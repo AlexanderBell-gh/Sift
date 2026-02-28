@@ -29,16 +29,6 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Create Workers directory
-        run: mkdir -p workers
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create price-trackr --production-compatibility=true || true
-
       - name: Deploy Pages
         uses: cloudflare/wrangler-action@v3
         with:
