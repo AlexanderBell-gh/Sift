@@ -50,9 +50,9 @@ const Api = {
         });
         if (!response.ok) throw new Error('Failed to create product');
         return response.json();
-    updateProduct(id, },
+    },
     
-    async updates) {
+    async updateProduct(id, updates) {
         if (USE_LOCAL_STORAGE) {
             const products = await this.getProducts();
             const index = products.findIndex(p => p.id === id);
