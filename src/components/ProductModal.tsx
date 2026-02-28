@@ -3,7 +3,9 @@ import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
+import { Loader2 } from 'lucide-react';
 import type { Product, Category } from '../types';
+import { api } from '../lib/api';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -21,6 +23,8 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
   const [price, setPrice] = useState('');
   const [store, setStore] = useState('');
   const [notes, setNotes] = useState('');
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [fetchError, setFetchError] = useState('');
 
   useEffect(() => {
     if (product) {
@@ -40,7 +44,30 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
       setStore('');
       setNotes('');
     }
+    setFetchError('');
+    setIsFetchingPrice(false);
   }, [product, isOpen]);
+
+  const handleFetchPrice = async () => {
+    if (!url.trim()) {
+      setFetchError('Enter a URL first');
+      return;
+    }
+    setIsFetchingPrice(true);
+    setFetchError('');
+    try {
+      const fetchedPrice = await api.fetchPriceFromUrl(url.trim());
+      if (fetchedPrice !== null) {
+        setPrice(fetchedPrice.toFixed(2));
+      } else {
+        setFetchError('Could not fetch price automatically');
+      }
+    } catch (e) {
+      setFetchError('Failed to fetch price');
+    } finally {
+      setIsFetchingPrice(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,13 +112,27 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
           required
         />
 
-        <Input
-          label="Product URL"
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://amazon.com/..."
-        />
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Input
+              label="Product URL"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://www.tesco.com/..."
+            />
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleFetchPrice}
+            disabled={isFetchingPrice || !url.trim()}
+            className="mt-6"
+          >
+            {isFetchingPrice ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Fetch Price'}
+          </Button>
+        </div>
+        {fetchError && <p className="text-xs text-red-500 -mt-2">{fetchError}</p>}
 
         <Input
           label="Image URL"

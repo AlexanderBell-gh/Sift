@@ -163,4 +163,19 @@ export const api = {
     });
     if (!response.ok) throw new Error('Failed to delete category');
   },
+
+  async fetchPriceFromUrl(url: string): Promise<number | null> {
+    if (USE_LOCAL_STORAGE) {
+      return null;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/scrape-price`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.price;
+  },
 };
