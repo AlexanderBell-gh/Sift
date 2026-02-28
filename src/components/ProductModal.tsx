@@ -60,6 +60,15 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
     label: `${c.icon} ${c.name}`,
   }));
 
+  const storeOptions = [
+    { value: '', label: 'Select a store...' },
+    { value: "Sainsbury's", label: "Sainsbury's" },
+    { value: 'Tesco', label: 'Tesco' },
+    { value: 'Morrisons', label: 'Morrisons' },
+    { value: 'ASDA', label: 'ASDA' },
+    { value: 'M&S', label: 'M&S' },
+  ];
+
   return (
     <Modal
       isOpen={isOpen}
@@ -111,11 +120,11 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
           />
         </div>
 
-        <Input
+        <Select
           label="Store"
           value={store}
           onChange={(e) => setStore(e.target.value)}
-          placeholder="e.g., Walmart, Amazon"
+          options={storeOptions}
         />
 
         <div>

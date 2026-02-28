@@ -78,6 +78,8 @@ function App() {
   };
 
   const handleEditProduct = (product: Product) => {
+    setIsDetailOpen(false);
+    setSelectedProduct(null);
     setEditingProduct(product);
     setIsProductModalOpen(true);
   };
