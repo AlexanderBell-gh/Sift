@@ -5,10 +5,14 @@
   "observability": {
     "enabled": true
   },
-  "assets": {
-    "directory": ".git"
-  },
+  "pages_build_output_dir": "dist",
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "PRICETRACKR",
+      "id": "162cd94a52d44887858b3398eaa84d36"
+    }
   ]
 }

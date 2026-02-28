@@ -1,0 +1,210 @@
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import type { Product } from '../types';
+import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
+import { Plus, Pencil, Trash2, ExternalLink } from 'lucide-react';
+
+interface ProductDetailProps {
+  product: Product | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAddPrice: () => void;
+}
+
+export function ProductDetail({
+  product,
+  isOpen,
+  onClose,
+  onEdit,
+  onDelete,
+  onAddPrice,
+}: ProductDetailProps) {
+  if (!product) return null;
+
+  const latestPrice = product.prices?.[product.prices.length - 1];
+  const { change, direction } = calculatePriceChange(product.prices || []);
+
+  const chartData = [...product.prices].reverse().map((p) => ({
+    date: formatDate(p.date),
+    price: p.price,
+  }));
+
+  const changeClass =
+    direction === 'up'
+      ? 'text-red-500'
+      : direction === 'down'
+      ? 'text-green-500'
+      : 'text-slate-400';
+
+  return (
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-24 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-4xl overflow-hidden">
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <span>
+                      {product.category === 'dairy'
+                        ? '🥛'
+                        : product.category === 'snacks'
+                        ? '🍿'
+                        : product.category === 'beverages'
+                        ? '🥤'
+                        : product.category === 'produce'
+                        ? '🥬'
+                        : product.category === 'meat'
+                        ? '🥩'
+                        : product.category === 'frozen'
+                        ? '🧊'
+                        : '📦'}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">{product.name}</h2>
+                  <Badge category={product.category} />
+                  {product.url && (
+                    <a
+                      href={product.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-sky-500 hover:underline mt-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      View Product
+                    </a>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6 p-4 bg-slate-100 dark:bg-slate-700 rounded-xl">
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Current Price</p>
+                  <p className="text-3xl font-bold">{formatPrice(latestPrice?.price || 0)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Change</p>
+                  <p className={`text-xl font-semibold ${changeClass}`}>
+                    {direction === 'up' && `↑ ${formatPrice(change)}`}
+                    {direction === 'down' && `↓ ${formatPrice(Math.abs(change))}`}
+                    {direction === 'neutral' && '→ No change'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Price History</h3>
+                <div className="h-48 bg-slate-100 dark:bg-slate-700 rounded-xl p-4">
+                  {chartData.length > 1 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 12 }}
+                          stroke="#64748B"
+                        />
+                        <YAxis
+                          tick={{ fontSize: 12 }}
+                          stroke="#64748B"
+                          tickFormatter={(value) => `£${value}`}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#fff',
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="price"
+                          stroke="#0ea5e9"
+                          strokeWidth={2}
+                          dot={{ fill: '#0ea5e9', strokeWidth: 2 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-400">
+                      Need more data for chart
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Price Log</h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto price-log">
+                  {product.prices?.length ? (
+                    [...product.prices].reverse().map((p, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-700 rounded-lg"
+                      >
+                        <div>
+                          <p className="font-semibold">{formatPrice(p.price)}</p>
+                          <p className="text-sm text-slate-500">{p.store || 'Unknown store'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm">{formatDate(p.date)}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-slate-400 text-center py-4">No price history</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button onClick={onAddPrice} className="flex-1 flex items-center justify-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Add Price
+                </Button>
+                <Button variant="secondary" onClick={onEdit}>
+                  <Pencil className="w-5 h-5" />
+                </Button>
+                <Button variant="danger" onClick={onDelete}>
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

@@ -1,0 +1,132 @@
+import { useState, useEffect } from 'react';
+import { Modal } from './ui/Modal';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
+import { Button } from './ui/Button';
+import type { Product, Category } from '../types';
+
+interface ProductModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (product: { name: string; url?: string; category: string; price: number; store?: string; notes?: string }) => void;
+  product?: Product | null;
+  categories: Category[];
+}
+
+export function ProductModal({ isOpen, onClose, onSave, product, categories }: ProductModalProps) {
+  const [name, setName] = useState('');
+  const [url, setUrl] = useState('');
+  const [category, setCategory] = useState('other');
+  const [price, setPrice] = useState('');
+  const [store, setStore] = useState('');
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (product) {
+      setName(product.name);
+      setUrl(product.url || '');
+      setCategory(product.category);
+      setPrice(product.prices?.[product.prices.length - 1]?.price?.toString() || '');
+      setStore(product.store || '');
+      setNotes(product.notes || '');
+    } else {
+      setName('');
+      setUrl('');
+      setCategory('other');
+      setPrice('');
+      setStore('');
+      setNotes('');
+    }
+  }, [product, isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      name: name.trim(),
+      url: url.trim(),
+      category,
+      price: parseFloat(price),
+      store: store.trim(),
+      notes: notes.trim(),
+    });
+  };
+
+  const categoryOptions = categories.map((c) => ({
+    value: c.id,
+    label: `${c.icon} ${c.name}`,
+  }));
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={product ? 'Edit Product' : 'Add Product'}
+      className="max-w-lg"
+    >
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <Input
+          label="Product Name *"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., Gallon of Milk"
+          required
+        />
+
+        <Input
+          label="Product URL"
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://amazon.com/..."
+        />
+        <p className="text-xs text-slate-500 -mt-3">Image will be fetched from this URL</p>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Select
+            label="Category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            options={categoryOptions}
+          />
+          <Input
+            label="Current Price *"
+            type="number"
+            step="0.01"
+            min="0"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="0.00"
+            required
+          />
+        </div>
+
+        <Input
+          label="Store"
+          value={store}
+          onChange={(e) => setStore(e.target.value)}
+          placeholder="e.g., Walmart, Amazon"
+        />
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Notes</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            placeholder="Optional notes..."
+          />
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button type="submit" className="flex-1">
+            Save Product
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
