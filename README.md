@@ -1,73 +1,122 @@
-# React + TypeScript + Vite
+# PriceTrackr 🏷️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal grocery price tracker to monitor price changes on products you frequently buy.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Product Management**: Add, edit, and delete products with name, URL, category, and store
+- **Price Tracking**: Record price entries over time to see trends
+- **Price History**: Interactive charts showing price trends (Recharts)
+- **Categories**: Organize products by category (Dairy, Snacks, Beverages, etc.)
+- **Search**: Filter products by name or store
+- **Dark/Light Mode**: Toggle between themes (or follow system preference)
+- **Image Fetching**: Auto-fetches product images from URLs
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19 + TypeScript + Vite
+- **Styling**: Tailwind CSS v4
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Backend**: Cloudflare Workers
+- **Storage**: Cloudflare Workers KV
+- **Deployment**: Cloudflare Pages + GitHub Actions
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 20+
+- npm or pnpm
+- Cloudflare account
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Local Development
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+The built files will be in the `dist/` directory.
+
+## Deployment
+
+### Automatic (GitHub Actions)
+
+This project includes a GitHub Actions workflow that automatically deploys to Cloudflare on push to main.
+
+1. Add these secrets to your GitHub repository:
+   - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID
+
+2. Push to main to trigger deployment
+
+### Manual
+
+```bash
+# Deploy frontend to Cloudflare Pages
+npx wrangler pages deploy dist --project-name=price-trackr
+
+# Deploy worker API
+cd workers
+npx wrangler deploy
+```
+
+## Configuration
+
+### Cloudflare KV Namespace
+
+The project uses a KV namespace for data storage. Update the namespace ID in:
+- `wrangler.jsonc` (for Pages)
+- `workers/wrangler.toml` (for Worker)
+
+### API URL
+
+After deploying the Worker, update the API URL in `src/lib/api.ts`:
+
+```typescript
+const API_BASE_URL = 'https://your-worker-url.workers.dev';
+const USE_LOCAL_STORAGE = false;
+```
+
+## Project Structure
+
+```
+PriceTrackr/
+├── src/
+│   ├── components/       # React components
+│   │   ├── ui/          # Reusable UI components
+│   │   ├── Header.tsx
+│   │   ├── CategoryFilter.tsx
+│   │   ├── ProductCard.tsx
+│   │   ├── ProductGrid.tsx
+│   │   ├── ProductModal.tsx
+│   │   ├── ProductDetail.tsx
+│   │   ├── AddPriceModal.tsx
+│   │   └── AddCategoryModal.tsx
+│   ├── lib/             # Utilities and API
+│   ├── types/           # TypeScript types
+│   ├── App.tsx          # Main app component
+│   └── main.tsx         # Entry point
+├── workers/             # Cloudflare Worker API
+│   ├── wrangler.toml
+│   └── index.js
+├── .github/
+│   └── workflows/
+│       └── deploy.yml   # CI/CD workflow
+├── wrangler.jsonc       # Cloudflare Pages config
+└── package.json
+```
+
+## License
+
+MIT
