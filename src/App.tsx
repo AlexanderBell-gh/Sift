@@ -82,7 +82,7 @@ function App() {
     setIsProductModalOpen(true);
   };
 
-  const handleSaveProduct = async (productData: { name: string; url?: string; category: string; price: number; store?: string; notes?: string }) => {
+  const handleSaveProduct = async (productData: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => {
     try {
       if (editingProduct) {
         const updated = await api.updateProduct(editingProduct.id, productData);

@@ -34,7 +34,7 @@ export const api = {
     return response.json();
   },
 
-  async createProduct(product: { name: string; url?: string; category: string; price: number; store?: string; notes?: string }): Promise<Product> {
+  async createProduct(product: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }): Promise<Product> {
     const newProduct: Product = {
       ...product,
       id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

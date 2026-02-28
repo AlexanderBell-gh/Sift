@@ -8,7 +8,7 @@ import type { Product, Category } from '../types';
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (product: { name: string; url?: string; category: string; price: number; store?: string; notes?: string }) => void;
+  onSave: (product: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => void;
   product?: Product | null;
   categories: Category[];
 }
@@ -16,6 +16,7 @@ interface ProductModalProps {
 export function ProductModal({ isOpen, onClose, onSave, product, categories }: ProductModalProps) {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [category, setCategory] = useState('other');
   const [price, setPrice] = useState('');
   const [store, setStore] = useState('');
@@ -25,6 +26,7 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
     if (product) {
       setName(product.name);
       setUrl(product.url || '');
+      setImageUrl(product.imageUrl || '');
       setCategory(product.category);
       setPrice(product.prices?.[product.prices.length - 1]?.price?.toString() || '');
       setStore(product.store || '');
@@ -32,6 +34,7 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
     } else {
       setName('');
       setUrl('');
+      setImageUrl('');
       setCategory('other');
       setPrice('');
       setStore('');
@@ -44,6 +47,7 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
     onSave({
       name: name.trim(),
       url: url.trim(),
+      imageUrl: imageUrl.trim(),
       category,
       price: parseFloat(price),
       store: store.trim(),
@@ -79,7 +83,14 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories }: P
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://amazon.com/..."
         />
-        <p className="text-xs text-slate-500 -mt-3">Image will be fetched from this URL</p>
+
+        <Input
+          label="Image URL"
+          type="url"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="https://example.com/image.jpg"
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <Select
