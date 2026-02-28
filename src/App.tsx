@@ -142,6 +142,19 @@ function App() {
     }
   };
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    try {
+      await api.deleteCategory(categoryId);
+      setCategories(categories.filter(c => c.id !== categoryId));
+      if (currentCategory === categoryId) {
+        setCurrentCategory('all');
+      }
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    }
+  };
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setIsDetailOpen(true);
@@ -171,6 +184,7 @@ function App() {
         activeCategory={currentCategory}
         onCategoryChange={setCurrentCategory}
         onAddCategory={handleAddCategory}
+        onDeleteCategory={handleDeleteCategory}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

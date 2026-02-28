@@ -1,7 +1,7 @@
 import type { Product, PriceEntry, Category } from '../types';
 import { DEFAULT_CATEGORIES } from '../types';
 
-const API_BASE_URL = 'https://price-trackr.pages.dev/'; // Set your Cloudflare Worker URL here
+const API_BASE_URL = 'https://pricetrackr-api.inbox-alexbell.workers.dev'; // Set your Cloudflare Worker URL here
 const USE_LOCAL_STORAGE = !API_BASE_URL;
 
 const STORAGE_KEYS = {
@@ -148,5 +148,19 @@ export const api = {
     });
     if (!response.ok) throw new Error('Failed to create category');
     return response.json();
+  },
+
+  async deleteCategory(id: string): Promise<void> {
+    if (USE_LOCAL_STORAGE) {
+      const categories = await this.getCategories();
+      const filtered = categories.filter(c => c.id !== id);
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(filtered));
+      return;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete category');
   },
 };

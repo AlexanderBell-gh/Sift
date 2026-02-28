@@ -29,12 +29,17 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Prepare worker for Pages
-        run: cp workers/index.js dist/_worker.js
+      - name: Deploy Worker API
+        working-directory: ./workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=price-trackr
+          command: pages project deploy price-trackr --output-directory dist

@@ -1,3 +1,13 @@
+const DEFAULT_CATEGORIES = [
+  { id: 'dairy', name: 'Dairy', icon: '🥛' },
+  { id: 'snacks', name: 'Snacks', icon: '🍿' },
+  { id: 'beverages', name: 'Beverages', icon: '🥤' },
+  { id: 'produce', name: 'Produce', icon: '🥬' },
+  { id: 'meat', name: 'Meat', icon: '🥩' },
+  { id: 'frozen', name: 'Frozen', icon: '🧊' },
+  { id: 'other', name: 'Other', icon: '📦' },
+];
+
 // PriceTrackr Cloudflare Worker API
 
 const corsHeaders = {
@@ -153,13 +163,13 @@ async function handleRequest(request, env) {
   if (path === '/api/categories') {
     if (method === 'GET') {
       const categories = await env.PRICETRACKR.get('categories', 'json');
-      return jsonResponse(categories || []);
+      return jsonResponse(categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES);
     }
     
     if (method === 'POST') {
       try {
         const body = await request.json();
-        const categories = await env.PRICETRACKR.get('categories', 'json') || [];
+        const categories = await env.PRICETRACKR.get('categories', 'json') || DEFAULT_CATEGORIES;
         const newCategory = {
           id: body.id || `cat_${Date.now()}`,
           name: body.name,
@@ -172,6 +182,15 @@ async function handleRequest(request, env) {
         return errorResponse('Invalid request body');
       }
     }
+  }
+
+  // Delete category
+  if (path.match(/^\/api\/categories\/(.+)$/) && method === 'DELETE') {
+    const id = path.match(/^\/api\/categories\/(.+)$/)[1];
+    const categories = await env.PRICETRACKR.get('categories', 'json') || DEFAULT_CATEGORIES;
+    const filtered = categories.filter(c => c.id !== id);
+    await env.PRICETRACKR.put('categories', JSON.stringify(filtered));
+    return jsonResponse({ success: true });
   }
 
   return errorResponse('Not found', 404);
