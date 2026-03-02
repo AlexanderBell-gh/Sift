@@ -7,6 +7,14 @@
 }
 
 :root {
+  --color-background-dark: #000000;
+}
+
+.dark {
+  background-color: var(--color-background-dark);
+}
+
+:root {
   --color-price-up: #EF4444;
   --color-price-down: #22C55E;
   --color-price-neutral: #64748B;
