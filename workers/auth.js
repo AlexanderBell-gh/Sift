@@ -216,7 +216,7 @@ async function deleteUser(env, userId) {
   }
 }
 
-module.exports = {
+export {
   isValidUser,
   isValidMagicLink,
   hashPassword,

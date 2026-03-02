@@ -9,7 +9,7 @@ const DEFAULT_CATEGORIES = [
   { id: 'other', name: 'Other', icon: '📦' },
 ];
 
-const {
+import {
   isValidUser,
   isValidMagicLink,
   hashPassword,
@@ -23,7 +23,7 @@ const {
   getUserByUsername,
   saveUser,
   deleteUser,
-} = require('./auth.js');
+} from './auth.js';
 
 // PriceTrackr Cloudflare Worker API
 
