@@ -1,11 +1,10 @@
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { Category } from '../types';
 
 interface CategoryFilterProps {
   categories: Category[];
   activeCategory: string;
   onCategoryChange: (categoryId: string) => void;
-  onAddCategory: () => void;
   onDeleteCategory?: (categoryId: string) => void;
 }
 
@@ -13,7 +12,6 @@ export function CategoryFilter({
   categories,
   activeCategory,
   onCategoryChange,
-  onAddCategory,
   onDeleteCategory,
 }: CategoryFilterProps) {
   return (
@@ -47,13 +45,6 @@ export function CategoryFilter({
               )}
             </div>
           ))}
-          <button
-            onClick={onAddCategory}
-            className="flex items-center gap-1 px-3 py-2 text-sm text-zinc-500 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </button>
         </div>
       </div>
     </nav>

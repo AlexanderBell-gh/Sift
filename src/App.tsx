@@ -6,16 +6,20 @@ import { ProductModal } from './components/ProductModal';
 import { AddPriceModal } from './components/AddPriceModal';
 import { ProductDetail } from './components/ProductDetail';
 import { AddCategoryModal } from './components/AddCategoryModal';
+import { SortSelect } from './components/SortSelect';
 import { api } from './lib/api';
 import type { Product, Category } from './types';
 import { DEFAULT_CATEGORIES } from './types';
 import { formatPrice } from './lib/utils';
+
+type SortOption = 'newest' | 'oldest' | 'store' | 'name-asc' | 'price-low' | 'price-high';
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [currentCategory, setCurrentCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal states
@@ -57,11 +61,27 @@ function App() {
     return matchesCategory && matchesSearch;
   });
 
-  // Sort by most recent price
-  filteredProducts.sort((a, b) => {
-    const aDate = a.prices?.[a.prices.length - 1]?.date || '';
-    const bDate = b.prices?.[b.prices.length - 1]?.date || '';
-    return new Date(bDate).getTime() - new Date(aDate).getTime();
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const getCurrentPrice = (p: Product) => p.prices?.[p.prices.length - 1]?.price || 0;
+    const getStoreName = (p: Product) => p.store?.toLowerCase() || '';
+
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'oldest':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case 'store':
+        return getStoreName(a).localeCompare(getStoreName(b));
+      case 'name-asc':
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      case 'price-low':
+        return getCurrentPrice(a) - getCurrentPrice(b);
+      case 'price-high':
+        return getCurrentPrice(b) - getCurrentPrice(a);
+      default:
+        return 0;
+    }
   });
 
   // Stats
@@ -174,27 +194,28 @@ function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onAddProduct={handleAddProduct}
+        onAddCategory={handleAddCategory}
       />
 
       <CategoryFilter
         categories={categories}
         activeCategory={currentCategory}
         onCategoryChange={setCurrentCategory}
-        onAddCategory={handleAddCategory}
         onDeleteCategory={handleDeleteCategory}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           <div className="flex items-center gap-4">
-            <span>{filteredProducts.length} Product{filteredProducts.length !== 1 ? 's' : ''}</span>
+            <span>{sortedProducts.length} Product{sortedProducts.length !== 1 ? 's' : ''}</span>
             <span className="text-zinc-300 dark:text-zinc-700">|</span>
             <span>Avg: {formatPrice(avgPrice)}</span>
           </div>
+          <SortSelect value={sortBy} onChange={setSortBy} />
         </div>
 
         <ProductGrid
-          products={filteredProducts}
+          products={sortedProducts}
           onProductClick={handleProductClick}
           onAddProduct={handleAddProduct}
         />

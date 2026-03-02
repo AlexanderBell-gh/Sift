@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, Sun, Moon, Plus } from 'lucide-react';
+import { Search, Sun, Moon, Plus, FolderPlus } from 'lucide-react';
 import { Button } from './ui/Button';
 
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onAddProduct: () => void;
+  onAddCategory: () => void;
 }
 
-export function Header({ searchQuery, onSearchChange, onAddProduct }: HeaderProps) {
+export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategory }: HeaderProps) {
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('pricetrackr_theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -54,6 +55,11 @@ export function Header({ searchQuery, onSearchChange, onAddProduct }: HeaderProp
             <Button onClick={onAddProduct} className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
               <span className="hidden sm:inline">Add Product</span>
+            </Button>
+
+            <Button onClick={onAddCategory} variant="secondary" className="flex items-center gap-2">
+              <FolderPlus className="w-5 h-5" />
+              <span className="hidden sm:inline">Add Category</span>
             </Button>
           </div>
         </div>
