@@ -116,9 +116,30 @@ async function handleRequest(request, env) {
     if (method === 'PUT') {
       try {
         const body = await request.json();
-        const updatedProducts = products.map(p => 
-          p.id === id ? { ...p, ...body } : p
-        );
+        
+        const updatedProducts = products.map(p => {
+          if (p.id !== id) return p;
+          
+          const updated = { ...p, ...body };
+          
+          if (body.price !== undefined) {
+            const newPriceEntry = {
+              price: body.price,
+              store: body.store || p.store,
+              date: new Date().toISOString().split('T')[0]
+            };
+            updated.prices = p.prices || [];
+            updated.prices.push(newPriceEntry);
+            delete updated.price;
+          }
+          
+          if (body.store !== undefined && body.price !== undefined) {
+            delete updated.store;
+          }
+          
+          return updated;
+        });
+        
         await saveProducts(env, updatedProducts);
         return jsonResponse(updatedProducts.find(p => p.id === id));
       } catch (e) {
