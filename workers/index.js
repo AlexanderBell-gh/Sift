@@ -9,6 +9,22 @@ const DEFAULT_CATEGORIES = [
   { id: 'other', name: 'Other', icon: '📦' },
 ];
 
+const {
+  isValidUser,
+  isValidMagicLink,
+  hashPassword,
+  verifyPassword,
+  generateToken,
+  createUserId,
+  createJWT,
+  verifyJWT,
+  getUserById,
+  getUserByEmail,
+  getUserByUsername,
+  saveUser,
+  deleteUser,
+} = require('./auth.js');
+
 // PriceTrackr Cloudflare Worker API
 
 const corsHeaders = {
@@ -50,13 +66,13 @@ function isValidCategory(category) {
   );
 }
 
-async function getAllProducts(env) {
-  const productIds = await env.PRICETRACKR.get('products', 'json');
+async function getAllProducts(env, userId) {
+  const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json');
   if (!productIds) return [];
   
   const products = await Promise.all(
     productIds.map(async (id) => {
-      const product = await env.PRICETRACKR.get(`product:${id}`, 'json');
+      const product = await env.PRICETRACKR.get(`user:${userId}:product:${id}`, 'json');
       return product;
     })
   );
@@ -65,21 +81,40 @@ async function getAllProducts(env) {
   const validIds = validProducts.map(p => p.id);
   
   if (validIds.length !== productIds.length) {
-    await env.PRICETRACKR.put('products', JSON.stringify(validIds));
+    await env.PRICETRACKR.put(`user:${userId}:products`, JSON.stringify(validIds));
   }
   
   return validProducts;
 }
 
-async function saveProducts(env, products) {
+async function saveProducts(env, userId, products) {
   const ids = products.map(p => p.id);
-  await env.PRICETRACKR.put('products', JSON.stringify(ids));
+  await env.PRICETRACKR.put(`user:${userId}:products`, JSON.stringify(ids));
   
   await Promise.all(
     products.map(async (product) => {
-      await env.PRICETRACKR.put(`product:${product.id}`, JSON.stringify(product));
+      await env.PRICETRACKR.put(`user:${userId}:product:${product.id}`, JSON.stringify(product));
     })
   );
+}
+
+async function authenticate(request, env) {
+  const cookie = request.headers.get('Cookie') || '';
+  const tokenMatch = cookie.match(/auth_token=([^;]+)/);
+  if (!tokenMatch) return null;
+
+  const payload = await verifyJWT(tokenMatch[1]);
+  if (!payload) return null;
+
+  return payload;
+}
+
+async function requireAuth(request, env) {
+  const auth = await authenticate(request, env);
+  if (!auth) {
+    return errorResponse('Authentication required', 401);
+  }
+  return auth;
 }
 
 async function handleRequest(request, env) {
@@ -92,17 +127,262 @@ async function handleRequest(request, env) {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Routes
-  if (path === '/api/products') {
+  // Auth Routes
+  if (path === '/api/auth/register') {
+    if (method === 'POST') {
+      try {
+        const body = await request.json();
+        const { email, username, password } = body;
+
+        if (!email || !username || !password) {
+          return errorResponse('Email, username, and password are required');
+        }
+
+        if (password.length < 6) {
+          return errorResponse('Password must be at least 6 characters');
+        }
+
+        const existingEmail = await getUserByEmail(env, email);
+        if (existingEmail) {
+          return errorResponse('Email already in use');
+        }
+
+        const existingUsername = await getUserByUsername(env, username);
+        if (existingUsername) {
+          return errorResponse('Username already in use');
+        }
+
+        const passwordHash = await hashPassword(password);
+        const user = {
+          id: createUserId(),
+          email,
+          username,
+          passwordHash,
+          role: 'user',
+          preferences: {
+            currency: body.currency || 'USD',
+            defaultStore: body.defaultStore || null,
+          },
+          createdAt: new Date().toISOString(),
+        };
+
+        await saveUser(env, user);
+        const token = await createJWT(user);
+
+        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token }, 201);
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
+    }
+  }
+
+  if (path === '/api/auth/register-admin') {
+    if (method === 'POST') {
+      try {
+        const body = await request.json();
+        const { email, username, password, adminSecret } = body;
+
+        if (!adminSecret || adminSecret !== env.ADMIN_SECRET) {
+          return errorResponse('Invalid admin secret', 403);
+        }
+
+        if (!email || !username || !password) {
+          return errorResponse('Email, username, and password are required');
+        }
+
+        if (password.length < 6) {
+          return errorResponse('Password must be at least 6 characters');
+        }
+
+        const existingEmail = await getUserByEmail(env, email);
+        if (existingEmail) {
+          return errorResponse('Email already in use');
+        }
+
+        const existingUsername = await getUserByUsername(env, username);
+        if (existingUsername) {
+          return errorResponse('Username already in use');
+        }
+
+        const passwordHash = await hashPassword(password);
+        const user = {
+          id: createUserId(),
+          email,
+          username,
+          passwordHash,
+          role: 'admin',
+          preferences: {
+            currency: body.currency || 'USD',
+            defaultStore: body.defaultStore || null,
+          },
+          createdAt: new Date().toISOString(),
+        };
+
+        await saveUser(env, user);
+        const token = await createJWT(user);
+
+        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token }, 201);
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
+    }
+  }
+
+  if (path === '/api/auth/login') {
+    if (method === 'POST') {
+      try {
+        const body = await request.json();
+        const { username, password } = body;
+
+        if (!username || !password) {
+          return errorResponse('Username and password are required');
+        }
+
+        const user = await getUserByUsername(env, username);
+        if (!user) {
+          return errorResponse('Invalid credentials');
+        }
+
+        const validPassword = await verifyPassword(password, user.passwordHash);
+        if (!validPassword) {
+          return errorResponse('Invalid credentials');
+        }
+
+        const token = await createJWT(user);
+
+        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token });
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
+    }
+  }
+
+  if (path === '/api/auth/me') {
     if (method === 'GET') {
-      const products = await getAllProducts(env);
+      const auth = await requireAuth(request, env);
+      if (auth && auth.error) return auth;
+
+      const user = await getUserById(env, auth.userId);
+      if (!user) {
+        return errorResponse('User not found', 404);
+      }
+
+      return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, createdAt: user.createdAt });
+    }
+
+    if (method === 'PUT') {
+      const auth = await requireAuth(request, env);
+      if (auth && auth.error) return auth;
+
+      try {
+        const body = await request.json();
+        const user = await getUserById(env, auth.userId);
+
+        if (!user) {
+          return errorResponse('User not found', 404);
+        }
+
+        if (body.preferences) {
+          user.preferences = { ...user.preferences, ...body.preferences };
+        }
+
+        await saveUser(env, user);
+
+        return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, createdAt: user.createdAt });
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
+    }
+
+    if (method === 'DELETE') {
+      const auth = await requireAuth(request, env);
+      if (auth && auth.error) return auth;
+
+      await deleteUser(env, auth.userId);
+
+      return jsonResponse({ success: true });
+    }
+  }
+
+  if (path === '/api/auth/magic/send') {
+    if (method === 'POST') {
+      try {
+        const body = await request.json();
+        const { email } = body;
+
+        if (!email) {
+          return errorResponse('Email is required');
+        }
+
+        const user = await getUserByEmail(env, email);
+        if (!user) {
+          return jsonResponse({ message: 'If that email exists, a magic link has been sent' });
+        }
+
+        const token = generateToken();
+        const magicLink = {
+          token,
+          userId: user.id,
+          expiresAt: Date.now() + 15 * 60 * 1000,
+        };
+
+        await env.USERS.put(`magic:${token}`, JSON.stringify(magicLink), { expirationTtl: 900 });
+
+        const magicLinkUrl = `${new URL(request.url).origin}/auth/magic/verify?token=${token}`;
+
+        return jsonResponse({ message: 'Magic link sent', magicLink: magicLinkUrl, token });
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
+    }
+  }
+
+  if (path === '/api/auth/magic/verify') {
+    if (method === 'POST') {
+      try {
+        const body = await request.json();
+        const { token } = body;
+
+        if (!token) {
+          return errorResponse('Token is required');
+        }
+
+        const magicLinkData = await env.USERS.get(`magic:${token}`, 'json');
+        if (!magicLinkData || !isValidMagicLink(magicLinkData)) {
+          return errorResponse('Invalid or expired token');
+        }
+
+        await env.USERS.delete(`magic:${token}`);
+
+        const user = await getUserById(env, magicLinkData.userId);
+        if (!user) {
+          return errorResponse('User not found');
+        }
+
+        const jwt = await createJWT(user);
+
+        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token: jwt });
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
+    }
+  }
+
+  // Products
+  if (path === '/api/products') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
+
+    if (method === 'GET') {
+      const products = await getAllProducts(env, userId);
       return jsonResponse(products);
     }
     
     if (method === 'POST') {
       try {
         const body = await request.json();
-        const products = await getAllProducts(env);
+        const products = await getAllProducts(env, userId);
         
         const newProduct = {
           id: body.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -117,7 +397,7 @@ async function handleRequest(request, env) {
         };
         
         products.push(newProduct);
-        await saveProducts(env, products);
+        await saveProducts(env, userId, products);
         
         return jsonResponse(newProduct, 201);
       } catch (e) {
@@ -128,8 +408,11 @@ async function handleRequest(request, env) {
   
   // Product by ID
   if (path.match(/^\/api\/products\/(.+)$/)) {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
     const id = path.match(/^\/api\/products\/(.+)$/)[1];
-    const products = await getAllProducts(env);
+    const products = await getAllProducts(env, userId);
     const product = products.find(p => p.id === id);
     
     if (!product) {
@@ -172,7 +455,7 @@ async function handleRequest(request, env) {
           return updated;
         });
         
-        await saveProducts(env, updatedProducts);
+        await saveProducts(env, userId, updatedProducts);
         return jsonResponse(updatedProducts.find(p => p.id === id));
       } catch (e) {
         return errorResponse('Invalid request body');
@@ -181,15 +464,18 @@ async function handleRequest(request, env) {
     
     if (method === 'DELETE') {
       const filtered = products.filter(p => p.id !== id);
-      await saveProducts(env, filtered);
+      await saveProducts(env, userId, filtered);
       return jsonResponse({ success: true });
     }
   }
   
   // Add price to product
   if (path.match(/^\/api\/products\/(.+)\/prices$/) && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
     const id = path.match(/^\/api\/products\/(.+)\/prices$/)[1];
-    const products = await getAllProducts(env);
+    const products = await getAllProducts(env, userId);
     const product = products.find(p => p.id === id);
     
     if (!product) {
@@ -205,7 +491,7 @@ async function handleRequest(request, env) {
         date: body.date || new Date().toISOString().split('T')[0]
       });
       
-      await saveProducts(env, products);
+      await saveProducts(env, userId, products);
       return jsonResponse(product);
     } catch (e) {
       return errorResponse('Invalid request body');
@@ -214,8 +500,12 @@ async function handleRequest(request, env) {
   
   // Categories
   if (path === '/api/categories') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
+
     if (method === 'GET') {
-      const rawCategories = await env.PRICETRACKR.get('categories', 'json');
+      const rawCategories = await env.PRICETRACKR.get(`user:${userId}:categories`, 'json');
       const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [];
       return jsonResponse(categories.length > 0 ? categories : DEFAULT_CATEGORIES);
     }
@@ -223,7 +513,7 @@ async function handleRequest(request, env) {
     if (method === 'POST') {
       try {
         const body = await request.json();
-        const rawCategories = await env.PRICETRACKR.get('categories', 'json');
+        const rawCategories = await env.PRICETRACKR.get(`user:${userId}:categories`, 'json');
         const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [...DEFAULT_CATEGORIES];
         const newCategory = {
           id: body.id || `cat_${Date.now()}`,
@@ -234,7 +524,7 @@ async function handleRequest(request, env) {
           return errorResponse('Invalid category data');
         }
         categories.push(newCategory);
-        await env.PRICETRACKR.put('categories', JSON.stringify(categories));
+        await env.PRICETRACKR.put(`user:${userId}:categories`, JSON.stringify(categories));
         return jsonResponse(newCategory, 201);
       } catch (e) {
         return errorResponse('Invalid request body');
@@ -244,11 +534,14 @@ async function handleRequest(request, env) {
 
   // Delete category
   if (path.match(/^\/api\/categories\/(.+)$/) && method === 'DELETE') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
     const id = path.match(/^\/api\/categories\/(.+)$/)[1];
-    const rawCategories = await env.PRICETRACKR.get('categories', 'json');
+    const rawCategories = await env.PRICETRACKR.get(`user:${userId}:categories`, 'json');
     const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [...DEFAULT_CATEGORIES];
     const filtered = categories.filter(c => c.id !== id);
-    await env.PRICETRACKR.put('categories', JSON.stringify(filtered));
+    await env.PRICETRACKR.put(`user:${userId}:categories`, JSON.stringify(filtered));
     return jsonResponse({ success: true });
   }
 

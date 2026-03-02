@@ -22,6 +22,35 @@ export interface Category {
   icon: string;
 }
 
+export interface UserPreferences {
+  currency: string;
+  defaultStore?: string;
+}
+
+export type UserRole = 'admin' | 'user';
+
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  passwordHash: string;
+  role: UserRole;
+  preferences: UserPreferences;
+  createdAt: string;
+}
+
+export interface MagicLink {
+  token: string;
+  userId: string;
+  expiresAt: number;
+}
+
+export interface AuthPayload {
+  userId: string;
+  role: UserRole;
+  exp: number;
+}
+
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'dairy', name: 'Dairy', icon: '🥛' },
   { id: 'snacks', name: 'Snacks', icon: '🍿' },

@@ -13,6 +13,13 @@
     {
       "binding": "PRICETRACKR",
       "id": "a901eb966d144e3081024b10a345b88a"
+    },
+    {
+      "binding": "USERS",
+      "id": "<create-in-cloudflare-dashboard>"
     }
-  ]
+  ],
+  "vars": {
+    "ADMIN_SECRET": "<set-your-admin-secret>"
+  }
 }
