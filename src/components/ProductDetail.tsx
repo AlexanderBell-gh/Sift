@@ -37,7 +37,7 @@ export function ProductDetail({
       ? 'text-red-500'
       : direction === 'down'
       ? 'text-green-500'
-      : 'text-slate-400';
+      : 'text-zinc-400';
 
   return (
     <>
@@ -48,12 +48,12 @@ export function ProductDetail({
         >
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
-            className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all"
+            className="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-start justify-between p-6 border-b border-zinc-200 dark:border-zinc-800">
               <div className="flex items-start gap-4">
-                <div className="w-24 h-24 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-4xl overflow-hidden">
+                <div className="w-24 h-24 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-4xl overflow-hidden">
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
@@ -100,7 +100,7 @@ export function ProductDetail({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -109,13 +109,13 @@ export function ProductDetail({
             </div>
 
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6 p-4 bg-slate-100 dark:bg-slate-700 rounded-xl">
+              <div className="flex items-center justify-between mb-6 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Current Price</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Current Price</p>
                   <p className="text-3xl font-bold">{formatPrice(latestPrice?.price || 0)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Change</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Change</p>
                   <p className={`text-xl font-semibold ${changeClass}`}>
                     {direction === 'up' && `↑ ${formatPrice(change)}`}
                     {direction === 'down' && `↓ ${formatPrice(Math.abs(change))}`}
@@ -126,23 +126,23 @@ export function ProductDetail({
 
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3">Price History</h3>
-                <div className="h-48 bg-slate-100 dark:bg-slate-700 rounded-xl p-4">
+                <div className="h-48 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-4">
                   {chartData.length > 1 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
                         <XAxis
                           dataKey="date"
                           tick={{ fontSize: 12 }}
-                          stroke="#64748B"
+                          stroke="#71717a"
                         />
                         <YAxis
                           tick={{ fontSize: 12 }}
-                          stroke="#64748B"
+                          stroke="#71717a"
                           tickFormatter={(value) => `£${value}`}
                         />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: '#1e293b',
+                            backgroundColor: '#18181b',
                             border: 'none',
                             borderRadius: '8px',
                             color: '#fff',
@@ -158,7 +158,7 @@ export function ProductDetail({
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full flex items-center justify-center text-slate-400">
+                    <div className="h-full flex items-center justify-center text-zinc-400">
                       Need more data for chart
                     </div>
                   )}
@@ -172,11 +172,11 @@ export function ProductDetail({
                     [...product.prices].reverse().map((p, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-700 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg"
                       >
                         <div>
                           <p className="font-semibold">{formatPrice(p.price)}</p>
-                          <p className="text-sm text-slate-500">{p.store || 'Unknown store'}</p>
+                          <p className="text-sm text-zinc-500">{p.store || 'Unknown store'}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm">{formatDate(p.date)}</p>
@@ -184,7 +184,7 @@ export function ProductDetail({
                       </div>
                     ))
                   ) : (
-                    <p className="text-slate-400 text-center py-4">No price history</p>
+                    <p className="text-zinc-400 text-center py-4">No price history</p>
                   )}
                 </div>
               </div>

@@ -22,7 +22,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
   const currentPrice = latestPrice?.price || 0;
   const { change, percent, direction } = calculatePriceChange(product.prices || []);
 
-  const priceClass = direction === 'up' ? 'text-red-500' : direction === 'down' ? 'text-green-500' : 'text-slate-400';
+  const priceClass = direction === 'up' ? 'text-red-500' : direction === 'down' ? 'text-green-500' : 'text-zinc-400';
   const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
   const icon = categoryIcons[product.category] || '📦';
 
@@ -54,7 +54,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
           <span className={`${getCategoryBadgeClass(product.category)} ml-2`}>{icon}</span>
         </div>
         {product.store && (
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">🏪 {product.store}</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">🏪 {product.store}</p>
         )}
 
         <div className="flex items-end justify-between mb-3">
@@ -67,19 +67,19 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
                 {arrow} {formatPrice(Math.abs(change))} ({percent}%)
               </p>
             ) : (
-              <p className="text-slate-400 text-sm">→ No change</p>
+              <p className="text-zinc-400 text-sm">→ No change</p>
             )}
           </div>
         </div>
 
         {chartData.length > 1 ? (
-          <div className="h-12 bg-slate-100 dark:bg-slate-700 rounded-lg mb-3 overflow-hidden">
+          <div className="h-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <Line
                   type="monotone"
                   dataKey="price"
-                  stroke={direction === 'up' ? '#EF4444' : direction === 'down' ? '#22C55E' : '#64748B'}
+                  stroke={direction === 'up' ? '#EF4444' : direction === 'down' ? '#22C55E' : '#71717a'}
                   strokeWidth={2}
                   dot={false}
                 />
@@ -87,12 +87,12 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-12 bg-slate-100 dark:bg-slate-700 rounded-lg mb-3 flex items-center justify-center text-slate-400 text-xs">
+          <div className="h-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center text-zinc-400 text-xs">
             Need more data for chart
           </div>
         )}
 
-        <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center justify-between text-xs text-zinc-500">
           <span>{product.prices?.length || 0} price{(product.prices?.length || 0) !== 1 ? 's' : ''}</span>
           <span>{latestPrice ? formatDate(latestPrice.date) : 'No prices'}</span>
         </div>

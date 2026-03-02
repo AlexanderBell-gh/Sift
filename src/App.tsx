@@ -164,17 +164,17 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">Loading...</p>
+          <p className="text-zinc-500">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100">
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -190,10 +190,10 @@ function App() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6 text-sm text-slate-600 dark:text-slate-400">
+        <div className="flex items-center justify-between mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           <div className="flex items-center gap-4">
             <span>{filteredProducts.length} Product{filteredProducts.length !== 1 ? 's' : ''}</span>
-            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span className="text-zinc-300 dark:text-zinc-700">|</span>
             <span>Avg: {formatPrice(avgPrice)}</span>
           </div>
         </div>
@@ -205,8 +205,8 @@ function App() {
         />
       </main>
 
-      <footer className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-slate-500">
+      <footer className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-zinc-500">
           PriceTrackr v1.0.0
         </div>
       </footer>

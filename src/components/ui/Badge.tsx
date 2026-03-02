@@ -12,7 +12,7 @@ const categoryStyles: Record<string, string> = {
   produce: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   meat: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
   frozen: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
-  other: 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200',
+  other: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200',
 };
 
 const categoryIcons: Record<string, string> = {

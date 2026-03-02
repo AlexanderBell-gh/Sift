@@ -7,7 +7,7 @@
 }
 
 :root {
-  --color-background-dark: #000000;
+  --color-background-dark: #09090b;
 }
 
 .dark {
@@ -17,7 +17,7 @@
 :root {
   --color-price-up: #EF4444;
   --color-price-down: #22C55E;
-  --color-price-neutral: #64748B;
+  --color-price-neutral: #71717a;
 }
 
 body {
@@ -35,8 +35,8 @@ body {
 
 .category-chip {
   @apply px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all;
-  @apply bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400;
-  @apply hover:bg-slate-200 dark:hover:bg-slate-700;
+  @apply bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400;
+  @apply hover:bg-zinc-200 dark:hover:bg-zinc-700;
 }
 
 .category-chip.active {
@@ -44,7 +44,7 @@ body {
 }
 
 .product-card {
-  @apply bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700;
+  @apply bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800;
   @apply transition-all duration-200;
 }
 
@@ -61,7 +61,7 @@ body {
 }
 
 .price-neutral {
-  @apply text-slate-400;
+  @apply text-zinc-400;
 }
 
 @keyframes pricePulse {
@@ -78,7 +78,7 @@ body {
 }
 
 .product-image {
-  @apply w-full h-40 rounded-t-2xl bg-slate-100 dark:bg-slate-700;
+  @apply w-full h-40 rounded-t-2xl bg-zinc-100 dark:bg-zinc-800;
   @apply flex items-center justify-center overflow-hidden;
 }
 
@@ -90,13 +90,13 @@ body {
   @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
 }
 
-.badge-dairy { @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200; }
-.badge-snacks { @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200; }
-.badge-beverages { @apply bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200; }
-.badge-produce { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
-.badge-meat { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; }
-.badge-frozen { @apply bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200; }
-.badge-other { @apply bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200; }
+.badge-dairy { @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200; }
+.badge-snacks { @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200; }
+.badge-beverages { @apply bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200; }
+.badge-produce { @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200; }
+.badge-meat { @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200; }
+.badge-frozen { @apply bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-200; }
+.badge-other { @apply bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200; }
 
 @media (max-width: 640px) {
   .product-card {
@@ -113,9 +113,9 @@ body {
 }
 
 .price-log::-webkit-scrollbar-track {
-  @apply bg-slate-100 dark:bg-slate-800 rounded-full;
+  @apply bg-zinc-100 dark:bg-zinc-900 rounded-full;
 }
 
 .price-log::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 dark:bg-slate-600 rounded-full;
+  @apply bg-zinc-300 dark:bg-zinc-700 rounded-full;
 }

@@ -15,7 +15,7 @@ export function ProductGrid({ products, onProductClick, onAddProduct }: ProductG
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="w-32 h-32 mb-6 text-6xl">📦</div>
         <h2 className="text-2xl font-semibold mb-2">No products yet</h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md">
+        <p className="text-zinc-500 dark:text-zinc-400 mb-6 max-w-md">
           Start tracking your grocery prices by adding your first product.
         </p>
         <Button onClick={onAddProduct} className="flex items-center gap-2">
