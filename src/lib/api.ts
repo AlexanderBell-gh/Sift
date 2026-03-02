@@ -1,7 +1,7 @@
 import type { Product, PriceEntry, Category } from '../types';
 import { DEFAULT_CATEGORIES } from '../types';
 
-const API_BASE_URL = ''; // Set your Cloudflare Worker URL here
+const API_BASE_URL = 'https://pricetrackr-api.inbox-alexbell.workers.dev'; // Set your Cloudflare Worker URL here
 const USE_LOCAL_STORAGE = !API_BASE_URL;
 
 const STORAGE_KEYS = {
