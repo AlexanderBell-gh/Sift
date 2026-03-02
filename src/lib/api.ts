@@ -136,7 +136,23 @@ export const api = {
   async getCategories(): Promise<Category[]> {
     if (USE_LOCAL_STORAGE) {
       const data = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-      return data ? JSON.parse(data) : DEFAULT_CATEGORIES;
+      const storedCategories: Category[] = data ? JSON.parse(data) : [];
+      
+      const mergedCategories = [...storedCategories];
+      let hasChanges = false;
+      
+      for (const defaultCat of DEFAULT_CATEGORIES) {
+        if (!mergedCategories.find(c => c.id === defaultCat.id)) {
+          mergedCategories.push(defaultCat);
+          hasChanges = true;
+        }
+      }
+      
+      if (hasChanges) {
+        localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(mergedCategories));
+      }
+      
+      return mergedCategories;
     }
 
     const response = await fetch(`${API_BASE_URL}/api/categories`);
