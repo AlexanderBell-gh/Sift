@@ -113,11 +113,6 @@ function App() {
     }
   };
 
-  const handleAddPrice = () => {
-    setIsDetailOpen(false);
-    setIsPriceModalOpen(true);
-  };
-
   const handleSavePrice = async (priceData: { price: number; store?: string; date: string }) => {
     if (!selectedProduct) return;
     try {
@@ -235,7 +230,6 @@ function App() {
           }
         }}
         onDelete={handleDeleteProduct}
-        onAddPrice={handleAddPrice}
       />
 
       <AddCategoryModal

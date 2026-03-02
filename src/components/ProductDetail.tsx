@@ -1,9 +1,8 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import type { Product } from '../types';
-import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
-import { Plus, Pencil, Trash2, ExternalLink } from 'lucide-react';
+import { formatPrice, calculatePriceChange } from '../lib/utils';
+import { Pencil, Trash2, ExternalLink } from 'lucide-react';
 
 interface ProductDetailProps {
   product: Product | null;
@@ -11,7 +10,6 @@ interface ProductDetailProps {
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  onAddPrice: () => void;
 }
 
 export function ProductDetail({
@@ -20,17 +18,11 @@ export function ProductDetail({
   onClose,
   onEdit,
   onDelete,
-  onAddPrice,
 }: ProductDetailProps) {
   if (!product) return null;
 
   const latestPrice = product.prices?.[product.prices.length - 1];
   const { change, direction } = calculatePriceChange(product.prices || []);
-
-  const chartData = [...product.prices].reverse().map((p) => ({
-    date: formatDate(p.date),
-    price: p.price,
-  }));
 
   const changeClass =
     direction === 'up'
@@ -125,80 +117,22 @@ export function ProductDetail({
               </div>
 
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">Price History</h3>
-                <div className="h-48 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-4">
-                  {chartData.length > 1 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <XAxis
-                          dataKey="date"
-                          tick={{ fontSize: 12 }}
-                          stroke="#71717a"
-                        />
-                        <YAxis
-                          tick={{ fontSize: 12 }}
-                          stroke="#71717a"
-                          tickFormatter={(value) => `£${value}`}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#18181b',
-                            border: 'none',
-                            borderRadius: '8px',
-                            color: '#fff',
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="price"
-                          stroke="#0ea5e9"
-                          strokeWidth={2}
-                          dot={{ fill: '#0ea5e9', strokeWidth: 2 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-zinc-400">
-                      Need more data for chart
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">Price Log</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto price-log">
-                  {product.prices?.length ? (
-                    [...product.prices].reverse().map((p, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg"
-                      >
-                        <div>
-                          <p className="font-semibold">{formatPrice(p.price)}</p>
-                          <p className="text-sm text-zinc-500">{p.store || 'Unknown store'}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm">{formatDate(p.date)}</p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-zinc-400 text-center py-4">No price history</p>
-                  )}
+                <h3 className="text-lg font-semibold mb-3">Notes</h3>
+                <div className="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-xl min-h-[80px]">
+                  <p className="text-zinc-600 dark:text-zinc-300">
+                    {product.notes || 'No notes yet'}
+                  </p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <Button onClick={onAddPrice} className="flex-1 flex items-center justify-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Add Price
-                </Button>
-                <Button variant="secondary" onClick={onEdit}>
+                <Button variant="secondary" onClick={onEdit} className="flex-1 flex items-center justify-center gap-2">
                   <Pencil className="w-5 h-5" />
+                  Edit
                 </Button>
-                <Button variant="danger" onClick={onDelete}>
+                <Button variant="danger" onClick={onDelete} className="flex-1 flex items-center justify-center gap-2">
                   <Trash2 className="w-5 h-5" />
+                  Delete
                 </Button>
               </div>
             </div>
