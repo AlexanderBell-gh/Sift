@@ -70,6 +70,8 @@ export function ProductDetail({
                         ? '🥩'
                         : product.category === 'frozen'
                         ? '🧊'
+                        : product.category === 'bakery'
+                        ? '🥖'
                         : '📦'}
                     </span>
                   )}

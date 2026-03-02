@@ -13,6 +13,7 @@ const categoryIcons: Record<string, string> = {
   produce: '🥬',
   meat: '🥩',
   frozen: '🧊',
+  bakery: '🥖',
   other: '📦',
 };
 
