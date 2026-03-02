@@ -31,6 +31,25 @@ function errorResponse(message, status = 400) {
   return jsonResponse({ error: message }, status);
 }
 
+function isValidProduct(product) {
+  return (
+    product &&
+    typeof product.id === 'string' &&
+    typeof product.name === 'string' &&
+    typeof product.category === 'string' &&
+    Array.isArray(product.prices)
+  );
+}
+
+function isValidCategory(category) {
+  return (
+    category &&
+    typeof category.id === 'string' &&
+    typeof category.name === 'string' &&
+    typeof category.icon === 'string'
+  );
+}
+
 async function getAllProducts(env) {
   const productIds = await env.PRICETRACKR.get('products', 'json');
   if (!productIds) return [];
@@ -42,7 +61,14 @@ async function getAllProducts(env) {
     })
   );
   
-  return products.filter(Boolean);
+  const validProducts = products.filter(isValidProduct);
+  const validIds = validProducts.map(p => p.id);
+  
+  if (validIds.length !== productIds.length) {
+    await env.PRICETRACKR.put('products', JSON.stringify(validIds));
+  }
+  
+  return validProducts;
 }
 
 async function saveProducts(env, products) {
@@ -189,19 +215,24 @@ async function handleRequest(request, env) {
   // Categories
   if (path === '/api/categories') {
     if (method === 'GET') {
-      const categories = await env.PRICETRACKR.get('categories', 'json');
-      return jsonResponse(categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES);
+      const rawCategories = await env.PRICETRACKR.get('categories', 'json');
+      const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [];
+      return jsonResponse(categories.length > 0 ? categories : DEFAULT_CATEGORIES);
     }
     
     if (method === 'POST') {
       try {
         const body = await request.json();
-        const categories = await env.PRICETRACKR.get('categories', 'json') || DEFAULT_CATEGORIES;
+        const rawCategories = await env.PRICETRACKR.get('categories', 'json');
+        const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [...DEFAULT_CATEGORIES];
         const newCategory = {
           id: body.id || `cat_${Date.now()}`,
           name: body.name,
           icon: body.icon || '📦'
         };
+        if (!isValidCategory(newCategory)) {
+          return errorResponse('Invalid category data');
+        }
         categories.push(newCategory);
         await env.PRICETRACKR.put('categories', JSON.stringify(categories));
         return jsonResponse(newCategory, 201);
@@ -214,7 +245,8 @@ async function handleRequest(request, env) {
   // Delete category
   if (path.match(/^\/api\/categories\/(.+)$/) && method === 'DELETE') {
     const id = path.match(/^\/api\/categories\/(.+)$/)[1];
-    const categories = await env.PRICETRACKR.get('categories', 'json') || DEFAULT_CATEGORIES;
+    const rawCategories = await env.PRICETRACKR.get('categories', 'json');
+    const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [...DEFAULT_CATEGORIES];
     const filtered = categories.filter(c => c.id !== id);
     await env.PRICETRACKR.put('categories', JSON.stringify(filtered));
     return jsonResponse({ success: true });
