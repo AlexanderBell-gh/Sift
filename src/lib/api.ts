@@ -58,12 +58,28 @@ export const api = {
     return response.json();
   },
 
-  async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
+  async updateProduct(id: string, updates: Partial<Product> & { price?: number; store?: string }): Promise<Product> {
     if (USE_LOCAL_STORAGE) {
       const products = await this.getProducts();
       const index = products.findIndex(p => p.id === id);
       if (index === -1) throw new Error('Product not found');
-      products[index] = { ...products[index], ...updates };
+      
+      const product = products[index];
+      
+      if (updates.price !== undefined) {
+        const newPriceEntry: PriceEntry = {
+          price: updates.price,
+          store: updates.store || product.store,
+          date: new Date().toISOString().split('T')[0],
+        };
+        product.prices = product.prices || [];
+        product.prices.push(newPriceEntry);
+      }
+      
+      if (updates.price !== undefined) delete updates.price;
+      if (updates.store !== undefined) delete updates.store;
+      
+      products[index] = { ...product, ...updates };
       localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
       return products[index];
     }
