@@ -120,7 +120,7 @@ async function handleRequest(request, env) {
         const updatedProducts = products.map(p => {
           if (p.id !== id) return p;
           
-          const updated = { ...p, ...body };
+          const updated = { ...p };
           
           if (body.price !== undefined) {
             const newPriceEntry = {
@@ -130,12 +130,17 @@ async function handleRequest(request, env) {
             };
             updated.prices = p.prices || [];
             updated.prices.push(newPriceEntry);
-            delete updated.price;
           }
           
-          if (body.store !== undefined && body.price !== undefined) {
-            delete updated.store;
+          if (body.store !== undefined) {
+            updated.store = body.store;
           }
+          
+          if (body.name !== undefined) updated.name = body.name;
+          if (body.url !== undefined) updated.url = body.url;
+          if (body.imageUrl !== undefined) updated.imageUrl = body.imageUrl;
+          if (body.category !== undefined) updated.category = body.category;
+          if (body.notes !== undefined) updated.notes = body.notes;
           
           return updated;
         });

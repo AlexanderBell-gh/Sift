@@ -1,6 +1,5 @@
 import type { Product } from '../types';
 import { formatPrice, formatDate, calculatePriceChange, getCategoryBadgeClass } from '../lib/utils';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
 
 interface ProductCardProps {
   product: Product;
@@ -25,8 +24,6 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
   const priceClass = direction === 'up' ? 'text-red-500' : direction === 'down' ? 'text-green-500' : 'text-zinc-400';
   const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
   const icon = categoryIcons[product.category] || '📦';
-
-  const chartData = product.prices?.slice(-7).map((p) => ({ price: p.price })) || [];
 
   return (
     <div
@@ -71,26 +68,6 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
             )}
           </div>
         </div>
-
-        {chartData.length > 1 ? (
-          <div className="h-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 overflow-hidden">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <Line
-                  type="monotone"
-                  dataKey="price"
-                  stroke={direction === 'up' ? '#EF4444' : direction === 'down' ? '#22C55E' : '#71717a'}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="h-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center text-zinc-400 text-xs">
-            Need more data for chart
-          </div>
-        )}
 
         <div className="flex items-center justify-between text-xs text-zinc-500">
           <span>{product.prices?.length || 0} price{(product.prices?.length || 0) !== 1 ? 's' : ''}</span>
