@@ -29,5 +29,6 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'produce', name: 'Produce', icon: '🥬' },
   { id: 'meat', name: 'Meat', icon: '🥩' },
   { id: 'frozen', name: 'Frozen', icon: '🧊' },
+  { id: 'bakery', name: 'Bakery', icon: '🥖' },
   { id: 'other', name: 'Other', icon: '📦' },
 ];

@@ -10,7 +10,6 @@ import { SortSelect } from './components/SortSelect';
 import { api } from './lib/api';
 import type { Product, Category } from './types';
 import { DEFAULT_CATEGORIES } from './types';
-import { formatPrice } from './lib/utils';
 
 type SortOption = 'newest' | 'oldest' | 'store' | 'name-asc' | 'price-low' | 'price-high';
 
@@ -83,13 +82,6 @@ function App() {
         return 0;
     }
   });
-
-  // Stats
-  const avgPrice =
-    filteredProducts.length > 0
-      ? filteredProducts.reduce((sum, p) => sum + (p.prices?.[p.prices.length - 1]?.price || 0), 0) /
-        filteredProducts.length
-      : 0;
 
   // Handlers
   const handleAddProduct = () => {
@@ -206,11 +198,7 @@ function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-          <div className="flex items-center gap-4">
-            <span>{sortedProducts.length} Product{sortedProducts.length !== 1 ? 's' : ''}</span>
-            <span className="text-zinc-300 dark:text-zinc-700">|</span>
-            <span>Avg: {formatPrice(avgPrice)}</span>
-          </div>
+          <span>{sortedProducts.length} Product{sortedProducts.length !== 1 ? 's' : ''}</span>
           <SortSelect value={sortBy} onChange={setSortBy} />
         </div>
 
