@@ -95,21 +95,34 @@ PriceTrackr/
 ├── src/
 │   ├── components/       # React components
 │   │   ├── ui/          # Reusable UI components
+│   │   │   ├── Badge.tsx
+│   │   │   ├── Button.tsx
+│   │   │   ├── Input.tsx
+│   │   │   ├── Modal.tsx
+│   │   │   └── Select.tsx
 │   │   ├── Header.tsx
+│   │   ├── MainApp.tsx
 │   │   ├── CategoryFilter.tsx
 │   │   ├── ProductCard.tsx
 │   │   ├── ProductGrid.tsx
 │   │   ├── ProductModal.tsx
 │   │   ├── ProductDetail.tsx
 │   │   ├── AddPriceModal.tsx
-│   │   └── AddCategoryModal.tsx
+│   │   ├── AddCategoryModal.tsx
+│   │   └── SortSelect.tsx
+│   ├── contexts/         # React contexts
+│   │   └── AuthContext.tsx
+│   ├── pages/            # Page components
+│   │   └── Landing.tsx
 │   ├── lib/             # Utilities and API
 │   ├── types/           # TypeScript types
 │   ├── App.tsx          # Main app component
-│   └── main.tsx         # Entry point
+│   ├── main.tsx         # Entry point
+│   └── index.css        # Global styles
 ├── workers/             # Cloudflare Worker API
 │   ├── wrangler.toml
-│   └── index.js
+│   ├── index.js
+│   └── auth.js
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml   # CI/CD workflow
