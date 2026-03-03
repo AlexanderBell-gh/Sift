@@ -70,7 +70,7 @@ export function Landing() {
                 className="w-12 h-12 rounded-xl object-contain dark:hidden"
               />
               <img
-                src="/dark_mode_logo.png"
+                src="/light_mode_logo.png"
                 alt="PriceTrackr"
                 className="w-12 h-12 rounded-xl object-contain hidden dark:block"
               />
