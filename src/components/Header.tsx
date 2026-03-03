@@ -31,12 +31,12 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategor
             <img
               src="/light_mode_logo.png"
               alt="PriceTrackr"
-              className="w-12 h-12 rounded-xl object-contain dark:hidden"
+              className="h-10 rounded-lg object-contain dark:hidden"
             />
             <img
               src="/dark_mode_logo.png"
               alt="PriceTrackr"
-              className="w-12 h-12 rounded-xl object-contain hidden dark:block"
+              className="h-10 rounded-lg object-contain hidden dark:block"
             />
           </div>
  
