@@ -67,12 +67,12 @@ export function Landing() {
               <img
                 src="/light_mode_logo.png"
                 alt="PriceTrackr"
-                className="w-12 h-12 rounded-xl dark:hidden"
+                className="w-12 h-12 rounded-xl object-contain dark:hidden"
               />
               <img
                 src="/dark_mode_logo.png"
                 alt="PriceTrackr"
-                className="w-12 h-12 rounded-xl hidden dark:block"
+                className="w-12 h-12 rounded-xl object-contain hidden dark:block"
               />
             </div>
 
@@ -182,14 +182,11 @@ export function Landing() {
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <>
+                    <span className="flex items-center justify-center">
                       Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
+                    </span>
                   )}
                 </Button>
-                <p className="text-center text-xs text-zinc-500 mt-2">
-                  1 day trial access
-                </p>
               </div>
             </div>
           </div>
