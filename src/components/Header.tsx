@@ -29,11 +29,15 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategor
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <img
-              src="/logo.png"
+              src="/light_mode_logo.png"
               alt="PriceTrackr"
-              className="w-12 h-12 rounded-xl object-contain bg-white"
+              className="w-12 h-12 rounded-xl dark:hidden"
             />
-            <h1 className="text-2xl font-bold tracking-tight">PriceTrackr</h1>
+            <img
+              src="/dark_mode_logo.png"
+              alt="PriceTrackr"
+              className="w-12 h-12 rounded-xl hidden dark:block"
+            />
           </div>
  
           <div className="flex items-center gap-3">
