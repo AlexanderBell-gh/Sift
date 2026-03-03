@@ -82,6 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = () => {
     api.signOut();
     setUser(null);
+    localStorage.setItem('pricetrackr_theme', 'light');
+    document.documentElement.classList.remove('dark');
   };
 
   return (

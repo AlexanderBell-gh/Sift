@@ -67,12 +67,7 @@ export function Landing() {
               <img
                 src="/light_mode_logo.png"
                 alt="PriceTrackr"
-                className="h-10 rounded-lg object-contain dark:hidden"
-              />
-              <img
-                src="/dark_mode_logo.png"
-                alt="PriceTrackr"
-                className="h-10 rounded-lg object-contain hidden dark:block"
+                className="h-14 rounded-lg object-contain"
               />
             </div>
 
