@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Search, Sun, Moon, Plus, FolderPlus } from 'lucide-react';
+import { Search, Sun, Moon, Plus, FolderPlus, LogOut, User } from 'lucide-react';
 import { Button } from './ui/Button';
+import type { UserRole } from '../types';
 
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onAddProduct: () => void;
   onAddCategory: () => void;
+  user?: { id: string; email: string; username: string; role: UserRole; isTrial?: boolean; trialExpiresAt?: number | null } | null;
+  onSignOut?: () => void;
 }
 
-export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategory }: HeaderProps) {
+export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategory, user, onSignOut }: HeaderProps) {
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('pricetrackr_theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -61,6 +64,29 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategor
               <FolderPlus className="w-5 h-5" />
               <span className="hidden sm:inline">Add Category</span>
             </Button>
+
+            {user && (
+              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200 dark:border-zinc-700">
+                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">{user.username}</span>
+                  {user.isTrial && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full">
+                      Trial
+                    </span>
+                  )}
+                </div>
+                {onSignOut && (
+                  <button
+                    onClick={onSignOut}
+                    className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500"
+                    title="Sign out"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

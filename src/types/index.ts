@@ -33,10 +33,12 @@ export interface User {
   id: string;
   email: string;
   username: string;
-  passwordHash: string;
+  passwordHash?: string;
   role: UserRole;
   preferences: UserPreferences;
   createdAt: string;
+  isTrial?: boolean;
+  trialExpiresAt?: number | null;
 }
 
 export interface MagicLink {
@@ -49,6 +51,20 @@ export interface AuthPayload {
   userId: string;
   role: UserRole;
   exp: number;
+}
+
+export interface AuthResponse {
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    role: UserRole;
+    isTrial?: boolean;
+    trialExpiresAt?: number | null;
+    preferences: UserPreferences;
+  };
+  token: string;
+  trialDaysRemaining?: number;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [

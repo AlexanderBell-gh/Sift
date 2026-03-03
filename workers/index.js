@@ -169,7 +169,7 @@ async function handleRequest(request, env) {
         await saveUser(env, user);
         const token = await createJWT(user);
 
-        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token }, 201);
+        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, trialExpiresAt: null }, token }, 201);
       } catch (e) {
         return errorResponse('Invalid request body');
       }
@@ -250,7 +250,58 @@ async function handleRequest(request, env) {
 
         const token = await createJWT(user);
 
-        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token });
+        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, trialExpiresAt: null }, token });
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
+    }
+  }
+
+  if (path === '/api/auth/trial') {
+    if (method === 'POST') {
+      try {
+        const body = await request.json();
+        const { username } = body;
+
+        const trialUsername = username || `trial_${Date.now()}`;
+        const trialEmail = `${trialUsername}@trial.pricetrackr`;
+        const trialPassword = generateToken();
+
+        const trialPasswordHash = await hashPassword(trialPassword);
+        const TRIAL_DAYS = 1;
+        const trialExpiresAt = Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000;
+
+        const user = {
+          id: createUserId(),
+          email: trialEmail,
+          username: trialUsername,
+          passwordHash: trialPasswordHash,
+          role: 'user',
+          isTrial: true,
+          trialExpiresAt,
+          preferences: {
+            currency: 'USD',
+            defaultStore: null,
+          },
+          createdAt: new Date().toISOString(),
+        };
+
+        await saveUser(env, user);
+        const token = await createJWT(user);
+
+        return jsonResponse({
+          user: {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            isTrial: true,
+            trialExpiresAt,
+            preferences: user.preferences
+          },
+          token,
+          trialDaysRemaining: TRIAL_DAYS
+        }, 201);
       } catch (e) {
         return errorResponse('Invalid request body');
       }
@@ -267,7 +318,7 @@ async function handleRequest(request, env) {
         return errorResponse('User not found', 404);
       }
 
-      return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, createdAt: user.createdAt });
+        return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences, createdAt: user.createdAt });
     }
 
     if (method === 'PUT') {
@@ -288,7 +339,7 @@ async function handleRequest(request, env) {
 
         await saveUser(env, user);
 
-        return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, createdAt: user.createdAt });
+      return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences, createdAt: user.createdAt });
       } catch (e) {
         return errorResponse('Invalid request body');
       }
@@ -361,7 +412,7 @@ async function handleRequest(request, env) {
 
         const jwt = await createJWT(user);
 
-        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token: jwt });
+        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences }, token: jwt });
       } catch (e) {
         return errorResponse('Invalid request body');
       }

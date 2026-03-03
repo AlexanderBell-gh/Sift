@@ -1,4 +1,4 @@
-import type { Product, PriceEntry, Category } from '../types';
+import type { Product, PriceEntry, Category, AuthResponse } from '../types';
 import { DEFAULT_CATEGORIES } from '../types';
 
 const API_BASE_URL = 'https://pricetrackr-api.inbox-alexbell.workers.dev'; // Set your Cloudflare Worker URL here
@@ -7,7 +7,14 @@ const USE_LOCAL_STORAGE = !API_BASE_URL;
 const STORAGE_KEYS = {
   PRODUCTS: 'pricetrackr_products',
   CATEGORIES: 'pricetrackr_categories',
+  AUTH_TOKEN: 'pricetrackr_token',
+  AUTH_USER: 'pricetrackr_user',
 };
+
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export const api = {
   async getProducts(): Promise<Product[]> {
@@ -194,5 +201,101 @@ export const api = {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete category');
+  },
+
+  async signUp(credentials: { email: string; username: string; password: string }): Promise<AuthResponse> {
+    if (USE_LOCAL_STORAGE) {
+      throw new Error('Sign up requires server');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to sign up');
+    }
+    const data = await response.json();
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    return data;
+  },
+
+  async signIn(credentials: { username: string; password: string }): Promise<AuthResponse> {
+    if (USE_LOCAL_STORAGE) {
+      throw new Error('Sign in requires server');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to sign in');
+    }
+    const data = await response.json();
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    return data;
+  },
+
+  async createTrial(username?: string): Promise<AuthResponse> {
+    if (USE_LOCAL_STORAGE) {
+      throw new Error('Trial requires server');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/trial`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create trial');
+    }
+    const data = await response.json();
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    return data;
+  },
+
+  async getCurrentUser(): Promise<AuthResponse['user'] | null> {
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    const userStr = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
+    if (!token || !userStr) return null;
+
+    if (USE_LOCAL_STORAGE) {
+      return JSON.parse(userStr);
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: { ...getAuthHeaders() },
+      });
+      if (!response.ok) return null;
+      const user = await response.json();
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+      return user;
+    } catch {
+      return null;
+    }
+  },
+
+  signOut(): void {
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+  },
+
+  getStoredUser(): AuthResponse['user'] | null {
+    const userStr = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
+    return userStr ? JSON.parse(userStr) : null;
+  },
+
+  getToken(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   },
 };
