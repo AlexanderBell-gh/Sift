@@ -6,7 +6,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 - **Product Management**: Add, edit, and delete products with name, URL, category, and store
 - **Price Tracking**: Record price entries over time to see trends
-- **Price History**: Interactive charts showing price trends (Recharts)
+- **Price History**: Interactive charts showing price trends
 - **Categories**: Organize products by category (Dairy, Snacks, Beverages, etc.)
 - **Search**: Filter products by name or store
 - **Dark/Light Mode**: Toggle between themes (or follow system preference)
@@ -16,7 +16,6 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 - **Frontend**: React 19 + TypeScript + Vite
 - **Styling**: Tailwind CSS v4
-- **Charts**: Recharts
 - **Icons**: Lucide React
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
