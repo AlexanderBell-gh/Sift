@@ -63,7 +63,7 @@ export function Landing() {
       <div className="min-h-screen flex">
         <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
-            <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center mb-8">
               <img
                 src="/light_mode_logo.png"
                 alt="PriceTrackr"
