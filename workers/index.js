@@ -393,19 +393,20 @@ async function handleRequest(request, env) {
       if (auth && auth.error) return auth;
 
       try {
-        const body = await request.json();
-        if (!body.password) {
-          return errorResponse('Password is required to delete account');
-        }
-
         const user = await getUserById(env, auth.userId);
         if (!user) {
           return errorResponse('User not found', 404);
         }
 
-        const passwordValid = await verifyPassword(body.password, user.passwordHash);
-        if (!passwordValid) {
-          return errorResponse('Password is incorrect');
+        if (!user.isTrial) {
+          const body = await request.json();
+          if (!body.password) {
+            return errorResponse('Password is required to delete account');
+          }
+          const passwordValid = await verifyPassword(body.password, user.passwordHash);
+          if (!passwordValid) {
+            return errorResponse('Password is incorrect');
+          }
         }
 
         await deleteUserData(env, auth.userId);

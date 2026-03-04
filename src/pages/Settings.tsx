@@ -11,6 +11,8 @@ export function Settings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   
+  const isTrialUser = user?.isTrial === true;
+
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -20,7 +22,6 @@ export function Settings() {
     newEmail: '',
     password: '',
   });
-  const [deletePassword, setDeletePassword] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
   const [passwordError, setPasswordError] = useState('');
@@ -77,14 +78,9 @@ export function Settings() {
   const handleDeleteAccount = async () => {
     setDeleteError('');
     
-    if (!deletePassword) {
-      setDeleteError('Please enter your password');
-      return;
-    }
-    
     setIsLoading(true);
     try {
-      await api.deleteAccount(deletePassword);
+      await api.deleteAccount('');
       signOut();
       navigate('/');
     } catch (err) {
@@ -103,73 +99,83 @@ export function Settings() {
         </div>
 
         <div className="space-y-6">
-          <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-            <h2 className="text-lg font-semibold mb-4">Account</h2>
-            <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-              <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Username:</span> {user?.username}</p>
-              <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Email:</span> {user?.email}</p>
-              <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Account type:</span> {user?.isTrial ? 'Trial' : 'Registered'}</p>
-            </div>
-          </section>
+          {isTrialUser ? (
+            <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+              <p className="text-zinc-600 dark:text-zinc-400">
+                This is a trial account, settings aren't available.
+              </p>
+            </section>
+          ) : (
+            <>
+              <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+                <h2 className="text-lg font-semibold mb-4">Account</h2>
+                <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Username:</span> {user?.username}</p>
+                  <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Email:</span> {user?.email}</p>
+                  <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Account type:</span> Registered</p>
+                </div>
+              </section>
 
-          <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-            <h2 className="text-lg font-semibold mb-4">Change Password</h2>
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <Input
-                label="Current Password"
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                required
-              />
-              <Input
-                label="New Password"
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                required
-              />
-              <Input
-                label="Confirm New Password"
-                type="password"
-                value={passwordForm.confirmPassword}
-                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                required
-              />
-              {passwordError && (
-                <p className="text-red-500 text-sm">{passwordError}</p>
-              )}
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change Password'}
-              </Button>
-            </form>
-          </section>
+              <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+                <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <Input
+                    label="Current Password"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="New Password"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Confirm New Password"
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    required
+                  />
+                  {passwordError && (
+                    <p className="text-red-500 text-sm">{passwordError}</p>
+                  )}
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change Password'}
+                  </Button>
+                </form>
+              </section>
 
-          <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-            <h2 className="text-lg font-semibold mb-4">Change Email</h2>
-            <form onSubmit={handleEmailChange} className="space-y-4">
-              <Input
-                label="New Email"
-                type="email"
-                value={emailForm.newEmail}
-                onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
-                required
-              />
-              <Input
-                label="Password (for verification)"
-                type="password"
-                value={emailForm.password}
-                onChange={(e) => setEmailForm({ ...emailForm, password: e.target.value })}
-                required
-              />
-              {emailError && (
-                <p className="text-red-500 text-sm">{emailError}</p>
-              )}
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change Email'}
-              </Button>
-            </form>
-          </section>
+              <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+                <h2 className="text-lg font-semibold mb-4">Change Email</h2>
+                <form onSubmit={handleEmailChange} className="space-y-4">
+                  <Input
+                    label="New Email"
+                    type="email"
+                    value={emailForm.newEmail}
+                    onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Password (for verification)"
+                    type="password"
+                    value={emailForm.password}
+                    onChange={(e) => setEmailForm({ ...emailForm, password: e.target.value })}
+                    required
+                  />
+                  {emailError && (
+                    <p className="text-red-500 text-sm">{emailError}</p>
+                  )}
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change Email'}
+                  </Button>
+                </form>
+              </section>
+            </>
+          )}
 
           <section className="bg-white dark:bg-zinc-900 rounded-lg border border-red-200 dark:border-red-900 p-6">
             <h2 className="text-lg font-semibold mb-4 text-red-600">Delete Account</h2>
@@ -193,13 +199,6 @@ export function Settings() {
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Are you sure you want to delete your account? This action cannot be undone.
           </p>
-          <Input
-            label="Enter your password to confirm"
-            type="password"
-            value={deletePassword}
-            onChange={(e) => setDeletePassword(e.target.value)}
-            required
-          />
           {deleteError && (
             <p className="text-red-500 text-sm">{deleteError}</p>
           )}
