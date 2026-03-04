@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, Loader2, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -100,6 +100,12 @@ export function Settings() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
+          <button
+            onClick={() => navigate('/app')}
+            className="p-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <SettingsIcon className="w-8 h-8" />
           <h1 className="text-2xl font-bold">Settings</h1>
         </div>

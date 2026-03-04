@@ -191,7 +191,7 @@ export function MainApp() {
           {isTrialExpired ? (
             'Your trial has expired. Sign up to continue using PriceTrackr.'
           ) : (
-            <>Free trial • {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining • <button onClick={() => navigate('/')} className="underline hover:no-underline">Sign up now</button></>
+            <>Free trial • {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining • <button onClick={() => { signOut(); navigate('/'); }} className="underline hover:no-underline">Sign up now</button></>
           )}
         </div>
       )}
