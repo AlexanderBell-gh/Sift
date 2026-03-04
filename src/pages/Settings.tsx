@@ -22,6 +22,7 @@ export function Settings() {
     newEmail: '',
     password: '',
   });
+  const [deletePassword, setDeletePassword] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
   const [passwordError, setPasswordError] = useState('');
@@ -78,9 +79,14 @@ export function Settings() {
   const handleDeleteAccount = async () => {
     setDeleteError('');
     
+    if (!isTrialUser && !deletePassword) {
+      setDeleteError('Please enter your password');
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      await api.deleteAccount('');
+      await api.deleteAccount(deletePassword);
       signOut();
       navigate('/');
     } catch (err) {
@@ -199,6 +205,15 @@ export function Settings() {
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Are you sure you want to delete your account? This action cannot be undone.
           </p>
+          {!isTrialUser && (
+            <Input
+              label="Enter your password to confirm"
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              required
+            />
+          )}
           {deleteError && (
             <p className="text-red-500 text-sm">{deleteError}</p>
           )}
