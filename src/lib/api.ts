@@ -154,6 +154,43 @@ export const api = {
     }
   },
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to change password' }));
+      throw new Error(error.error || 'Failed to change password');
+    }
+  },
+
+  async changeEmail(newEmail: string, password: string): Promise<AuthResponse['user']> {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ newEmail, password }),
+    });
+    const user = await handleResponse<AuthResponse['user']>(response);
+    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+    return user;
+  },
+
+  async deleteAccount(password: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ password }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to delete account' }));
+      throw new Error(error.error || 'Failed to delete account');
+    }
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+  },
+
   signOut(): void {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER);

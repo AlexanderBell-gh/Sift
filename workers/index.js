@@ -98,6 +98,19 @@ async function saveProducts(env, userId, products) {
   );
 }
 
+async function deleteUserData(env, userId) {
+  const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json');
+  if (productIds && Array.isArray(productIds)) {
+    await Promise.all(
+      productIds.map(async (id) => {
+        await env.PRICETRACKR.delete(`user:${userId}:product:${id}`);
+      })
+    );
+  }
+  await env.PRICETRACKR.delete(`user:${userId}:products`);
+  await env.PRICETRACKR.delete(`user:${userId}:categories`);
+}
+
 async function authenticate(request, env) {
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/auth_token=([^;]+)/);
@@ -342,6 +355,31 @@ async function handleRequest(request, env) {
           user.preferences = { ...user.preferences, ...body.preferences };
         }
 
+        if (body.currentPassword && body.newPassword) {
+          const passwordValid = await verifyPassword(body.currentPassword, user.passwordHash);
+          if (!passwordValid) {
+            return errorResponse('Current password is incorrect');
+          }
+          if (body.newPassword.length < 6) {
+            return errorResponse('New password must be at least 6 characters');
+          }
+          user.passwordHash = await hashPassword(body.newPassword);
+        }
+
+        if (body.newEmail && body.password) {
+          const passwordValid = await verifyPassword(body.password, user.passwordHash);
+          if (!passwordValid) {
+            return errorResponse('Password is incorrect');
+          }
+          const existingUser = await getUserByEmail(env, body.newEmail);
+          if (existingUser && existingUser.id !== user.id) {
+            return errorResponse('Email already in use');
+          }
+          await env.USERS.delete(`email:${user.email.toLowerCase()}`);
+          user.email = body.newEmail;
+          await env.USERS.put(`email:${user.email.toLowerCase()}`, user.id);
+        }
+
         await saveUser(env, user);
 
       return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences, createdAt: user.createdAt });
@@ -354,9 +392,29 @@ async function handleRequest(request, env) {
       const auth = await requireAuth(request, env);
       if (auth && auth.error) return auth;
 
-      await deleteUser(env, auth.userId);
+      try {
+        const body = await request.json();
+        if (!body.password) {
+          return errorResponse('Password is required to delete account');
+        }
 
-      return jsonResponse({ success: true });
+        const user = await getUserById(env, auth.userId);
+        if (!user) {
+          return errorResponse('User not found', 404);
+        }
+
+        const passwordValid = await verifyPassword(body.password, user.passwordHash);
+        if (!passwordValid) {
+          return errorResponse('Password is incorrect');
+        }
+
+        await deleteUserData(env, auth.userId);
+        await deleteUser(env, auth.userId);
+
+        return jsonResponse({ success: true });
+      } catch (e) {
+        return errorResponse('Invalid request body');
+      }
     }
   }
 

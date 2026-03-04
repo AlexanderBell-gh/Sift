@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Search, Sun, Moon, Plus, FolderPlus, LogOut, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Sun, Moon, Plus, FolderPlus, LogOut, User, Settings } from 'lucide-react';
 import { Button } from './ui/Button';
 import type { UserRole } from '../types';
 
@@ -13,6 +14,7 @@ interface HeaderProps {
 }
 
 export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategory, user, onSignOut }: HeaderProps) {
+  const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('pricetrackr_theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -81,13 +83,22 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategor
                   )}
                 </div>
                 {onSignOut && (
-                  <button
-                    onClick={onSignOut}
-                    className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500"
-                    title="Sign out"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
+                  <>
+                    <button
+                      onClick={() => navigate('/app/settings')}
+                      className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500"
+                      title="Settings"
+                    >
+                      <Settings className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={onSignOut}
+                      className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500"
+                      title="Sign out"
+                    >
+                      <LogOut className="w-5 h-5" />
+                    </button>
+                  </>
                 )}
               </div>
             )}
