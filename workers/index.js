@@ -101,9 +101,14 @@ async function saveProducts(env, userId, products) {
 async function authenticate(request, env) {
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/auth_token=([^;]+)/);
-  if (!tokenMatch) return null;
+  
+  const authHeader = request.headers.get('Authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  
+  const token = tokenMatch?.[1] || bearerToken;
+  if (!token) return null;
 
-  const payload = await verifyJWT(tokenMatch[1]);
+  const payload = await verifyJWT(token);
   if (!payload) return null;
 
   return payload;
