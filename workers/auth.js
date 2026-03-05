@@ -1,7 +1,13 @@
 const SALT_LENGTH = 16;
 const ITERATIONS = 100000;
-const JWT_SECRET = 'pricetrackr-jwt-secret-change-in-production';
 const JWT_EXPIRY_DAYS = 7;
+
+function getJwtSecret(env) {
+  if (!env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return env.JWT_SECRET;
+}
 
 function isValidUser(user) {
   return (
@@ -114,8 +120,7 @@ function createUserId() {
   return `user_${generateToken()}`;
 }
 
-async function createJWT(user) {
-  const encoder = new TextEncoder();
+async function createJWT(user, env) {
   const payload = {
     userId: user.id,
     role: user.role,
@@ -123,6 +128,7 @@ async function createJWT(user) {
   };
   const payloadBase64 = btoa(JSON.stringify(payload));
 
+  const JWT_SECRET = getJwtSecret(env);
   const keyData = encoder.encode(JWT_SECRET);
   const key = await crypto.subtle.importKey(
     'raw',
@@ -138,12 +144,13 @@ async function createJWT(user) {
   return `${payloadBase64}.${signatureBase64}`;
 }
 
-async function verifyJWT(token) {
+async function verifyJWT(token, env) {
   try {
     const [payloadBase64, signatureBase64] = token.split('.');
     if (!payloadBase64 || !signatureBase64) return null;
 
     const encoder = new TextEncoder();
+    const JWT_SECRET = getJwtSecret(env);
     const keyData = encoder.encode(JWT_SECRET);
     const key = await crypto.subtle.importKey(
       'raw',

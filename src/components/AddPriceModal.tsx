@@ -13,11 +13,20 @@ export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
   const [price, setPrice] = useState('');
   const [store, setStore] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [priceError, setPriceError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPriceError('');
+    
+    const numPrice = parseFloat(price);
+    if (isNaN(numPrice) || numPrice < 0) {
+      setPriceError('Please enter a valid price');
+      return;
+    }
+    
     onSave({
-      price: parseFloat(price),
+      price: numPrice,
       store: store.trim() || undefined,
       date,
     });
@@ -35,10 +44,11 @@ export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
           step="0.01"
           min="0"
           value={price}
-          onChange={(e) => setPrice(e.target.value)}
+          onChange={(e) => { setPrice(e.target.value); setPriceError(''); }}
           placeholder="0.00"
           required
         />
+        {priceError && <p className="text-sm text-red-600 mt-1">{priceError}</p>}
 
         <Input
           label="Store"

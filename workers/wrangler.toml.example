@@ -1,0 +1,17 @@
+name = "pricetrackr-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "PRICETRACKR"
+id = "a901eb966d144e3081024b10a345b88a"
+
+[[kv_namespaces]]
+binding = "USERS"
+id = "247e9ac8a5a249a183f7974ff1b2718a"
+
+# Required: Generate a secure random string for JWT signing
+# JWT_SECRET = "your-secure-random-secret-min-32-chars"
+
+# Optional: Override admin secret (default provided)
+# ADMIN_SECRET = "production_admin_2026"

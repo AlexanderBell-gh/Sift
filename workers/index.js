@@ -121,7 +121,7 @@ async function authenticate(request, env) {
   const token = tokenMatch?.[1] || bearerToken;
   if (!token) return null;
 
-  const payload = await verifyJWT(token);
+  const payload = await verifyJWT(token, env);
   if (!payload) return null;
 
   return payload;
@@ -185,7 +185,7 @@ async function handleRequest(request, env) {
         };
 
         await saveUser(env, user);
-        const token = await createJWT(user);
+        const token = await createJWT(user, env);
 
         return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, trialExpiresAt: null }, token }, 201);
       } catch (e) {
@@ -237,7 +237,7 @@ async function handleRequest(request, env) {
         };
 
         await saveUser(env, user);
-        const token = await createJWT(user);
+        const token = await createJWT(user, env);
 
         return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token }, 201);
       } catch (e) {
@@ -266,7 +266,7 @@ async function handleRequest(request, env) {
           return errorResponse('Invalid credentials');
         }
 
-        const token = await createJWT(user);
+        const token = await createJWT(user, env);
 
         return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, trialExpiresAt: null }, token });
       } catch (e) {
@@ -305,7 +305,7 @@ async function handleRequest(request, env) {
         };
 
         await saveUser(env, user);
-        const token = await createJWT(user);
+        const token = await createJWT(user, env);
 
         return jsonResponse({
           user: {
@@ -474,7 +474,7 @@ async function handleRequest(request, env) {
           return errorResponse('User not found');
         }
 
-        const jwt = await createJWT(user);
+        const jwt = await createJWT(user, env);
 
         return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences }, token: jwt });
       } catch (e) {
@@ -522,11 +522,12 @@ async function handleRequest(request, env) {
   }
   
   // Product by ID
-  if (path.match(/^\/api\/products\/(.+)$/)) {
+  const productMatch = path.match(/^\/api\/products\/(.+)$/);
+  if (productMatch) {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
-    const id = path.match(/^\/api\/products\/(.+)$/)[1];
+    const id = productMatch[1];
     const products = await getAllProducts(env, userId);
     const product = products.find(p => p.id === id);
     
@@ -585,11 +586,12 @@ async function handleRequest(request, env) {
   }
   
   // Add price to product
-  if (path.match(/^\/api\/products\/(.+)\/prices$/) && method === 'POST') {
+  const priceMatch = path.match(/^\/api\/products\/(.+)\/prices$/);
+  if (priceMatch && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
-    const id = path.match(/^\/api\/products\/(.+)\/prices$/)[1];
+    const id = priceMatch[1];
     const products = await getAllProducts(env, userId);
     const product = products.find(p => p.id === id);
     
@@ -648,11 +650,12 @@ async function handleRequest(request, env) {
   }
 
   // Delete category
-  if (path.match(/^\/api\/categories\/(.+)$/) && method === 'DELETE') {
+  const categoryMatch = path.match(/^\/api\/categories\/(.+)$/);
+  if (categoryMatch && method === 'DELETE') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
-    const id = path.match(/^\/api\/categories\/(.+)$/)[1];
+    const id = categoryMatch[1];
     const rawCategories = await env.PRICETRACKR.get(`user:${userId}:categories`, 'json');
     const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [...DEFAULT_CATEGORIES];
     const filtered = categories.filter(c => c.id !== id);

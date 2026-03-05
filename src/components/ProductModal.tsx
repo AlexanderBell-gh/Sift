@@ -26,15 +26,24 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [price, setPrice] = useState(product?.prices?.[product.prices.length - 1]?.price?.toString() || '');
   const [store, setStore] = useState(product?.store || '');
   const [notes, setNotes] = useState(product?.notes || '');
+  const [priceError, setPriceError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPriceError('');
+    
+    const numPrice = parseFloat(price);
+    if (isNaN(numPrice) || numPrice < 0) {
+      setPriceError('Please enter a valid price');
+      return;
+    }
+    
     onSubmit({
       name: name.trim(),
       url: url.trim(),
       imageUrl: imageUrl.trim(),
       category,
-      price: parseFloat(price),
+      price: numPrice,
       store: store.trim(),
       notes: notes.trim(),
     });
@@ -93,10 +102,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           step="0.01"
           min="0"
           value={price}
-          onChange={(e) => setPrice(e.target.value)}
+          onChange={(e) => { setPrice(e.target.value); setPriceError(''); }}
           placeholder="0.00"
           required
         />
+        {priceError && <p className="text-sm text-red-600 mt-1">{priceError}</p>}
       </div>
 
       <Select
