@@ -2,6 +2,11 @@ name = "pricetrackr-api"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
+[observability]
+enabled = false
+logs = { enabled = true, head_sampling_rate = 1, persist = true, invocation_logs = true }
+traces = { enabled = false, persist = true, head_sampling_rate = 1 }
+
 [[kv_namespaces]]
 binding = "PRICETRACKR"
 id = "a901eb966d144e3081024b10a345b88a"
