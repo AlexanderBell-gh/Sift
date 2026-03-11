@@ -30,8 +30,10 @@ const RESEND_FROM = 'PriceTrackr <onboarding@resend.dev>';
 async function sendMagicLinkEmail(env, email, magicLinkUrl, username) {
   if (!env.RESEND_API_KEY) {
     console.error('RESEND_API_KEY not configured');
-    return false;
+    throw new Error('Email service not configured');
   }
+
+  console.log('Sending magic link email to:', email);
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -64,12 +66,14 @@ async function sendMagicLinkEmail(env, email, magicLinkUrl, username) {
     }),
   });
 
+  const responseText = await response.text();
+  
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to send email:', error);
-    return false;
+    console.error('Resend API error:', response.status, responseText);
+    throw new Error(`Email service error: ${response.status}`);
   }
 
+  console.log('Email sent successfully:', responseText);
   return true;
 }
 
@@ -494,7 +498,12 @@ async function handleRequest(request, env) {
         const baseUrl = env.FRONTEND_URL || new URL(request.url).origin.replace('pricetrackr-api', 'pricetrackr');
         const magicLinkUrl = `${baseUrl}/auth/magic/verify?token=${token}`;
 
-        await sendMagicLinkEmail(env, email, magicLinkUrl, user.username);
+        try {
+          await sendMagicLinkEmail(env, email, magicLinkUrl, user.username);
+        } catch (emailError) {
+          console.error('Failed to send magic link email:', emailError);
+          return errorResponse('Failed to send email. Please try again later.', 500);
+        }
 
         return jsonResponse({ message: 'Magic link sent' });
       } catch (e) {

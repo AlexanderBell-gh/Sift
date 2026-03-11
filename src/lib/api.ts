@@ -154,6 +154,10 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to send reset email' }));
+      throw new Error(error.error || 'Failed to send reset email');
+    }
     return handleResponse(response);
   },
 
