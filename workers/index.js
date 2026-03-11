@@ -25,58 +25,6 @@ import {
   deleteUser,
 } from './auth.js';
 
-const RESEND_FROM = 'PriceTrackr <onboarding@resend.dev>';
-
-async function sendMagicLinkEmail(env, email, magicLinkUrl, username) {
-  if (!env.RESEND_API_KEY) {
-    console.error('RESEND_API_KEY not configured');
-    throw new Error('Email service not configured');
-  }
-
-  console.log('Sending magic link email to:', email);
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: email,
-      subject: 'Sign in to PriceTrackr',
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #0284c7;">Sign in to PriceTrackr</h2>
-            <p>Hi ${username},</p>
-            <p>Click the button below to sign in to your PriceTrackr account:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${magicLinkUrl}" style="background: #0284c7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Sign In</a>
-            </div>
-            <p style="color: #666; font-size: 14px;">Or copy and paste this link:</p>
-            <p style="background: #f4f4f5; padding: 10px; border-radius: 4px; word-break: break-all; font-size: 13px;">${magicLinkUrl}</p>
-            <p style="color: #666; font-size: 14px;">This link expires in 15 minutes.</p>
-            <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 30px 0;">
-            <p style="color: #999; font-size: 12px;">If you didn't request this email, you can safely ignore it.</p>
-          </body>
-        </html>
-      `,
-    }),
-  });
-
-  const responseText = await response.text();
-  
-  if (!response.ok) {
-    console.error('Resend API error:', response.status, responseText);
-    throw new Error(`Email service error: ${response.status}`);
-  }
-
-  console.log('Email sent successfully:', responseText);
-  return true;
-}
-
 // PriceTrackr Cloudflare Worker API
 
 const corsHeaders = {
@@ -465,79 +413,6 @@ async function handleRequest(request, env) {
         await deleteUser(env, auth.userId);
 
         return jsonResponse({ success: true });
-      } catch (e) {
-        return errorResponse('Invalid request body');
-      }
-    }
-  }
-
-  if (path === '/api/auth/magic/send') {
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        const { email } = body;
-
-        if (!email) {
-          return errorResponse('Email is required');
-        }
-
-        const user = await getUserByEmail(env, email);
-        if (!user) {
-          return jsonResponse({ message: 'If that email exists, a magic link has been sent' });
-        }
-
-        const token = generateToken();
-        const magicLink = {
-          token,
-          userId: user.id,
-          expiresAt: Date.now() + 15 * 60 * 1000,
-        };
-
-        await env.USERS.put(`magic:${token}`, JSON.stringify(magicLink), { expirationTtl: 900 });
-
-        const baseUrl = env.FRONTEND_URL || new URL(request.url).origin.replace('pricetrackr-api', 'pricetrackr');
-        const magicLinkUrl = `${baseUrl}/auth/magic/verify?token=${token}`;
-
-        try {
-          await sendMagicLinkEmail(env, email, magicLinkUrl, user.username);
-        } catch (emailError) {
-          console.error('Failed to send magic link email:', emailError);
-          return errorResponse('Failed to send email. Please try again later.', 500);
-        }
-
-        return jsonResponse({ message: 'Magic link sent' });
-      } catch (e) {
-        console.error('Magic send error:', e);
-        return errorResponse('Invalid request body');
-      }
-    }
-  }
-
-  if (path === '/api/auth/magic/verify') {
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        const { token } = body;
-
-        if (!token) {
-          return errorResponse('Token is required');
-        }
-
-        const magicLinkData = await env.USERS.get(`magic:${token}`, 'json');
-        if (!magicLinkData || !isValidMagicLink(magicLinkData)) {
-          return errorResponse('Invalid or expired token');
-        }
-
-        await env.USERS.delete(`magic:${token}`);
-
-        const user = await getUserById(env, magicLinkData.userId);
-        if (!user) {
-          return errorResponse('User not found');
-        }
-
-        const jwt = await createJWT(user, env);
-
-        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences }, token: jwt });
       } catch (e) {
         return errorResponse('Invalid request body');
       }

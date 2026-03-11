@@ -136,31 +136,6 @@ export const api = {
     return data;
   },
 
-  async verifyMagicLink(token: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/magic/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-    const data = await handleResponse<AuthResponse>(response);
-    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
-    return data;
-  },
-
-  async sendPasswordReset(email: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/magic/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to send reset email' }));
-      throw new Error(error.error || 'Failed to send reset email');
-    }
-    return handleResponse(response);
-  },
-
   async getCurrentUser(): Promise<AuthResponse['user'] | null> {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     const userStr = localStorage.getItem(STORAGE_KEYS.AUTH_USER);

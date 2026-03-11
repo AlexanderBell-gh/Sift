@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Landing } from './pages/Landing';
-import { MagicVerify } from './pages/MagicVerify';
 import { MainApp } from './components/MainApp';
 import { Settings } from './pages/Settings';
 
@@ -34,10 +33,6 @@ function AppRoutes() {
       <Route
         path="/"
         element={isAuthenticated ? <Navigate to="/app" replace /> : <Landing />}
-      />
-      <Route
-        path="/auth/magic/verify"
-        element={<MagicVerify />}
       />
       <Route
         path="/app/settings"
