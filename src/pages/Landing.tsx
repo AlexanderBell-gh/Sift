@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingDown, Eye, Bell, ArrowRight, Loader2 } from 'lucide-react';
+import { TrendingDown, Eye, Bell, ArrowRight, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { api } from '../lib/api';
 
-type Tab = 'signin' | 'signup';
+type Tab = 'signin' | 'signup' | 'forgot';
 
 export function Landing() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ export function Landing() {
 
   const [signInData, setSignInData] = useState({ username: '', password: '' });
   const [signUpData, setSignUpData] = useState({ email: '', username: '', password: '' });
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +56,20 @@ export function Landing() {
       navigate('/app');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start trial');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    try {
+      await api.sendPasswordReset(forgotEmail);
+      setForgotSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset link');
     } finally {
       setIsLoading(false);
     }
@@ -126,10 +143,57 @@ export function Landing() {
                     placeholder="Enter your password"
                     required
                   />
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => { setForgotSuccess(false); setActiveTab('forgot'); }}
+                      className="text-sm text-sky-600 hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
                   </Button>
                 </form>
+              ) : activeTab === 'forgot' ? (
+                forgotSuccess ? (
+                  <div className="text-center py-6">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <p className="text-zinc-800 dark:text-zinc-100 font-medium mb-2">Check your email</p>
+                    <p className="text-zinc-500 text-sm">If an account exists for {forgotEmail}, we've sent a password reset link.</p>
+                    <Button
+                      type="button"
+                      onClick={() => { setForgotSuccess(false); setActiveTab('signin'); }}
+                      variant="secondary"
+                      className="w-full mt-6"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" /> Back to Sign In
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <p className="text-zinc-500 text-sm mb-4">
+                      Enter your email address and we'll send you a link to reset your password.
+                    </p>
+                    <Input
+                      label="Email"
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                    <div className="flex gap-3">
+                      <Button type="button" onClick={() => { setForgotSuccess(false); setActiveTab('signin'); }} variant="secondary" className="flex-1">
+                        Cancel
+                      </Button>
+                      <Button type="submit" className="flex-1" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Reset Link'}
+                      </Button>
+                    </div>
+                  </form>
+                )
               ) : (
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <Input

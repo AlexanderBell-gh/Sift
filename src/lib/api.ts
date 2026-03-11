@@ -148,6 +148,15 @@ export const api = {
     return data;
   },
 
+  async sendPasswordReset(email: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/auth/magic/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
   async getCurrentUser(): Promise<AuthResponse['user'] | null> {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     const userStr = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
