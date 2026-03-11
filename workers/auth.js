@@ -1,6 +1,7 @@
 const SALT_LENGTH = 16;
 const ITERATIONS = 100000;
 const JWT_EXPIRY_DAYS = 7;
+const encoder = new TextEncoder();
 
 function getJwtSecret(env) {
   if (!env.JWT_SECRET) {

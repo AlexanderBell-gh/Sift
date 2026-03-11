@@ -12,3 +12,4 @@ id = "247e9ac8a5a249a183f7974ff1b2718a"
 
 [vars]
 ADMIN_SECRET = "production_admin_2026"
+JWT_SECRET = "jwt_secret_change_in_production"
