@@ -168,7 +168,9 @@ export function Landing() {
                       variant="secondary"
                       className="w-full mt-6"
                     >
-                      <ArrowLeft className="w-4 h-4 mr-2" /> Back to Sign In
+                      <span className="flex items-center justify-center">
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Sign In
+                      </span>
                     </Button>
                   </div>
                 ) : (
