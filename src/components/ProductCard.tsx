@@ -17,6 +17,14 @@ const categoryIcons: Record<string, string> = {
   other: '📦',
 };
 
+const storeFavicons: Record<string, string> = {
+  "Sainsbury's": '/favicon_sainsburys.png',
+  'Tesco': '/favicon_tesco.png',
+  'Morrisons': '/favicon_morrisons.png',
+  'ASDA': '/favicon_asda.png',
+  'M&S': '/favicon_mands.png',
+};
+
 export function ProductCard({ product, onClick }: ProductCardProps) {
   const latestPrice = product.prices?.[product.prices.length - 1];
   const currentPrice = latestPrice?.price || 0;
@@ -52,7 +60,18 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
           <span className={`${getCategoryBadgeClass(product.category)} ml-2`}>{icon}</span>
         </div>
         {product.store && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">🏪 {product.store}</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 flex items-center gap-2">
+            {storeFavicons[product.store] ? (
+              <img 
+                src={storeFavicons[product.store]} 
+                alt={product.store}
+                className="w-5 h-5 rounded object-contain" 
+              />
+            ) : (
+              <span>🏪</span>
+            )}
+            {product.store}
+          </p>
         )}
 
         <div className="flex items-end justify-between mb-3">
