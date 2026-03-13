@@ -65,13 +65,31 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-4">
-      <Input
-        label="Product Name *"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="e.g., Gallon of Milk"
-        required
-      />
+       <div className="flex items-end space-x-2">
+         <Input
+           label="Product Name *"
+           value={name}
+           onChange={(e) => setName(e.target.value)}
+           placeholder="e.g., Gallon of Milk"
+           required
+           className="flex-1"
+         />
+         <Button
+           type="button"
+           variant="secondary"
+           onClick={() => {
+             if (name.trim()) {
+               const searchQuery = encodeURIComponent(name.trim());
+               window.open(`https://www.google.com/search?tbm=isch&q=${searchQuery}`, '_blank');
+             } else {
+               alert('Please enter a product name to search for images');
+             }
+           }}
+           className="h-10 px-4"
+         >
+           🔍 Search Images
+         </Button>
+       </div>
 
       <Input
         label="Product URL"
