@@ -70,7 +70,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
            label="Product Name *"
            value={name}
            onChange={(e) => setName(e.target.value)}
-           placeholder="e.g., Gallon of Milk"
+           placeholder="Enter Product name then click Search"
            required
            className="flex-1"
          />
@@ -87,7 +87,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
            }}
            className="h-10 px-4"
          >
-           🔍 Search Images
+           🔍 Search
          </Button>
        </div>
 
