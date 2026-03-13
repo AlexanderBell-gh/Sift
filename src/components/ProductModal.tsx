@@ -65,7 +65,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-4">
-       <div className="flex items-end space-x-2">
+       <div className="flex w-full items-end space-x-2">
          <Input
            label="Product Name *"
            value={name}
@@ -85,7 +85,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
                alert('Please enter a product name to search for images');
              }
            }}
-           className="h-10 px-4"
+           className="h-full px-4"
          >
            🔍 Search
          </Button>
