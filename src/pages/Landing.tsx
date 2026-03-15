@@ -63,19 +63,6 @@ export function Landing() {
       <div className="min-h-screen flex">
         <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
-            <div className="flex items-center mb-8">
-              <img
-                src="/light_mode_logo.png"
-                alt="PriceTrackr"
-                className="h-12 w-auto object-contain dark:hidden"
-              />
-              <img
-                src="/dark_mode_logo.png"
-                alt="PriceTrackr"
-                className="h-12 w-auto object-contain hidden dark:block"
-              />
-            </div>
-
             <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8">
               <div className="flex border-b border-zinc-200 dark:border-zinc-700 mb-6">
                 <button
@@ -194,7 +181,7 @@ export function Landing() {
           <div className="mt-6 text-center text-sm text-zinc-500">
             <a href="https://github.com/Alex-Projects-Master/PriceTrackr" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
               <img src="/github.png" alt="GitHub Logo" className="w-5 h-5" />
-              View on GitHub
+              View project on GitHub
             </a>
           </div>
         </div>
