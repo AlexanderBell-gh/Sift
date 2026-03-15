@@ -59,7 +59,7 @@ export function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-800">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-zinc-100">
       <div className="min-h-screen flex">
         <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
@@ -67,24 +67,19 @@ export function Landing() {
               <img
                 src="/light_mode_logo.png"
                 alt="PriceTrackr"
-                className="h-12 w-auto object-contain dark:hidden"
-              />
-              <img
-                src="/dark_mode_logo.png"
-                alt="PriceTrackr"
-                className="h-12 w-auto object-contain hidden dark:block"
+                className="h-12 w-auto object-contain"
               />
             </div>
 
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8">
-              <div className="flex border-b border-zinc-200 dark:border-zinc-700 mb-6">
+            <div className="bg-white rounded-2xl shadow-xl border border-zinc-200 p-6 sm:p-8">
+              <div className="flex border-b border-zinc-200 mb-6">
                 <button
                   type="button"
                   onClick={() => setActiveTab('signin')}
                   className={`flex-1 pb-3 text-sm font-medium transition-colors ${
                     activeTab === 'signin'
                       ? 'text-sky-600 border-b-2 border-sky-600'
-                      : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                      : 'text-zinc-500 hover:text-zinc-700'
                   }`}
                 >
                   Sign In
@@ -95,7 +90,7 @@ export function Landing() {
                   className={`flex-1 pb-3 text-sm font-medium transition-colors ${
                     activeTab === 'signup'
                       ? 'text-sky-600 border-b-2 border-sky-600'
-                      : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                      : 'text-zinc-500 hover:text-zinc-700'
                   }`}
                 >
                   Sign Up
@@ -103,7 +98,7 @@ export function Landing() {
               </div>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg">
+                <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
                   {error}
                 </div>
               )}
@@ -165,10 +160,10 @@ export function Landing() {
               <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-zinc-200 dark:border-zinc-700" />
+                    <div className="w-full border-t border-zinc-200" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="bg-white dark:bg-zinc-900 px-2 text-zinc-500">or</span>
+                    <span className="bg-white px-2 text-zinc-500">or</span>
                   </div>
                 </div>
 
@@ -192,13 +187,13 @@ export function Landing() {
           </div>
 
           <div className="mt-6 text-center text-sm text-zinc-500">
-            <a href="https://github.com/Alex-Projects-Master/PriceTrackr" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+            <a href="https://github.com/Alex-Projects-Master/PriceTrackr" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-700 transition-colors">
               View project on GitHub
             </a>
           </div>
         </div>
 
-        <div className="hidden lg:flex lg:flex-1 bg-zinc-900 dark:bg-zinc-950 items-center justify-center p-12">
+        <div className="hidden lg:flex lg:flex-1 bg-zinc-900 items-center justify-center p-12">
           <div className="max-w-lg text-center">
             <h2 className="text-3xl font-bold text-white mb-6">
               Track prices. Save money.
