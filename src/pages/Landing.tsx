@@ -67,12 +67,12 @@ export function Landing() {
               <img
                 src="/light_mode_logo.png"
                 alt="PriceTrackr"
-                className="h-13 rounded-lg object-contain dark:hidden"
+                className="h-12 w-auto rounded-lg object-contain dark:hidden"
               />
               <img
                 src="/dark_mode_logo.png"
                 alt="PriceTrackr"
-                className="h-13 rounded-lg object-contain hidden dark:block"
+                className="h-12 w-auto rounded-lg object-contain hidden dark:block"
               />
             </div>
 
@@ -188,14 +188,6 @@ export function Landing() {
                   )}
                 </Button>
 
-                {/* Adding GitHub link and logo */}
-                <div className="mt-6 flex items-center space-x-2">
-                  <a href="https://github.com/Alex-Projects-Master/PriceTrackr" target="_blank" rel="noopener noreferrer">
-                    <img src="/github.png" alt="GitHub Logo" className="w-5 h-5" />
-                  </a>
-                  <a href="https://github.com/Alex-Projects-Master/PriceTrackr" target="_blank" rel="noopener noreferrer">View on GitHub</a>
-                </div>
-
               </div>
             </div>
           </div>
@@ -242,6 +234,13 @@ export function Landing() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-zinc-500">
+          <a href="https://github.com/Alex-Projects-Master/PriceTrackr" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+            <img src="/github.png" alt="GitHub Logo" className="w-5 h-5" />
+            View on GitHub
+          </a>
         </div>
       </div>
     </div>
