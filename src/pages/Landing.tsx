@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingDown, Eye, Bell, ArrowRight, Loader2 } from 'lucide-react';
+import { TrendingDown, History, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -208,28 +208,28 @@ export function Landing() {
                   <TrendingDown className="w-5 h-5 text-sky-400" />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium">Track Prices</h3>
-                  <p className="text-zinc-400 text-sm">Add products and monitor their prices over time</p>
+                  <h3 className="text-white font-medium">Track Products</h3>
+                  <p className="text-zinc-400 text-sm">Add products with images, categories, and store information</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4 text-left">
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center">
-                  <Eye className="w-5 h-5 text-sky-400" />
+                  <History className="w-5 h-5 text-sky-400" />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium">Visualize Trends</h3>
-                  <p className="text-zinc-400 text-sm">See price history with beautiful charts</p>
+                  <h3 className="text-white font-medium">Price History</h3>
+                  <p className="text-zinc-400 text-sm">Record and view price changes over time</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4 text-left">
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-sky-400" />
+                  <Search className="w-5 h-5 text-sky-400" />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium">Get Alerts</h3>
-                  <p className="text-zinc-400 text-sm">Know instantly when prices drop</p>
+                  <h3 className="text-white font-medium">Search & Filter</h3>
+                  <p className="text-zinc-400 text-sm">Find products quickly by name, store, or category</p>
                 </div>
               </div>
             </div>
