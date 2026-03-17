@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Sun, Moon, Plus, FolderPlus, LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { Search, Sun, Moon, Plus, LogOut, User, Settings, ChevronDown } from 'lucide-react';
 import { Button } from './ui/Button';
 import type { UserRole } from '../types';
 
@@ -8,12 +8,11 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onAddProduct: () => void;
-  onAddCategory: () => void;
   user?: { id: string; email: string; username: string; role: UserRole; isTrial?: boolean; trialExpiresAt?: number | null } | null;
   onSignOut?: () => void;
 }
 
-export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategory, user, onSignOut }: HeaderProps) {
+export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSignOut }: HeaderProps) {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('pricetrackr_theme');
@@ -79,11 +78,6 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, onAddCategor
             <Button onClick={onAddProduct} className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
               <span className="hidden sm:inline">Add Product</span>
-            </Button>
-
-            <Button onClick={onAddCategory} variant="secondary" className="flex items-center gap-2">
-              <FolderPlus className="w-5 h-5" />
-              <span className="hidden sm:inline">Add Category</span>
             </Button>
 
             {user && (

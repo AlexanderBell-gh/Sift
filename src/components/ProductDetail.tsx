@@ -58,7 +58,7 @@ export function ProductDetail({
                     />
                   ) : (
                     <span>
-                      {product.category === 'dairy'
+                      {product.category === 'chilled'
                         ? '🥛'
                         : product.category === 'snacks'
                         ? '🍿'
@@ -66,12 +66,14 @@ export function ProductDetail({
                         ? '🥤'
                         : product.category === 'produce'
                         ? '🥬'
-                        : product.category === 'meat'
-                        ? '🥩'
                         : product.category === 'frozen'
                         ? '🧊'
                         : product.category === 'bakery'
                         ? '🥖'
+                        : product.category === 'pantry'
+                        ? '🥫'
+                        : product.category === 'condiments'
+                        ? '🧂'
                         : '📦'}
                     </span>
                   )}

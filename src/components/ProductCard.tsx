@@ -7,13 +7,14 @@ interface ProductCardProps {
 }
 
 const categoryIcons: Record<string, string> = {
-  dairy: '🥛',
+  chilled: '🥛',
   snacks: '🍿',
   beverages: '🥤',
   produce: '🥬',
-  meat: '🥩',
   frozen: '🧊',
   bakery: '🥖',
+  pantry: '🥫',
+  condiments: '🧂',
   other: '📦',
 };
 

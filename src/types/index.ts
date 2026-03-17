@@ -68,12 +68,13 @@ export interface AuthResponse {
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'dairy', name: 'Dairy', icon: '🥛' },
+  { id: 'chilled', name: 'Chilled', icon: '🥛' },
   { id: 'snacks', name: 'Snacks', icon: '🍿' },
   { id: 'beverages', name: 'Beverages', icon: '🥤' },
   { id: 'produce', name: 'Produce', icon: '🥬' },
-  { id: 'meat', name: 'Meat', icon: '🥩' },
   { id: 'frozen', name: 'Frozen', icon: '🧊' },
   { id: 'bakery', name: 'Bakery', icon: '🥖' },
+  { id: 'pantry', name: 'Pantry', icon: '🥫' },
+  { id: 'condiments', name: 'Condiments', icon: '🧂' },
   { id: 'other', name: 'Other', icon: '📦' },
 ];

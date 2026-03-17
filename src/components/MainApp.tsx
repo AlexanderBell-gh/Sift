@@ -6,7 +6,6 @@ import { ProductGrid } from './ProductGrid';
 import { ProductModal } from './ProductModal';
 import { AddPriceModal } from './AddPriceModal';
 import { ProductDetail } from './ProductDetail';
-import { AddCategoryModal } from './AddCategoryModal';
 import { SortSelect } from './SortSelect';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,7 +26,6 @@ export function MainApp() {
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -136,20 +134,6 @@ export function MainApp() {
     }
   };
 
-  const handleAddCategory = () => {
-    setIsCategoryModalOpen(true);
-  };
-
-  const handleSaveCategory = async (category: { name: string; icon: string }) => {
-    try {
-      const newCategory = await api.createCategory(category);
-      setCategories([...categories, newCategory]);
-      setIsCategoryModalOpen(false);
-    } catch (error) {
-      console.error('Failed to add category:', error);
-    }
-  };
-
   const handleDeleteCategory = async (categoryId: string) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
     try {
@@ -200,7 +184,6 @@ export function MainApp() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onAddProduct={handleAddProduct}
-        onAddCategory={handleAddCategory}
         user={user}
         onSignOut={handleSignOut}
       />
@@ -254,12 +237,6 @@ export function MainApp() {
           }
         }}
         onDelete={handleDeleteProduct}
-      />
-
-      <AddCategoryModal
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        onSave={handleSaveCategory}
       />
     </div>
   );
