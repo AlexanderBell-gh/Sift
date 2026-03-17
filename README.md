@@ -1,16 +1,19 @@
-# PriceTrackr 🏷️
+# PriceTrackr
 
 A personal grocery price tracker to monitor price changes on products you frequently buy.
 
 ## Features
 
-- **Product Management**: Add, edit, and delete products with name, URL, category, and store
-- **Price Tracking**: Record price entries over time to see trends
-- **Price History**: Interactive charts showing price trends
-- **Categories**: Organize products by category (Dairy, Snacks, Beverages, etc.)
-- **Search**: Filter products by name or store
-- **Dark/Light Mode**: Toggle between themes (or follow system preference)
-- **Image Fetching**: Auto-fetches product images from URLs
+- **Product Management**: Add, edit, delete products with name, URL, image, category, store
+- **Price Tracking**: Record price entries over time with store and date
+- **Price History**: View price changes and trends
+- **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
+- **Search & Filter**: Filter by name, store, or category
+- **Dark/Light Mode**: Toggle or follow system preference
+- **Google Images Search**: Search and add product images via Google Images (auto-detects store from URL)
+- **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
+- **Store Favicons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S)
+- **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S)
 
 ## Tech Stack
 
@@ -92,40 +95,36 @@ const USE_LOCAL_STORAGE = false;
 ```
 PriceTrackr/
 ├── src/
-│   ├── components/       # React components
-│   │   ├── ui/          # Reusable UI components
-│   │   │   ├── Badge.tsx
-│   │   │   ├── Button.tsx
-│   │   │   ├── Input.tsx
-│   │   │   ├── Modal.tsx
-│   │   │   └── Select.tsx
-│   │   ├── Header.tsx
-│   │   ├── MainApp.tsx
-│   │   ├── CategoryFilter.tsx
-│   │   ├── ProductCard.tsx
-│   │   ├── ProductGrid.tsx
-│   │   ├── ProductModal.tsx
-│   │   ├── ProductDetail.tsx
-│   │   ├── AddPriceModal.tsx
-│   │   ├── AddCategoryModal.tsx
-│   │   └── SortSelect.tsx
-│   ├── contexts/         # React contexts
-│   │   └── AuthContext.tsx
-│   ├── pages/            # Page components
-│   │   └── Landing.tsx
-│   ├── lib/             # Utilities and API
-│   ├── types/           # TypeScript types
-│   ├── App.tsx          # Main app component
-│   ├── main.tsx         # Entry point
-│   └── index.css        # Global styles
-├── workers/             # Cloudflare Worker API
-│   ├── wrangler.toml
-│   ├── index.js
-│   └── auth.js
-├── .github/
-│   └── workflows/
-│       └── deploy.yml   # CI/CD workflow
-├── wrangler.jsonc       # Cloudflare Pages config
+│   ├── components/
+│   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select)
+│   │   ├── Header.tsx    # App header with search, theme toggle
+│   │   ├── MainApp.tsx   # Main application logic
+│   │   ├── ProductCard.tsx      # Product display card
+│   │   ├── ProductGrid.tsx      # Grid layout for products
+│   │   ├── ProductModal.tsx     # Add/Edit product form
+│   │   ├── ProductDetail.tsx    # Product detail view
+│   │   ├── AddPriceModal.tsx    # Add price entry
+│   │   ├── CategoryFilter.tsx   # Category filter chips
+│   │   └── SortSelect.tsx       # Sort dropdown
+│   ├── contexts/
+│   │   └── AuthContext.tsx      # Authentication state
+│   ├── pages/
+│   │   ├── Landing.tsx          # Sign in/up page
+│   │   └── Settings.tsx         # User settings
+│   ├── lib/
+│   │   ├── api.ts               # API client
+│   │   └── utils.ts             # Utility functions
+│   ├── types/
+│   │   └── index.ts             # TypeScript types
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── workers/
+│   ├── index.js                 # Worker API endpoints
+│   ├── auth.js                  # Authentication utilities
+│   └── wrangler.toml
+├── public/                      # Static assets (favicons, logos)
+├── .github/workflows/           # CI/CD
 └── package.json
 ```
 
