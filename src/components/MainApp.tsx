@@ -17,7 +17,7 @@ type SortOption = 'newest' | 'oldest' | 'store' | 'name-asc' | 'price-low' | 'pr
 
 export function MainApp() {
   const navigate = useNavigate();
-  const { user, isTrial, isTrialExpired, trialDaysRemaining, signOut } = useAuth();
+  const { user, isTrial, isTrialExpired, trialHoursRemaining, signOut } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [currentCategory, setCurrentCategory] = useState('all');
@@ -191,7 +191,7 @@ export function MainApp() {
           {isTrialExpired ? (
             'Your trial has expired. Sign up to continue using PriceTrackr.'
           ) : (
-            <>Free trial • {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''} remaining • <button onClick={() => { signOut(); navigate('/'); }} className="underline hover:no-underline">Sign up now</button></>
+            <>Free trial • {trialHoursRemaining} hour{trialHoursRemaining !== 1 ? 's' : ''} remaining • <button onClick={() => { signOut(); navigate('/'); }} className="underline hover:no-underline">Sign up now</button></>
           )}
         </div>
       )}

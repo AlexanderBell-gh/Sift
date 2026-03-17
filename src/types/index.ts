@@ -64,7 +64,7 @@ export interface AuthResponse {
     preferences: UserPreferences;
   };
   token: string;
-  trialDaysRemaining?: number;
+  trialHoursRemaining?: number;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [

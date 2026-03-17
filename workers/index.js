@@ -286,8 +286,8 @@ async function handleRequest(request, env) {
         const trialPassword = generateToken();
 
         const trialPasswordHash = await hashPassword(trialPassword);
-        const TRIAL_DAYS = 1;
-        const trialExpiresAt = Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000;
+        const TRIAL_HOURS = 12;
+        const trialExpiresAt = Date.now() + TRIAL_HOURS * 60 * 60 * 1000;
 
         const user = {
           id: createUserId(),
@@ -318,7 +318,7 @@ async function handleRequest(request, env) {
             preferences: user.preferences
           },
           token,
-          trialDaysRemaining: TRIAL_DAYS
+          trialHoursRemaining: TRIAL_HOURS
         }, 201);
       } catch (e) {
         return errorResponse('Invalid request body');

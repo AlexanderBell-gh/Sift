@@ -15,7 +15,7 @@ interface AuthUser {
 interface TrialInfo {
   isTrial: boolean;
   isTrialExpired: boolean;
-  trialDaysRemaining: number | null;
+  trialHoursRemaining: number | null;
 }
 
 interface AuthContextType {
@@ -23,24 +23,24 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isTrial: boolean;
   isTrialExpired: boolean;
-  trialDaysRemaining: number | null;
+  trialHoursRemaining: number | null;
   isLoading: boolean;
   signIn: (credentials: { username: string; password: string }) => Promise<void>;
   signUp: (credentials: { email: string; username: string; password: string }) => Promise<void>;
   createTrial: (username?: string) => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function computeTrialInfo(user: AuthUser | null): TrialInfo {
   if (!user || !user.isTrial || !user.trialExpiresAt) {
-    return { isTrial: false, isTrialExpired: false, trialDaysRemaining: null };
+    return { isTrial: false, isTrialExpired: false, trialHoursRemaining: null };
   }
   const now = Date.now();
   const expired = now > user.trialExpiresAt;
-  const daysRemaining = expired ? 0 : Math.ceil((user.trialExpiresAt - now) / (1000 * 60 * 60 * 24));
-  return { isTrial: true, isTrialExpired: expired, trialDaysRemaining: daysRemaining };
+  const hoursRemaining = expired ? 0 : Math.ceil((user.trialExpiresAt - now) / (1000 * 60 * 60));
+  return { isTrial: true, isTrialExpired: expired, trialHoursRemaining: hoursRemaining };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -79,7 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(response.user);
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    if (user?.isTrial) {
+      try {
+        await api.deleteAccount();
+      } catch (e) {
+        console.error('Failed to delete trial data:', e);
+      }
+    }
     api.signOut();
     setUser(null);
   };
@@ -91,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isTrial: trialInfo.isTrial,
         isTrialExpired: trialInfo.isTrialExpired,
-        trialDaysRemaining: trialInfo.trialDaysRemaining,
+        trialHoursRemaining: trialInfo.trialHoursRemaining,
         isLoading,
         signIn,
         signUp,
