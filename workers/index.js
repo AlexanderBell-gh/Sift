@@ -517,7 +517,11 @@ async function handleRequest(request, env) {
     if (method === 'DELETE') {
       await env.PRICETRACKR.delete(`user:${userId}:product:${id}`);
       const filtered = products.filter(p => p.id !== id);
-      await saveProducts(env, userId, filtered);
+      if (filtered.length === 0) {
+        await env.PRICETRACKR.delete(`user:${userId}:products`);
+      } else {
+        await saveProducts(env, userId, filtered);
+      }
       return jsonResponse({ success: true });
     }
   }
