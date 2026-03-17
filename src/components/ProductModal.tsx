@@ -87,25 +87,26 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
            label="Product Name *"
            value={name}
            onChange={(e) => setName(e.target.value)}
-           placeholder="Enter Product name then click Search"
+           placeholder="Enter a Product name then click Search ->"
            required
            className="flex-1"
          />
-         <Button
-           type="button"
-           variant="secondary"
-           onClick={() => {
-             if (name.trim()) {
-               const searchQuery = encodeURIComponent(name.trim());
-               window.open(`https://www.google.com/search?tbm=isch&q=${searchQuery}`, '_blank');
-             } else {
-               alert('Please enter a product name to search for images');
-             }
-           }}
-           className="h-full px-4"
-         >
-           🔍 Search
-         </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              if (name.trim()) {
+                const searchQuery = encodeURIComponent(name.trim());
+                window.open(`https://www.google.com/search?tbm=isch&q=${searchQuery}`, '_blank');
+              } else {
+                alert('Please enter a product name to search for images');
+              }
+            }}
+            className="h-full px-2"
+            title="Search Google Images"
+          >
+            🔍
+          </Button>
        </div>
 
       <Input
