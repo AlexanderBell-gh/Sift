@@ -220,7 +220,11 @@ async function deleteUser(env, userId) {
   const userIds = await env.USERS.get('users', 'json');
   if (userIds && Array.isArray(userIds)) {
     const filtered = userIds.filter(id => id !== userId);
-    await env.USERS.put('users', JSON.stringify(filtered));
+    if (filtered.length === 0) {
+      await env.USERS.delete('users');
+    } else {
+      await env.USERS.put('users', JSON.stringify(filtered));
+    }
   }
 }
 
