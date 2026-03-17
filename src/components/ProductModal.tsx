@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import type { Product, Category } from '../types';
+import { detectStoreFromUrl } from '../lib/utils';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -27,6 +28,22 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [store, setStore] = useState(product?.store || '');
   const [notes, setNotes] = useState(product?.notes || '');
   const [priceError, setPriceError] = useState('');
+  const [isStoreAutoDetected, setIsStoreAutoDetected] = useState(false);
+
+  useEffect(() => {
+    if (url && !store) {
+      const detected = detectStoreFromUrl(url);
+      if (detected) {
+        setStore(detected);
+        setIsStoreAutoDetected(true);
+      }
+    }
+  }, [url]);
+
+  const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStore(e.target.value);
+    setIsStoreAutoDetected(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,12 +144,21 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         {priceError && <p className="text-sm text-red-600 mt-1">{priceError}</p>}
       </div>
 
-      <Select
-        label="Store"
-        value={store}
-        onChange={(e) => setStore(e.target.value)}
-        options={storeOptions}
-      />
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Select
+            label="Store"
+            value={store}
+            onChange={handleStoreChange}
+            options={storeOptions}
+          />
+        </div>
+        {isStoreAutoDetected && (
+          <span className="text-xs bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 px-2 py-1 rounded mb-0.5">
+            Auto-detected
+          </span>
+        )}
+      </div>
 
       <div>
         <label className="block text-sm font-medium mb-1">Notes</label>

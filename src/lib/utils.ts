@@ -46,3 +46,22 @@ export function generateId(): string {
 export function getCategoryBadgeClass(categoryId: string): string {
   return `badge badge-${categoryId}`;
 }
+
+const STORE_PATTERNS: Record<string, string[]> = {
+  "Sainsbury's": ['sainsburys'],
+  'Tesco': ['tesco'],
+  'Morrisons': ['morrisons'],
+  'ASDA': ['asda'],
+  'M&S': ['marksandspencer', 'marksandspencer.com', 'mand s'],
+};
+
+export function detectStoreFromUrl(url: string): string | null {
+  if (!url) return null;
+  const lowerUrl = url.toLowerCase();
+  for (const [store, patterns] of Object.entries(STORE_PATTERNS)) {
+    if (patterns.some(pattern => lowerUrl.includes(pattern))) {
+      return store;
+    }
+  }
+  return null;
+}
