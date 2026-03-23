@@ -48,20 +48,49 @@ export function getCategoryBadgeClass(categoryId: string): string {
 }
 
 const STORE_PATTERNS: Record<string, string[]> = {
-  "Sainsbury's": ['sainsburys'],
+  "Sainsbury's": ['sainsburys', 'sainsbury'],
   'Tesco': ['tesco'],
   'Morrisons': ['morrisons'],
   'ASDA': ['asda'],
-  'M&S': ['marksandspencer', 'marksandspencer.com', 'mand s'],
+  'M&S': ['marksandspencer', 'mand s', 'marksand'],
+  'Waitrose': ['waitrose'],
+  'Ocado': ['ocado'],
+  'Aldi': ['aldi'],
+  'Lidl': ['lidl'],
+  'Iceland': ['iceland'],
+  'Co-op': ['coop', 'co-op', 'cooperative'],
 };
 
 export function detectStoreFromUrl(url: string): string | null {
   if (!url) return null;
-  const lowerUrl = url.toLowerCase();
-  for (const [store, patterns] of Object.entries(STORE_PATTERNS)) {
-    if (patterns.some(pattern => lowerUrl.includes(pattern))) {
-      return store;
+  
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    
+    // Extract main domain (remove subdomains like www, groceries, delivery, etc.)
+    const domainParts = hostname.split('.');
+    const mainDomain = domainParts.length > 2 ? domainParts.slice(-2).join('.') : hostname;
+    
+    const lowerUrl = hostname;
+    
+    for (const [store, patterns] of Object.entries(STORE_PATTERNS)) {
+      for (const pattern of patterns) {
+        // Match against hostname or main domain
+        if (lowerUrl.includes(pattern) || mainDomain.includes(pattern)) {
+          return store;
+        }
+      }
     }
+    return null;
+  } catch {
+    // If URL parsing fails, fall back to simple string matching
+    const lowerUrl = url.toLowerCase();
+    for (const [store, patterns] of Object.entries(STORE_PATTERNS)) {
+      if (patterns.some(pattern => lowerUrl.includes(pattern))) {
+        return store;
+      }
+    }
+    return null;
   }
-  return null;
 }
