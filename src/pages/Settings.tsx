@@ -193,7 +193,6 @@ export function Settings() {
             <h2 className="text-lg font-semibold mb-4">About</h2>
             <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
               <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Version:</span> 1.0.0</p>
-              <p><span className="font-medium text-zinc-900 dark:text-zinc-100">PriceTrackr</span> - Track your grocery prices</p>
             </div>
           </section>
 
