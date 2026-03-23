@@ -189,6 +189,14 @@ export function Settings() {
             </>
           )}
 
+          <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+            <h2 className="text-lg font-semibold mb-4">About</h2>
+            <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Version:</span> 1.0.0</p>
+              <p><span className="font-medium text-zinc-900 dark:text-zinc-100">PriceTrackr</span> - Track your grocery prices</p>
+            </div>
+          </section>
+
           <section className="bg-white dark:bg-zinc-900 rounded-lg border border-red-200 dark:border-red-900 p-6">
             <h2 className="text-lg font-semibold mb-4 text-red-600">Delete Account</h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
