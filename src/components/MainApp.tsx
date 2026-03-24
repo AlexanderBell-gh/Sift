@@ -6,7 +6,7 @@ import { ProductModal } from './ProductModal';
 import { AddPriceModal } from './AddPriceModal';
 import { ProductDetail } from './ProductDetail';
 import { SortSelect } from './SortSelect';
-import { Select } from './ui/Select';
+import { FilterDropdown } from './FilterDropdown';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, Category } from '../types';
@@ -14,27 +14,13 @@ import { DEFAULT_CATEGORIES } from '../types';
 
 type SortOption = 'newest' | 'oldest' | 'store' | 'name-asc' | 'price-low' | 'price-high';
 
-const ALL_STORES = [
-  "Sainsbury's",
-  'Tesco',
-  'Morrisons',
-  'ASDA',
-  'M&S',
-  'Waitrose',
-  'Ocado',
-  'Aldi',
-  'Lidl',
-  'Iceland',
-  'Co-op',
-];
-
 export function MainApp() {
   const navigate = useNavigate();
   const { user, isTrial, isTrialExpired, trialHoursRemaining, signOut } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
-  const [currentCategory, setCurrentCategory] = useState('all');
-  const [currentStore, setCurrentStore] = useState('all');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedStores, setSelectedStores] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isLoading, setIsLoading] = useState(true);
@@ -66,8 +52,8 @@ export function MainApp() {
   }, [loadData]);
 
   const filteredProducts = products.filter((product) => {
-    const matchesCategory = currentCategory === 'all' || product.category === currentCategory;
-    const matchesStore = currentStore === 'all' || product.store === currentStore;
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+    const matchesStore = selectedStores.length === 0 || (product.store && selectedStores.includes(product.store));
     const matchesSearch =
       searchQuery === '' ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -194,23 +180,12 @@ export function MainApp() {
       <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center gap-4">
-            <Select
-              value={currentCategory}
-              onChange={(e) => setCurrentCategory(e.target.value)}
-              options={[
-                { value: 'all', label: 'All Categories' },
-                ...categories.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` })),
-              ]}
-              className="w-48"
-            />
-            <Select
-              value={currentStore}
-              onChange={(e) => setCurrentStore(e.target.value)}
-              options={[
-                { value: 'all', label: 'All Stores' },
-                ...ALL_STORES.map((s) => ({ value: s, label: s })),
-              ]}
-              className="w-48"
+            <FilterDropdown
+              categories={categories}
+              selectedCategories={selectedCategories}
+              selectedStores={selectedStores}
+              onCategoriesChange={setSelectedCategories}
+              onStoresChange={setSelectedStores}
             />
           </div>
         </div>
