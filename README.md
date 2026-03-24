@@ -2,6 +2,8 @@
 
 A personal grocery price tracker to monitor price changes on products you frequently buy.
 
+**Live:** https://price-trackr.pages.dev/
+
 ## Features
 
 - **Product Management**: Add, edit, delete products with name, URL, image, category, store
@@ -10,7 +12,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
 - **Search & Filter**: Filter by name, store, or category
 - **Dark/Light Mode**: Toggle or follow system preference
-- **Google Images Search**: Search and add product images via Google Images (auto-detects store from URL)
+- **Google Images Search**: Search and add product images via Google Images (right-click image → Copy link address for URL, Copy image address for image)
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Favicons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S)
 - **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S)
