@@ -5,14 +5,12 @@ import { ProductGrid } from './ProductGrid';
 import { ProductModal } from './ProductModal';
 import { AddPriceModal } from './AddPriceModal';
 import { ProductDetail } from './ProductDetail';
-import { SortSelect } from './SortSelect';
+import { SortSelect, type SortOption } from './SortSelect';
 import { FilterDropdown } from './FilterDropdown';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, Category } from '../types';
 import { DEFAULT_CATEGORIES } from '../types';
-
-type SortOption = 'newest' | 'oldest' | 'store' | 'name-asc' | 'price-low' | 'price-high';
 
 export function MainApp() {
   const navigate = useNavigate();
@@ -63,15 +61,12 @@ export function MainApp() {
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     const getCurrentPrice = (p: Product) => p.prices?.[p.prices.length - 1]?.price || 0;
-    const getStoreName = (p: Product) => p.store?.toLowerCase() || '';
 
     switch (sortBy) {
       case 'newest':
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case 'oldest':
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case 'store':
-        return getStoreName(a).localeCompare(getStoreName(b));
       case 'name-asc':
         return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
       case 'price-low':

@@ -1,6 +1,6 @@
 import { Select } from './ui/Select';
 
-type SortOption = 'newest' | 'oldest' | 'store' | 'name-asc' | 'price-low' | 'price-high';
+export type SortOption = 'newest' | 'oldest' | 'name-asc' | 'price-low' | 'price-high';
 
 interface SortSelectProps {
   value: SortOption;
@@ -10,7 +10,6 @@ interface SortSelectProps {
 const options: { value: SortOption; label: string }[] = [
   { value: 'newest', label: 'Newest Added' },
   { value: 'oldest', label: 'Oldest Added' },
-  { value: 'store', label: 'Store (A-Z)' },
   { value: 'name-asc', label: 'Name (A-Z)' },
   { value: 'price-low', label: 'Price (Low to High)' },
   { value: 'price-high', label: 'Price (High to Low)' },
