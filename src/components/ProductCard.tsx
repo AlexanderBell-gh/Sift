@@ -1,5 +1,6 @@
 import type { Product } from '../types';
 import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
+import { Badge } from './ui/Badge';
 
 interface ProductCardProps {
   product: Product;
@@ -90,7 +91,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
         </div>
 
         <div className="flex items-center justify-between text-xs text-zinc-500">
-          <span className="bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded">{icon}</span>
+          <Badge category={product.category} />
           <span>{latestPrice ? formatDate(latestPrice.date) : 'No prices'}</span>
         </div>
       </div>
