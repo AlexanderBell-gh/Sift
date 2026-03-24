@@ -66,7 +66,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
               <img 
                 src={storeFavicons[product.store]} 
                 alt={product.store}
-                className="w-5 h-5 rounded object-contain" 
+                className="w-5 h-5 rounded object-contain bg-white dark:bg-zinc-100" 
               />
             ) : (
               <span>🏪</span>
@@ -91,7 +91,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
         </div>
 
         <div className="flex items-center justify-between text-xs text-zinc-500">
-          <span>{product.prices?.length || 0} price{(product.prices?.length || 0) !== 1 ? 's' : ''}</span>
+          <span className="bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded">{icon}</span>
           <span>{latestPrice ? formatDate(latestPrice.date) : 'No prices'}</span>
         </div>
       </div>
