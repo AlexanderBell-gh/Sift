@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from './Header';
-import { CategoryFilter } from './CategoryFilter';
 import { ProductGrid } from './ProductGrid';
 import { ProductModal } from './ProductModal';
 import { AddPriceModal } from './AddPriceModal';
 import { ProductDetail } from './ProductDetail';
 import { SortSelect } from './SortSelect';
+import { Select } from './ui/Select';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, Category } from '../types';
@@ -14,12 +14,27 @@ import { DEFAULT_CATEGORIES } from '../types';
 
 type SortOption = 'newest' | 'oldest' | 'store' | 'name-asc' | 'price-low' | 'price-high';
 
+const ALL_STORES = [
+  "Sainsbury's",
+  'Tesco',
+  'Morrisons',
+  'ASDA',
+  'M&S',
+  'Waitrose',
+  'Ocado',
+  'Aldi',
+  'Lidl',
+  'Iceland',
+  'Co-op',
+];
+
 export function MainApp() {
   const navigate = useNavigate();
   const { user, isTrial, isTrialExpired, trialHoursRemaining, signOut } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [currentCategory, setCurrentCategory] = useState('all');
+  const [currentStore, setCurrentStore] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isLoading, setIsLoading] = useState(true);
@@ -52,11 +67,12 @@ export function MainApp() {
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = currentCategory === 'all' || product.category === currentCategory;
+    const matchesStore = currentStore === 'all' || product.store === currentStore;
     const matchesSearch =
       searchQuery === '' ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.store?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesStore && matchesSearch;
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -134,19 +150,6 @@ export function MainApp() {
     }
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-    try {
-      await api.deleteCategory(categoryId);
-      setCategories(categories.filter(c => c.id !== categoryId));
-      if (currentCategory === categoryId) {
-        setCurrentCategory('all');
-      }
-    } catch (error) {
-      console.error('Failed to delete category:', error);
-    }
-  };
-
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setIsDetailOpen(true);
@@ -188,12 +191,30 @@ export function MainApp() {
         onSignOut={handleSignOut}
       />
 
-      <CategoryFilter
-        categories={categories}
-        activeCategory={currentCategory}
-        onCategoryChange={setCurrentCategory}
-        onDeleteCategory={handleDeleteCategory}
-      />
+      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center gap-4">
+            <Select
+              value={currentCategory}
+              onChange={(e) => setCurrentCategory(e.target.value)}
+              options={[
+                { value: 'all', label: 'All Categories' },
+                ...categories.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` })),
+              ]}
+              className="w-48"
+            />
+            <Select
+              value={currentStore}
+              onChange={(e) => setCurrentStore(e.target.value)}
+              options={[
+                { value: 'all', label: 'All Stores' },
+                ...ALL_STORES.map((s) => ({ value: s, label: s })),
+              ]}
+              className="w-48"
+            />
+          </div>
+        </div>
+      </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-start mb-6 gap-4">
