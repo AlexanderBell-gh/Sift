@@ -1,5 +1,5 @@
 import type { Product } from '../types';
-import { formatPrice, formatDate, calculatePriceChange, getCategoryBadgeClass } from '../lib/utils';
+import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
 
 interface ProductCardProps {
   product: Product;
@@ -58,7 +58,6 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
       <div className="p-5">
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-semibold text-lg truncate flex-1">{product.name}</h3>
-          <span className={`${getCategoryBadgeClass(product.category)} ml-2`}>{icon}</span>
         </div>
         {product.store && (
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 flex items-center gap-2">
