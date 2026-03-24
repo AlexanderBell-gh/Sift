@@ -10,12 +10,12 @@ A personal grocery price tracker to monitor price changes on products you freque
 - **Price Tracking**: Record price entries over time with store and date
 - **Price History**: View price changes and trends
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
-- **Search & Filter**: Filter by name, store, or category
+- **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
-- **Google Images Search**: Search and add product images via Google Images (right-click image → Copy link address for URL, Copy image address for image)
+- **Google Images Search**: Search and add product images via Google Images (right-click image → Copy link address for Product URL, Copy image address for Image URL)
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Favicons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S)
-- **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S)
+- **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 
 ## Tech Stack
 
@@ -30,7 +30,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24
 - npm or pnpm
 - Cloudflare account
 
@@ -106,7 +106,7 @@ PriceTrackr/
 │   │   ├── ProductModal.tsx     # Add/Edit product form
 │   │   ├── ProductDetail.tsx    # Product detail view
 │   │   ├── AddPriceModal.tsx    # Add price entry
-│   │   ├── CategoryFilter.tsx   # Category filter chips
+│   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown (categories + stores)
 │   │   └── SortSelect.tsx       # Sort dropdown
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
