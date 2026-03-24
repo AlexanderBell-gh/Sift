@@ -87,7 +87,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
            label="Product Name *"
            value={name}
            onChange={(e) => setName(e.target.value)}
-           placeholder="Enter a Product name then click Search ->"
+           placeholder="e.g., Jasons Sourdough Bread"
            required
            className="flex-1"
          />
@@ -102,28 +102,50 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
                 alert('Please enter a product name to search for images');
               }
             }}
-            className="h-full px-2"
+            className="h-full px-4 whitespace-nowrap"
             title="Search Google Images"
           >
-            🔍
+            Search Images
           </Button>
        </div>
 
-      <Input
-        label="Product URL"
-        type="url"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="https://www.tesco.com/..."
-      />
+      <div>
+        <Input
+          label="Product URL"
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Right-click image → Copy link address → Paste here"
+        />
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          Get this from the store product page
+        </p>
+      </div>
 
-      <Input
-        label="Image URL"
-        type="url"
-        value={imageUrl}
-        onChange={(e) => setImageUrl(e.target.value)}
-        placeholder="https://example.com/image.jpg"
-      />
+      <div>
+        <Input
+          label="Image URL"
+          type="url"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="Right-click image → Copy image address → Paste here"
+        />
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          Direct link to the image file
+        </p>
+        {imageUrl && (
+          <div className="mt-2 p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg inline-block">
+            <img 
+              src={imageUrl} 
+              alt="Preview" 
+              className="max-h-24 max-w-full rounded object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Select
