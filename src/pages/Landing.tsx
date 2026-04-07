@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingDown, History, Search, ArrowRight, Loader2, Zap } from 'lucide-react';
+import { TrendingDown, History, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -204,11 +204,6 @@ export function Landing() {
           <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
           
           <div className="max-w-lg text-center relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/20 text-indigo-400 text-xs font-medium mb-8">
-              <Zap className="w-3.5 h-3.5" />
-              Track smarter, save more
-            </div>
-            
             <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
               Track prices.<br />
               <span className="gradient-text">Save money.</span>

@@ -4,11 +4,23 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 **Live:** https://price-trackr.pages.dev/
 
+## Design
+
+PriceTrackr features a refined Linear/Vercel-inspired UI with:
+
+- **Indigo accent colors** with gradient highlights
+- **Glassmorphism** on sticky header and filter bar
+- **Border-based depth** instead of heavy shadows
+- **Spring animations** for all transitions
+- **Sparkline charts** for price history visualization
+- **Skeleton loading** states for smooth content transitions
+- **Dark mode** with subtle dot pattern background
+
 ## Features
 
 - **Product Management**: Add, edit, delete products with name, URL, image, category, store
 - **Price Tracking**: Record price entries over time with store and date
-- **Price History**: View price changes and trends
+- **Price History**: View price changes and trends with interactive sparkline charts
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
 - **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
@@ -99,19 +111,19 @@ PriceTrackr/
 ├── src/
 │   ├── components/
 │   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select)
-│   │   ├── Header.tsx    # App header with search, theme toggle
+│   │   ├── Header.tsx    # App header with glassmorphism, search, theme toggle
 │   │   ├── MainApp.tsx   # Main application logic
-│   │   ├── ProductCard.tsx      # Product display card
-│   │   ├── ProductGrid.tsx      # Grid layout for products
+│   │   ├── ProductCard.tsx      # Product display card with staggered animations
+│   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
 │   │   ├── ProductModal.tsx     # Add/Edit product form
-│   │   ├── ProductDetail.tsx    # Product detail view
+│   │   ├── ProductDetail.tsx    # Product detail with sparkline chart
 │   │   ├── AddPriceModal.tsx    # Add price entry
 │   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown (categories + stores)
 │   │   └── SortSelect.tsx       # Sort dropdown
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
 │   ├── pages/
-│   │   ├── Landing.tsx          # Sign in/up page
+│   │   ├── Landing.tsx          # Sign in/up page with gradient background
 │   │   └── Settings.tsx         # User settings
 │   ├── lib/
 │   │   ├── api.ts               # API client
@@ -120,12 +132,17 @@ PriceTrackr/
 │   │   └── index.ts             # TypeScript types
 │   ├── App.tsx
 │   ├── main.tsx
-│   └── index.css
+│   └── index.css                # Global styles, design tokens, animations
 ├── workers/
 │   ├── index.js                 # Worker API endpoints
 │   ├── auth.js                  # Authentication utilities
 │   └── wrangler.toml
 ├── public/                      # Static assets (favicons, logos)
+│   ├── landing_logo.png         # Landing page logo (white container)
+│   ├── light_mode_logo.png      # Main app light mode logo
+│   ├── dark_mode_logo.png       # Main app dark mode logo
+│   ├── favicon*.png             # Various favicon sizes
+│   └── site.webmanifest         # Web manifest
 ├── .github/workflows/           # CI/CD
 └── package.json
 ```
