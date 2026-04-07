@@ -1,5 +1,6 @@
 import { type SelectHTMLAttributes, forwardRef } from 'react';
 import { cn } from '../../lib/utils';
+import { ChevronDown } from 'lucide-react';
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
@@ -11,28 +12,32 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium mb-1">
+          <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
             {label}
           </label>
         )}
-        <select
-          ref={ref}
-          className={cn(
-            'w-full px-4 py-2 rounded-lg',
-            'bg-zinc-100 dark:bg-zinc-800',
-            'border border-zinc-200 dark:border-zinc-700',
-            'focus:outline-none focus:ring-2 focus:ring-sky-500',
-            'transition-colors duration-200',
-            className
-          )}
-          {...props}
-        >
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            ref={ref}
+            className={cn(
+              'w-full px-3.5 py-2.5 pr-10 rounded-lg text-sm appearance-none cursor-pointer',
+              'bg-transparent',
+              'border border-zinc-200 dark:border-white/10',
+              'text-zinc-900 dark:text-zinc-100',
+              'focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-400/60',
+              'transition-all duration-200',
+              className
+            )}
+            {...props}
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value} className="bg-white dark:bg-zinc-800">
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+        </div>
       </div>
     );
   }

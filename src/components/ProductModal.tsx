@@ -114,7 +114,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         type="url"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        placeholder="Right-click image → Copy link address → Paste here"
+        placeholder="Right-click product → Copy link address → Paste here"
       />
 
       <div>
@@ -126,7 +126,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           placeholder="Right-click image → Copy image address → Paste here"
         />
         {imageUrl && (
-          <div className="mt-2 p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg inline-block">
+          <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
             <img 
               src={imageUrl} 
               alt="Preview" 
@@ -155,9 +155,10 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           onChange={(e) => { setPrice(e.target.value); setPriceError(''); }}
           placeholder="0.00"
           required
+          className="tabular-nums"
         />
-        {priceError && <p className="text-sm text-red-600 mt-1">{priceError}</p>}
       </div>
+      {priceError && <p className="text-sm text-red-500">{priceError}</p>}
 
       <div className="flex items-end gap-2">
         <div className="flex-1">
@@ -169,24 +170,24 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           />
         </div>
         {isStoreAutoDetected && (
-          <span className="text-xs bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 px-2 py-1 rounded mb-0.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-full mb-0.5">
             Auto-detected
           </span>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Notes</label>
+        <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Notes</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="w-full px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-transparent border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-400/60 transition-all resize-none"
           placeholder="Optional notes..."
         />
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
           Cancel
         </Button>

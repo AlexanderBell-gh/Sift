@@ -97,39 +97,39 @@ export function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100">
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] text-zinc-800 dark:text-zinc-100">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => navigate('/app')}
-            className="p-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 text-zinc-500" />
           </button>
-          <SettingsIcon className="w-8 h-8" />
-          <h1 className="text-2xl font-bold">Settings</h1>
+          <SettingsIcon className="w-5 h-5 text-zinc-500" />
+          <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {isTrialUser ? (
-            <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-              <p className="text-zinc-600 dark:text-zinc-400">
+            <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 This is a trial account, settings aren't available.
               </p>
             </section>
           ) : (
             <>
-              <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-                <h2 className="text-lg font-semibold mb-4">Account</h2>
-                <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Username:</span> {user?.username}</p>
-                  <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Email:</span> {user?.email}</p>
-                  <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Account type:</span> Registered</p>
+              <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+                <h2 className="text-sm font-semibold tracking-tight mb-4">Account</h2>
+                <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Username:</span> {user?.username}</p>
+                  <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Email:</span> {user?.email}</p>
+                  <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Account type:</span> Registered</p>
                 </div>
               </section>
 
-              <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-                <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+              <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+                <h2 className="text-sm font-semibold tracking-tight mb-4">Change Password</h2>
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   <Input
                     label="Current Password"
@@ -161,8 +161,8 @@ export function Settings() {
                 </form>
               </section>
 
-              <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-                <h2 className="text-lg font-semibold mb-4">Change Email</h2>
+              <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+                <h2 className="text-sm font-semibold tracking-tight mb-4">Change Email</h2>
                 <form onSubmit={handleEmailChange} className="space-y-4">
                   <Input
                     label="New Email"
@@ -189,16 +189,16 @@ export function Settings() {
             </>
           )}
 
-          <section className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-            <h2 className="text-lg font-semibold mb-4">About</h2>
-            <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-              <p><span className="font-medium text-zinc-900 dark:text-zinc-100">Version:</span> 1.0.0</p>
+          <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+            <h2 className="text-sm font-semibold tracking-tight mb-4">About</h2>
+            <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Version:</span> 1.0.0</p>
             </div>
           </section>
 
-          <section className="bg-white dark:bg-zinc-900 rounded-lg border border-red-200 dark:border-red-900 p-6">
-            <h2 className="text-lg font-semibold mb-4 text-red-600">Delete Account</h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+          <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-red-200/50 dark:border-red-500/20 p-6">
+            <h2 className="text-sm font-semibold tracking-tight mb-2 text-red-500">Delete Account</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
               Once you delete your account, there is no going back. All your products, categories, and data will be permanently deleted.
             </p>
             <Button variant="danger" onClick={() => setIsDeleteModalOpen(true)}>
@@ -215,7 +215,7 @@ export function Settings() {
         className="max-w-sm"
       >
         <div className="p-6 space-y-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Are you sure you want to delete your account? This action cannot be undone.
           </p>
           {!isTrialUser && (
@@ -230,7 +230,7 @@ export function Settings() {
           {deleteError && (
             <p className="text-red-500 text-sm">{deleteError}</p>
           )}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-2">
             <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)} className="flex-1">
               Cancel
             </Button>

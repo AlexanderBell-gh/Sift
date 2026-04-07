@@ -141,25 +141,14 @@ export function MainApp() {
     navigate('/');
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-zinc-500">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100">
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] text-zinc-800 dark:text-zinc-100 relative">
       {isTrial && (
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-2 px-4 text-sm font-medium">
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-2 px-4 text-sm font-medium relative z-50">
           {isTrialExpired ? (
             'Your trial has expired. Sign up to continue using PriceTrackr.'
           ) : (
-            <>Free trial • {trialHoursRemaining} hour{trialHoursRemaining !== 1 ? 's' : ''} remaining • <button onClick={() => { signOut(); navigate('/'); }} className="underline hover:no-underline">Sign up now</button></>
+            <>Free trial • {trialHoursRemaining} hour{trialHoursRemaining !== 1 ? 's' : ''} remaining • <button onClick={() => { signOut(); navigate('/'); }} className="underline hover:no-underline font-semibold">Sign up now</button></>
           )}
         </div>
       )}
@@ -172,9 +161,9 @@ export function MainApp() {
         onSignOut={handleSignOut}
       />
 
-      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center gap-4">
+      <div className="glass border-b border-zinc-200/50 dark:border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+          <div className="flex items-center gap-3">
             <FilterDropdown
               categories={categories}
               selectedCategories={selectedCategories}
@@ -187,7 +176,7 @@ export function MainApp() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-start mb-6 gap-4">
+        <div className="flex items-center justify-start mb-6">
           <SortSelect value={sortBy} onChange={setSortBy} />
         </div>
 
@@ -195,11 +184,12 @@ export function MainApp() {
           products={sortedProducts}
           onProductClick={handleProductClick}
           onAddProduct={handleAddProduct}
+          isLoading={isLoading}
         />
       </main>
 
-      <footer className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-zinc-500">
+      <footer className="border-t border-zinc-200/80 dark:border-white/10 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
           PriceTrackr
         </div>
       </footer>

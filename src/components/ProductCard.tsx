@@ -5,6 +5,7 @@ import { Badge } from './ui/Badge';
 interface ProductCardProps {
   product: Product;
   onClick: () => void;
+  index?: number;
 }
 
 const categoryIcons: Record<string, string> = {
@@ -27,19 +28,20 @@ const storeFavicons: Record<string, string> = {
   'M&S': '/favicon_mands.png',
 };
 
-export function ProductCard({ product, onClick }: ProductCardProps) {
+export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
   const latestPrice = product.prices?.[product.prices.length - 1];
   const currentPrice = latestPrice?.price || 0;
   const { change, percent, direction } = calculatePriceChange(product.prices || []);
 
-  const priceClass = direction === 'up' ? 'text-red-500' : direction === 'down' ? 'text-green-500' : 'text-zinc-400';
   const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
   const icon = categoryIcons[product.category] || '📦';
+  const pillClass = direction === 'up' ? 'price-pill-up' : direction === 'down' ? 'price-pill-down' : 'price-pill-neutral';
 
   return (
     <div
       onClick={onClick}
-      className="product-card cursor-pointer"
+      className="product-card cursor-pointer animate-fade-in-up"
+      style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="product-image">
         {product.imageUrl ? (
@@ -56,43 +58,38 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
           <span className="text-5xl">{icon}</span>
         )}
       </div>
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-lg truncate flex-1">{product.name}</h3>
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-1.5">
+          <h3 className="font-semibold text-base tracking-tight truncate flex-1">{product.name}</h3>
         </div>
         {product.store && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 flex items-center gap-2">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3 flex items-center gap-1.5">
             {storeFavicons[product.store] ? (
               <img 
                 src={storeFavicons[product.store]} 
                 alt={product.store}
-                className="w-5 h-5 rounded object-contain bg-white dark:bg-zinc-100" 
+                className="w-4 h-4 rounded object-contain bg-white dark:bg-zinc-100 p-0.5" 
               />
             ) : (
-              <span>🏪</span>
+              <span className="text-[10px]">🏪</span>
             )}
             {product.store}
           </p>
         )}
 
         <div className="flex items-end justify-between mb-3">
-          <div>
-            <p className="text-2xl font-bold">{formatPrice(currentPrice)}</p>
-          </div>
+          <p className="price-display">{formatPrice(currentPrice)}</p>
           <div className="text-right">
-            {direction !== 'neutral' ? (
-              <p className={`${priceClass} font-semibold text-sm`}>
-                {arrow} {formatPrice(Math.abs(change))} ({percent}%)
-              </p>
-            ) : (
-              <p className="text-zinc-400 text-sm">→ No change</p>
-            )}
+            <span className={`price-change-pill ${pillClass}`}>
+              {arrow} {formatPrice(Math.abs(change))}
+              {direction !== 'neutral' && <span className="opacity-70">({percent}%)</span>}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-zinc-500">
+        <div className="flex items-center justify-between">
           <Badge category={product.category} />
-          <span>{latestPrice ? formatDate(latestPrice.date) : 'No prices'}</span>
+          <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{latestPrice ? formatDate(latestPrice.date) : 'No prices'}</span>
         </div>
       </div>
     </div>

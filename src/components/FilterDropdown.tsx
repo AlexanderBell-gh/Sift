@@ -72,65 +72,65 @@ export function FilterDropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm transition-all"
       >
-        <span>Filter by</span>
+        <span className="text-zinc-600 dark:text-zinc-300">Filter</span>
         {totalFilters > 0 && (
-          <span className="bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-full text-xs">
+          <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full text-xs font-semibold tabular-nums">
             {totalFilters}
           </span>
         )}
-        <ChevronDown className="w-4 h-4" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-72 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg">
-          <div className="p-2 border-b border-zinc-200 dark:border-zinc-700">
+        <div className="absolute z-50 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-[0_16px_32px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_32px_-12px_rgba(0,0,0,0.4)] animate-slide-up">
+          <div className="p-2 border-b border-zinc-200/80 dark:border-white/10">
             <button
               onClick={clearAll}
-              className="text-sm text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
+              className="text-sm text-indigo-500 hover:text-indigo-400 transition-colors flex items-center gap-1"
             >
               <X className="w-3 h-3" /> Clear all
             </button>
           </div>
 
-          <div className="p-2 max-h-64 overflow-y-auto">
+          <div className="p-2 max-h-72 overflow-y-auto price-log">
             <div className="mb-3">
-              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase mb-2">
+              <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider px-2 mb-1.5">
                 Categories
               </p>
               {categories.map((category) => (
                 <label
                   key={category.id}
-                  className="flex items-center gap-2 py-1.5 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer"
+                  className="flex items-center gap-2.5 py-2 px-2 hover:bg-zinc-50 dark:hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={selectedCategories.includes(category.id)}
                     onChange={() => toggleCategory(category.id)}
-                    className="rounded border-zinc-300 dark:border-zinc-600"
+                    className="rounded border-zinc-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
                   />
-                  <span className="text-sm">{category.icon} {category.name}</span>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-200">{category.icon} {category.name}</span>
                 </label>
               ))}
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase mb-2">
+              <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider px-2 mb-1.5">
                 Stores
               </p>
               {ALL_STORES.map((store) => (
                 <label
                   key={store}
-                  className="flex items-center gap-2 py-1.5 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer"
+                  className="flex items-center gap-2.5 py-2 px-2 hover:bg-zinc-50 dark:hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={selectedStores.includes(store)}
                     onChange={() => toggleStore(store)}
-                    className="rounded border-zinc-300 dark:border-zinc-600"
+                    className="rounded border-zinc-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
                   />
-                  <span className="text-sm">{store}</span>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-200">{store}</span>
                 </label>
               ))}
             </div>

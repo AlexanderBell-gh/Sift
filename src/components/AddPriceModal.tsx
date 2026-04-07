@@ -47,24 +47,32 @@ export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
           onChange={(e) => { setPrice(e.target.value); setPriceError(''); }}
           placeholder="0.00"
           required
+          className="text-lg tabular-nums font-semibold"
         />
-        {priceError && <p className="text-sm text-red-600 mt-1">{priceError}</p>}
+        {priceError && <p className="text-sm text-red-500">{priceError}</p>}
 
-        <Input
-          label="Store"
-          value={store}
-          onChange={(e) => setStore(e.target.value)}
-          placeholder="e.g., Walmart, Target"
-        />
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <div className="relative">
+              <Input
+                label="Store"
+                value={store}
+                onChange={(e) => setStore(e.target.value)}
+                placeholder="e.g., Tesco"
+              />
+            </div>
+          </div>
+          <div className="flex-1">
+            <Input
+              label="Date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+        </div>
 
-        <Input
-          label="Date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
             Cancel
           </Button>

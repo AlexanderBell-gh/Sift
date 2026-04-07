@@ -21,7 +21,7 @@ export function SortSelect({ value, onChange }: SortSelectProps) {
       value={value}
       onChange={(e) => onChange(e.target.value as SortOption)}
       options={options}
-      className="w-48"
+      className="w-44"
     />
   );
 }
