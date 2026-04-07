@@ -9,15 +9,15 @@ interface ProductCardProps {
 }
 
 const categoryIcons: Record<string, string> = {
-  Chilled: '🥛',
-  Snacks: '🍿',
-  Beverages: '🥤',
-  Produce: '🥬',
-  Frozen: '🧊',
-  Bakery: '🥖',
-  Pantry: '🥫',
-  Condiments: '🧂',
-  Other: '📦',
+  chilled: '🥛',
+  snacks: '🍿',
+  beverages: '🥤',
+  produce: '🥬',
+  frozen: '🧊',
+  bakery: '🥖',
+  pantry: '🥫',
+  condiments: '🧂',
+  other: '📦',
 };
 
 const storeFavicons: Record<string, string> = {
