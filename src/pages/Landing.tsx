@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingDown, History, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,6 +16,17 @@ export function Landing() {
 
   const [signInData, setSignInData] = useState({ username: '', password: '' });
   const [signUpData, setSignUpData] = useState({ email: '', username: '', password: '' });
+
+  // Force light mode on landing, restore preference on unmount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('pricetrackr_theme');
+    document.documentElement.classList.remove('dark');
+    return () => {
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    };
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
