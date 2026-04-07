@@ -68,11 +68,13 @@ export function Landing() {
         <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
             <div className="flex items-center mb-8">
-              <img
-                src="/light_mode_logo.png"
-                alt="PriceTrackr"
-                className="h-14 w-auto object-contain"
-              />
+              <div className="bg-white rounded-lg p-1 shadow-sm">
+                <img
+                  src="/landing_logo.png"
+                  alt="PriceTrackr"
+                  className="h-14 w-auto object-contain"
+                />
+              </div>
             </div>
 
             <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)] border border-zinc-200/80 dark:border-white/10 p-6 sm:p-8">
