@@ -54,12 +54,12 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
             <img
               src="/light_mode_logo.png"
               alt="PriceTrackr"
-              className="h-10 w-auto object-contain dark:hidden"
+              className="h-12 w-auto object-contain dark:hidden"
             />
             <img
               src="/dark_mode_logo.png"
               alt="PriceTrackr"
-              className="h-10 w-auto object-contain hidden dark:block"
+              className="h-12 w-auto object-contain hidden dark:block"
             />
           </div>
  
