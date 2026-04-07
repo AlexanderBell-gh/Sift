@@ -72,7 +72,7 @@ export function Landing() {
                 <img
                   src="/landing_logo.png"
                   alt="PriceTrackr"
-                  className="h-12 w-auto object-contain"
+                  className="h-13 w-auto object-contain"
                 />
               </div>
               <div className="flex border-b border-zinc-200/80 dark:border-white/10 mb-6">
