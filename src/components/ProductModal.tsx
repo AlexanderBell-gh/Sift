@@ -78,6 +78,12 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     { value: 'Morrisons', label: 'Morrisons' },
     { value: 'ASDA', label: 'ASDA' },
     { value: 'M&S', label: 'M&S' },
+    { value: 'Waitrose', label: 'Waitrose' },
+    { value: 'Ocado', label: 'Ocado' },
+    { value: 'Aldi', label: 'Aldi' },
+    { value: 'Lidl', label: 'Lidl' },
+    { value: 'Iceland', label: 'Iceland' },
+    { value: 'Co-op', label: 'Co-op' },
   ];
 
   return (
