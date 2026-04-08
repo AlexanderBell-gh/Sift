@@ -19,15 +19,16 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 ## Features
 
 - **Product Management**: Add, edit, delete products with name, URL, image, category, store
-- **Price Tracking**: Record price entries over time with store and date
+- **Price Tracking**: Record price entries over time with store and date (only adds entry when price value changes)
 - **Price History**: View price changes and trends with interactive sparkline charts
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
 - **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
 - **Google Images Search**: Search and add product images via Google Images (right-click image → Copy link address for Product URL, Copy image address for Image URL)
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
-- **Store Favicons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S)
+- **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
+- **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (merge behavior, duplicates skipped)
 
 ## Tech Stack
 
@@ -142,6 +143,7 @@ PriceTrackr/
 │   ├── light_mode_logo.png      # Main app light mode logo
 │   ├── dark_mode_logo.png       # Main app dark mode logo
 │   ├── favicon*.png             # Various favicon sizes
+│   ├── storeicon_*.png          # Store icons (aldi, asda, co-op, iceland, lidl, mands, morrisons, ocado, sainsburys, tesco, waitrose)
 │   └── site.webmanifest         # Web manifest
 ├── .github/workflows/           # CI/CD
 └── package.json
