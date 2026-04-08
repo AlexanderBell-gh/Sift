@@ -486,13 +486,19 @@ async function handleRequest(request, env) {
           const updated = { ...p };
           
           if (body.price !== undefined) {
-            const newPriceEntry = {
-              price: body.price,
-              store: body.store || p.store,
-              date: new Date().toISOString().split('T')[0]
-            };
-            updated.prices = p.prices || [];
-            updated.prices.push(newPriceEntry);
+            const existingPrices = p.prices || [];
+            const latestPrice = existingPrices.length > 0 
+              ? existingPrices[existingPrices.length - 1].price 
+              : null;
+            
+            if (latestPrice === null || Math.abs(body.price - latestPrice) > 0.001) {
+              const newPriceEntry = {
+                price: body.price,
+                store: body.store || p.store,
+                date: new Date().toISOString().split('T')[0]
+              };
+              updated.prices = [...existingPrices, newPriceEntry];
+            }
           }
           
           if (body.store !== undefined) {
