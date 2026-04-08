@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon, Loader2, ArrowLeft } from 'lucide-react';
+import { Settings as SettingsIcon, Loader2, ArrowLeft, Download, Upload, Copy, ClipboardPaste, Check } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
+import type { Product } from '../types';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -29,6 +30,10 @@ export function Settings() {
   const [emailError, setEmailError] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +98,122 @@ export function Settings() {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExportDownload = async () => {
+    try {
+      setIsLoading(true);
+      const products = await api.getProducts();
+      const data = JSON.stringify(products, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pricetrackr-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setImportStatus({ type: 'success', message: `Exported ${products.length} products` });
+    } catch {
+      setImportStatus({ type: 'error', message: 'Failed to export products' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExportCopy = async () => {
+    try {
+      const products = await api.getProducts();
+      const data = JSON.stringify(products, null, 2);
+      await navigator.clipboard.writeText(data);
+      setCopied(true);
+      setImportStatus({ type: 'success', message: `Copied ${products.length} products to clipboard` });
+    } catch {
+      setImportStatus({ type: 'error', message: 'Failed to copy to clipboard' });
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      const text = await file.text();
+      await processImport(text);
+    } catch {
+      setImportStatus({ type: 'error', message: 'Failed to read file' });
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleImportPaste = async () => {
+    try {
+      setIsLoading(true);
+      const text = await navigator.clipboard.readText();
+      await processImport(text);
+    } catch {
+      setImportStatus({ type: 'error', message: 'Failed to read clipboard. Make sure you have copied valid JSON data.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const processImport = async (text: string) => {
+    try {
+      const importedProducts = JSON.parse(text) as Product[];
+      
+      if (!Array.isArray(importedProducts)) {
+        throw new Error('Invalid format: expected an array of products');
+      }
+
+      const existingProducts = await api.getProducts();
+      const existingIds = new Set(existingProducts.map(p => p.id));
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const product of importedProducts) {
+        if (!product.name || !product.category) {
+          skipped++;
+          continue;
+        }
+
+        if (existingIds.has(product.id)) {
+          skipped++;
+          continue;
+        }
+
+        const latestPrice = product.prices?.[product.prices.length - 1]?.price || 0;
+        
+        await api.createProduct({
+          name: product.name,
+          url: product.url,
+          imageUrl: product.imageUrl,
+          category: product.category,
+          store: product.store,
+          notes: product.notes,
+          price: latestPrice,
+        });
+        imported++;
+      }
+
+      setImportStatus({ 
+        type: 'success', 
+        message: `Imported ${imported} products, skipped ${skipped} (duplicates or invalid)` 
+      });
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        setImportStatus({ type: 'error', message: 'Invalid JSON format' });
+      } else {
+        setImportStatus({ type: 'error', message: err instanceof Error ? err.message : 'Failed to import' });
+      }
     }
   };
 
@@ -188,6 +309,56 @@ export function Settings() {
               </section>
             </>
           )}
+
+          <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+            <h2 className="text-sm font-semibold tracking-tight mb-4">Data Management</h2>
+            
+            {importStatus && (
+              <div className={`mb-4 p-3 rounded-lg text-sm ${importStatus.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-500'}`}>
+                {importStatus.message}
+              </div>
+            )}
+
+            <div className="space-y-6">
+              <div>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Export</p>
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={handleExportDownload} disabled={isLoading} className="flex-1">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download JSON
+                  </Button>
+                  <Button variant="secondary" onClick={handleExportCopy} disabled={isLoading} className="flex-1">
+                    {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                    {copied ? 'Copied!' : 'Copy'}
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Import</p>
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload File
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImportFile}
+                    accept=".json"
+                    className="hidden"
+                  />
+                  <Button variant="secondary" onClick={handleImportPaste} disabled={isLoading} className="flex-1">
+                    <ClipboardPaste className="w-4 h-4 mr-2" />
+                    Paste
+                  </Button>
+                </div>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+                  Imports will merge with existing products (duplicates skipped)
+                </p>
+              </div>
+            </div>
+          </section>
 
           <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
             <h2 className="text-sm font-semibold tracking-tight mb-4">About</h2>
