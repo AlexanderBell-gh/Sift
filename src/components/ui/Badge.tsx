@@ -2,7 +2,6 @@ import { cn } from '../../lib/utils';
 
 interface BadgeProps {
   category: string;
-  icon?: string;
 }
 
 const categoryStyles: Record<string, string> = {
@@ -17,25 +16,11 @@ const categoryStyles: Record<string, string> = {
   other: 'bg-zinc-500/5 text-zinc-600 dark:text-zinc-400 border-zinc-200/50 dark:border-zinc-400/20',
 };
 
-const categoryIcons: Record<string, string> = {
-  chilled: '🥛',
-  snacks: '🍿',
-  beverages: '🥤',
-  produce: '🥬',
-  frozen: '🧊',
-  bakery: '🥖',
-  pantry: '🥫',
-  condiments: '🧂',
-  other: '📦',
-};
-
-export function Badge({ category, icon }: BadgeProps) {
+export function Badge({ category }: BadgeProps) {
   const style = categoryStyles[category] || categoryStyles.other;
-  const iconChar = icon || categoryIcons[category] || '📦';
 
   return (
-    <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200', style)}>
-      <span className="text-[10px]">{iconChar}</span>
+    <span className={cn('px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200', style)}>
       {category.charAt(0).toUpperCase() + category.slice(1)}
     </span>
   );
