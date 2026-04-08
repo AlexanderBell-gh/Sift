@@ -21,11 +21,17 @@ const categoryIcons: Record<string, string> = {
 };
 
 const storeFavicons: Record<string, string> = {
-  "Sainsbury's": '/favicon_sainsburys.png',
-  'Tesco': '/favicon_tesco.png',
-  'Morrisons': '/favicon_morrisons.png',
-  'ASDA': '/favicon_asda.png',
-  'M&S': '/favicon_mands.png',
+  "Sainsbury's": '/storeicon_sainsburys.png',
+  'Tesco': '/storeicon_tesco.png',
+  'Morrisons': '/storeicon_morrisons.png',
+  'ASDA': '/storeicon_asda.png',
+  'M&S': '/storeicon_mands.png',
+  'Waitrose': '/storeicon_waitrose.png',
+  'Ocado': '/storeicon_ocado.png',
+  'Aldi': '/storeicon_aldi.png',
+  'Lidl': '/storeicon_lidl.png',
+  'Iceland': '/storeicon_iceland.png',
+  'Co-op': '/storeicon_co-op.png',
 };
 
 export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
@@ -68,7 +74,7 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
               <img 
                 src={storeFavicons[product.store]} 
                 alt={product.store}
-                className="w-4 h-4 rounded object-contain bg-white dark:bg-zinc-100 p-0.5" 
+                className="w-5 h-5 rounded object-contain bg-white dark:bg-zinc-100 p-0.5" 
               />
             ) : (
               <span className="text-[10px]">🏪</span>
