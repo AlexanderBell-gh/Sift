@@ -10,7 +10,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, options, ...props }, ref) => {
     return (
-      <div className="w-full">
+      <div className={cn('w-full', className)}>
         {label && (
           <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
             {label}
@@ -25,8 +25,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               'border border-zinc-200 dark:border-white/10',
               'text-zinc-900 dark:text-zinc-100',
               'focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-400/60',
-              'transition-all duration-200',
-              className
+              'transition-all duration-200'
             )}
             {...props}
           >
