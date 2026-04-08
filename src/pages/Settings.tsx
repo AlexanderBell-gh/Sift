@@ -323,12 +323,12 @@ export function Settings() {
               <div>
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Export</p>
                 <div className="flex gap-2">
-                  <Button variant="secondary" onClick={handleExportDownload} disabled={isLoading} className="flex-1">
-                    <Download className="w-4 h-4 mr-2" />
+                  <Button variant="secondary" onClick={handleExportDownload} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                    <Download className="w-4 h-4" />
                     Download JSON
                   </Button>
-                  <Button variant="secondary" onClick={handleExportCopy} disabled={isLoading} className="flex-1">
-                    {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                  <Button variant="secondary" onClick={handleExportCopy} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     {copied ? 'Copied!' : 'Copy'}
                   </Button>
                 </div>
@@ -337,8 +337,8 @@ export function Settings() {
               <div>
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Import</p>
                 <div className="flex gap-2">
-                  <Button variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1">
-                    <Upload className="w-4 h-4 mr-2" />
+                  <Button variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                    <Upload className="w-4 h-4" />
                     Upload File
                   </Button>
                   <input
@@ -348,8 +348,8 @@ export function Settings() {
                     accept=".json"
                     className="hidden"
                   />
-                  <Button variant="secondary" onClick={handleImportPaste} disabled={isLoading} className="flex-1">
-                    <ClipboardPaste className="w-4 h-4 mr-2" />
+                  <Button variant="secondary" onClick={handleImportPaste} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                    <ClipboardPaste className="w-4 h-4" />
                     Paste
                   </Button>
                 </div>
