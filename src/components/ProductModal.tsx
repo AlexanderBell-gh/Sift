@@ -68,7 +68,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
 
   const categoryOptions = categories.map((c) => ({
     value: c.id,
-    label: `${c.icon} ${c.name}`,
+    label: c.name,
   }));
 
   const storeOptions = [

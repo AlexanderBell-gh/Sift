@@ -110,7 +110,7 @@ export function FilterDropdown({
                     onChange={() => toggleCategory(category.id)}
                     className="rounded border-zinc-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
                   />
-                  <span className="text-sm text-zinc-700 dark:text-zinc-200">{category.icon} {category.name}</span>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-200">{category.name}</span>
                 </label>
               ))}
             </div>
