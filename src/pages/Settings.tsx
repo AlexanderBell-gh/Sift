@@ -310,55 +310,63 @@ export function Settings() {
             </>
           )}
 
-          <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
-            <h2 className="text-sm font-semibold tracking-tight mb-4">Data Management</h2>
-            
-            {importStatus && (
-              <div className={`mb-4 p-3 rounded-lg text-sm ${importStatus.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-500'}`}>
-                {importStatus.message}
-              </div>
-            )}
+          {isTrialUser ? (
+            <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Import/Export is not available for trial accounts.
+              </p>
+            </section>
+          ) : (
+            <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+              <h2 className="text-sm font-semibold tracking-tight mb-4">Data Management</h2>
+              
+              {importStatus && (
+                <div className={`mb-4 p-3 rounded-lg text-sm ${importStatus.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-500'}`}>
+                  {importStatus.message}
+                </div>
+              )}
 
-            <div className="space-y-6">
-              <div>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Export</p>
-                <div className="flex gap-2">
-                  <Button variant="secondary" onClick={handleExportDownload} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
-                    <Download className="w-4 h-4" />
-                    Download JSON
-                  </Button>
-                  <Button variant="secondary" onClick={handleExportCopy} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied!' : 'Copy'}
-                  </Button>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Export</p>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={handleExportDownload} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                      <Download className="w-4 h-4" />
+                      Download JSON
+                    </Button>
+                    <Button variant="secondary" onClick={handleExportCopy} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Import</p>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                      <Upload className="w-4 h-4" />
+                      Upload File
+                    </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImportFile}
+                      accept=".json"
+                      className="hidden"
+                    />
+                    <Button variant="secondary" onClick={handleImportPaste} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
+                      <ClipboardPaste className="w-4 h-4" />
+                      Paste
+                    </Button>
+                  </div>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+                    Imports will merge with existing products (duplicates skipped)
+                  </p>
                 </div>
               </div>
-
-              <div>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Import</p>
-                <div className="flex gap-2">
-                  <Button variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
-                    <Upload className="w-4 h-4" />
-                    Upload File
-                  </Button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImportFile}
-                    accept=".json"
-                    className="hidden"
-                  />
-                  <Button variant="secondary" onClick={handleImportPaste} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
-                    <ClipboardPaste className="w-4 h-4" />
-                    Paste
-                  </Button>
-                </div>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-                  Imports will merge with existing products (duplicates skipped)
-                </p>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
             <h2 className="text-sm font-semibold tracking-tight mb-4">About</h2>
