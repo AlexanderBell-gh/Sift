@@ -420,6 +420,29 @@ async function handleRequest(request, env) {
     }
   }
 
+  // Fetch product details from URL
+  if (path === '/api/products/fetch' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const body = await request.json();
+      const productUrl = body.url;
+
+      if (!productUrl) {
+        return errorResponse('URL is required');
+      }
+
+      const store = detectStoreFromUrl(productUrl);
+      const productData = await fetchProductDetails(productUrl, store);
+
+      return jsonResponse(productData);
+    } catch (e) {
+      console.error('Fetch product error:', e);
+      return errorResponse('Failed to fetch product details: ' + e.message);
+    }
+  }
+
   // Products
   if (path === '/api/products') {
     const auth = await requireAuth(request, env);
@@ -609,29 +632,6 @@ async function handleRequest(request, env) {
     const filtered = categories.filter(c => c.id !== id);
     await env.PRICETRACKR.put(`user:${userId}:categories`, JSON.stringify(filtered));
     return jsonResponse({ success: true });
-  }
-
-  // Fetch product details from URL
-  if (path === '/api/products/fetch' && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-
-    try {
-      const body = await request.json();
-      const productUrl = body.url;
-
-      if (!productUrl) {
-        return errorResponse('URL is required');
-      }
-
-      const store = detectStoreFromUrl(productUrl);
-      const productData = await fetchProductDetails(productUrl, store);
-
-      return jsonResponse(productData);
-    } catch (e) {
-      console.error('Fetch product error:', e);
-      return errorResponse('Failed to fetch product details: ' + e.message);
-    }
   }
 
   return errorResponse('Not found', 404);
