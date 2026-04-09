@@ -5,6 +5,8 @@ import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import type { Product, Category } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
+import { api } from '../lib/api';
+import { Loader2, Sparkle } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -29,6 +31,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [notes, setNotes] = useState(product?.notes || '');
   const [priceError, setPriceError] = useState('');
   const [isStoreAutoDetected, setIsStoreAutoDetected] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchError, setFetchError] = useState('');
 
   useEffect(() => {
     if (url && !store) {
@@ -43,6 +47,32 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStore(e.target.value);
     setIsStoreAutoDetected(false);
+  };
+
+  const handleFetch = async () => {
+    if (!url.trim()) {
+      setFetchError('Please enter a product URL first');
+      return;
+    }
+
+    setFetchError('');
+    setIsFetching(true);
+
+    try {
+      const data = await api.fetchProductFromUrl(url.trim());
+      
+      if (data.name) setName(data.name);
+      if (data.price) setPrice(data.price.toString());
+      if (data.imageUrl) setImageUrl(data.imageUrl);
+      if (data.store) {
+        setStore(data.store);
+        setIsStoreAutoDetected(true);
+      }
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Failed to fetch product');
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -115,13 +145,29 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           </Button>
        </div>
 
-      <Input
-        label="Product URL"
-        type="url"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="Right-click product → Copy link address → Paste here"
-      />
+      <div className="flex items-end gap-2">
+        <Input
+          label="Product URL"
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Paste product page URL"
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={handleFetch}
+          disabled={isFetching}
+          className="h-full px-3 whitespace-nowrap"
+          title="Fetch product details automatically"
+        >
+          {isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkle className="w-4 h-4" />}
+        </Button>
+      </div>
+      {fetchError && (
+        <p className="text-xs text-red-500 mt-1">{fetchError}</p>
+      )}
 
       <div>
         <Input
