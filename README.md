@@ -8,7 +8,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 PriceTrackr features a refined Linear/Vercel-inspired UI with:
 
-- **Indigo accent colors** with gradient highlights
+- **Green accent colors** matching the logo (`#74da86`)
 - **Glassmorphism** on sticky header and filter bar
 - **Border-based depth** instead of heavy shadows
 - **Spring animations** for all transitions
@@ -28,7 +28,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
-- **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (merge behavior, duplicates skipped)
+- **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (merge behavior, duplicates skipped; registered users only)
 
 ## Tech Stack
 

@@ -93,7 +93,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
            label="Product Name *"
            value={name}
            onChange={(e) => setName(e.target.value)}
-           placeholder="e.g., Jasons Sourdough Bread"
+           placeholder="e.g., Sainsbury's Jasons Sourdough Bread"
            required
            className="flex-1"
          />
