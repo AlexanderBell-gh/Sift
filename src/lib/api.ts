@@ -1,4 +1,4 @@
-import type { Product, Category, AuthResponse } from '../types';
+import type { Product, Category, AuthResponse, AdminUser, AdminUserDetail } from '../types';
 
 const API_BASE_URL = 'https://pricetrackr-api.inbox-alexbell.workers.dev';
 
@@ -203,5 +203,63 @@ export const api = {
 
   getToken(): string | null {
     return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  },
+
+  getAdminSecret(): string | null {
+    return localStorage.getItem('pricetrackr_admin_secret');
+  },
+
+  setAdminSecret(secret: string): void {
+    localStorage.setItem('pricetrackr_admin_secret', secret);
+  },
+
+  clearAdminSecret(): void {
+    localStorage.removeItem('pricetrackr_admin_secret');
+  },
+
+  getAdminHeaders(): HeadersInit {
+    const secret = this.getAdminSecret();
+    return secret ? { 'X-Admin-Secret': secret } : {};
+  },
+
+  async getAdminStats(): Promise<{ totalUsers: number; regularUsers: number; trialUsers: number; totalProducts: number; totalPrices: number }> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+      headers: this.getAdminHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getAdminUsers(page = 1, limit = 20, search?: string): Promise<{ users: AdminUser[]; total: number; page: number; limit: number; totalPages: number }> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) params.set('search', search);
+    const response = await fetch(`${API_BASE_URL}/api/admin/users?${params}`, {
+      headers: this.getAdminHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getAdminUser(id: string): Promise<AdminUserDetail> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+      headers: this.getAdminHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async deleteAdminUser(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+      method: 'DELETE',
+      headers: this.getAdminHeaders(),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to delete user' }));
+      throw new Error(error.error || 'Failed to delete user');
+    }
+  },
+
+  async getAdminAnalytics(): Promise<{ categoryDistribution: Record<string, number>; storeDistribution: Record<string, number>; totalProducts: number; totalPriceEntries: number; userCount: number }> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/analytics`, {
+      headers: this.getAdminHeaders(),
+    });
+    return handleResponse(response);
   },
 };

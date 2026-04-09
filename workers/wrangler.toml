@@ -16,7 +16,7 @@ binding = "USERS"
 id = "247e9ac8a5a249a183f7974ff1b2718a"
 
 [vars]
-ADMIN_SECRET = "production_admin_2026"
-JWT_SECRET = "jwt_secret_change_in_production"
+ADMIN_SECRET = "4f2338808548e8e3f4b35ca1c2187e1e"
+JWT_SECRET = "f347d250a32906c75a6fd52fd16a3958"
 
 # Note: Set RESEND_API_KEY using: npx wrangler secret put RESEND_API_KEY

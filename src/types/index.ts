@@ -78,3 +78,29 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'condiments', name: 'Condiments', icon: '🧂' },
   { id: 'other', name: 'Other', icon: '📦' },
 ];
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  username: string;
+  role: UserRole;
+  isTrial: boolean;
+  trialExpiresAt: number | null;
+  createdAt: string;
+  productCount: number;
+}
+
+export interface AdminUserProduct {
+  id: string;
+  name: string;
+  category: string;
+  store?: string;
+  priceCount: number;
+}
+
+export interface AdminUserDetail extends AdminUser {
+  preferences: UserPreferences;
+  productCount: number;
+  totalPrices: number;
+  products: AdminUserProduct[];
+}

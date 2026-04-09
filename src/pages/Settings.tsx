@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon, Loader2, ArrowLeft, Download, Upload, Copy, ClipboardPaste, Check } from 'lucide-react';
+import { Settings as SettingsIcon, Loader2, ArrowLeft, Download, Upload, Copy, ClipboardPaste, Check, Shield } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -369,7 +369,16 @@ export function Settings() {
           )}
 
           <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
-            <h2 className="text-sm font-semibold tracking-tight mb-4">About</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold tracking-tight mb-4">About</h2>
+              <button
+                onClick={() => navigate('/admin')}
+                className="flex items-center gap-1.5 text-xs text-emerald-500 hover:text-emerald-400 transition-colors"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Admin
+              </button>
+            </div>
             <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
               <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Version:</span> 1.0.0</p>
             </div>

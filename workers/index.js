@@ -611,6 +611,207 @@ async function handleRequest(request, env) {
     return jsonResponse({ success: true });
   }
 
+  // Admin Routes - require X-Admin-Secret header
+  async function requireAdmin(request, env) {
+    const adminSecret = request.headers.get('X-Admin-Secret');
+    if (!adminSecret || adminSecret !== env.ADMIN_SECRET) {
+      return errorResponse('Admin access denied', 403);
+    }
+    return true;
+  }
+
+  // Admin stats
+  if (path === '/api/admin/stats') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const userIds = await env.USERS.get('users', 'json') || [];
+    let totalProducts = 0;
+    let totalPrices = 0;
+    let trialUsers = 0;
+    let regularUsers = 0;
+
+    for (const userId of userIds) {
+      const user = await getUserById(env, userId);
+      if (user) {
+        if (user.isTrial) trialUsers++;
+        else regularUsers++;
+
+        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
+        totalProducts += productIds.length;
+
+        for (const prodId of productIds) {
+          const product = await env.PRICETRACKR.get(`user:${userId}:product:${prodId}`, 'json');
+          if (product && product.prices) {
+            totalPrices += product.prices.length;
+          }
+        }
+      }
+    }
+
+    return jsonResponse({
+      totalUsers: userIds.length,
+      regularUsers,
+      trialUsers,
+      totalProducts,
+      totalPrices,
+    });
+  }
+
+  // Admin users list
+  if (path === '/api/admin/users') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const userIds = await env.USERS.get('users', 'json') || [];
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const search = url.searchParams.get('search')?.toLowerCase() || '';
+
+    const usersWithStats = await Promise.all(
+      userIds.map(async (userId) => {
+        const user = await getUserById(env, userId);
+        if (!user) return null;
+
+        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
+        const productCount = productIds.length;
+
+        return {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          isTrial: user.isTrial || false,
+          trialExpiresAt: user.trialExpiresAt || null,
+          createdAt: user.createdAt,
+          productCount,
+        };
+      })
+    );
+
+    let filteredUsers = usersWithStats.filter(u => u !== null);
+    
+    if (search) {
+      filteredUsers = filteredUsers.filter(u => 
+        u.username.toLowerCase().includes(search) || 
+        u.email.toLowerCase().includes(search)
+      );
+    }
+
+    const total = filteredUsers.length;
+    const start = (page - 1) * limit;
+    const paginatedUsers = filteredUsers.slice(start, start + limit);
+
+    return jsonResponse({
+      users: paginatedUsers,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
+  }
+
+  // Admin user detail
+  const adminUserMatch = path.match(/^\/api\/admin\/users\/(.+)$/);
+  if (adminUserMatch && method === 'GET') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const userId = adminUserMatch[1];
+    const user = await getUserById(env, userId);
+    if (!user) {
+      return errorResponse('User not found', 404);
+    }
+
+    const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
+    let totalPrices = 0;
+    const products = [];
+
+    for (const prodId of productIds) {
+      const product = await env.PRICETRACKR.get(`user:${userId}:product:${prodId}`, 'json');
+      if (product) {
+        totalPrices += (product.prices?.length || 0);
+        products.push({
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          store: product.store,
+          priceCount: product.prices?.length || 0,
+        });
+      }
+    }
+
+    return jsonResponse({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      isTrial: user.isTrial || false,
+      trialExpiresAt: user.trialExpiresAt || null,
+      preferences: user.preferences,
+      createdAt: user.createdAt,
+      productCount: productIds.length,
+      totalPrices,
+      products,
+    });
+  }
+
+  // Admin delete user
+  if (adminUserMatch && method === 'DELETE') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const userId = adminUserMatch[1];
+    const user = await getUserById(env, userId);
+    if (!user) {
+      return errorResponse('User not found', 404);
+    }
+
+    await deleteUserData(env, userId);
+    await deleteUser(env, userId);
+
+    return jsonResponse({ success: true });
+  }
+
+  // Admin analytics
+  if (path === '/api/admin/analytics') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const userIds = await env.USERS.get('users', 'json') || [];
+    const categoryCount = {};
+    const storeCount = {};
+    let totalProductCount = 0;
+    let totalPriceEntries = 0;
+
+    for (const userId of userIds) {
+      const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
+      totalProductCount += productIds.length;
+
+      for (const prodId of productIds) {
+        const product = await env.PRICETRACKR.get(`user:${userId}:product:${prodId}`, 'json');
+        if (product) {
+          const cat = product.category || 'other';
+          categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+          
+          if (product.store) {
+            storeCount[product.store] = (storeCount[product.store] || 0) + 1;
+          }
+          
+          totalPriceEntries += product.prices?.length || 0;
+        }
+      }
+    }
+
+    return jsonResponse({
+      categoryDistribution: categoryCount,
+      storeDistribution: storeCount,
+      totalProducts: totalProductCount,
+      totalPriceEntries,
+      userCount: userIds.length,
+    });
+  }
+
   return errorResponse('Not found', 404);
 }
 
