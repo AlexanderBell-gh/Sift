@@ -64,15 +64,6 @@ export const api = {
     }
   },
 
-  async fetchProductFromUrl(url: string): Promise<{ name: string; price: number | null; imageUrl: string; store: string | null; url: string }> {
-    const response = await fetch(`${API_BASE_URL}/api/products/fetch`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ url }),
-    });
-    return handleResponse(response);
-  },
-
   async addPrice(id: string, priceData: { price: number; store?: string; date?: string }): Promise<Product> {
     const response = await fetch(`${API_BASE_URL}/api/products/${id}/prices`, {
       method: 'POST',
