@@ -29,6 +29,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (merge behavior, duplicates skipped; registered users only)
+- **Admin Dashboard**: Management dashboard for system stats, user management, and analytics (registered users only)
 
 ## Tech Stack
 
@@ -120,7 +121,12 @@ PriceTrackr/
 │   │   ├── ProductDetail.tsx    # Product detail with sparkline chart
 │   │   ├── AddPriceModal.tsx    # Add price entry
 │   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown (categories + stores)
-│   │   └── SortSelect.tsx       # Sort dropdown
+│   │   ├── SortSelect.tsx       # Sort dropdown
+│   │   ├── AddCategoryModal.tsx # Add custom category
+│   │   ├── AdminDashboard.tsx   # Admin dashboard (stats, users, analytics)
+│   │   ├── AdminStats.tsx       # System statistics cards
+│   │   ├── AdminUsers.tsx       # User management table
+│   │   └── AdminAnalytics.tsx   # Aggregate analytics charts
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
 │   ├── pages/
@@ -152,3 +158,16 @@ PriceTrackr/
 ## License
 
 MIT
+
+## Admin Dashboard
+
+The admin dashboard provides system management capabilities:
+
+1. Navigate to `/admin` or click "Admin" in Settings (registered users only)
+2. Enter the admin secret to access the dashboard
+3. Three tabs available:
+   - **Stats**: Total users, trial users, products, and price entries
+   - **Users**: View, search, and delete user accounts
+   - **Analytics**: Category and store distribution across all users
+
+Admin access is controlled via the `X-Admin-Secret` header, which must match the `ADMIN_SECRET` environment variable configured in `workers/wrangler.toml`.
