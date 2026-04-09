@@ -4,9 +4,9 @@
 
 @theme {
   --font-sans: 'Inter', sans-serif;
-  --color-accent: #6366f1;
-  --color-accent-light: #818cf8;
-  --color-accent-dark: #4f46e5;
+  --color-accent: #74da86;
+  --color-accent-light: #86efac;
+  --color-accent-dark: #22c55e;
   --color-background-dark: #0A0A0A;
   --color-price-up: #EF4444;
   --color-price-down: #22C55E;
@@ -54,7 +54,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+  background: linear-gradient(135deg, #74da86, #4ade16, #22c55e);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -72,7 +72,7 @@ body {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.1));
+  background: linear-gradient(135deg, rgba(116, 218, 134, 0.5), rgba(74, 222, 22, 0.3), rgba(34, 197, 94, 0.1));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -89,8 +89,8 @@ body {
 }
 
 .product-card:hover {
-  @apply border-indigo-300/60 dark:border-indigo-400/30;
-  @apply shadow-[0_8px_40px_-12px_rgba(99,102,241,0.12)] dark:shadow-[0_8px_40px_-12px_rgba(99,102,241,0.08)];
+  @apply border-green-300/60 dark:border-green-400/30;
+  @apply shadow-[0_8px_40px_-12px_rgba(116,218,134,0.12)] dark:shadow-[0_8px_40px_-12px_rgba(116,218,134,0.08)];
   transform: translateY(-2px);
 }
 

@@ -24,7 +24,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               'bg-transparent',
               'border border-zinc-200 dark:border-white/10',
               'text-zinc-900 dark:text-zinc-100',
-              'focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-400/60',
+              'focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-400 dark:focus:border-green-400/60',
               'transition-all duration-200'
             )}
             {...props}

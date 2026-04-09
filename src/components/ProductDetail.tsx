@@ -127,7 +127,7 @@ export function ProductDetail({
                       href={product.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-400 mt-2 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs text-green-500 hover:text-green-400 mt-2 transition-colors"
                     >
                       <ExternalLink className="w-3 h-3" />
                       View Product

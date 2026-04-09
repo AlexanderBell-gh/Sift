@@ -72,8 +72,8 @@ export function Landing() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] relative overflow-hidden">
       {/* Subtle gradient orbs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="min-h-screen flex relative z-10">
         <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
@@ -92,7 +92,7 @@ export function Landing() {
                   onClick={() => setActiveTab('signin')}
                   className={`flex-1 pb-3 text-sm font-medium transition-all duration-200 ${
                     activeTab === 'signin'
-                      ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                      ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
                       : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
                 >
@@ -103,7 +103,7 @@ export function Landing() {
                   onClick={() => setActiveTab('signup')}
                   className={`flex-1 pb-3 text-sm font-medium transition-all duration-200 ${
                     activeTab === 'signup'
-                      ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                      ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
                       : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
                 >
@@ -222,8 +222,8 @@ export function Landing() {
 
             <div className="space-y-5">
               <div className="flex items-start gap-4 text-left p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                  <TrendingDown className="w-5 h-5 text-indigo-400" />
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <TrendingDown className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
                   <h3 className="text-white font-medium text-sm">Track Products</h3>
@@ -232,8 +232,8 @@ export function Landing() {
               </div>
 
               <div className="flex items-start gap-4 text-left p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                  <History className="w-5 h-5 text-indigo-400" />
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <History className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
                   <h3 className="text-white font-medium text-sm">Price History</h3>
@@ -242,8 +242,8 @@ export function Landing() {
               </div>
 
               <div className="flex items-start gap-4 text-left p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-colors">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                  <Search className="w-5 h-5 text-indigo-400" />
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <Search className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
                   <h3 className="text-white font-medium text-sm">Search & Filter</h3>

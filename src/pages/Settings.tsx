@@ -235,7 +235,7 @@ export function Settings() {
           {isTrialUser ? (
             <section className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                This is a trial account, settings aren't available.
+                This is a trial account, settings are only available when signing up.
               </p>
             </section>
           ) : (

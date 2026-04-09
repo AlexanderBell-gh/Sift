@@ -72,11 +72,11 @@ export function FilterDropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm transition-all"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-green-500/40 text-sm transition-all"
       >
         <span className="text-zinc-600 dark:text-zinc-300">Filter</span>
         {totalFilters > 0 && (
-          <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full text-xs font-semibold tabular-nums">
+          <span className="bg-green-500/10 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-full text-xs font-semibold tabular-nums">
             {totalFilters}
           </span>
         )}
@@ -88,7 +88,7 @@ export function FilterDropdown({
           <div className="p-2 border-b border-zinc-200/80 dark:border-white/10">
             <button
               onClick={clearAll}
-              className="text-sm text-indigo-500 hover:text-indigo-400 transition-colors flex items-center gap-1"
+              className="text-sm text-green-500 hover:text-green-400 transition-colors flex items-center gap-1"
             >
               <X className="w-3 h-3" /> Clear all
             </button>
@@ -108,7 +108,7 @@ export function FilterDropdown({
                     type="checkbox"
                     checked={selectedCategories.includes(category.id)}
                     onChange={() => toggleCategory(category.id)}
-                    className="rounded border-zinc-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                    className="rounded border-zinc-300 dark:border-zinc-600 text-green-500 focus:ring-green-500/40 focus:ring-offset-0"
                   />
                   <span className="text-sm text-zinc-700 dark:text-zinc-200">{category.name}</span>
                 </label>
@@ -128,7 +128,7 @@ export function FilterDropdown({
                     type="checkbox"
                     checked={selectedStores.includes(store)}
                     onChange={() => toggleStore(store)}
-                    className="rounded border-zinc-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                    className="rounded border-zinc-300 dark:border-zinc-600 text-green-500 focus:ring-green-500/40 focus:ring-offset-0"
                   />
                   <span className="text-sm text-zinc-700 dark:text-zinc-200">{store}</span>
                 </label>

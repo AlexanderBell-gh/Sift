@@ -71,7 +71,7 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-56 pl-9 pr-4 py-1.5 rounded-lg bg-transparent border border-zinc-200/80 dark:border-white/10 text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-400/60 transition-all"
+                className="w-56 pl-9 pr-4 py-1.5 rounded-lg bg-transparent border border-zinc-200/80 dark:border-white/10 text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-400 dark:focus:border-green-400/60 transition-all"
               />
             </div>
  
