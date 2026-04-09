@@ -115,16 +115,15 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           </Button>
        </div>
 
-      <div className="flex items-end gap-2">
-        <Input
-          label="Product URL"
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Right-click product → Copy link address → Paste here"
-        />
+       <Input
+         label="Product URL"
+         type="url"
+         value={url}
+         onChange={(e) => setUrl(e.target.value)}
+         placeholder="Right-click product → Copy link address → Paste here"
+       />
 
-      <div>
+       <div>
         <Input
           label="Image URL"
           type="url"
