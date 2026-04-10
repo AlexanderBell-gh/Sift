@@ -611,13 +611,16 @@ async function handleRequest(request, env) {
     return jsonResponse({ success: true });
   }
 
-  // Admin Routes - require X-Admin-Secret header
+  // Admin Routes - require admin role in JWT
   async function requireAdmin(request, env) {
-    const adminSecret = request.headers.get('X-Admin-Secret');
-    if (!adminSecret || adminSecret !== env.ADMIN_SECRET) {
+    const auth = await authenticate(request, env);
+    if (!auth) {
+      return errorResponse('Authentication required', 401);
+    }
+    if (auth.role !== 'admin') {
       return errorResponse('Admin access denied', 403);
     }
-    return true;
+    return auth;
   }
 
   // Admin stats

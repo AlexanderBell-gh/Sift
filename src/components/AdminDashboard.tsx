@@ -1,56 +1,36 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, Loader2 } from 'lucide-react';
+import { ArrowLeft, Shield, Loader2, Lock } from 'lucide-react';
 import { api } from '../lib/api';
 import { AdminStats } from './AdminStats';
 import { AdminUsers } from './AdminUsers';
 import { AdminAnalytics } from './AdminAnalytics';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Modal } from './ui/Modal';
 
 type TabId = 'stats' | 'users' | 'analytics';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(true);
-  const [secret, setSecret] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('stats');
 
   useEffect(() => {
-    const storedSecret = api.getAdminSecret();
-    if (storedSecret) {
-      setSecret(storedSecret);
-      setIsAuthModalOpen(false);
-    }
+    checkAdminStatus();
   }, []);
 
-  const handleAuth = async () => {
-    if (!secret.trim()) {
-      setError('Please enter the admin secret');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
+  const checkAdminStatus = async () => {
     try {
-      await api.getAdminStats();
-      api.setAdminSecret(secret);
-      setIsAuthModalOpen(false);
+      const user = api.getStoredUser();
+      if (user && user.role === 'admin') {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
     } catch {
-      setError('Invalid admin secret');
+      setIsAdmin(false);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    api.clearAdminSecret();
-    setIsAuthModalOpen(true);
-    setSecret('');
   };
 
   const tabs: { id: TabId; label: string }[] = [
@@ -58,6 +38,37 @@ export function AdminDashboard() {
     { id: 'users', label: 'Users' },
     { id: 'analytics', label: 'Analytics' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+      </div>
+    );
+  }
+
+  if (isAdmin === false) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 mb-4">
+            <Lock className="w-8 h-8 text-red-500" />
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight mb-2">Access Denied</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+            You don't have permission to access the admin dashboard.
+          </p>
+          <button
+            onClick={() => navigate('/app')}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to App
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] text-zinc-800 dark:text-zinc-100">
@@ -73,9 +84,12 @@ export function AdminDashboard() {
             <Shield className="w-5 h-5 text-emerald-500" />
             <h1 className="text-xl font-semibold tracking-tight">Admin Dashboard</h1>
           </div>
-          <Button variant="secondary" onClick={handleLogout}>
+          <button
+            onClick={() => navigate('/app')}
+            className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+          >
             Exit Admin
-          </Button>
+          </button>
         </div>
 
         <div className="border-b border-zinc-200 dark:border-white/10 mb-6">
@@ -100,35 +114,6 @@ export function AdminDashboard() {
         {activeTab === 'users' && <AdminUsers />}
         {activeTab === 'analytics' && <AdminAnalytics />}
       </div>
-
-      <Modal
-        isOpen={isAuthModalOpen}
-        onClose={() => navigate('/app')}
-        title="Admin Access"
-        className="max-w-sm"
-      >
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Enter the admin secret to access the dashboard.
-          </p>
-          <Input
-            label="Admin Secret"
-            type="password"
-            value={secret}
-            onChange={(e) => setSecret(e.target.value)}
-            placeholder="Enter secret key"
-            error={error}
-          />
-          <div className="flex gap-2 pt-2">
-            <Button variant="secondary" onClick={() => navigate('/app')} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleAuth} disabled={isLoading} className="flex-1">
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Access'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

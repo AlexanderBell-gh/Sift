@@ -205,26 +205,9 @@ export const api = {
     return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   },
 
-  getAdminSecret(): string | null {
-    return localStorage.getItem('pricetrackr_admin_secret');
-  },
-
-  setAdminSecret(secret: string): void {
-    localStorage.setItem('pricetrackr_admin_secret', secret);
-  },
-
-  clearAdminSecret(): void {
-    localStorage.removeItem('pricetrackr_admin_secret');
-  },
-
-  getAdminHeaders(): HeadersInit {
-    const secret = this.getAdminSecret();
-    return secret ? { 'X-Admin-Secret': secret } : {};
-  },
-
   async getAdminStats(): Promise<{ totalUsers: number; regularUsers: number; trialUsers: number; totalProducts: number; totalPrices: number }> {
     const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
-      headers: this.getAdminHeaders(),
+      headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
@@ -233,14 +216,14 @@ export const api = {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.set('search', search);
     const response = await fetch(`${API_BASE_URL}/api/admin/users?${params}`, {
-      headers: this.getAdminHeaders(),
+      headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
   async getAdminUser(id: string): Promise<AdminUserDetail> {
     const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
-      headers: this.getAdminHeaders(),
+      headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
@@ -248,7 +231,7 @@ export const api = {
   async deleteAdminUser(id: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
       method: 'DELETE',
-      headers: this.getAdminHeaders(),
+      headers: getAuthHeaders(),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Failed to delete user' }));
@@ -258,7 +241,7 @@ export const api = {
 
   async getAdminAnalytics(): Promise<{ categoryDistribution: Record<string, number>; storeDistribution: Record<string, number>; totalProducts: number; totalPriceEntries: number; userCount: number }> {
     const response = await fetch(`${API_BASE_URL}/api/admin/analytics`, {
-      headers: this.getAdminHeaders(),
+      headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
