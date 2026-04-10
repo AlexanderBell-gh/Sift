@@ -188,8 +188,10 @@ export function AdminUsers() {
           onClick={() => setIsCleanupModalOpen(true)}
           disabled={expiredCount === 0}
         >
-          <Trash2 className="w-4 h-4" />
-          <span>Cleanup ({expiredCount} expired)</span>
+          <div className="flex items-center gap-2">
+            <Trash2 className="w-4 h-4" />
+            <span>Cleanup ({expiredCount} expired)</span>
+          </div>
         </Button>
       </div>
 

@@ -78,7 +78,7 @@ export function AdminDashboard() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 mb-4">
             <Lock className="w-8 h-8 text-red-500" />
           </div>
-          <h1 className="text-xl font-semibold tracking-tight mb-2">Access Denied</h1>
+          <h1 className="text-xl font-semibold tracking-tight mb-2 text-zinc-800 dark:text-zinc-100">Access Denied</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
             You don't have permission to access the admin dashboard.
           </p>
