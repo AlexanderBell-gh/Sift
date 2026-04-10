@@ -189,7 +189,7 @@ export function AdminUsers() {
           disabled={expiredCount === 0}
         >
           <Trash2 className="w-4 h-4" />
-          Cleanup ({expiredCount} expired)
+          <span>Cleanup ({expiredCount} expired)</span>
         </Button>
       </div>
 
