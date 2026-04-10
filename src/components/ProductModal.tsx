@@ -5,6 +5,8 @@ import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import type { Product, Category } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
+import { api } from '../lib/api';
+import { Search, Loader2 } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -12,6 +14,13 @@ interface ProductModalProps {
   onSave: (product: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => void;
   product?: Product | null;
   categories: Category[];
+}
+
+interface ImageResult {
+  title: string;
+  imageUrl: string;
+  source: string;
+  sourceUrl: string;
 }
 
 function ProductForm({ product, categories, onSubmit, onCancel }: {
@@ -30,6 +39,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [priceError, setPriceError] = useState('');
   const [isStoreAutoDetected, setIsStoreAutoDetected] = useState(false);
 
+  const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
+  const [imageSearchQuery, setImageSearchQuery] = useState('');
+  const [imageResults, setImageResults] = useState<ImageResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   useEffect(() => {
     if (url && !store) {
       const detected = detectStoreFromUrl(url);
@@ -39,6 +53,12 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       }
     }
   }, [url]);
+
+  useEffect(() => {
+    if (isImageSearchOpen && name.trim()) {
+      setImageSearchQuery(name.trim());
+    }
+  }, [isImageSearchOpen, name]);
 
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStore(e.target.value);
@@ -64,6 +84,27 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       store: store.trim(),
       notes: notes.trim(),
     });
+  };
+
+  const searchImages = async () => {
+    if (!imageSearchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const response = await api.searchImages(imageSearchQuery.trim());
+      setImageResults(response.images || []);
+    } catch (err) {
+      console.error('Image search failed:', err);
+      setImageResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const selectImage = (img: ImageResult) => {
+    setImageUrl(img.imageUrl);
+    setIsImageSearchOpen(false);
+    setImageResults([]);
   };
 
   const categoryOptions = categories.map((c) => ({
@@ -100,18 +141,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => {
-              if (name.trim()) {
-                const searchQuery = encodeURIComponent(name.trim());
-                window.open(`https://www.google.com/search?tbm=isch&q=${searchQuery}`, '_blank');
-              } else {
-                alert('Please enter a product name to search for images');
-              }
-            }}
+            onClick={() => setIsImageSearchOpen(true)}
             className="h-full px-4 whitespace-nowrap"
-            title="Search Google Images"
+            title="Find Images"
           >
-            Search Images
+            Find Images
           </Button>
        </div>
 
@@ -201,6 +235,73 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           Save Product
         </Button>
       </div>
+
+      <Modal
+        isOpen={isImageSearchOpen}
+        onClose={() => { setIsImageSearchOpen(false); setImageResults([]); }}
+        title="Search Images"
+        className="max-w-2xl"
+      >
+        <div className="p-4 space-y-4">
+          <div className="flex gap-2">
+            <Input
+              value={imageSearchQuery}
+              onChange={(e) => setImageSearchQuery(e.target.value)}
+              placeholder="Search for product images..."
+              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  searchImages();
+                }
+              }}
+            />
+            <Button
+              onClick={searchImages}
+              disabled={isSearching || !imageSearchQuery.trim()}
+            >
+              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            </Button>
+          </div>
+
+          {isSearching ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+            </div>
+          ) : imageResults.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-96 overflow-y-auto">
+              {imageResults.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => selectImage(img)}
+                  className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-white/10 hover:border-green-500 transition-colors group"
+                >
+                  <img
+                    src={img.imageUrl}
+                    alt={img.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f4f4f5" width="100" height="100"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-zinc-500 dark:text-zinc-400">
+              <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>Enter a search term and click the search button</p>
+            </div>
+          )}
+
+          {imageResults.length > 0 && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+              Click an image to select it
+            </p>
+          )}
+        </div>
+      </Modal>
     </form>
   );
 }

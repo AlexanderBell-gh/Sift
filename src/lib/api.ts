@@ -275,4 +275,13 @@ export const api = {
     });
     return handleResponse(response);
   },
+
+  async searchImages(query: string): Promise<{ images: { title: string; imageUrl: string; source: string; sourceUrl: string }[] }> {
+    const response = await fetch(`${API_BASE_URL}/api/images`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ q: query }),
+    });
+    return handleResponse(response);
+  },
 };

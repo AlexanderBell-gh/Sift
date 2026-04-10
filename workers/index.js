@@ -944,6 +944,53 @@ async function handleRequest(request, env) {
     return jsonResponse({ deletedCount });
   }
 
+  // Image search via Serper API
+  if (path === '/api/images' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const body = await request.json();
+      const { q } = body;
+
+      if (!q || typeof q !== 'string') {
+        return errorResponse('Query is required');
+      }
+
+      if (!env.SERPER_API_KEY) {
+        return errorResponse('Image search service not configured', 503);
+      }
+
+      const response = await fetch('https://google.serper.dev/images', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': env.SERPER_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: q,
+          num: 20,
+        }),
+      });
+
+      if (!response.ok) {
+        return errorResponse('Failed to fetch images', response.status);
+      }
+
+      const data = await response.json();
+      const images = (data.images || []).map((img: { title?: string; imageUrl?: string; source?: string; sourceUrl?: string; link?: string }) => ({
+        title: img.title || '',
+        imageUrl: img.imageUrl || img.link || '',
+        source: img.source || '',
+        sourceUrl: img.sourceUrl || img.link || '',
+      }));
+
+      return jsonResponse({ images });
+    } catch (e) {
+      return errorResponse('Failed to search images');
+    }
+  }
+
   return errorResponse('Not found', 404);
 }
 
