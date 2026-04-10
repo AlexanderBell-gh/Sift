@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Loader2, Trash2, ChevronLeft, ChevronRight, User, Shield } from 'lucide-react';
+import { Search, Loader2, Trash2, ChevronLeft, ChevronRight, User, Shield, Clock } from 'lucide-react';
 import { api } from '../lib/api';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import type { AdminUser, AdminUserDetail } from '../types';
+
+type FilterType = 'users' | 'trials' | 'all';
 
 export function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -13,6 +15,8 @@ export function AdminUsers() {
   const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterType>('users');
+  const [expiredCount, setExpiredCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -27,10 +31,14 @@ export function AdminUsers() {
   const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
   const [isChangingRole, setIsChangingRole] = useState(false);
 
+  const [isCleanupModalOpen, setIsCleanupModalOpen] = useState(false);
+  const [isCleanupLoading, setIsCleanupLoading] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState<{ deletedCount: number } | null>(null);
+
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await api.getAdminUsers(page, limit, search || undefined);
+      const data = await api.getAdminUsers(page, limit, search || undefined, filter);
       setUsers(data.users);
       setTotal(data.total);
       setTotalPages(data.totalPages);
@@ -39,16 +47,31 @@ export function AdminUsers() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, limit, search]);
+  }, [page, limit, search, filter]);
+
+  const loadExpiredCount = useCallback(async () => {
+    try {
+      const data = await api.getAdminTrials(1, 1, 'expired');
+      setExpiredCount(data.total);
+    } catch {
+      setExpiredCount(0);
+    }
+  }, []);
 
   useEffect(() => {
     loadUsers();
-  }, [loadUsers]);
+    loadExpiredCount();
+  }, [loadUsers, loadExpiredCount]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
     loadUsers();
+  };
+
+  const handleFilterChange = (newFilter: FilterType) => {
+    setFilter(newFilter);
+    setPage(1);
   };
 
   const viewUser = async (userId: string) => {
@@ -102,6 +125,21 @@ export function AdminUsers() {
     }
   };
 
+  const handleCleanup = async () => {
+    setIsCleanupLoading(true);
+    setCleanupResult(null);
+    try {
+      const result = await api.cleanupExpiredTrials();
+      setCleanupResult(result);
+      loadExpiredCount();
+      loadUsers();
+    } catch {
+      alert('Failed to cleanup trials');
+    } finally {
+      setIsCleanupLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -112,6 +150,49 @@ export function AdminUsers() {
 
   return (
     <div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleFilterChange('users')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              filter === 'users'
+                ? 'bg-emerald-500 text-white'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+            }`}
+          >
+            Users
+          </button>
+          <button
+            onClick={() => handleFilterChange('trials')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              filter === 'trials'
+                ? 'bg-emerald-500 text-white'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+            }`}
+          >
+            Trials
+          </button>
+          <button
+            onClick={() => handleFilterChange('all')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              filter === 'all'
+                ? 'bg-emerald-500 text-white'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+            }`}
+          >
+            All
+          </button>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={() => setIsCleanupModalOpen(true)}
+          disabled={expiredCount === 0}
+        >
+          <Trash2 className="w-4 h-4" />
+          Cleanup ({expiredCount} expired)
+        </Button>
+      </div>
+
       <form onSubmit={handleSearch} className="mb-6">
         <div className="flex gap-2">
           <div className="flex-1">
@@ -339,6 +420,41 @@ export function AdminUsers() {
               {isChangingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isCleanupModalOpen}
+        onClose={() => {
+          setIsCleanupModalOpen(false);
+          setCleanupResult(null);
+        }}
+        title="Cleanup Expired Trials"
+        className="max-w-sm"
+      >
+        <div className="p-6 space-y-4">
+          {cleanupResult ? (
+            <div className="text-center py-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 mb-3">
+                <Clock className="w-6 h-6 text-emerald-500" />
+              </div>
+              <p className="font-medium">Cleaned up {cleanupResult.deletedCount} expired trial(s)</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                This will permanently delete all expired trial accounts and their data. This action cannot be undone.
+              </p>
+              <div className="flex gap-2 pt-2">
+                <Button variant="secondary" onClick={() => setIsCleanupModalOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button variant="danger" onClick={handleCleanup} disabled={isCleanupLoading} className="flex-1">
+                  {isCleanupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Cleanup'}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </div>

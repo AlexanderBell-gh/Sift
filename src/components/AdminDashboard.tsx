@@ -1,23 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, Loader2, Lock } from 'lucide-react';
+import { ArrowLeft, Shield, Loader2, Lock, Sun, Moon } from 'lucide-react';
 import { api } from '../lib/api';
 import { AdminStats } from './AdminStats';
 import { AdminUsers } from './AdminUsers';
 import { AdminAnalytics } from './AdminAnalytics';
-import { AdminTrials } from './AdminTrials';
 
-type TabId = 'stats' | 'users' | 'trials' | 'analytics';
+type TabId = 'stats' | 'users' | 'analytics';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('stats');
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     checkAdminStatus();
+    initTheme();
   }, []);
+
+  const initTheme = () => {
+    const stored = localStorage.getItem('pricetrackr_theme');
+    const dark = stored !== 'light';
+    setIsDark(dark);
+    if (dark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    localStorage.setItem('pricetrackr_theme', newIsDark ? 'dark' : 'light');
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   const checkAdminStatus = async () => {
     try {
@@ -37,7 +60,6 @@ export function AdminDashboard() {
   const tabs: { id: TabId; label: string }[] = [
     { id: 'stats', label: 'Stats' },
     { id: 'users', label: 'Users' },
-    { id: 'trials', label: 'Trials' },
     { id: 'analytics', label: 'Analytics' },
   ];
 
@@ -86,12 +108,24 @@ export function AdminDashboard() {
             <Shield className="w-5 h-5 text-emerald-500" />
             <h1 className="text-xl font-semibold tracking-tight">Admin Dashboard</h1>
           </div>
-          <button
-            onClick={() => navigate('/app')}
-            className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-          >
-            Exit Admin
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4 text-zinc-500" />
+              ) : (
+                <Moon className="w-4 h-4 text-zinc-500" />
+              )}
+            </button>
+            <button
+              onClick={() => navigate('/app')}
+              className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+            >
+              Exit Admin
+            </button>
+          </div>
         </div>
 
         <div className="border-b border-zinc-200 dark:border-white/10 mb-6">
@@ -114,7 +148,6 @@ export function AdminDashboard() {
 
         {activeTab === 'stats' && <AdminStats />}
         {activeTab === 'users' && <AdminUsers />}
-        {activeTab === 'trials' && <AdminTrials />}
         {activeTab === 'analytics' && <AdminAnalytics />}
       </div>
     </div>

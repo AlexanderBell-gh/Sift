@@ -212,8 +212,8 @@ export const api = {
     return handleResponse(response);
   },
 
-  async getAdminUsers(page = 1, limit = 20, search?: string): Promise<{ users: AdminUser[]; total: number; page: number; limit: number; totalPages: number }> {
-    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  async getAdminUsers(page = 1, limit = 20, search?: string, filter: 'users' | 'trials' | 'all' = 'users'): Promise<{ users: AdminUser[]; total: number; page: number; limit: number; totalPages: number }> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit), filter });
     if (search) params.set('search', search);
     const response = await fetch(`${API_BASE_URL}/api/admin/users?${params}`, {
       headers: getAuthHeaders(),

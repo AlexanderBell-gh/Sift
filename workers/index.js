@@ -670,6 +670,7 @@ async function handleRequest(request, env) {
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
     const search = url.searchParams.get('search')?.toLowerCase() || '';
+    const filter = url.searchParams.get('filter') || 'users';
 
     const usersWithStats = await Promise.all(
       userIds.map(async (userId) => {
@@ -693,7 +694,13 @@ async function handleRequest(request, env) {
     );
 
     let filteredUsers = usersWithStats.filter(u => u !== null);
-    
+
+    if (filter === 'users') {
+      filteredUsers = filteredUsers.filter(u => !u.isTrial);
+    } else if (filter === 'trials') {
+      filteredUsers = filteredUsers.filter(u => u.isTrial);
+    }
+
     if (search) {
       filteredUsers = filteredUsers.filter(u => 
         u.username.toLowerCase().includes(search) || 
