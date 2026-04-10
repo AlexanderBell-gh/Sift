@@ -143,9 +143,9 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
             variant="secondary"
             onClick={() => setIsImageSearchOpen(true)}
             className="h-full px-4 whitespace-nowrap"
-            title="Find Images"
+            title="Find Products"
           >
-            Find Images
+            Find Products
           </Button>
        </div>
 
@@ -239,7 +239,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       <Modal
         isOpen={isImageSearchOpen}
         onClose={() => { setIsImageSearchOpen(false); setImageResults([]); }}
-        title="Search Images"
+        title="Find Products"
         className="max-w-2xl"
       >
         <div className="p-4 space-y-4">
