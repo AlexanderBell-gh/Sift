@@ -5,8 +5,9 @@ import { api } from '../lib/api';
 import { AdminStats } from './AdminStats';
 import { AdminUsers } from './AdminUsers';
 import { AdminAnalytics } from './AdminAnalytics';
+import { AdminTrials } from './AdminTrials';
 
-type TabId = 'stats' | 'users' | 'analytics';
+type TabId = 'stats' | 'users' | 'trials' | 'analytics';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export function AdminDashboard() {
   const tabs: { id: TabId; label: string }[] = [
     { id: 'stats', label: 'Stats' },
     { id: 'users', label: 'Users' },
+    { id: 'trials', label: 'Trials' },
     { id: 'analytics', label: 'Analytics' },
   ];
 
@@ -112,6 +114,7 @@ export function AdminDashboard() {
 
         {activeTab === 'stats' && <AdminStats />}
         {activeTab === 'users' && <AdminUsers />}
+        {activeTab === 'trials' && <AdminTrials />}
         {activeTab === 'analytics' && <AdminAnalytics />}
       </div>
     </div>

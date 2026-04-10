@@ -104,3 +104,13 @@ export interface AdminUserDetail extends AdminUser {
   totalPrices: number;
   products: AdminUserProduct[];
 }
+
+export interface AdminTrial {
+  id: string;
+  username: string;
+  email: string;
+  createdAt: string;
+  trialExpiresAt: number;
+  isExpired: boolean;
+  productCount: number;
+}

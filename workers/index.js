@@ -815,6 +815,85 @@ async function handleRequest(request, env) {
     });
   }
 
+  // Admin trials list
+  if (path === '/api/admin/trials') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const userIds = await env.USERS.get('users', 'json') || [];
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const status = url.searchParams.get('status') || 'all';
+    const search = url.searchParams.get('search')?.toLowerCase() || '';
+
+    const trialsWithStats = await Promise.all(
+      userIds.map(async (userId) => {
+        const user = await getUserById(env, userId);
+        if (!user || !user.isTrial) return null;
+
+        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
+        const productCount = productIds.length;
+        const isExpired = user.trialExpiresAt && user.trialExpiresAt < Date.now();
+
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          createdAt: user.createdAt,
+          trialExpiresAt: user.trialExpiresAt,
+          isExpired,
+          productCount,
+        };
+      })
+    );
+
+    let filteredTrials = trialsWithStats.filter(t => t !== null);
+
+    if (status === 'active') {
+      filteredTrials = filteredTrials.filter(t => !t.isExpired);
+    } else if (status === 'expired') {
+      filteredTrials = filteredTrials.filter(t => t.isExpired);
+    }
+
+    if (search) {
+      filteredTrials = filteredTrials.filter(t =>
+        t.username.toLowerCase().includes(search)
+      );
+    }
+
+    const total = filteredTrials.length;
+    const start = (page - 1) * limit;
+    const paginatedTrials = filteredTrials.slice(start, start + limit);
+
+    return jsonResponse({
+      trials: paginatedTrials,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
+  }
+
+  // Admin trials cleanup
+  if (path === '/api/admin/trials/cleanup' && method === 'DELETE') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const userIds = await env.USERS.get('users', 'json') || [];
+    let deletedCount = 0;
+
+    for (const userId of userIds) {
+      const user = await getUserById(env, userId);
+      if (user && user.isTrial && user.trialExpiresAt && user.trialExpiresAt < Date.now()) {
+        await deleteUserData(env, userId);
+        await deleteUser(env, userId);
+        deletedCount++;
+      }
+    }
+
+    return jsonResponse({ deletedCount });
+  }
+
   return errorResponse('Not found', 404);
 }
 
