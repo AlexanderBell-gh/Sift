@@ -978,7 +978,7 @@ async function handleRequest(request, env) {
       }
 
       const data = await response.json();
-      const images = (data.images || []).map((img: { title?: string; imageUrl?: string; source?: string; sourceUrl?: string; link?: string }) => ({
+      const images = (data.images || []).map((img) => ({
         title: img.title || '',
         imageUrl: img.imageUrl || img.link || '',
         source: img.source || '',
