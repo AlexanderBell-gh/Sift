@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Loader2, Trash2, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Search, Loader2, Trash2, ChevronLeft, ChevronRight, User, Shield } from 'lucide-react';
 import { api } from '../lib/api';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -21,6 +21,11 @@ export function AdminUsers() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [userToChangeRole, setUserToChangeRole] = useState<AdminUser | null>(null);
+  const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
+  const [isChangingRole, setIsChangingRole] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
@@ -76,6 +81,27 @@ export function AdminUsers() {
     }
   };
 
+  const openRoleModal = (user: AdminUser, role: 'admin' | 'user') => {
+    setUserToChangeRole(user);
+    setNewRole(role);
+    setIsRoleModalOpen(true);
+  };
+
+  const handleRoleChange = async () => {
+    if (!userToChangeRole) return;
+    setIsChangingRole(true);
+    try {
+      await api.updateUserRole(userToChangeRole.id, newRole);
+      setIsRoleModalOpen(false);
+      setUserToChangeRole(null);
+      loadUsers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update role');
+    } finally {
+      setIsChangingRole(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -116,6 +142,7 @@ export function AdminUsers() {
                 <tr className="text-left text-sm text-zinc-500 dark:text-zinc-400">
                   <th className="px-4 py-3 font-medium">Username</th>
                   <th className="px-4 py-3 font-medium">Email</th>
+                  <th className="px-4 py-3 font-medium">Role</th>
                   <th className="px-4 py-3 font-medium">Type</th>
                   <th className="px-4 py-3 font-medium">Products</th>
                   <th className="px-4 py-3 font-medium">Joined</th>
@@ -127,6 +154,18 @@ export function AdminUsers() {
                   <tr key={user.id} className="hover:bg-zinc-50 dark:hover:bg-white/5">
                     <td className="px-4 py-3 font-medium">{user.username}</td>
                     <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">{user.email}</td>
+                    <td className="px-4 py-3">
+                      {user.role === 'admin' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                          <Shield className="w-3 h-3" />
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                          User
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       {user.isTrial ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -145,6 +184,15 @@ export function AdminUsers() {
                         <Button variant="ghost" onClick={() => viewUser(user.id)}>
                           <User className="w-4 h-4" />
                         </Button>
+                        {user.role === 'admin' ? (
+                          <Button variant="ghost" onClick={() => openRoleModal(user, 'user')}>
+                            <Shield className="w-4 h-4 text-zinc-400" />
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" onClick={() => openRoleModal(user, 'admin')}>
+                            <Shield className="w-4 h-4 text-purple-500" />
+                          </Button>
+                        )}
                         <Button variant="ghost" onClick={() => confirmDelete(user)}>
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
@@ -199,6 +247,10 @@ export function AdminUsers() {
                 <p className="font-medium">{selectedUser.email}</p>
               </div>
               <div>
+                <p className="text-zinc-500 dark:text-zinc-400">Role</p>
+                <p className="font-medium">{selectedUser.role === 'admin' ? 'Admin' : 'User'}</p>
+              </div>
+              <div>
                 <p className="text-zinc-500 dark:text-zinc-400">Account Type</p>
                 <p className="font-medium">{selectedUser.isTrial ? 'Trial' : 'Registered'}</p>
               </div>
@@ -209,10 +261,6 @@ export function AdminUsers() {
               <div>
                 <p className="text-zinc-500 dark:text-zinc-400">Products</p>
                 <p className="font-medium">{selectedUser.productCount}</p>
-              </div>
-              <div>
-                <p className="text-zinc-500 dark:text-zinc-400">Price Entries</p>
-                <p className="font-medium">{selectedUser.totalPrices}</p>
               </div>
             </div>
 
@@ -263,6 +311,32 @@ export function AdminUsers() {
             </Button>
             <Button variant="danger" onClick={handleDelete} disabled={isDeleting} className="flex-1">
               {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isRoleModalOpen}
+        onClose={() => setIsRoleModalOpen(false)}
+        title="Change Role"
+        className="max-w-sm"
+      >
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Are you sure you want to change <strong>{userToChangeRole?.username}</strong>'s role to <strong>{newRole === 'admin' ? 'Admin' : 'User'}</strong>?
+          </p>
+          {newRole === 'user' && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Warning: Demoting an admin to user will remove their access to the admin dashboard.
+            </p>
+          )}
+          <div className="flex gap-2 pt-2">
+            <Button variant="secondary" onClick={() => setIsRoleModalOpen(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleRoleChange} disabled={isChangingRole} className="flex-1">
+              {isChangingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
             </Button>
           </div>
         </div>

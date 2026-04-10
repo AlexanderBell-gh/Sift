@@ -239,6 +239,18 @@ export const api = {
     }
   },
 
+  async updateUserRole(id: string, role: 'admin' | 'user'): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/role`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ role }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to update role' }));
+      throw new Error(error.error || 'Failed to update role');
+    }
+  },
+
   async getAdminAnalytics(): Promise<{ categoryDistribution: Record<string, number>; storeDistribution: Record<string, number>; totalProducts: number; totalPriceEntries: number; userCount: number }> {
     const response = await fetch(`${API_BASE_URL}/api/admin/analytics`, {
       headers: getAuthHeaders(),

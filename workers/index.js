@@ -776,6 +776,49 @@ async function handleRequest(request, env) {
     return jsonResponse({ success: true });
   }
 
+  // Admin update user role
+  const roleMatch = path.match(/^\/api\/admin\/users\/(.+)\/role$/);
+  if (roleMatch && method === 'PUT') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const targetUserId = roleMatch[1];
+    const targetUser = await getUserById(env, targetUserId);
+    if (!targetUser) {
+      return errorResponse('User not found', 404);
+    }
+
+    try {
+      const body = await request.json();
+      const newRole = body.role;
+
+      if (!newRole || (newRole !== 'admin' && newRole !== 'user')) {
+        return errorResponse('Invalid role. Must be "admin" or "user"');
+      }
+
+      if (newRole === 'user' && targetUser.role === 'admin') {
+        const userIds = await env.USERS.get('users', 'json') || [];
+        let adminCount = 0;
+        for (const uid of userIds) {
+          const u = await getUserById(env, uid);
+          if (u && u.role === 'admin' && u.id !== targetUserId) {
+            adminCount++;
+          }
+        }
+        if (adminCount === 0) {
+          return errorResponse('Cannot demote the last admin');
+        }
+      }
+
+      targetUser.role = newRole;
+      await saveUser(env, targetUser);
+
+      return jsonResponse({ success: true, role: newRole });
+    } catch (e) {
+      return errorResponse('Invalid request body');
+    }
+  }
+
   // Admin analytics
   if (path === '/api/admin/analytics') {
     const admin = await requireAdmin(request, env);
