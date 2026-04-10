@@ -24,12 +24,12 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
 - **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
-- **Google Images Search**: Search and add product images via Google Images (right-click image → Copy link address for Product URL, Copy image address for Image URL)
+- **Product Image Search**: In-app image search via "Find Products" button (uses Serper API)
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
-- **Auto-detect Store**: Automatically detects store from product URL (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
-- **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (merge behavior, duplicates skipped; registered users only)
-- **Admin Dashboard**: Management dashboard for system stats, user management, and analytics (registered users only)
+- **Auto-detect Store**: Automatically detects store from product URL
+- **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (registered users only)
+- **Admin Dashboard**: Management dashboard for system stats, user management, and analytics (admin users only)
 
 ## Tech Stack
 
@@ -39,6 +39,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
 - **Deployment**: Cloudflare Pages + GitHub Actions
+- **External API**: Serper API (image search)
 
 ## Getting Started
 
@@ -103,7 +104,19 @@ After deploying the Worker, update the API URL in `src/lib/api.ts`:
 
 ```typescript
 const API_BASE_URL = 'https://your-worker-url.workers.dev';
-const USE_LOCAL_STORAGE = false;
+```
+
+### Serper API Key (Image Search)
+
+For the "Find Products" feature, you need a Serper API key:
+
+1. Sign up at https://serper.dev
+2. Get your API key from the dashboard
+3. Add the secret to Cloudflare Workers:
+
+```bash
+cd workers
+wrangler secret put SERPER_API_KEY
 ```
 
 ## Project Structure
@@ -117,15 +130,15 @@ PriceTrackr/
 │   │   ├── MainApp.tsx   # Main application logic
 │   │   ├── ProductCard.tsx      # Product display card with staggered animations
 │   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
-│   │   ├── ProductModal.tsx     # Add/Edit product form
+│   │   ├── ProductModal.tsx     # Add/Edit product form with Find Products
 │   │   ├── ProductDetail.tsx    # Product detail with sparkline chart
 │   │   ├── AddPriceModal.tsx    # Add price entry
-│   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown (categories + stores)
+│   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown
 │   │   ├── SortSelect.tsx       # Sort dropdown
 │   │   ├── AddCategoryModal.tsx # Add custom category
-│   │   ├── AdminDashboard.tsx   # Admin dashboard (stats, users, analytics)
+│   │   ├── AdminDashboard.tsx   # Admin dashboard with role-based auth
 │   │   ├── AdminStats.tsx       # System statistics cards
-│   │   ├── AdminUsers.tsx       # User management table
+│   │   ├── AdminUsers.tsx       # User management with filters and role change
 │   │   └── AdminAnalytics.tsx   # Aggregate analytics charts
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
@@ -145,12 +158,6 @@ PriceTrackr/
 │   ├── auth.js                  # Authentication utilities
 │   └── wrangler.toml
 ├── public/                      # Static assets (favicons, logos)
-│   ├── landing_logo.png         # Landing page logo (white container)
-│   ├── light_mode_logo.png      # Main app light mode logo
-│   ├── dark_mode_logo.png       # Main app dark mode logo
-│   ├── favicon*.png             # Various favicon sizes
-│   ├── storeicon_*.png          # Store icons (aldi, asda, co-op, iceland, lidl, mands, morrisons, ocado, sainsburys, tesco, waitrose)
-│   └── site.webmanifest         # Web manifest
 ├── .github/workflows/           # CI/CD
 └── package.json
 ```
@@ -161,13 +168,33 @@ MIT
 
 ## Admin Dashboard
 
-The admin dashboard provides system management capabilities:
+The admin dashboard provides system management capabilities for users with admin role.
 
-1. Navigate to `/admin` or click "Admin" in Settings (registered users only)
-2. Enter the admin secret to access the dashboard
-3. Three tabs available:
-   - **Stats**: Total users, trial users, products, and price entries
-   - **Users**: View, search, and delete user accounts
-   - **Analytics**: Category and store distribution across all users
+### Access
 
-Admin access is controlled via the `X-Admin-Secret` header, which must match the `ADMIN_SECRET` environment variable configured in `workers/wrangler.toml`.
+- Navigate to `/admin` route
+- Requires user account with `role: admin`
+- Non-admin users see an "Access Denied" message
+
+### Creating an Admin User
+
+Admin users are created via the registration endpoint with an admin secret:
+
+```bash
+curl -X POST https://your-worker-url/api/auth/register-admin \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "username": "admin", "password": "password", "adminSecret": "your-admin-secret"}'
+```
+
+The admin secret must match the `ADMIN_SECRET` environment variable in your Worker configuration.
+
+### Features
+
+- **Stats Tab**: View system statistics (total users, regular users, trial users, total products, total price entries)
+- **Users Tab**: Manage users with:
+  - Filter: Users / Trials / All
+  - Role change: Promote users to admin or demote admins to user
+  - Delete: Remove user accounts and their data
+  - Cleanup Expired: Purge expired trial accounts
+- **Analytics Tab**: View category and store distribution across all users
+- **Dark/Light Mode**: Toggle in the header (synced with main app)

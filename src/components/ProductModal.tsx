@@ -154,7 +154,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
          type="url"
          value={url}
          onChange={(e) => setUrl(e.target.value)}
-         placeholder="Right-click product → Copy link address → Paste here"
+         placeholder="Enter Product URL"
        />
 
        <div>
@@ -163,7 +163,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           type="url"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="Right-click image → Copy image address → Paste here"
+          placeholder="Once an image is selected a thumbnail will appear below"
         />
         {imageUrl && (
           <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
