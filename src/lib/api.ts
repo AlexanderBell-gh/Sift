@@ -1,4 +1,4 @@
-import type { Product, Category, AuthResponse, AdminUser, AdminUserDetail, AdminTrial } from '../types';
+import type { Product, Category, AuthResponse, AdminUser, AdminUserDetail, AdminTrial, AuditLog } from '../types';
 
 const API_BASE_URL = 'https://pricetrackr-api.inbox-alexbell.workers.dev';
 
@@ -271,6 +271,18 @@ export const api = {
   async cleanupExpiredTrials(): Promise<{ deletedCount: number }> {
     const response = await fetch(`${API_BASE_URL}/api/admin/trials/cleanup`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getAuditLogs(page = 1, limit = 20, action?: string, search?: string, startDate?: string, endDate?: string): Promise<{ logs: AuditLog[]; total: number; page: number; limit: number; totalPages: number }> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (action) params.set('action', action);
+    if (search) params.set('search', search);
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    const response = await fetch(`${API_BASE_URL}/api/admin/audit?${params}`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);

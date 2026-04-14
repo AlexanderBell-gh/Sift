@@ -114,3 +114,14 @@ export interface AdminTrial {
   isExpired: boolean;
   productCount: number;
 }
+
+export interface AuditLog {
+  id: string;
+  action: 'admin.user_delete' | 'admin.role_change' | 'admin.trials_cleanup';
+  adminId: string;
+  adminUsername: string;
+  targetUserId?: string;
+  targetUsername?: string;
+  details: string;
+  timestamp: number;
+}

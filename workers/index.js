@@ -112,6 +112,21 @@ async function deleteUserData(env, userId) {
   await env.PRICETRACKR.delete(`user:${userId}:categories`);
 }
 
+const MAX_AUDIT_LOGS = 1000;
+
+async function logAudit(env, entry) {
+  const logs = await env.PRICETRACKR.get('audit_logs', 'json') || [];
+  logs.unshift({
+    id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    ...entry,
+    timestamp: Date.now(),
+  });
+  if (logs.length > MAX_AUDIT_LOGS) {
+    logs.length = MAX_AUDIT_LOGS;
+  }
+  await env.PRICETRACKR.put('audit_logs', JSON.stringify(logs));
+}
+
 async function authenticate(request, env) {
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/auth_token=([^;]+)/);
@@ -780,6 +795,16 @@ async function handleRequest(request, env) {
     await deleteUserData(env, userId);
     await deleteUser(env, userId);
 
+    const adminUser = await getUserById(env, admin.userId);
+    await logAudit(env, {
+      action: 'admin.user_delete',
+      adminId: admin.userId,
+      adminUsername: adminUser?.username || 'unknown',
+      targetUserId: userId,
+      targetUsername: user.username,
+      details: `deleted user ${user.username}`,
+    });
+
     return jsonResponse({ success: true });
   }
 
@@ -817,13 +842,73 @@ async function handleRequest(request, env) {
         }
       }
 
+      const oldRole = targetUser.role;
       targetUser.role = newRole;
       await saveUser(env, targetUser);
+
+      const adminUser = await getUserById(env, admin.userId);
+      await logAudit(env, {
+        action: 'admin.role_change',
+        adminId: admin.userId,
+        adminUsername: adminUser?.username || 'unknown',
+        targetUserId: targetUserId,
+        targetUsername: targetUser.username,
+        details: `changed ${targetUser.username} from ${oldRole} to ${newRole}`,
+      });
 
       return jsonResponse({ success: true, role: newRole });
     } catch (e) {
       return errorResponse('Invalid request body');
     }
+  }
+
+  // Admin audit logs
+  if (path === '/api/admin/audit') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const logs = await env.PRICETRACKR.get('audit_logs', 'json') || [];
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const actionFilter = url.searchParams.get('action') || '';
+    const search = url.searchParams.get('search')?.toLowerCase() || '';
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
+
+    let filtered = logs;
+
+    if (actionFilter) {
+      filtered = filtered.filter(l => l.action === actionFilter);
+    }
+
+    if (search) {
+      filtered = filtered.filter(l => 
+        l.adminUsername.toLowerCase().includes(search) ||
+        l.targetUsername?.toLowerCase().includes(search)
+      );
+    }
+
+    if (startDate) {
+      const startMs = new Date(startDate).getTime();
+      filtered = filtered.filter(l => l.timestamp >= startMs);
+    }
+
+    if (endDate) {
+      const endMs = new Date(endDate).getTime() + 86400000;
+      filtered = filtered.filter(l => l.timestamp <= endMs);
+    }
+
+    const total = filtered.length;
+    const start = (page - 1) * limit;
+    const paginatedLogs = filtered.slice(start, start + limit);
+
+    return jsonResponse({
+      logs: paginatedLogs,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
   // Admin analytics
@@ -940,6 +1025,14 @@ async function handleRequest(request, env) {
         deletedCount++;
       }
     }
+
+    const adminUser = await getUserById(env, admin.userId);
+    await logAudit(env, {
+      action: 'admin.trials_cleanup',
+      adminId: admin.userId,
+      adminUsername: adminUser?.username || 'unknown',
+      details: `deleted ${deletedCount} expired trial accounts`,
+    });
 
     return jsonResponse({ deletedCount });
   }
