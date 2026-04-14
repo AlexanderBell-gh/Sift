@@ -24,12 +24,14 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
 - **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
-- **Product Image Search**: In-app image search via "Find Products" button (uses Serper API)
+- **Product Image Search**: Find product images via Serper API
+- **Product Web Search**: Search products to find URLs (uses Serper API)
+- **AI Price Extraction**: Extract price/details from product URLs using Google Gemini AI
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL
 - **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (registered users only)
-- **Admin Dashboard**: Management dashboard for system stats, user management, and analytics (admin users only)
+- **Admin Dashboard**: System stats, user management, analytics, activity audit log (admin users only)
 
 ## Tech Stack
 
@@ -39,7 +41,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
 - **Deployment**: Cloudflare Pages + GitHub Actions
-- **External API**: Serper API (image search)
+- **External APIs**: Serper API (image + web search), Google Gemini (AI price extraction)
 
 ## Getting Started
 
@@ -106,18 +108,25 @@ After deploying the Worker, update the API URL in `src/lib/api.ts`:
 const API_BASE_URL = 'https://your-worker-url.workers.dev';
 ```
 
-### Serper API Key (Image Search)
+### API Keys
 
-For the "Find Products" feature, you need a Serper API key:
+For product search and AI features, you need API keys:
 
-1. Sign up at https://serper.dev
-2. Get your API key from the dashboard
-3. Add the secret to Cloudflare Workers:
+1. **Serper API Key** (image + web search):
+   - Sign up at https://serper.dev
+   - Add the secret to Cloudflare Workers:
+   ```bash
+   cd workers
+   wrangler secret put SERPER_API_KEY
+   ```
 
-```bash
-cd workers
-wrangler secret put SERPER_API_KEY
-```
+2. **Gemini API Key** (AI price extraction):
+   - Get your API key from Google AI Studio
+   - Add the secret to Cloudflare Workers:
+   ```bash
+   cd workers
+   wrangler secret put GEMINI_API_KEY
+   ```
 
 ## Project Structure
 
@@ -130,20 +139,20 @@ PriceTrackr/
 │   │   ├── MainApp.tsx   # Main application logic
 │   │   ├── ProductCard.tsx      # Product display card with staggered animations
 │   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
-│   │   ├── ProductModal.tsx     # Add/Edit product form with Find Products
+│   │   ├── ProductModal.tsx     # Add/Edit product form with search + AI
 │   │   ├── ProductDetail.tsx    # Product detail with sparkline chart
 │   │   ├── AddPriceModal.tsx    # Add price entry
 │   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown
 │   │   ├── SortSelect.tsx       # Sort dropdown
 │   │   ├── AddCategoryModal.tsx # Add custom category
-│   │   ├── AdminDashboard.tsx   # Admin dashboard with role-based auth
-│   │   ├── AdminStats.tsx       # System statistics cards
-│   │   ├── AdminUsers.tsx       # User management with filters and role change
-│   │   └── AdminAnalytics.tsx   # Aggregate analytics charts
+│   │   ├── AdminDashboard.tsx   # Admin dashboard
+│   │   ├── AdminUsers.tsx       # User management
+│   │   ├── AdminAnalytics.tsx   # Analytics + stats
+│   │   └── AdminActivity.tsx    # Activity/audit log
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
 │   ├── pages/
-│   │   ├── Landing.tsx          # Sign in/up page with gradient background
+│   │   ├── Landing.tsx          # Sign in/up page
 │   │   └── Settings.tsx         # User settings
 │   ├── lib/
 │   │   ├── api.ts               # API client
@@ -152,12 +161,12 @@ PriceTrackr/
 │   │   └── index.ts             # TypeScript types
 │   ├── App.tsx
 │   ├── main.tsx
-│   └── index.css                # Global styles, design tokens, animations
+│   └── index.css                # Global styles
 ├── workers/
 │   ├── index.js                 # Worker API endpoints
 │   ├── auth.js                  # Authentication utilities
 │   └── wrangler.toml
-├── public/                      # Static assets (favicons, logos)
+├── public/                      # Static assets
 ├── .github/workflows/           # CI/CD
 └── package.json
 ```
@@ -190,11 +199,22 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 
 ### Features
 
-- **Stats Tab**: View system statistics (total users, regular users, trial users, total products, total price entries)
 - **Users Tab**: Manage users with:
   - Filter: Users / Trials / All
   - Role change: Promote users to admin or demote admins to user
   - Delete: Remove user accounts and their data
   - Cleanup Expired: Purge expired trial accounts
-- **Analytics Tab**: View category and store distribution across all users
+- **Analytics Tab**: Stats cards + category/store distribution charts
+- **Activity Tab**: Audit log of admin actions (user deletes, role changes, trial cleanups)
 - **Dark/Light Mode**: Toggle in the header (synced with main app)
+
+## Adding Products - Workflow
+
+The Product Modal provides a streamlined workflow:
+
+1. **Enter product name** in the name field
+2. Click **Search** button → Serper returns web search results
+3. Click a result → URL auto-fills, store auto-detected
+4. Click **AI Extract** button → extracts price from the URL using Gemini AI
+5. Optionally add image via **Find Images** button (searches images via Serper)
+6. Fill remaining fields (category, notes), Save
