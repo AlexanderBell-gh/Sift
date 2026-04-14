@@ -45,6 +45,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [isSearching, setIsSearching] = useState(false);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState('');
 
   useEffect(() => {
     if (url && !store) {
@@ -112,6 +113,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const analyzeProduct = async () => {
     if (!name.trim()) return;
     setIsAnalyzing(true);
+    setAnalyzeError('');
     try {
       const result: ProductAnalysis = await api.analyzeProduct(name.trim());
       if (result) {
@@ -128,6 +130,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         }
       }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'AI analysis failed';
+      setAnalyzeError(msg);
       console.error('AI analysis failed:', err);
     } finally {
       setIsAnalyzing(false);
@@ -182,11 +186,14 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
            title="AI Search"
          >
            {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-         </Button>
-       </div>
+</Button>
+        </div>
+        {analyzeError && (
+          <p className="text-sm text-red-500">{analyzeError}</p>
+        )}
 
-       <Input
-         label="Product URL"
+        <Input
+          label="Product URL"
          type="url"
          value={url}
          onChange={(e) => setUrl(e.target.value)}

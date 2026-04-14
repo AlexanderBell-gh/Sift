@@ -1108,6 +1108,7 @@ async function handleRequest(request, env) {
       }
 
       if (!env.GEMINI_API_KEY) {
+        console.error('GEMINI_API_KEY not configured');
         return errorResponse('AI service not configured', 503);
       }
 
@@ -1125,7 +1126,10 @@ Provide a JSON object with the most relevant product found:
 
 Only respond with valid JSON. No explanation or additional text.`;
 
-      const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + env.GEMINI_API_KEY, {
+      const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + env.GEMINI_API_KEY;
+      console.log('Calling Gemini API with model gemini-1.5-flash...');
+
+      const geminiResponse = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1138,11 +1142,19 @@ Only respond with valid JSON. No explanation or additional text.`;
       });
 
       if (!geminiResponse.ok) {
-        return errorResponse('AI analysis failed', geminiResponse.status);
+        const errText = await geminiResponse.text();
+        console.error('Gemini API error:', geminiResponse.status, errText);
+        return errorResponse('AI analysis failed: ' + geminiResponse.status, geminiResponse.status);
       }
 
       const data = await geminiResponse.json();
+      console.log('Gemini response:', JSON.stringify(data).slice(0, 500));
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      if (!text) {
+        console.error('Empty response from Gemini');
+        return errorResponse('AI returned empty response');
+      }
 
       try {
         const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -1157,9 +1169,11 @@ Only respond with valid JSON. No explanation or additional text.`;
           inStock: product.inStock,
         });
       } catch (parseErr) {
+        console.error('JSON parse error:', parseErr, 'Text was:', text);
         return errorResponse('Failed to parse AI response');
       }
     } catch (e) {
+      console.error('AI analysis error:', e);
       return errorResponse('Failed to analyze product');
     }
   }
