@@ -3,10 +3,10 @@ import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
-import type { Product, Category } from '../types';
+import type { Product, Category, ProductAnalysis } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Sparkles } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -43,6 +43,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [imageSearchQuery, setImageSearchQuery] = useState('');
   const [imageResults, setImageResults] = useState<ImageResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (url && !store) {
@@ -107,6 +109,31 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     setImageResults([]);
   };
 
+  const analyzeProduct = async () => {
+    if (!name.trim()) return;
+    setIsAnalyzing(true);
+    try {
+      const result: ProductAnalysis = await api.analyzeProduct(name.trim());
+      if (result) {
+        if (result.name) setName(result.name);
+        if (result.url) setUrl(result.url);
+        if (result.price) setPrice(result.price.toString());
+        if (result.imageUrl) setImageUrl(result.imageUrl);
+        if (result.url) {
+          const detected = detectStoreFromUrl(result.url);
+          if (detected) {
+            setStore(detected);
+            setIsStoreAutoDetected(true);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('AI analysis failed:', err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const categoryOptions = categories.map((c) => ({
     value: c.id,
     label: c.name,
@@ -138,15 +165,24 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
            required
            className="flex-1"
          />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setIsImageSearchOpen(true)}
-            className="h-full px-4 whitespace-nowrap"
-            title="Find Products"
-          >
-            Find Products
-          </Button>
+         <Button
+           type="button"
+           variant="secondary"
+           onClick={() => setIsImageSearchOpen(true)}
+           className="h-full px-4 whitespace-nowrap"
+           title="Find Products"
+         >
+           <Search className="w-4 h-4" />
+         </Button>
+         <Button
+           type="button"
+           onClick={analyzeProduct}
+           disabled={isAnalyzing || !name.trim()}
+           className="h-full px-4 whitespace-nowrap"
+           title="AI Search"
+         >
+           {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+         </Button>
        </div>
 
        <Input

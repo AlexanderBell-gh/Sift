@@ -1,4 +1,4 @@
-import type { Product, Category, AuthResponse, AdminUser, AdminUserDetail, AdminTrial, AuditLog } from '../types';
+import type { Product, Category, AuthResponse, AdminUser, AdminUserDetail, AdminTrial, AuditLog, ProductAnalysis } from '../types';
 
 const API_BASE_URL = 'https://pricetrackr-api.inbox-alexbell.workers.dev';
 
@@ -293,6 +293,15 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ q: query }),
+    });
+    return handleResponse(response);
+  },
+
+  async analyzeProduct(productName: string): Promise<ProductAnalysis> {
+    const response = await fetch(`${API_BASE_URL}/api/ai/analyze-product`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ productName }),
     });
     return handleResponse(response);
   },

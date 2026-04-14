@@ -125,3 +125,13 @@ export interface AuditLog {
   details: string;
   timestamp: number;
 }
+
+export interface ProductAnalysis {
+  name: string;
+  url: string;
+  price: number;
+  currency: string;
+  imageUrl?: string;
+  inStock?: boolean;
+  store?: string;
+}

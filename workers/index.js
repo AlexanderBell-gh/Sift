@@ -1094,6 +1094,76 @@ async function handleRequest(request, env) {
     }
   }
 
+  // AI product analysis via Gemini
+  if (path === '/api/ai/analyze-product' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const body = await request.json();
+      const { productName } = body;
+
+      if (!productName || typeof productName !== 'string') {
+        return errorResponse('Product name is required');
+      }
+
+      if (!env.GEMINI_API_KEY) {
+        return errorResponse('AI service not configured', 503);
+      }
+
+      const prompt = `You are a grocery price research assistant. Search for the product "${productName}" in UK supermarkets (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op). 
+
+Provide a JSON object with the most relevant product found:
+{
+  "name": "exact product name as it appears on the supermarket site",
+  "url": "direct product page URL from a UK supermarket",
+  "price": the current price as a number (just the number, no currency symbol),
+  "currency": "GBP",
+  "imageUrl": "product image URL if available",
+  "inStock": true/false/unknown
+}
+
+Only respond with valid JSON. No explanation or additional text.`;
+
+      const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + env.GEMINI_API_KEY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1024,
+          },
+        }),
+      });
+
+      if (!geminiResponse.ok) {
+        return errorResponse('AI analysis failed', geminiResponse.status);
+      }
+
+      const data = await geminiResponse.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      try {
+        const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const product = JSON.parse(cleaned);
+
+        return jsonResponse({
+          name: product.name || productName,
+          url: product.url || '',
+          price: parseFloat(product.price) || 0,
+          currency: product.currency || 'GBP',
+          imageUrl: product.imageUrl || '',
+          inStock: product.inStock,
+        });
+      } catch (parseErr) {
+        return errorResponse('Failed to parse AI response');
+      }
+    } catch (e) {
+      return errorResponse('Failed to analyze product');
+    }
+  }
+
   return errorResponse('Not found', 404);
 }
 
