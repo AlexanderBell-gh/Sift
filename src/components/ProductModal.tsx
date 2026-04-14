@@ -259,7 +259,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-transparent border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-400 dark:focus:border-green-400/60 transition-all resize-none"
-          placeholder="Hint: Normal Price £x.xx | Nectar Price £x.xx"
+          placeholder="e.g, Normal Price £x.xx | Nectar Price £x.xx"
         />
       </div>
 
