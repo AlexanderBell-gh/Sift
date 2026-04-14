@@ -135,3 +135,10 @@ export interface ProductAnalysis {
   inStock?: boolean;
   store?: string;
 }
+
+export interface SearchResult {
+  title: string;
+  url: string;
+  snippet?: string;
+  imageUrl?: string;
+}

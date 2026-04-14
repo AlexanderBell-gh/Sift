@@ -1047,6 +1047,56 @@ async function handleRequest(request, env) {
     return jsonResponse({ deletedCount });
   }
 
+  // Product search via Serper API (web search, not images)
+  if (path === '/api/search/products' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const body = await request.json();
+      const { q } = body;
+
+      if (!q || typeof q !== 'string') {
+        return errorResponse('Query is required');
+      }
+
+      if (!env.SERPER_API_KEY) {
+        return errorResponse('Search service not configured', 503);
+      }
+
+      const response = await fetch('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': env.SERPER_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: q + ' UK supermarket price',
+          num: 10,
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Serper search error:', response.status, errText);
+        return errorResponse('Search failed', response.status);
+      }
+
+      const data = await response.json();
+      const results = (data.organic || []).map((item) => ({
+        title: item.title || '',
+        url: item.link || item.url || '',
+        snippet: item.snippet || '',
+      }));
+
+      console.log('Search results:', results.length);
+      return jsonResponse({ results });
+    } catch (e) {
+      console.error('Search error:', e);
+      return errorResponse('Search failed');
+    }
+  }
+
   // Image search via Serper API
   if (path === '/api/images' && method === 'POST') {
     const auth = await requireAuth(request, env);
@@ -1094,17 +1144,17 @@ async function handleRequest(request, env) {
     }
   }
 
-  // AI product analysis via Gemini
+  // AI product analysis via Gemini (extracts price from URL)
   if (path === '/api/ai/analyze-product' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
 
     try {
       const body = await request.json();
-      const { productName } = body;
+      const { url } = body;
 
-      if (!productName || typeof productName !== 'string') {
-        return errorResponse('Product name is required');
+      if (!url || typeof url !== 'string') {
+        return errorResponse('URL is required');
       }
 
       if (!env.GEMINI_API_KEY) {
@@ -1112,19 +1162,18 @@ async function handleRequest(request, env) {
         return errorResponse('AI service not configured', 503);
       }
 
-      const prompt = `You are a grocery price research assistant. Search for the product "${productName}" in UK supermarkets (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op). 
+      const prompt = `You are a grocery price research assistant. Extract product information from this URL: ${url}
 
-Provide a JSON object with the most relevant product found:
+Look for and extract:
 {
-  "name": "exact product name as it appears on the supermarket site",
-  "url": "direct product page URL from a UK supermarket",
-  "price": the current price as a number (just the number, no currency symbol),
-  "currency": "GBP",
-  "imageUrl": "product image URL if available",
-  "inStock": true/false/unknown
+  "name": "the exact product name on the page",
+  "price": "the current price as a number (just the number, no currency symbol)",
+  "currency": "GBP or whatever currency",
+  "imageUrl": "product image URL if visible on page",
+  "inStock": true/false/unknown based on availability information
 }
 
-Only respond with valid JSON. No explanation or additional text.`;
+Only respond with valid JSON. No explanation or additional text. If you cannot find the price, return what you can find.`;
 
       const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + env.GEMINI_API_KEY;
       console.log('Calling Gemini API with model gemini-2.5-flash...');
@@ -1161,12 +1210,13 @@ Only respond with valid JSON. No explanation or additional text.`;
         const product = JSON.parse(cleaned);
 
         return jsonResponse({
-          name: product.name || productName,
-          url: product.url || '',
+          name: product.name || '',
+          url: url,
           price: parseFloat(product.price) || 0,
           currency: product.currency || 'GBP',
           imageUrl: product.imageUrl || '',
           inStock: product.inStock,
+          store: product.store || '',
         });
       } catch (parseErr) {
         console.error('JSON parse error:', parseErr, 'Text was:', text);

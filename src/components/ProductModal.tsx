@@ -172,7 +172,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         <Button
           type="button"
           onClick={analyzeProduct}
-          disabled={isAnalyzing || !name.trim()}
+          disabled={isAnalyzing || !url.trim()}
           className="h-full px-4 whitespace-nowrap"
           title="AI Search"
         >
