@@ -1126,8 +1126,8 @@ Provide a JSON object with the most relevant product found:
 
 Only respond with valid JSON. No explanation or additional text.`;
 
-      const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + env.GEMINI_API_KEY;
-      console.log('Calling Gemini API with model gemini-1.5-flash...');
+      const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + env.GEMINI_API_KEY;
+      console.log('Calling Gemini API with model gemini-2.5-flash...');
 
       const geminiResponse = await fetch(apiUrl, {
         method: 'POST',
