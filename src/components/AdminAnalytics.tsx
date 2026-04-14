@@ -26,6 +26,8 @@ export function AdminAnalytics() {
     totalProducts: number;
     totalPriceEntries: number;
     userCount: number;
+    regularUsers: number;
+    trialUsers: number;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,37 +80,59 @@ export function AdminAnalytics() {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-500/10">
-              <Users className="w-5 h-5 text-blue-500" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <Users className="w-4 h-4 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Users</p>
-              <p className="text-2xl font-semibold tracking-tight">{analytics?.userCount ?? 0}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Users</p>
+              <p className="text-xl font-semibold tracking-tight">{analytics?.userCount ?? 0}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-purple-500/10">
-              <Package className="w-5 h-5 text-purple-500" />
+        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10">
+              <Users className="w-4 h-4 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Products</p>
-              <p className="text-2xl font-semibold tracking-tight">{analytics?.totalProducts ?? 0}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Regular</p>
+              <p className="text-xl font-semibold tracking-tight">{analytics?.regularUsers ?? 0}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-pink-500/10">
-              <Tag className="w-5 h-5 text-pink-500" />
+        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/10">
+              <Users className="w-4 h-4 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Price Entries</p>
-              <p className="text-2xl font-semibold tracking-tight">{analytics?.totalPriceEntries ?? 0}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Trial</p>
+              <p className="text-xl font-semibold tracking-tight">{analytics?.trialUsers ?? 0}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/10">
+              <Package className="w-4 h-4 text-purple-500" />
+            </div>
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Products</p>
+              <p className="text-xl font-semibold tracking-tight">{analytics?.totalProducts ?? 0}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-pink-500/10">
+              <Tag className="w-4 h-4 text-pink-500" />
+            </div>
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Prices</p>
+              <p className="text-xl font-semibold tracking-tight">{analytics?.totalPriceEntries ?? 0}</p>
             </div>
           </div>
         </div>

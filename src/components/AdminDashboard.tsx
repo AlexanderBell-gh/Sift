@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Loader2, Lock, Sun, Moon } from 'lucide-react';
 import { api } from '../lib/api';
-import { AdminStats } from './AdminStats';
 import { AdminUsers } from './AdminUsers';
 import { AdminAnalytics } from './AdminAnalytics';
 import { AdminActivity } from './AdminActivity';
 
-type TabId = 'stats' | 'users' | 'analytics' | 'activity';
+type TabId = 'users' | 'analytics' | 'activity';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabId>('stats');
+  const [activeTab, setActiveTab] = useState<TabId>('users');
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -59,7 +58,6 @@ export function AdminDashboard() {
   };
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: 'stats', label: 'Stats' },
     { id: 'users', label: 'Users' },
     { id: 'analytics', label: 'Analytics' },
     { id: 'activity', label: 'Activity' },
@@ -148,7 +146,6 @@ export function AdminDashboard() {
           </nav>
         </div>
 
-        {activeTab === 'stats' && <AdminStats />}
         {activeTab === 'users' && <AdminUsers />}
         {activeTab === 'analytics' && <AdminAnalytics />}
         {activeTab === 'activity' && <AdminActivity />}

@@ -251,7 +251,7 @@ export const api = {
     }
   },
 
-  async getAdminAnalytics(): Promise<{ categoryDistribution: Record<string, number>; storeDistribution: Record<string, number>; totalProducts: number; totalPriceEntries: number; userCount: number }> {
+  async getAdminAnalytics(): Promise<{ categoryDistribution: Record<string, number>; storeDistribution: Record<string, number>; totalProducts: number; totalPriceEntries: number; userCount: number; regularUsers: number; trialUsers: number }> {
     const response = await fetch(`${API_BASE_URL}/api/admin/analytics`, {
       headers: getAuthHeaders(),
     });

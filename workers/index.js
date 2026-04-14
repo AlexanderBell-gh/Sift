@@ -921,8 +921,16 @@ async function handleRequest(request, env) {
     const storeCount = {};
     let totalProductCount = 0;
     let totalPriceEntries = 0;
+    let regularUsers = 0;
+    let trialUsers = 0;
 
     for (const userId of userIds) {
+      const user = await getUserById(env, userId);
+      if (user) {
+        if (user.isTrial) trialUsers++;
+        else regularUsers++;
+      }
+
       const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
       totalProductCount += productIds.length;
 
@@ -947,6 +955,8 @@ async function handleRequest(request, env) {
       totalProducts: totalProductCount,
       totalPriceEntries,
       userCount: userIds.length,
+      regularUsers,
+      trialUsers,
     });
   }
 
