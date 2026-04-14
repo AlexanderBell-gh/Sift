@@ -3,7 +3,7 @@ import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
-import type { Product, Category, ProductAnalysis } from '../types';
+import type { Product, Category, ProductAnalysis, SearchResult } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
 import { Search, Loader2, Sparkles } from 'lucide-react';
@@ -43,6 +43,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [imageSearchQuery, setImageSearchQuery] = useState('');
   const [imageResults, setImageResults] = useState<ImageResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  const [isWebSearchOpen, setIsWebSearchOpen] = useState(false);
+  const [webSearchQuery, setWebSearchQuery] = useState('');
+  const [webResults, setWebResults] = useState<SearchResult[]>([]);
+  const [isWebSearching, setIsWebSearching] = useState(false);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState('');
@@ -110,27 +115,52 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     setImageResults([]);
   };
 
+  const openWebSearch = () => {
+    setWebSearchQuery(name.trim());
+    setIsWebSearchOpen(true);
+  };
+
+  const searchWeb = async () => {
+    if (!webSearchQuery.trim()) return;
+    setIsWebSearching(true);
+    try {
+      const data = await api.searchProducts(webSearchQuery.trim());
+      setWebResults(data.results || []);
+    } catch (err) {
+      console.error('Web search failed:', err);
+    } finally {
+      setIsWebSearching(false);
+    }
+  };
+
+  const selectWebResult = (result: SearchResult) => {
+    setUrl(result.url);
+    const detected = detectStoreFromUrl(result.url);
+    if (detected) {
+      setStore(detected);
+      setIsStoreAutoDetected(true);
+    }
+    setIsWebSearchOpen(false);
+    setWebResults([]);
+  };
+
   const analyzeProduct = async () => {
-    if (!name.trim()) return;
+    if (!url.trim()) return;
     setIsAnalyzing(true);
     setAnalyzeError('');
     try {
-      const result: ProductAnalysis = await api.analyzeProduct(name.trim());
+      const result: ProductAnalysis = await api.analyzeProduct(url.trim());
       if (result) {
         if (result.name) setName(result.name);
-        if (result.url) setUrl(result.url);
         if (result.price) setPrice(result.price.toString());
         if (result.imageUrl) setImageUrl(result.imageUrl);
-        if (result.url) {
-          const detected = detectStoreFromUrl(result.url);
-          if (detected) {
-            setStore(detected);
-            setIsStoreAutoDetected(true);
-          }
+        if (result.store) {
+          setStore(result.store);
+          setIsStoreAutoDetected(true);
         }
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'AI analysis failed';
+      const msg = err instanceof Error ? err.message : 'AI extraction failed';
       setAnalyzeError(msg);
       console.error('AI analysis failed:', err);
     } finally {
@@ -160,8 +190,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-4">
-       <div className="flex w-full items-end space-x-2">
-<Input
+      <div className="flex w-full items-end space-x-2">
+        <Input
           label="Product Name *"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -171,57 +201,70 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         />
         <Button
           type="button"
+          variant="secondary"
+          onClick={openWebSearch}
+          disabled={!name.trim()}
+          className="h-full px-4 whitespace-nowrap"
+          title="Search"
+        >
+          <Search className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <div className="flex w-full items-end space-x-2">
+        <Input
+          label="Product URL"
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Enter Product URL"
+          className="flex-1"
+        />
+        <Button
+          type="button"
           onClick={analyzeProduct}
           disabled={isAnalyzing || !url.trim()}
           className="h-full px-4 whitespace-nowrap"
-          title="AI Search"
+          title="AI Extract"
         >
           {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
         </Button>
-       </div>
-        {analyzeError && (
-          <p className="text-sm text-red-500">{analyzeError}</p>
-        )}
+      </div>
+      {analyzeError && (
+        <p className="text-sm text-red-500">{analyzeError}</p>
+      )}
 
+      <div className="flex w-full items-end space-x-2">
         <Input
-          label="Product URL"
-         type="url"
-         value={url}
-         onChange={(e) => setUrl(e.target.value)}
-         placeholder="Enter Product URL"
-       />
-
-<div className="flex w-full items-end space-x-2">
-         <Input
-           label="Image URL"
-           type="url"
-           value={imageUrl}
-           onChange={(e) => setImageUrl(e.target.value)}
-           placeholder="Once an image is selected a thumbnail will appear below"
-           className="flex-1"
-         />
-         <Button
-           type="button"
-           variant="secondary"
-           onClick={() => setIsImageSearchOpen(true)}
-           className="h-full px-4 whitespace-nowrap"
-           title="Find Products"
-         >
-           <Search className="w-4 h-4" />
-</Button>
+          label="Image URL"
+          type="url"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="Once an image is selected a thumbnail will appear below"
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => setIsImageSearchOpen(true)}
+          className="h-full px-4 whitespace-nowrap"
+          title="Find Images"
+        >
+          <Search className="w-4 h-4" />
+        </Button>
+      </div>
+      {imageUrl && (
+        <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
+          <img 
+            src={imageUrl} 
+            alt="Preview" 
+            className="max-h-24 max-w-full rounded object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
         </div>
-        {imageUrl && (
-          <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
-            <img 
-              src={imageUrl} 
-              alt="Preview" 
-              className="max-h-24 max-w-full rounded object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          </div>
-        )}
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <Select
@@ -342,6 +385,69 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           {imageResults.length > 0 && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
               Click an image to select it
+            </p>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isWebSearchOpen}
+        onClose={() => { setIsWebSearchOpen(false); setWebResults([]); }}
+        title="Search Products"
+        className="max-w-2xl"
+      >
+        <div className="p-4 space-y-4">
+          <div className="flex gap-2">
+            <Input
+              value={webSearchQuery}
+              onChange={(e) => setWebSearchQuery(e.target.value)}
+              placeholder="Search for products..."
+              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  searchWeb();
+                }
+              }}
+            />
+            <Button
+              onClick={searchWeb}
+              disabled={isWebSearching || !webSearchQuery.trim()}
+            >
+              {isWebSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            </Button>
+          </div>
+
+          {isWebSearching ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+            </div>
+          ) : webResults.length > 0 ? (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {webResults.map((result, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => selectWebResult(result)}
+                  className="w-full text-left p-3 rounded-lg border border-zinc-200 dark:border-white/10 hover:border-green-500 transition-colors"
+                >
+                  <p className="font-medium text-sm line-clamp-2">{result.title}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{result.url}</p>
+                  {result.snippet && (
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 line-clamp-2">{result.snippet}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-zinc-500 dark:text-zinc-400">
+              <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>Enter a search term and click search</p>
+            </div>
+          )}
+
+          {webResults.length > 0 && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+              Click a result to select it
             </p>
           )}
         </div>
