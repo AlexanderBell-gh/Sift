@@ -161,33 +161,24 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-4">
        <div className="flex w-full items-end space-x-2">
-         <Input
-           label="Product Name *"
-           value={name}
-           onChange={(e) => setName(e.target.value)}
-           placeholder="e.g., Sainsbury's Jasons Sourdough Bread"
-           required
-           className="flex-1"
-         />
-         <Button
-           type="button"
-           variant="secondary"
-           onClick={() => setIsImageSearchOpen(true)}
-           className="h-full px-4 whitespace-nowrap"
-           title="Find Products"
-         >
-           <Search className="w-4 h-4" />
-         </Button>
-         <Button
-           type="button"
-           onClick={analyzeProduct}
-           disabled={isAnalyzing || !name.trim()}
-           className="h-full px-4 whitespace-nowrap"
-           title="AI Search"
-         >
-           {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-</Button>
-        </div>
+<Input
+          label="Product Name *"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., Sainsbury's Jasons Sourdough Bread"
+          required
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          onClick={analyzeProduct}
+          disabled={isAnalyzing || !name.trim()}
+          className="h-full px-4 whitespace-nowrap"
+          title="AI Search"
+        >
+          {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+        </Button>
+       </div>
         {analyzeError && (
           <p className="text-sm text-red-500">{analyzeError}</p>
         )}
@@ -200,14 +191,25 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
          placeholder="Enter Product URL"
        />
 
-       <div>
-        <Input
-          label="Image URL"
-          type="url"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="Once an image is selected a thumbnail will appear below"
-        />
+<div className="flex w-full items-end space-x-2">
+         <Input
+           label="Image URL"
+           type="url"
+           value={imageUrl}
+           onChange={(e) => setImageUrl(e.target.value)}
+           placeholder="Once an image is selected a thumbnail will appear below"
+           className="flex-1"
+         />
+         <Button
+           type="button"
+           variant="secondary"
+           onClick={() => setIsImageSearchOpen(true)}
+           className="h-full px-4 whitespace-nowrap"
+           title="Find Products"
+         >
+           <Search className="w-4 h-4" />
+</Button>
+        </div>
         {imageUrl && (
           <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
             <img 
@@ -220,7 +222,6 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
             />
           </div>
         )}
-      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Select
