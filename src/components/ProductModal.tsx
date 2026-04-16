@@ -106,16 +106,16 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   };
 
   const analyzeImage = async () => {
-    if (!imageUrl.trim()) return;
+    if (!url.trim()) return;
     setIsAnalyzing(true);
     setAnalyzeImageError('');
     try {
       const result: ProductAnalysis = await api.analyzeProduct(url.trim());
       if (result) {
-        if (result.name) setName(result.name);
+        if (!product && result.name) setName(result.name);
         if (result.price) setPrice(result.price.toString());
         if (result.imageUrl) setImageUrl(result.imageUrl);
-        if (result.store) {
+        if (!product && result.store) {
           setStore(result.store);
           setIsStoreAutoDetected(true);
         }
