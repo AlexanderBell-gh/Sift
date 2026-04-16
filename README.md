@@ -39,6 +39,49 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (registered users only)
 - **Admin Dashboard**: System stats, user management, analytics, activity audit log (admin users only)
 
+### Adding Products - Workflow
+
+The Product Modal provides a streamlined workflow:
+
+1. **Enter product name** in the name field
+2. Click **Search** button → Serper returns web search results
+3. Click a result → URL auto-fills in Product URL field, store auto-detected
+4. Click **AI Extract** button (next to Image URL field) → extracts price + image from the Product URL using Gemini AI
+5. Fill remaining fields (category, notes), Save
+
+## Admin Dashboard
+
+The admin dashboard provides system management capabilities for users with admin role.
+
+### Access
+
+- Navigate to `/admin` route
+- Requires user account with `role: admin`
+- Non-admin users see an "Access Denied" message
+
+### Creating an Admin User
+
+Admin users are created via the registration endpoint with an admin secret:
+
+```bash
+curl -X POST https://your-worker-url/api/auth/register-admin \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "username": "admin", "password": "password", "adminSecret": "your-admin-secret"}'
+```
+
+The admin secret must match the `ADMIN_SECRET` environment variable in your Worker configuration.
+
+### Features
+
+- **Users Tab**: Manage users with:
+  - Filter: Users / Trials / All
+  - Role change: Promote users to admin or demote admins to user
+  - Delete: Remove user accounts and their data
+  - Cleanup Expired: Purge expired trial accounts
+- **Analytics Tab**: Stats cards + category/store distribution charts
+- **Activity Tab**: Audit log of admin actions (user deletes, role changes, trial cleanups)
+- **Dark/Light Mode**: Toggle in the header (synced with main app)
+
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite
@@ -47,7 +90,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
 - **Deployment**: Cloudflare Pages + GitHub Actions
-- **External APIs**: Serper API (image + web search), Google Gemini (AI price extraction)
+- **External APIs**: Serper API (web search), Google Gemini (AI price extraction)
 
 ## Getting Started
 
@@ -118,7 +161,7 @@ const API_BASE_URL = 'https://your-worker-url.workers.dev';
 
 For product search and AI features, you need API keys:
 
-1. **Serper API Key** (image + web search):
+1. **Serper API Key** (web search):
    - Sign up at https://serper.dev
    - Add the secret to Cloudflare Workers:
    ```bash
@@ -180,46 +223,3 @@ PriceTrackr/
 ## License
 
 MIT
-
-## Admin Dashboard
-
-The admin dashboard provides system management capabilities for users with admin role.
-
-### Access
-
-- Navigate to `/admin` route
-- Requires user account with `role: admin`
-- Non-admin users see an "Access Denied" message
-
-### Creating an Admin User
-
-Admin users are created via the registration endpoint with an admin secret:
-
-```bash
-curl -X POST https://your-worker-url/api/auth/register-admin \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@example.com", "username": "admin", "password": "password", "adminSecret": "your-admin-secret"}'
-```
-
-The admin secret must match the `ADMIN_SECRET` environment variable in your Worker configuration.
-
-### Features
-
-- **Users Tab**: Manage users with:
-  - Filter: Users / Trials / All
-  - Role change: Promote users to admin or demote admins to user
-  - Delete: Remove user accounts and their data
-  - Cleanup Expired: Purge expired trial accounts
-- **Analytics Tab**: Stats cards + category/store distribution charts
-- **Activity Tab**: Audit log of admin actions (user deletes, role changes, trial cleanups)
-- **Dark/Light Mode**: Toggle in the header (synced with main app)
-
-## Adding Products - Workflow
-
-The Product Modal provides a streamlined workflow:
-
-1. **Enter product name** in the name field
-2. Click **Search** button → Serper returns web search results
-3. Click a result → URL auto-fills in Product URL field, store auto-detected
-4. Click **AI Extract** button (next to Image URL field) → extracts price + image from the Product URL using Gemini AI
-5. Fill remaining fields (category, notes), Save
