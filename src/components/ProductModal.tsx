@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import type { Product, Category, ProductAnalysis, SearchResult } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
-import { Search, Loader2, Sparkles, Image } from 'lucide-react';
+import { Search, Loader2, Sparkles } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
