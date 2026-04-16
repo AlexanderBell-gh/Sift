@@ -1175,8 +1175,8 @@ Look for and extract:
 
 Only respond with valid JSON. No explanation or additional text. If you cannot find the price, return what you can find.`;
 
-      const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-lite:generateContent?key=' + env.GEMINI_API_KEY;
-      console.log('Calling Gemini API with model gemini-3-flash-lite...');
+      const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' + env.GEMINI_API_KEY;
+      console.log('Calling Gemini API with model gemini-3-flash-preview...');
 
       const geminiResponse = await fetch(apiUrl, {
         method: 'POST',
