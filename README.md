@@ -4,6 +4,13 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 **Live:** https://price-trackr.pages.dev/
 
+## What's New (Recent Updates)
+
+- **AI Extract workflow streamlined** - Button moved to Image URL field, analyzes Product URL to auto-fill price + image
+- **Web search for products** - New Search button uses Serper API to find product URLs from product names
+- **Improved error handling** - Friendly message for AI service 503 errors
+- **Edit mode protection** - AI Extract in Edit mode only updates price + image (preserves name + store)
+
 ## Design
 
 PriceTrackr features a refined Linear/Vercel-inspired UI with:
@@ -24,9 +31,8 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
 - **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
-- **Product Image Search**: Find product images via Serper API
 - **Product Web Search**: Search products to find URLs (uses Serper API)
-- **AI Price Extraction**: Extract price/details from product URLs using Google Gemini AI
+- **AI Price Extraction**: Extract price/details from product URLs using Google Gemini AI (click button next to Image URL field)
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL
@@ -214,7 +220,6 @@ The Product Modal provides a streamlined workflow:
 
 1. **Enter product name** in the name field
 2. Click **Search** button → Serper returns web search results
-3. Click a result → URL auto-fills, store auto-detected
-4. Click **AI Extract** button → extracts price from the URL using Gemini AI
-5. Optionally add image via **Find Images** button (searches images via Serper)
-6. Fill remaining fields (category, notes), Save
+3. Click a result → URL auto-fills in Product URL field, store auto-detected
+4. Click **AI Extract** button (next to Image URL field) → extracts price + image from the Product URL using Gemini AI
+5. Fill remaining fields (category, notes), Save
