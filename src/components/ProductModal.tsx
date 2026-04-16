@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import type { Product, Category, ProductAnalysis, SearchResult } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
-import { Search, Loader2, Sparkles } from 'lucide-react';
+import { Search, Loader2, Sparkles, Image } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -49,8 +49,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [webResults, setWebResults] = useState<SearchResult[]>([]);
   const [isWebSearching, setIsWebSearching] = useState(false);
 
+  const isEditMode = !!product;
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analyzeError, setAnalyzeError] = useState('');
+  const [analyzeUrlError, setAnalyzeUrlError] = useState('');
+  const [analyzeImageError, setAnalyzeImageError] = useState('');
 
   useEffect(() => {
     if (url && !store) {
@@ -147,9 +150,33 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const analyzeProduct = async () => {
     if (!url.trim()) return;
     setIsAnalyzing(true);
-    setAnalyzeError('');
+    setAnalyzeUrlError('');
     try {
       const result: ProductAnalysis = await api.analyzeProduct(url.trim());
+      if (result) {
+        if (result.name) setName(result.name);
+        if (result.price) setPrice(result.price.toString());
+        if (result.imageUrl && !isEditMode) setImageUrl(result.imageUrl);
+        if (result.store) {
+          setStore(result.store);
+          setIsStoreAutoDetected(true);
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'AI extraction failed';
+      setAnalyzeUrlError(msg);
+      console.error('AI analysis failed:', err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const analyzeImage = async () => {
+    if (!imageUrl.trim()) return;
+    setIsAnalyzing(true);
+    setAnalyzeImageError('');
+    try {
+      const result: ProductAnalysis = await api.analyzeProduct(imageUrl.trim());
       if (result) {
         if (result.name) setName(result.name);
         if (result.price) setPrice(result.price.toString());
@@ -161,7 +188,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'AI extraction failed';
-      setAnalyzeError(msg);
+      setAnalyzeImageError(msg);
       console.error('AI analysis failed:', err);
     } finally {
       setIsAnalyzing(false);
@@ -220,18 +247,20 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           placeholder="Enter Product URL"
           className="flex-1"
         />
-        <Button
-          type="button"
-          onClick={analyzeProduct}
-          disabled={isAnalyzing || !url.trim()}
-          className="h-full px-4 whitespace-nowrap"
-          title="AI Extract"
-        >
-          {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-        </Button>
+        {!isEditMode && (
+          <Button
+            type="button"
+            onClick={analyzeProduct}
+            disabled={isAnalyzing || !url.trim()}
+            className="h-full px-4 whitespace-nowrap"
+            title="AI Extract"
+          >
+            {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          </Button>
+        )}
       </div>
-      {analyzeError && (
-        <p className="text-sm text-red-500">{analyzeError}</p>
+      {analyzeUrlError && (
+        <p className="text-sm text-red-500">{analyzeUrlError}</p>
       )}
 
       <div className="flex w-full items-end space-x-2">
@@ -243,16 +272,31 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           placeholder="Once an image is selected a thumbnail will appear below"
           className="flex-1"
         />
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => setIsImageSearchOpen(true)}
-          className="h-full px-4 whitespace-nowrap"
-          title="Find Images"
-        >
-          <Search className="w-4 h-4" />
-        </Button>
+        {isEditMode ? (
+          <Button
+            type="button"
+            onClick={analyzeImage}
+            disabled={isAnalyzing || !imageUrl.trim()}
+            className="h-full px-4 whitespace-nowrap"
+            title="AI Extract"
+          >
+            {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setIsImageSearchOpen(true)}
+            className="h-full px-4 whitespace-nowrap"
+            title="Find Images"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
+        )}
       </div>
+      {analyzeImageError && (
+        <p className="text-sm text-red-500">{analyzeImageError}</p>
+      )}
       {imageUrl && (
         <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
           <img 
