@@ -110,7 +110,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     setIsAnalyzing(true);
     setAnalyzeImageError('');
     try {
-      const result: ProductAnalysis = await api.analyzeProduct(imageUrl.trim());
+      const result: ProductAnalysis = await api.analyzeProduct(url.trim());
       if (result) {
         if (result.name) setName(result.name);
         if (result.price) setPrice(result.price.toString());
@@ -189,7 +189,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           type="url"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="Once an image is selected a thumbnail will appear below"
+          placeholder="Click AI Extract to auto-fill"
           className="flex-1"
         />
         <Button
