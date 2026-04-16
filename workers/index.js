@@ -1193,6 +1193,9 @@ Only respond with valid JSON. No explanation or additional text. If you cannot f
       if (!geminiResponse.ok) {
         const errText = await geminiResponse.text();
         console.error('Gemini API error:', geminiResponse.status, errText);
+        if (geminiResponse.status === 503) {
+          return errorResponse('AI service temporarily unavailable. Please try again later or enter details manually.', 503);
+        }
         return errorResponse('AI analysis failed: ' + geminiResponse.status, geminiResponse.status);
       }
 
