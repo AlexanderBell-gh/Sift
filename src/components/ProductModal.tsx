@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import type { Product, Category, ProductAnalysis, SearchResult } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
-import { Search, Loader2, Sparkles } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -37,8 +37,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [webResults, setWebResults] = useState<SearchResult[]>([]);
   const [isWebSearching, setIsWebSearching] = useState(false);
 
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analyzeImageError, setAnalyzeImageError] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractError, setExtractError] = useState('');
 
   useEffect(() => {
     if (url && !store) {
@@ -47,6 +47,12 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         setStore(detected);
         setIsStoreAutoDetected(true);
       }
+    }
+  }, [url]);
+
+  useEffect(() => {
+    if (url.trim() && !product) {
+      extractFromUrl(url);
     }
   }, [url]);
 
@@ -94,7 +100,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     }
   };
 
-  const selectWebResult = (result: SearchResult) => {
+  const selectWebResult = async (result: SearchResult) => {
     setUrl(result.url);
     const detected = detectStoreFromUrl(result.url);
     if (detected) {
@@ -103,14 +109,15 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     }
     setIsWebSearchOpen(false);
     setWebResults([]);
+    await extractFromUrl(result.url);
   };
 
-  const analyzeImage = async () => {
-    if (!url.trim()) return;
-    setIsAnalyzing(true);
-    setAnalyzeImageError('');
+  const extractFromUrl = async (urlToExtract: string) => {
+    if (!urlToExtract.trim()) return;
+    setIsExtracting(true);
+    setExtractError('');
     try {
-      const result: ProductAnalysis = await api.analyzeProduct(url.trim());
+      const result: ProductAnalysis = await api.analyzeProduct(urlToExtract.trim());
       if (result) {
         if (!product && result.name) setName(result.name);
         if (result.price) setPrice(result.price.toString());
@@ -122,10 +129,10 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'AI extraction failed';
-      setAnalyzeImageError(msg);
-      console.error('AI analysis failed:', err);
+      setExtractError(msg);
+      console.error('AI extraction failed:', err);
     } finally {
-      setIsAnalyzing(false);
+      setIsExtracting(false);
     }
   };
 
@@ -164,11 +171,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           type="button"
           variant="secondary"
           onClick={openWebSearch}
-          disabled={!name.trim()}
+          disabled={!name.trim() || isExtracting}
           className="h-full px-4 whitespace-nowrap"
-          title="Search"
+          title="Find Product"
         >
-          <Search className="w-4 h-4" />
+          {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
         </Button>
       </div>
 
@@ -183,27 +190,18 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         />
       </div>
 
-      <div className="flex w-full items-end space-x-2">
+      <div>
         <Input
           label="Image URL"
           type="url"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="Click AI Extract to auto-fill"
-          className="flex-1"
+          placeholder="Optional"
+          className="w-full"
         />
-        <Button
-          type="button"
-          onClick={analyzeImage}
-          disabled={isAnalyzing || (!url.trim() && !imageUrl.trim())}
-          className="h-full px-4 whitespace-nowrap"
-          title="AI Extract"
-        >
-          {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-        </Button>
       </div>
-      {analyzeImageError && (
-        <p className="text-sm text-red-500">{analyzeImageError}</p>
+      {extractError && (
+        <p className="text-sm text-red-500">{extractError}</p>
       )}
       {imageUrl && (
         <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
@@ -280,7 +278,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       <Modal
         isOpen={isWebSearchOpen}
         onClose={() => { setIsWebSearchOpen(false); setWebResults([]); }}
-        title="Search Products"
+        title="Find Product"
         className="max-w-2xl"
       >
         <div className="p-4 space-y-4">
