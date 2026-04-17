@@ -1047,7 +1047,7 @@ async function handleRequest(request, env) {
     return jsonResponse({ deletedCount });
   }
 
-  // Product search via Serper API (shopping with images fallback)
+  // Product search via Serper API (web search)
   if (path === '/api/search/products' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -1064,73 +1064,33 @@ async function handleRequest(request, env) {
         return errorResponse('Search service not configured', 503);
       }
 
-      // First try shopping endpoint
-      const shoppingResponse = await fetch('https://google.serper.dev/shopping', {
+      const response = await fetch('https://google.serper.dev/search', {
         method: 'POST',
         headers: {
           'X-API-KEY': env.SERPER_API_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          q: q + ' UK supermarket',
-          num: 20,
+          q: q + ' UK supermarket price',
+          num: 10,
         }),
       });
 
-      if (!shoppingResponse.ok) {
-        const errText = await shoppingResponse.text();
-        console.error('Serper shopping search error:', shoppingResponse.status, errText);
-        return errorResponse('Search failed', shoppingResponse.status);
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Serper search error:', response.status, errText);
+        return errorResponse('Search failed', response.status);
       }
 
-      const shoppingData = await shoppingResponse.json();
-      let shoppingResults = (shoppingData.shopping || []).map((item) => ({
+      const data = await response.json();
+      const results = (data.organic || []).map((item) => ({
         title: item.title || '',
-        url: item.link || item.product_link || '',
-        snippet: item.source || '',
-        price: item.price || '',
-        imageUrl: item.thumbnail || '',
+        url: item.link || item.url || '',
+        snippet: item.snippet || '',
       }));
 
-      console.log('Shopping results:', shoppingResults.length, 'with images:', shoppingResults.filter(r => r.imageUrl).length);
-
-      // Fallback to images if shopping has < 5 results with images
-      const shoppingWithImages = shoppingResults.filter(r => r.imageUrl);
-      if (shoppingWithImages.length < 5) {
-        console.log('Low shopping images, fetching images endpoint...');
-        
-        const imagesResponse = await fetch('https://google.serper.dev/images', {
-          method: 'POST',
-          headers: {
-            'X-API-KEY': env.SERPER_API_KEY,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            q: q + ' UK supermarket product',
-            num: 20,
-          }),
-        });
-
-        if (imagesResponse.ok) {
-          const imagesData = await imagesResponse.json();
-          const imageResults = (imagesData.images || []).map((item) => ({
-            title: item.title || '',
-            url: item.link || '',
-            snippet: item.source || '',
-            price: '',
-            imageUrl: item.thumbnail || item.original || '',
-          }));
-
-          console.log('Images results:', imageResults.length);
-
-          // Merge: shopping first (has prices), then fill with images
-          const existingUrls = new Set(shoppingResults.map(r => r.url));
-          const newImages = imageResults.filter(r => r.imageUrl && !existingUrls.has(r.url));
-          shoppingResults = [...shoppingResults, ...newImages.slice(0, 10)];
-        }
-      }
-
-      return jsonResponse({ results: shoppingResults });
+      console.log('Search results:', results.length);
+      return jsonResponse({ results });
     } catch (e) {
       console.error('Search error:', e);
       return errorResponse('Search failed');
