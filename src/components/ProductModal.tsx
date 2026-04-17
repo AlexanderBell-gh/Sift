@@ -102,6 +102,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
 
   const selectWebResult = async (result: SearchResult) => {
     setUrl(result.url);
+    if (result.imageUrl) setImageUrl(result.imageUrl);
+    if (result.price) setPrice(result.price.replace(/[^\d.]/g, ''));
     const detected = detectStoreFromUrl(result.url);
     if (detected) {
       setStore(detected);
@@ -313,20 +315,32 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
                   key={idx}
                   type="button"
                   onClick={() => selectWebResult(result)}
-                  className="w-full text-left p-3 rounded-lg border border-zinc-200 dark:border-white/10 hover:border-green-500 transition-colors"
+                  className="w-full text-left p-3 rounded-lg border border-zinc-200 dark:border-white/10 hover:border-green-500 transition-colors flex gap-3"
                 >
-                  <p className="font-medium text-sm line-clamp-2">{result.title}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{result.url}</p>
-                  {result.snippet && (
-                    <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 line-clamp-2">{result.snippet}</p>
+                  {result.imageUrl && (
+                    <img
+                      src={result.imageUrl}
+                      alt=""
+                      className="w-16 h-16 object-contain rounded bg-zinc-100 dark:bg-white/5 flex-shrink-0"
+                    />
                   )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm line-clamp-2">{result.title}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{result.url}</p>
+                    {result.price && (
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-400 mt-1">{result.price}</p>
+                    )}
+                    {result.snippet && (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 line-clamp-1">{result.snippet}</p>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
           ) : (
             <div className="text-center py-12 text-zinc-500 dark:text-zinc-400">
               <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>Enter a search term and click search</p>
+              <p>Enter a product name and click Find Product</p>
             </div>
           )}
 

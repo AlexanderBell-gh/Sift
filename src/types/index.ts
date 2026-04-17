@@ -141,4 +141,5 @@ export interface SearchResult {
   url: string;
   snippet?: string;
   imageUrl?: string;
+  price?: string;
 }

@@ -1047,7 +1047,7 @@ async function handleRequest(request, env) {
     return jsonResponse({ deletedCount });
   }
 
-  // Product search via Serper API (web search, not images)
+  // Product search via Serper API (shopping results)
   if (path === '/api/search/products' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -1064,32 +1064,34 @@ async function handleRequest(request, env) {
         return errorResponse('Search service not configured', 503);
       }
 
-      const response = await fetch('https://google.serper.dev/search', {
+      const response = await fetch('https://google.serper.dev/shopping', {
         method: 'POST',
         headers: {
           'X-API-KEY': env.SERPER_API_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          q: q + ' UK supermarket price',
+          q: q + ' UK supermarket',
           num: 10,
         }),
       });
 
       if (!response.ok) {
         const errText = await response.text();
-        console.error('Serper search error:', response.status, errText);
+        console.error('Serper shopping search error:', response.status, errText);
         return errorResponse('Search failed', response.status);
       }
 
       const data = await response.json();
-      const results = (data.organic || []).map((item) => ({
+      const results = (data.shopping || []).map((item) => ({
         title: item.title || '',
-        url: item.link || item.url || '',
-        snippet: item.snippet || '',
+        url: item.link || item.product_link || '',
+        snippet: item.source || '',
+        price: item.price || '',
+        imageUrl: item.thumbnail || '',
       }));
 
-      console.log('Search results:', results.length);
+      console.log('Shopping search results:', results.length);
       return jsonResponse({ results });
     } catch (e) {
       console.error('Search error:', e);
