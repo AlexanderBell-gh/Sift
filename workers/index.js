@@ -112,6 +112,29 @@ async function deleteUserData(env, userId) {
   await env.PRICETRACKR.delete(`user:${userId}:categories`);
 }
 
+async function scrapeImageFromUrl(url) {
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PriceTrackr/1.0)' },
+    });
+    const html = await response.text();
+    
+    let match = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+    if (match) return match[1];
+    
+    match = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
+    if (match) return match[1];
+    
+    match = html.match(/<meta[^>]*property=["']product:image["'][^>]*content=["']([^"']+)["']/i);
+    if (match) return match[1];
+    
+    return '';
+  } catch (e) {
+    console.error('Image scrape error:', e);
+    return '';
+  }
+}
+
 const MAX_AUDIT_LOGS = 1000;
 
 async function logAudit(env, entry) {
@@ -1144,7 +1167,7 @@ async function handleRequest(request, env) {
     }
   }
 
-  // AI product analysis via Gemini (extracts price from URL)
+  // AI product analysis via Groq (extracts price from URL)
   if (path === '/api/ai/analyze-product' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -1157,74 +1180,95 @@ async function handleRequest(request, env) {
         return errorResponse('URL is required');
       }
 
-      if (!env.GEMINI_API_KEY) {
-        console.error('GEMINI_API_KEY not configured');
+      let imageUrl = '';
+      let aiFailed = false;
+      let extractedData = {};
+
+      if (!env.GROQ_API_KEY && !env.GEMINI_API_KEY) {
+        console.error('No AI API key configured');
         return errorResponse('AI service not configured', 503);
       }
 
-      const prompt = `You are a grocery price research assistant. Extract product information from this URL: ${url}
+      const fetchHtml = url + '|||FETCHING_HTML|||';
+      const prompt = `You are a grocery price research assistant. Extract product information from this web page: ${fetchHtml}
 
 Look for and extract:
 {
   "name": "the exact product name on the page",
   "price": "the current price as a number (just the number, no currency symbol)",
   "currency": "GBP or whatever currency",
-  "imageUrl": "product image URL if visible on page",
-  "inStock": true/false/unknown based on availability information
+  "inStock": true/false/unknown based on availability information"
 }
 
 Only respond with valid JSON. No explanation or additional text. If you cannot find the price, return what you can find.`;
 
-      const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + env.GEMINI_API_KEY;
-      console.log('Calling Gemini API with model gemini-2.5-flash...');
-
-      const geminiResponse = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1024,
-          },
-        }),
-      });
-
-      if (!geminiResponse.ok) {
-        const errText = await geminiResponse.text();
-        console.error('Gemini API error:', geminiResponse.status, errText);
-        if (geminiResponse.status === 503) {
-          return errorResponse('AI service temporarily unavailable. Please try again later or enter details manually.', 503);
-        }
-        return errorResponse('AI analysis failed: ' + geminiResponse.status, geminiResponse.status);
-      }
-
-      const data = await geminiResponse.json();
-      console.log('Gemini response:', JSON.stringify(data).slice(0, 500));
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      if (!text) {
-        console.error('Empty response from Gemini');
-        return errorResponse('AI returned empty response');
-      }
-
       try {
-        const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const product = JSON.parse(cleaned);
+        if (env.GROQ_API_KEY) {
+          console.log('Calling Groq API...');
+          const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + env.GROQ_API_KEY,
+            },
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.2,
+              max_completion_tokens: 1024,
+            }),
+          });
 
-        return jsonResponse({
-          name: product.name || '',
-          url: url,
-          price: parseFloat(product.price) || 0,
-          currency: product.currency || 'GBP',
-          imageUrl: product.imageUrl || '',
-          inStock: product.inStock,
-          store: product.store || '',
-        });
-      } catch (parseErr) {
-        console.error('JSON parse error:', parseErr, 'Text was:', text);
-        return errorResponse('Failed to parse AI response');
+          if (groqResponse.ok) {
+            const data = await groqResponse.json();
+            const text = data.choices?.[0]?.message?.content || '';
+            if (text) {
+              const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+              extractedData = JSON.parse(cleaned);
+            }
+          } else {
+            const errText = await groqResponse.text();
+            console.error('Groq API error:', groqResponse.status, errText);
+            aiFailed = true;
+          }
+        } else if (env.GEMINI_API_KEY) {
+          console.log('Falling back to Gemini...');
+          const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + env.GEMINI_API_KEY, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+            }),
+          });
+
+          if (geminiResponse.ok) {
+            const data = await geminiResponse.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (text) {
+              const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+              extractedData = JSON.parse(cleaned);
+            }
+          } else {
+            aiFailed = true;
+          }
+        }
+      } catch (aiErr) {
+        console.error('AI extraction error:', aiErr);
+        aiFailed = true;
       }
+
+      imageUrl = await scrapeImageFromUrl(url);
+
+      return jsonResponse({
+        name: extractedData.name || '',
+        url: url,
+        price: parseFloat(extractedData.price) || 0,
+        currency: extractedData.currency || 'GBP',
+        imageUrl: imageUrl,
+        inStock: extractedData.inStock,
+        store: extractedData.store || '',
+      });
     } catch (e) {
       console.error('AI analysis error:', e);
       return errorResponse('Failed to analyze product');
