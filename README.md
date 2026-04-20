@@ -6,10 +6,10 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
+- **Playwright Scraping** - Uses Cloudflare Browser Rendering to extract product name, price, and image from live pages
 - **Streamlined Add/Edit Product Flow** - Single "Find Product" button searches and auto-extracts price + image in one click
 - **Web search for products** - Find Product button uses Serper API to find product URLs from product names
-- **Improved error handling** - Friendly message for AI service 503 errors ("AI service temporarily unavailable")
-- **Edit mode protection** - AI Extract in Edit mode only updates price + image (preserves name + store)
+- **Edit mode protection** - Extract in Edit mode only updates price + image (preserves name + store)
 
 ## Design
 
@@ -32,7 +32,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
 - **Product Web Search**: Search products to find URLs (uses Serper API)
-- **AI Price Extraction**: Auto-extracts price/details from product URLs using Google Gemini AI (runs automatically when selecting a search result)
+- **Product Scraping**: Auto-extracts name, price, and image from product URLs using Playwright (runs automatically when selecting a search result)
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL
@@ -45,8 +45,8 @@ The Product Modal provides a streamlined workflow:
 
 1. **Enter product name** in the name field
 2. Click **Find Product** button → Serper returns web search results
-3. Click a result → URL auto-fills, store auto-detected, AI extraction runs automatically
-4. Price + image are extracted via Gemini AI
+3. Click a result → URL auto-fills, store auto-detected, Playwright extraction runs automatically
+4. Name, price, and image are extracted via Playwright browser rendering
 5. Select category, add optional notes, Save
 
 ## Admin Dashboard
@@ -90,7 +90,7 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
 - **Deployment**: Cloudflare Pages + GitHub Actions
-- **External APIs**: Serper API (web search), Google Gemini (AI price extraction)
+- **External APIs**: Serper API (web search), Cloudflare Browser Rendering (product scraping)
 
 ## Getting Started
 
@@ -159,7 +159,7 @@ const API_BASE_URL = 'https://your-worker-url.workers.dev';
 
 ### API Keys
 
-For product search and AI features, you need API keys:
+For product search, you need an API key:
 
 1. **Serper API Key** (web search):
    - Sign up at https://serper.dev
@@ -169,13 +169,13 @@ For product search and AI features, you need API keys:
    wrangler secret put SERPER_API_KEY
    ```
 
-2. **Gemini API Key** (AI price extraction):
-   - Get your API key from Google AI Studio
-   - Add the secret to Cloudflare Workers:
-   ```bash
-   cd workers
-   wrangler secret put GEMINI_API_KEY
-   ```
+### Browser Rendering
+
+Product scraping uses Cloudflare Browser Rendering (Playwright):
+
+- **Free tier**: 10 hours/month on Workers Paid plan
+- **Pricing beyond**: $0.09/browser-hour
+- Enable in Cloudflare dashboard under Workers → your worker → Settings → Browser Rendering
 
 ## Project Structure
 
@@ -188,7 +188,7 @@ PriceTrackr/
 │   │   ├── MainApp.tsx   # Main application logic
 │   │   ├── ProductCard.tsx      # Product display card with staggered animations
 │   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
-│   │   ├── ProductModal.tsx     # Add/Edit product form with search + AI
+│   │   ├── ProductModal.tsx     # Add/Edit product form with search + scraping
 │   │   ├── ProductDetail.tsx    # Product detail with sparkline chart
 │   │   ├── AddPriceModal.tsx    # Add price entry
 │   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown
