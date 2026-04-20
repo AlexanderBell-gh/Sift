@@ -1,0 +1,8 @@
+{
+  "name": "pricetrackr-api",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@cloudflare/playwright": "^1.0.0"
+  }
+}
