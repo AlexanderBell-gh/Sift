@@ -298,7 +298,7 @@ export const api = {
   },
 
   async analyzeProduct(url: string): Promise<ProductAnalysis> {
-    const response = await fetch(`${API_BASE_URL}/api/ai/analyze-product`, {
+    const response = await fetch(`${API_BASE_URL}/api/scrape/product`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ url }),

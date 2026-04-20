@@ -128,9 +128,9 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         }
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'AI extraction failed';
+      const msg = err instanceof Error ? err.message : 'Failed to fetch product details';
       setExtractError(msg);
-      console.error('AI extraction failed:', err);
+      console.error('Product scrape failed:', err);
     } finally {
       setIsExtracting(false);
     }

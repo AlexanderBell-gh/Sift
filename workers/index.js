@@ -112,6 +112,61 @@ async function deleteUserData(env, userId) {
   await env.PRICETRACKR.delete(`user:${userId}:categories`);
 }
 
+async function scrapeProductPage(url, browserEnv, maxRetries = 3) {
+  let lastError = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let browser = null;
+    try {
+      const { chromium } = await import('@cloudflare/playwright');
+      browser = await chromium.launch(browserEnv);
+      const page = await browser.newPage();
+      
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+      
+      const data = await page.evaluate(() => {
+        const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
+        const getAttr = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || '';
+        
+        const priceEl = document.querySelector('[itemprop="price"]') 
+          || document.querySelector('.price') 
+          || document.querySelector('[data-price]')
+          || document.querySelector('.product-price');
+        
+        const priceText = priceEl?.textContent?.trim() || '';
+        const priceMatch = priceText.replace(/[£,$]/g, '').match(/[\d.]+/);
+        
+        return {
+          name: getText('h1') || getText('[itemprop="name"]') || getText('.product-title') || getText('.product-name'),
+          price: priceMatch ? parseFloat(priceMatch[0]) : 0,
+          currency: priceText.includes('£') ? 'GBP' : (priceText.includes('$') ? 'USD' : 'GBP'),
+          image: getAttr('[itemprop="image"]', 'src') 
+            || getAttr('meta[property="og:image"]', 'content')
+            || getAttr('.product-image img', 'src')
+            || getAttr('[data-product-image]', 'src')
+            || '',
+        };
+      });
+      
+      await browser.close();
+      return data;
+    } catch (e) {
+      lastError = e;
+      console.error(`Scrape attempt ${attempt}/${maxRetries} failed:`, e.message);
+    } finally {
+      if (browser) {
+        try { await browser.close(); } catch (e) {}
+      }
+    }
+    
+    if (attempt < maxRetries) {
+      await new Promise(r => setTimeout(r, 1000 * attempt));
+    }
+  }
+  
+  throw lastError || new Error('All retries failed');
+}
+
 async function scrapeImageFromUrl(url) {
   try {
     const response = await fetch(url, {
@@ -1167,8 +1222,8 @@ async function handleRequest(request, env) {
     }
   }
 
-// Product analysis via scrape (no AI)
-  if (path === '/api/ai/analyze-product' && method === 'POST') {
+// Product scrape via Playwright
+  if (path === '/api/scrape/product' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
 
@@ -1180,20 +1235,24 @@ async function handleRequest(request, env) {
         return errorResponse('URL is required');
       }
 
-      const imageUrl = await scrapeImageFromUrl(url);
+      const data = await scrapeProductPage(url, env.MYBROWSER);
+      
+      if (!data) {
+        return errorResponse('Failed to scrape product. Please check the URL and try again.', 500);
+      }
 
       return jsonResponse({
-        name: '',
+        name: data.name || '',
         url: url,
-        price: 0,
-        currency: 'GBP',
-        imageUrl: imageUrl,
+        price: data.price || 0,
+        currency: data.currency || 'GBP',
+        imageUrl: data.image || '',
         inStock: undefined,
         store: '',
       });
     } catch (e) {
-      console.error('Product analysis error:', e);
-      return errorResponse('Failed to analyze product');
+      console.error('Product scrape error:', e);
+      return errorResponse('Failed to scrape product');
     }
   }
 
