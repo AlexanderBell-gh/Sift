@@ -1167,7 +1167,7 @@ async function handleRequest(request, env) {
     }
   }
 
-  // AI product analysis via Groq (extracts price from URL)
+// Product analysis via scrape (no AI)
   if (path === '/api/ai/analyze-product' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -1179,6 +1179,23 @@ async function handleRequest(request, env) {
       if (!url || typeof url !== 'string') {
         return errorResponse('URL is required');
       }
+
+      const imageUrl = await scrapeImageFromUrl(url);
+
+      return jsonResponse({
+        name: '',
+        url: url,
+        price: 0,
+        currency: 'GBP',
+        imageUrl: imageUrl,
+        inStock: undefined,
+        store: '',
+      });
+    } catch (e) {
+      console.error('Product analysis error:', e);
+      return errorResponse('Failed to analyze product');
+    }
+  }
 
       let imageUrl = '';
       let aiFailed = false;
