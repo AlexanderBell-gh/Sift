@@ -6,11 +6,9 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
-- **Playwright Scraping with Caching** - Uses Cloudflare Browser Rendering to extract product name, price, and image from live pages. Results cached for 24 hours globally to avoid repeat scraping and reduce rate limiting
-- **Streamlined Add/Edit Product Flow** - Single "Find Product" button searches and auto-extracts price + image in one click
 - **Web search for products** - Find Product button uses Serper API to find product URLs from product names
 - **Edit mode protection** - Extract in Edit mode only updates price + image (preserves name + store)
-- **Graceful Error Handling** - Scraping errors no longer block data entry if partial data was extracted
+- **Streamlined Add Product Flow** - Enter product name, click Find Product to search, select result to auto-fill URL
 
 ## Design
 
@@ -33,7 +31,6 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
 - **Dark/Light Mode**: Toggle or follow system preference
 - **Product Web Search**: Search products to find URLs (uses Serper API)
-- **Product Scraping**: Auto-extracts name, price, and image from product URLs using Playwright (runs automatically when selecting a search result)
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL
@@ -46,9 +43,8 @@ The Product Modal provides a streamlined workflow:
 
 1. **Enter product name** in the name field
 2. Click **Find Product** button → Serper returns web search results
-3. Click a result → URL auto-fills, store auto-detected, Playwright extraction runs automatically
-4. Name, price, and image are extracted via Playwright browser rendering
-5. Select category, add optional notes, Save
+3. Click a result → URL auto-fills, store auto-detected
+4. Enter price, select category, add optional notes, Save
 
 ## Admin Dashboard
 
@@ -91,7 +87,7 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
 - **Deployment**: Cloudflare Pages + GitHub Actions
-- **External APIs**: Serper API (web search), Cloudflare Browser Rendering (product scraping)
+- **External APIs**: Serper API (web search)
 
 ## Getting Started
 
@@ -169,15 +165,6 @@ For product search, you need an API key:
    cd workers
    wrangler secret put SERPER_API_KEY
    ```
-
-### Browser Rendering
-
-Product scraping uses Cloudflare Browser Rendering (Playwright):
-
-- **Free tier**: 10 hours/month on Workers Paid plan
-- **Pricing beyond**: $0.09/browser-hour
-- Enable in Cloudflare dashboard under Workers → your worker → Settings → Browser Rendering
-- **Caching**: Scraped product data is cached for 24 hours (per URL) to minimize browser usage and avoid rate limiting
 
 ## Project Structure
 

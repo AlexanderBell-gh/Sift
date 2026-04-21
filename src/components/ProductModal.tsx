@@ -3,7 +3,7 @@ import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
-import type { Product, Category, ProductAnalysis, SearchResult } from '../types';
+import type { Product, Category, SearchResult } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
 import { Search, Loader2 } from 'lucide-react';
@@ -37,9 +37,6 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [webResults, setWebResults] = useState<SearchResult[]>([]);
   const [isWebSearching, setIsWebSearching] = useState(false);
 
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractError, setExtractError] = useState('');
-
   useEffect(() => {
     if (url && !store) {
       const detected = detectStoreFromUrl(url);
@@ -47,12 +44,6 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         setStore(detected);
         setIsStoreAutoDetected(true);
       }
-    }
-  }, [url]);
-
-  useEffect(() => {
-    if (url.trim() && !product) {
-      extractFromUrl(url);
     }
   }, [url]);
 
@@ -100,7 +91,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     }
   };
 
-  const selectWebResult = async (result: SearchResult) => {
+  const selectWebResult = (result: SearchResult) => {
     setUrl(result.url);
     const detected = detectStoreFromUrl(result.url);
     if (detected) {
@@ -109,34 +100,6 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     }
     setIsWebSearchOpen(false);
     setWebResults([]);
-    await extractFromUrl(result.url);
-  };
-
-  const extractFromUrl = async (urlToExtract: string) => {
-    if (!urlToExtract.trim()) return;
-    setIsExtracting(true);
-    setExtractError('');
-    try {
-      const result: ProductAnalysis = await api.analyzeProduct(urlToExtract.trim());
-      const hasData = result && (result.name || result.price || result.imageUrl);
-      if (hasData) {
-        if (!product && result.name) setName(result.name);
-        if (result.price) setPrice(result.price.toString());
-        if (result.imageUrl) setImageUrl(result.imageUrl);
-        if (!product && result.store) {
-          setStore(result.store);
-          setIsStoreAutoDetected(true);
-        }
-      } else {
-        setExtractError('Failed to extract product details');
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to fetch product details';
-      setExtractError(msg);
-      console.error('Product scrape failed:', err);
-    } finally {
-      setIsExtracting(false);
-    }
   };
 
   const categoryOptions = categories.map((c) => ({
@@ -174,11 +137,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           type="button"
           variant="secondary"
           onClick={openWebSearch}
-          disabled={!name.trim() || isExtracting}
+          disabled={!name.trim()}
           className="h-full px-4 whitespace-nowrap"
           title="Find Product"
         >
-          {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          <Search className="w-4 h-4" />
         </Button>
       </div>
 
@@ -203,9 +166,6 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           className="w-full"
         />
       </div>
-      {extractError && (
-        <p className="text-sm text-red-500">{extractError}</p>
-      )}
       {imageUrl && (
         <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
           <img 

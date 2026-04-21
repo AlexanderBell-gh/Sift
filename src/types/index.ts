@@ -126,16 +126,6 @@ export interface AuditLog {
   timestamp: number;
 }
 
-export interface ProductAnalysis {
-  name: string;
-  url: string;
-  price: number;
-  currency: string;
-  imageUrl?: string;
-  inStock?: boolean;
-  store?: string;
-}
-
 export interface SearchResult {
   title: string;
   url: string;
