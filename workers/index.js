@@ -112,7 +112,7 @@ async function deleteUserData(env, userId) {
   await env.PRICETRACKR.delete(`user:${userId}:categories`);
 }
 
-async function scrapeProductPage(url, browserEnv, maxRetries = 3) {
+async function scrapeProductPage(url, browserEnv, maxRetries = 2) {
   let lastError = null;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -122,7 +122,16 @@ async function scrapeProductPage(url, browserEnv, maxRetries = 3) {
       browser = await launch(browserEnv);
       const page = await browser.newPage();
       
+      await page.setExtraHTTPHeaders({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      });
+      
       await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+      
+      const pageContent = await page.content();
+      if (pageContent.includes('Access Denied') || pageContent.includes('Challenge') || pageContent.includes('Just a moment')) {
+        throw new Error('Page blocked by Cloudflare');
+      }
       
       const data = await page.evaluate(() => {
         const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
@@ -160,7 +169,7 @@ async function scrapeProductPage(url, browserEnv, maxRetries = 3) {
     }
     
     if (attempt < maxRetries) {
-      await new Promise(r => setTimeout(r, 1000 * attempt));
+      await new Promise(r => setTimeout(r, 4000 * attempt));
     }
   }
   
@@ -1238,7 +1247,7 @@ async function handleRequest(request, env) {
       const data = await scrapeProductPage(url, env.MYBROWSER);
       
       if (!data) {
-        return errorResponse('Failed to scrape product. Please check the URL and try again.', 500);
+        return errorResponse('Failed to gather product info, enter manually', 500);
       }
 
       return jsonResponse({
@@ -1252,7 +1261,7 @@ async function handleRequest(request, env) {
       });
     } catch (e) {
       console.error('Product scrape error:', e);
-      return errorResponse('Failed to scrape product');
+      return errorResponse('Failed to gather product info, enter manually');
     }
   }
 
