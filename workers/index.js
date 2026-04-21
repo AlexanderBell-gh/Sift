@@ -1349,8 +1349,36 @@ async function handleRequest(request, env) {
         return errorResponse('URL is required');
       }
 
-      const data = await scrapeProductPage(url, env.MYBROWSER);
-      
+      let data = null;
+      let fromCache = false;
+
+      try {
+        const parsedUrl = new URL(url);
+        const cacheKey = `scrape:cache:${parsedUrl.hostname}:${parsedUrl.pathname}`;
+        const cached = await env.PRICETRACKR.get(cacheKey, 'json');
+
+        if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
+          data = cached.data;
+          fromCache = true;
+        } else {
+          data = await scrapeProductPage(url, env.MYBROWSER);
+          if (data && (data.name || data.price || data.image)) {
+            await env.PRICETRACKR.put(cacheKey, JSON.stringify({
+              data,
+              timestamp: Date.now(),
+            }), { expirationTtl: 24 * 60 * 60 });
+          }
+        }
+      } catch (scrapeErr) {
+        console.error('Product scrape error:', scrapeErr);
+        const cacheKey = `scrape:cache:${new URL(url).hostname}:${new URL(url).pathname}`;
+        const cached = await env.PRICETRACKR.get(cacheKey, 'json');
+        if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
+          data = cached.data;
+          fromCache = true;
+        }
+      }
+
       if (!data) {
         return errorResponse('Failed to gather product info, enter manually', 500);
       }
@@ -1363,11 +1391,8 @@ async function handleRequest(request, env) {
         imageUrl: data.image || '',
         inStock: undefined,
         store: '',
+        fromCache,
       });
-    } catch (e) {
-      console.error('Product scrape error:', e);
-      return errorResponse('Failed to gather product info, enter manually');
-    }
   }
 
   return errorResponse('Not found', 404);

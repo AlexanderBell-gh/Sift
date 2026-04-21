@@ -118,7 +118,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     setExtractError('');
     try {
       const result: ProductAnalysis = await api.analyzeProduct(urlToExtract.trim());
-      if (result) {
+      const hasData = result && (result.name || result.price || result.imageUrl);
+      if (hasData) {
         if (!product && result.name) setName(result.name);
         if (result.price) setPrice(result.price.toString());
         if (result.imageUrl) setImageUrl(result.imageUrl);
@@ -126,6 +127,8 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           setStore(result.store);
           setIsStoreAutoDetected(true);
         }
+      } else {
+        setExtractError('Failed to extract product details');
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch product details';
