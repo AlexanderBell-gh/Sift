@@ -148,19 +148,50 @@ async function scrapeProductPage(url, browserEnv) {
         '.pricelockup',
         '.sale-price',
         '.offer-price',
-        '[class*="price"]',
+        'span[class*="price"]',
         '.ts-price',
-        'span.price',
         '.unit-price',
         '.price-per-unit',
       ];
       
+      const mainProductSelectors = [
+        '.product-detail',
+        '.pdp-product',
+        '.product-main',
+        '.product-info',
+        '.product-information',
+        '[data-testid="product-info"]',
+        '.pdp-summary',
+        '.product-header',
+        'main',
+        '.content-main',
+      ];
+      
       let priceText = '';
-      for (const sel of priceSelectors) {
-        const el = document.querySelector(sel);
-        if (el?.textContent?.trim()) {
-          priceText = el.textContent.trim();
-          break;
+      
+      // Try main product area first
+      for (const containerSel of mainProductSelectors) {
+        const container = document.querySelector(containerSel);
+        if (container) {
+          for (const sel of priceSelectors) {
+            const el = container.querySelector(sel);
+            if (el?.textContent?.trim()) {
+              priceText = el.textContent.trim();
+              break;
+            }
+          }
+          if (priceText) break;
+        }
+      }
+      
+      // Fallback: any price on page
+      if (!priceText) {
+        for (const sel of priceSelectors) {
+          const el = document.querySelector(sel);
+          if (el?.textContent?.trim()) {
+            priceText = el.textContent.trim();
+            break;
+          }
         }
       }
       
