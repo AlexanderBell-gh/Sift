@@ -120,17 +120,43 @@ async function scrapeProductPage(url, browserEnv) {
     
     await page.setExtraHTTPHeaders({
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-GB,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     });
     
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+    const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
     
-    const pageContent = await page.content();
-    if (pageContent.includes('Access Denied') || pageContent.includes('Challenge') || pageContent.includes('Just a moment')) {
+    if (!response || response.status() >= 400) {
       await browser.close();
-      throw new Error('Page blocked by Cloudflare');
+      throw new Error(`HTTP error: ${response?.status() || 'no response'}`);
     }
     
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('body', { timeout: 10000 });
+    
+    const pageContent = await page.content();
+    const blockedPatterns = [
+      'Access Denied', 'Challenge', 'Just a moment',
+      '403 Forbidden', '403', 'Please enable cookies',
+      'robot', 'automated', 'captcha', 'security check',
+      'blocked', 'detected unusual', 'too many requests'
+    ];
+    
+    const isBlocked = blockedPatterns.some(p => pageContent.toLowerCase().includes(p.toLowerCase()))
+      || pageContent.length < 2000
+      || !(await page.$('body'));
+    
+    if (isBlocked) {
+      await browser.close();
+      throw new Error('Page blocked or inaccessible');
+    }
+    
+    try {
+      await page.waitForSelector('[data-testid], .product, main, article', { timeout: 8000 });
+    } catch (e) {
+      // Continue anyway - selector not found is OK
+    }
+    
+    await page.waitForTimeout(1500);
     
     const data = await page.evaluate(() => {
       const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
