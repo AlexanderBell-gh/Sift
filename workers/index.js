@@ -136,76 +136,141 @@ async function scrapeProductPage(url, browserEnv) {
       const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
       const getAttr = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || '';
       
-      const priceSelectors = [
-        '[itemprop="price"]',
-        '.price',
-        '[data-price]',
-        '.product-price',
-        '.pricePerUnit',
-        '[data-qa="price"]',
-        '.current-price',
-        '.product-unit-price',
-        '.pricelockup',
-        '.sale-price',
-        '.offer-price',
-        'span[class*="price"]',
-        '.ts-price',
-        '.unit-price',
-        '.price-per-unit',
-      ];
+      // Layer 1: JSON-LD Structured Data (most reliable)
+      let name = '';
+      let price = 0;
+      let currency = 'GBP';
+      let image = '';
       
-      const mainProductSelectors = [
-        '.product-detail',
-        '.pdp-product',
-        '.product-main',
-        '.product-info',
-        '.product-information',
-        '[data-testid="product-info"]',
-        '.pdp-summary',
-        '.product-header',
-        'main',
-        '.content-main',
-      ];
+      try {
+        const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+        scripts.forEach(script => {
+          try {
+            const json = JSON.parse(script.textContent);
+            const findProduct = (obj) => {
+              if (!obj) return null;
+              if (obj['@type'] === 'Product' || obj['@type'] === 'http://schema.org/Product') return obj;
+              if (Array.isArray(obj)) return obj.find(findProduct);
+              if (obj['@graph']) return findProduct(obj['@graph']);
+              return null;
+            };
+            const product = findProduct(json);
+            if (product) {
+              if (product.name && !name) name = product.name;
+              if (product.image && !image) {
+                image = Array.isArray(product.image) ? product.image[0] : product.image;
+              }
+              const offer = Array.isArray(product.offers) ? product.offers[0] : product.offers;
+              if (offer) {
+                if (offer.price !== undefined && !price) {
+                  price = parseFloat(offer.price);
+                }
+                if (offer.priceCurrency && !currency) {
+                  currency = offer.priceCurrency;
+                }
+              }
+            }
+          } catch {}
+        });
+      } catch {}
       
-      let priceText = '';
-      
-      // Try main product area first
-      for (const containerSel of mainProductSelectors) {
-        const container = document.querySelector(containerSel);
-        if (container) {
+      // Layer 2: DOM fallback (with unit price filters)
+      if (!price) {
+        const priceSelectors = [
+          '[itemprop="price"]',
+          '.price',
+          '[data-price]',
+          '.product-price',
+          '.pricePerUnit',
+          '[data-qa="price"]',
+          '.current-price',
+          '.product-unit-price',
+          '.pricelockup',
+          '.sale-price',
+          '.offer-price',
+          '.now-price',
+          '.actual-price',
+          'span[class*="price"]',
+          '.ts-price',
+        ];
+        
+        const mainProductSelectors = [
+          '.product-detail',
+          '.pdp-product',
+          '.product-main',
+          '.product-info',
+          '.product-information',
+          '[data-testid="product-info"]',
+          '.pdp-summary',
+          '.product-header',
+          'main',
+          '.content-main',
+        ];
+        
+        const unitPricePatterns = [
+          'per kg', 'per 100g', 'per 100ml', 'per litre', 'per pack', 'per each', '/kg', '/l', '/100g', '/100ml', 'per 500g', 'per 750ml'
+        ];
+        
+        const isUnitPrice = (text) => {
+          const lower = text.toLowerCase();
+          return unitPricePatterns.some(p => lower.includes(p));
+        };
+        
+        let priceText = '';
+        
+        // Try main product area first
+        for (const containerSel of mainProductSelectors) {
+          const container = document.querySelector(containerSel);
+          if (container) {
+            for (const sel of priceSelectors) {
+              const el = container.querySelector(sel);
+              const text = el?.textContent?.trim() || '';
+              if (text && !isUnitPrice(text)) {
+                priceText = text;
+                break;
+              }
+            }
+            if (priceText) break;
+          }
+        }
+        
+        // Fallback: any price on page (with filter)
+        if (!priceText) {
           for (const sel of priceSelectors) {
-            const el = container.querySelector(sel);
-            if (el?.textContent?.trim()) {
-              priceText = el.textContent.trim();
+            const el = document.querySelector(sel);
+            const text = el?.textContent?.trim() || '';
+            if (text && !isUnitPrice(text)) {
+              priceText = text;
               break;
             }
           }
-          if (priceText) break;
+        }
+        
+        if (priceText) {
+          const priceMatch = priceText.replace(/[£,$]/g, '').match(/[\d.]+/);
+          price = priceMatch ? parseFloat(priceMatch[0]) : 0;
+          currency = priceText.includes('£') ? 'GBP' : (priceText.includes('$') ? 'USD' : 'GBP');
         }
       }
       
-      // Fallback: any price on page
-      if (!priceText) {
-        for (const sel of priceSelectors) {
-          const el = document.querySelector(sel);
-          if (el?.textContent?.trim()) {
-            priceText = el.textContent.trim();
-            break;
-          }
-        }
+      // Name fallback
+      if (!name) {
+        name = getText('h1') || getText('[itemprop="name"]') || getText('.product-title') || getText('.product-name');
       }
       
-      const priceMatch = priceText.replace(/[£,$]/g, '').match(/[\d.]+/);
-      
-      return {
-        name: getText('h1') || getText('[itemprop="name"]') || getText('.product-title') || getText('.product-name'),
-        price: priceMatch ? parseFloat(priceMatch[0]) : 0,
-        currency: priceText.includes('£') ? 'GBP' : (priceText.includes('$') ? 'USD' : 'GBP'),
-        image: getAttr('[itemprop="image"]', 'src') 
+      // Image fallback
+      if (!image) {
+        image = getAttr('[itemprop="image"]', 'src') 
           || getAttr('meta[property="og:image"]', 'content')
           || getAttr('.product-image img', 'src')
-          || getAttr('[data-product-image]', 'src')
-          || '',
+          || getAttr('[data-product-image]', 'src');
+      }
+      
+      return {
+        name,
+        price,
+        currency,
+        image: image || '',
       };
     });
     
