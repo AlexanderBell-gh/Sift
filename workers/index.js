@@ -1393,6 +1393,10 @@ async function handleRequest(request, env) {
         store: '',
         fromCache,
       });
+    } catch (e) {
+      console.error('Product scrape error:', e);
+      return errorResponse('Failed to gather product info, enter manually');
+    }
   }
 
   return errorResponse('Not found', 404);

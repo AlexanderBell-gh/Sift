@@ -6,10 +6,11 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
-- **Playwright Scraping** - Uses Cloudflare Browser Rendering to extract product name, price, and image from live pages
+- **Playwright Scraping with Caching** - Uses Cloudflare Browser Rendering to extract product name, price, and image from live pages. Results cached for 24 hours globally to avoid repeat scraping and reduce rate limiting
 - **Streamlined Add/Edit Product Flow** - Single "Find Product" button searches and auto-extracts price + image in one click
 - **Web search for products** - Find Product button uses Serper API to find product URLs from product names
 - **Edit mode protection** - Extract in Edit mode only updates price + image (preserves name + store)
+- **Graceful Error Handling** - Scraping errors no longer block data entry if partial data was extracted
 
 ## Design
 
@@ -176,6 +177,7 @@ Product scraping uses Cloudflare Browser Rendering (Playwright):
 - **Free tier**: 10 hours/month on Workers Paid plan
 - **Pricing beyond**: $0.09/browser-hour
 - Enable in Cloudflare dashboard under Workers → your worker → Settings → Browser Rendering
+- **Caching**: Scraped product data is cached for 24 hours (per URL) to minimize browser usage and avoid rate limiting
 
 ## Project Structure
 
