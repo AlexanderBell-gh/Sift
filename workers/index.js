@@ -112,94 +112,77 @@ async function deleteUserData(env, userId) {
   await env.PRICETRACKR.delete(`user:${userId}:categories`);
 }
 
-async function scrapeProductPage(url, browserEnv, maxRetries = 2) {
-  let lastError = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    let browser = null;
-    try {
-      const { launch } = await import('@cloudflare/playwright');
-      browser = await launch(browserEnv);
-      const page = await browser.newPage();
-      
-      await page.setExtraHTTPHeaders({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      });
-      
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
-      
-      const pageContent = await page.content();
-      if (pageContent.includes('Access Denied') || pageContent.includes('Challenge') || pageContent.includes('Just a moment')) {
-        throw new Error('Page blocked by Cloudflare');
-      }
-      
-      await page.waitForTimeout(2000);
-      
-      const data = await page.evaluate(() => {
-        const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
-        const getAttr = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || '';
-        
-        const priceSelectors = [
-          '[itemprop="price"]',
-          '.price',
-          '[data-price]',
-          '.product-price',
-          '.pricePerUnit',
-          '[data-qa="price"]',
-          '.current-price',
-          '.product-unit-price',
-          '.pricelockup',
-          '.sale-price',
-          '.offer-price',
-          '[class*="price"]',
-          '.ts-price',
-          'span.price',
-          '.unit-price',
-          '.price-per-unit',
-        ];
-        
-        let priceEl = null;
-        let priceText = '';
-        for (const sel of priceSelectors) {
-          const el = document.querySelector(sel);
-          if (el?.textContent?.trim()) {
-            priceEl = el;
-            priceText = el.textContent.trim();
-            break;
-          }
-        }
-        
-        const priceMatch = priceText.replace(/[£,$]/g, '').match(/[\d.]+/);
-        
-        return {
-          name: getText('h1') || getText('[itemprop="name"]') || getText('.product-title') || getText('.product-name'),
-          price: priceMatch ? parseFloat(priceMatch[0]) : 0,
-          currency: priceText.includes('£') ? 'GBP' : (priceText.includes('$') ? 'USD' : 'GBP'),
-          image: getAttr('[itemprop="image"]', 'src') 
-            || getAttr('meta[property="og:image"]', 'content')
-            || getAttr('.product-image img', 'src')
-            || getAttr('[data-product-image]', 'src')
-            || '',
-        };
-      });
-      
+async function scrapeProductPage(url, browserEnv) {
+  try {
+    const { launch } = await import('@cloudflare/playwright');
+    const browser = await launch(browserEnv);
+    const page = await browser.newPage();
+    
+    await page.setExtraHTTPHeaders({
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    });
+    
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+    
+    const pageContent = await page.content();
+    if (pageContent.includes('Access Denied') || pageContent.includes('Challenge') || pageContent.includes('Just a moment')) {
       await browser.close();
-      return data;
-    } catch (e) {
-      lastError = e;
-      console.error(`Scrape attempt ${attempt}/${maxRetries} failed:`, e.message);
-    } finally {
-      if (browser) {
-        try { await browser.close(); } catch (e) {}
-      }
+      throw new Error('Page blocked by Cloudflare');
     }
     
-    if (attempt < maxRetries) {
-      await new Promise(r => setTimeout(r, 4000 * attempt));
-    }
+    await page.waitForTimeout(2000);
+    
+    const data = await page.evaluate(() => {
+      const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
+      const getAttr = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || '';
+      
+      const priceSelectors = [
+        '[itemprop="price"]',
+        '.price',
+        '[data-price]',
+        '.product-price',
+        '.pricePerUnit',
+        '[data-qa="price"]',
+        '.current-price',
+        '.product-unit-price',
+        '.pricelockup',
+        '.sale-price',
+        '.offer-price',
+        '[class*="price"]',
+        '.ts-price',
+        'span.price',
+        '.unit-price',
+        '.price-per-unit',
+      ];
+      
+      let priceText = '';
+      for (const sel of priceSelectors) {
+        const el = document.querySelector(sel);
+        if (el?.textContent?.trim()) {
+          priceText = el.textContent.trim();
+          break;
+        }
+      }
+      
+      const priceMatch = priceText.replace(/[£,$]/g, '').match(/[\d.]+/);
+      
+      return {
+        name: getText('h1') || getText('[itemprop="name"]') || getText('.product-title') || getText('.product-name'),
+        price: priceMatch ? parseFloat(priceMatch[0]) : 0,
+        currency: priceText.includes('£') ? 'GBP' : (priceText.includes('$') ? 'USD' : 'GBP'),
+        image: getAttr('[itemprop="image"]', 'src') 
+          || getAttr('meta[property="og:image"]', 'content')
+          || getAttr('.product-image img', 'src')
+          || getAttr('[data-product-image]', 'src')
+          || '',
+      };
+    });
+    
+    await browser.close();
+    return data;
+  } catch (e) {
+    throw e;
   }
-  
-  throw lastError || new Error('All retries failed');
 }
 
 async function scrapeImageFromUrl(url) {
