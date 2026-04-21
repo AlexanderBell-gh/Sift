@@ -133,16 +133,42 @@ async function scrapeProductPage(url, browserEnv, maxRetries = 2) {
         throw new Error('Page blocked by Cloudflare');
       }
       
+      await page.waitForTimeout(2000);
+      
       const data = await page.evaluate(() => {
         const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
         const getAttr = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || '';
         
-        const priceEl = document.querySelector('[itemprop="price"]') 
-          || document.querySelector('.price') 
-          || document.querySelector('[data-price]')
-          || document.querySelector('.product-price');
+        const priceSelectors = [
+          '[itemprop="price"]',
+          '.price',
+          '[data-price]',
+          '.product-price',
+          '.pricePerUnit',
+          '[data-qa="price"]',
+          '.current-price',
+          '.product-unit-price',
+          '.pricelockup',
+          '.sale-price',
+          '.offer-price',
+          '[class*="price"]',
+          '.ts-price',
+          'span.price',
+          '.unit-price',
+          '.price-per-unit',
+        ];
         
-        const priceText = priceEl?.textContent?.trim() || '';
+        let priceEl = null;
+        let priceText = '';
+        for (const sel of priceSelectors) {
+          const el = document.querySelector(sel);
+          if (el?.textContent?.trim()) {
+            priceEl = el;
+            priceText = el.textContent.trim();
+            break;
+          }
+        }
+        
         const priceMatch = priceText.replace(/[£,$]/g, '').match(/[\d.]+/);
         
         return {
