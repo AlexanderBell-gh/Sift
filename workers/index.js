@@ -118,8 +118,8 @@ async function scrapeProductPage(url, browserEnv, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     let browser = null;
     try {
-      const { chromium } = await import('@cloudflare/playwright');
-      browser = await chromium.launch(browserEnv);
+      const { launch } = await import('@cloudflare/playwright');
+      browser = await launch(browserEnv);
       const page = await browser.newPage();
       
       await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
