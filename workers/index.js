@@ -1120,6 +1120,27 @@ async function handleRequest(request, env) {
     }
   }
 
+  // Scrape product image from URL
+  if (path === '/api/scrape-product' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const body = await request.json();
+      const { url } = body;
+
+      if (!url || typeof url !== 'string') {
+        return errorResponse('URL is required');
+      }
+
+      const imageUrl = await scrapeImageFromUrl(url);
+      return jsonResponse({ imageUrl });
+    } catch (e) {
+      console.error('Product scrape error:', e);
+      return errorResponse('Failed to scrape product');
+    }
+  }
+
   // Image search via Serper API
   if (path === '/api/images' && method === 'POST') {
     const auth = await requireAuth(request, env);

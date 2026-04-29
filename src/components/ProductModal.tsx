@@ -91,12 +91,20 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     }
   };
 
-  const selectWebResult = (result: SearchResult) => {
+  const selectWebResult = async (result: SearchResult) => {
     setUrl(result.url);
     const detected = detectStoreFromUrl(result.url);
     if (detected) {
       setStore(detected);
       setIsStoreAutoDetected(true);
+    }
+    try {
+      const data = await api.scrapeProduct(result.url);
+      if (data.imageUrl) {
+        setImageUrl(data.imageUrl);
+      }
+    } catch (err) {
+      console.error('Failed to scrape product image:', err);
     }
     setIsWebSearchOpen(false);
     setWebResults([]);

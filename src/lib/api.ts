@@ -305,4 +305,13 @@ export const api = {
     });
     return handleResponse(response);
   },
+
+  async scrapeProduct(url: string): Promise<{ imageUrl: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/scrape-product`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ url }),
+    });
+    return handleResponse(response);
+  },
 };
