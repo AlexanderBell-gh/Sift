@@ -6,9 +6,10 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
-- **Web search for products** - Find Product button uses Serper API to find product URLs from product names
-- **Edit mode protection** - Extract in Edit mode only updates price + image (preserves name + store)
-- **Streamlined Add Product Flow** - Enter product name, click Find Product to search, select result to auto-fill URL
+- **Image auto-fetch** - Find Product now also fetches product image from search results
+- **CSV import/export** - Export products as CSV, import via file upload or clipboard paste
+- **Toast notifications** - Better feedback for actions (replaced browser alerts)
+- **Streamlined Add Product Flow** - Enter product name, click Find Product to search, select result to auto-fill URL + image
 
 ## Design
 
@@ -34,7 +35,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL
-- **Import/Export**: Export all products as JSON, import via file upload or clipboard paste (registered users only)
+- **Import/Export**: Export products as CSV, import via file upload or clipboard paste (registered users only)
 - **Admin Dashboard**: System stats, user management, analytics, activity audit log (admin users only)
 
 ### Adding Products - Workflow
@@ -172,17 +173,17 @@ For product search, you need an API key:
 PriceTrackr/
 ├── src/
 │   ├── components/
-│   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select)
+│   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select, Toast)
+│   │   ├── useToast.ts   # Toast notification hook
 │   │   ├── Header.tsx    # App header with glassmorphism, search, theme toggle
 │   │   ├── MainApp.tsx   # Main application logic
 │   │   ├── ProductCard.tsx      # Product display card with staggered animations
 │   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
-│   │   ├── ProductModal.tsx     # Add/Edit product form with search + scraping
+│   │   ├── ProductModal.tsx     # Add/Edit product form with search + auto-fetch
 │   │   ├── ProductDetail.tsx    # Product detail with sparkline chart
 │   │   ├── AddPriceModal.tsx    # Add price entry
 │   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown
 │   │   ├── SortSelect.tsx       # Sort dropdown
-│   │   ├── AddCategoryModal.tsx # Add custom category
 │   │   ├── AdminDashboard.tsx   # Admin dashboard
 │   │   ├── AdminUsers.tsx       # User management
 │   │   ├── AdminAnalytics.tsx   # Analytics + stats
@@ -191,20 +192,19 @@ PriceTrackr/
 │   │   └── AuthContext.tsx      # Authentication state
 │   ├── pages/
 │   │   ├── Landing.tsx          # Sign in/up page
-│   │   └── Settings.tsx         # User settings
+│   │   └── Settings.tsx       # User settings (import/export, account)
 │   ├── lib/
 │   │   ├── api.ts               # API client
 │   │   └── utils.ts             # Utility functions
 │   ├── types/
-│   │   └── index.ts             # TypeScript types
+│   │   └── index.ts            # TypeScript types + constants
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css                # Global styles
 ├── workers/
 │   ├── index.js                 # Worker API endpoints
-│   ├── auth.js                  # Authentication utilities
 │   └── wrangler.toml
-├── public/                      # Static assets
+├── public/                      # Static assets (store icons)
 ├── .github/workflows/           # CI/CD
 └── package.json
 ```
