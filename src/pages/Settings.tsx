@@ -6,7 +6,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
-import type { Product } from '../types';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -105,17 +104,39 @@ export function Settings() {
     try {
       setIsLoading(true);
       const products = await api.getProducts();
-      const data = JSON.stringify(products, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
+      
+      const rows: string[] = ['product_id,name,url,imageUrl,category,store,notes,price,date,createdAt'];
+      
+      for (const product of products) {
+        for (const priceEntry of product.prices || []) {
+          const fields = [
+            product.id,
+            product.name,
+            product.url || '',
+            product.imageUrl || '',
+            product.category,
+            product.store || '',
+            product.notes || '',
+            priceEntry.price.toString(),
+            priceEntry.date,
+            product.createdAt
+          ].map(field => `"${String(field).replace(/"/g, '""')}"`);
+          
+          rows.push(fields.join(','));
+        }
+      }
+      
+      const data = rows.join('\n');
+      const blob = new Blob([data], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `pricetrackr-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `pricetrackr-export-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      setImportStatus({ type: 'success', message: `Exported ${products.length} products` });
+      setImportStatus({ type: 'success', message: `Exported ${products.length} products (${rows.length - 1} price entries)` });
     } catch {
       setImportStatus({ type: 'error', message: 'Failed to export products' });
     } finally {
@@ -126,10 +147,32 @@ export function Settings() {
   const handleExportCopy = async () => {
     try {
       const products = await api.getProducts();
-      const data = JSON.stringify(products, null, 2);
+      
+      const rows: string[] = ['product_id,name,url,imageUrl,category,store,notes,price,date,createdAt'];
+      
+      for (const product of products) {
+        for (const priceEntry of product.prices || []) {
+          const fields = [
+            product.id,
+            product.name,
+            product.url || '',
+            product.imageUrl || '',
+            product.category,
+            product.store || '',
+            product.notes || '',
+            priceEntry.price.toString(),
+            priceEntry.date,
+            product.createdAt
+          ].map(field => `"${String(field).replace(/"/g, '""')}"`);
+          
+          rows.push(fields.join(','));
+        }
+      }
+      
+      const data = rows.join('\n');
       await navigator.clipboard.writeText(data);
       setCopied(true);
-      setImportStatus({ type: 'success', message: `Copied ${products.length} products to clipboard` });
+      setImportStatus({ type: 'success', message: `Copied ${products.length} products (${rows.length - 1} price entries) to clipboard` });
     } catch {
       setImportStatus({ type: 'error', message: 'Failed to copy to clipboard' });
     }
@@ -159,7 +202,7 @@ export function Settings() {
       const text = await navigator.clipboard.readText();
       await processImport(text);
     } catch {
-      setImportStatus({ type: 'error', message: 'Failed to read clipboard. Make sure you have copied valid JSON data.' });
+      setImportStatus({ type: 'error', message: 'Failed to read clipboard. Make sure you have copied valid CSV data.' });
     } finally {
       setIsLoading(false);
     }
@@ -167,53 +210,135 @@ export function Settings() {
 
   const processImport = async (text: string) => {
     try {
-      const importedProducts = JSON.parse(text) as Product[];
-      
-      if (!Array.isArray(importedProducts)) {
-        throw new Error('Invalid format: expected an array of products');
+      const lines = text.trim().split('\n');
+      if (lines.length < 2) {
+        throw new Error('Invalid format: CSV must have header row and at least one data row');
+      }
+
+      const header = lines[0].toLowerCase().split(',');
+      const idIdx = header.indexOf('product_id');
+      const nameIdx = header.indexOf('name');
+      const urlIdx = header.indexOf('url');
+      const imageIdx = header.indexOf('imageurl');
+      const catIdx = header.indexOf('category');
+      const storeIdx = header.indexOf('store');
+      const notesIdx = header.indexOf('notes');
+      const priceIdx = header.indexOf('price');
+      const dateIdx = header.indexOf('date');
+      const createdIdx = header.indexOf('createdat');
+
+      if (nameIdx === -1 || priceIdx === -1 || dateIdx === -1) {
+        throw new Error('Invalid CSV: missing required columns (name, price, date)');
       }
 
       const existingProducts = await api.getProducts();
-      const existingIds = new Set(existingProducts.map(p => p.id));
+      const existingById = new Map(existingProducts.map(p => [p.id, p]));
+
+      const productPrices = new Map<string, { name: string; url: string; imageUrl: string; category: string; store: string; notes: string; createdAt: string; prices: { price: number; date: string }[] }>();
 
       let imported = 0;
       let skipped = 0;
 
-      for (const product of importedProducts) {
-        if (!product.name || !product.category) {
-          skipped++;
-          continue;
-        }
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
 
-        if (existingIds.has(product.id)) {
-          skipped++;
-          continue;
-        }
+        const parseCSVValue = (str: string): string => {
+          if (str.startsWith('"') && str.endsWith('"')) {
+            return str.slice(1, -1).replace(/""/g, '"');
+          }
+          return str;
+        };
 
-        const latestPrice = product.prices?.[product.prices.length - 1]?.price || 0;
+        const values = line.split(',').map(v => parseCSVValue(v.trim()));
         
-        await api.createProduct({
-          name: product.name,
-          url: product.url,
-          imageUrl: product.imageUrl,
-          category: product.category,
-          store: product.store,
-          notes: product.notes,
-          price: latestPrice,
-        });
+        const productId = idIdx >= 0 ? values[idIdx] : '';
+        const name = values[nameIdx] || '';
+        const price = parseFloat(values[priceIdx]);
+        const date = values[dateIdx];
+
+        if (!name || isNaN(price) || !date) {
+          skipped++;
+          continue;
+        }
+
+        const category = catIdx >= 0 ? values[catIdx] || 'other' : 'other';
+        const url = urlIdx >= 0 ? values[urlIdx] : '';
+        const imageUrl = imageIdx >= 0 ? values[imageIdx] : '';
+        const store = storeIdx >= 0 ? values[storeIdx] : '';
+        const notes = notesIdx >= 0 ? values[notesIdx] : '';
+        const createdAt = createdIdx >= 0 ? values[createdIdx] : new Date().toISOString().split('T')[0];
+
+        const key = productId || `${name}-${url}`;
+
+        if (!productPrices.has(key)) {
+          productPrices.set(key, {
+            name,
+            url,
+            imageUrl,
+            category,
+            store,
+            notes,
+            createdAt,
+            prices: []
+          });
+        }
+
+        productPrices.get(key)!.prices.push({ price, date });
         imported++;
       }
 
+      for (const [key, productData] of productPrices) {
+        productData.prices.sort((a, b) => a.date.localeCompare(b.date));
+
+        const existingProduct = existingById.get(key);
+
+        if (existingProduct) {
+          const existingDates = new Set(existingProduct.prices.map(p => p.date));
+          const newPrices = productData.prices.filter(p => !existingDates.has(p.date));
+          
+          for (const newPrice of newPrices) {
+            await api.addPrice(existingProduct.id, {
+              price: newPrice.price,
+              store: productData.store || existingProduct.store,
+              date: newPrice.date
+            });
+          }
+        } else {
+          const latestPrice = productData.prices[productData.prices.length - 1];
+          await api.createProduct({
+            name: productData.name,
+            url: productData.url,
+            imageUrl: productData.imageUrl,
+            category: productData.category,
+            price: latestPrice.price,
+            store: productData.store,
+            notes: productData.notes
+          });
+
+          const newProduct = await api.getProducts();
+          const created = newProduct.find(p => p.name === productData.name && p.category === productData.category);
+          
+          if (created && productData.prices.length > 1) {
+            for (const priceEntry of productData.prices.slice(0, -1)) {
+              await api.addPrice(created.id, {
+                price: priceEntry.price,
+                store: productData.store,
+                date: priceEntry.date
+              });
+            }
+          }
+        }
+      }
+
+      const newCount = productPrices.size - (productPrices.size > 0 ? Array.from(productPrices.keys()).filter(k => existingById.has(k)).length : 0);
       setImportStatus({ 
         type: 'success', 
-        message: `Imported ${imported} products, skipped ${skipped} (duplicates or invalid)` 
+        message: `Imported ${imported} price entries across ${productPrices.size} products (${newCount} new, ${skipped} skipped)` 
       });
     } catch (err) {
-      if (err instanceof SyntaxError) {
-        setImportStatus({ type: 'error', message: 'Invalid JSON format' });
-      } else {
-        setImportStatus({ type: 'error', message: err instanceof Error ? err.message : 'Failed to import' });
-      }
+      console.error('Import error:', err);
+      setImportStatus({ type: 'error', message: err instanceof Error ? err.message : 'Invalid CSV format' });
     }
   };
 
@@ -332,7 +457,7 @@ export function Settings() {
                   <div className="flex gap-2">
                     <Button variant="secondary" onClick={handleExportDownload} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
                       <Download className="w-4 h-4" />
-                      Download JSON
+                      Download CSV
                     </Button>
                     <Button variant="secondary" onClick={handleExportCopy} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">
                       {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -352,7 +477,7 @@ export function Settings() {
                       type="file"
                       ref={fileInputRef}
                       onChange={handleImportFile}
-                      accept=".json"
+                      accept=".csv,.txt"
                       className="hidden"
                     />
                     <Button variant="secondary" onClick={handleImportPaste} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5">

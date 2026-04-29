@@ -1087,33 +1087,55 @@ async function handleRequest(request, env) {
         return errorResponse('Search service not configured', 503);
       }
 
-      const response = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': env.SERPER_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: q + ' UK supermarket price',
-          num: 10,
+      const [searchRes, imagesRes] = await Promise.all([
+        fetch('https://google.serper.dev/search', {
+          method: 'POST',
+          headers: {
+            'X-API-KEY': env.SERPER_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            q: q + ' UK supermarket price',
+            num: 10,
+          }),
         }),
-      });
+        fetch('https://google.serper.dev/images', {
+          method: 'POST',
+          headers: {
+            'X-API-KEY': env.SERPER_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            q: q,
+            num: 10,
+          }),
+        }),
+      ]);
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error('Serper search error:', response.status, errText);
-        return errorResponse('Search failed', response.status);
+      if (!searchRes.ok) {
+        const errText = await searchRes.text();
+        console.error('Serper search error:', searchRes.status, errText);
+        return errorResponse('Search failed', searchRes.status);
       }
 
-      const data = await response.json();
-      const results = (data.organic || []).map((item) => ({
+      const searchData = await searchRes.json();
+      const results = (searchData.organic || []).map((item) => ({
         title: item.title || '',
         url: item.link || item.url || '',
         snippet: item.snippet || '',
       }));
 
-      console.log('Search results:', results.length);
-      return jsonResponse({ results });
+      let imageUrl = '';
+      if (imagesRes.ok) {
+        const imagesData = await imagesRes.json();
+        const images = imagesData.images || [];
+        if (images.length > 0) {
+          imageUrl = images[0].imageUrl || images[0].link || '';
+        }
+      }
+
+      console.log('Search results:', results.length, 'image:', imageUrl ? 'found' : 'none');
+      return jsonResponse({ results, imageUrl });
     } catch (e) {
       console.error('Search error:', e);
       return errorResponse('Search failed');

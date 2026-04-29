@@ -297,7 +297,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  async searchProducts(query: string): Promise<{ results: SearchResult[] }> {
+  async searchProducts(query: string): Promise<{ results: SearchResult[]; imageUrl: string }> {
     const response = await fetch(`${API_BASE_URL}/api/search/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
