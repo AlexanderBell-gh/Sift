@@ -1,23 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Loader2, Package, Tag, Users } from 'lucide-react';
 import { api } from '../lib/api';
-import { DEFAULT_CATEGORIES } from '../types';
+import { DEFAULT_CATEGORIES, STORE_FAVICONS, STORES } from '../types';
 
-const STORE_ICONS: Record<string, string> = {
-  "Sainsbury's": '/storeicon_sainsburys.png',
-  'Tesco': '/storeicon_tesco.png',
-  'Morrisons': '/storeicon_morrisons.png',
-  'ASDA': '/storeicon_asda.png',
-  "M&S": '/storeicon_mands.png',
-  'Waitrose': '/storeicon_waitrose.png',
-  'Ocado': '/storeicon_ocado.png',
-  'Aldi': '/storeicon_aldi.png',
-  'Lidl': '/storeicon_lidl.png',
-  'Iceland': '/storeicon_iceland.png',
-  'Co-op': '/storeicon_co-op.png',
-};
-
-const STORE_NAMES = ["Sainsbury's", 'Tesco', 'Morrisons', 'ASDA', "M&S", 'Waitrose', 'Ocado', 'Aldi', 'Lidl', 'Iceland', 'Co-op'];
+const STORE_NAMES = STORES;
 
 export function AdminAnalytics() {
   const [analytics, setAnalytics] = useState<{
@@ -164,7 +150,7 @@ export function AdminAnalytics() {
             {storeData.map((store) => (
               <div key={store.name} className="flex items-center gap-3">
                 <img
-                  src={STORE_ICONS[store.name]}
+                  src={STORE_FAVICONS[store.name]}
                   alt={store.name}
                   className="w-5 h-5 object-contain"
                   onError={(e) => {

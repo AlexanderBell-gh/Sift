@@ -1,5 +1,5 @@
 import type { Product } from '../types';
-import { CATEGORY_ICONS } from '../types';
+import { CATEGORY_ICONS, STORE_FAVICONS } from '../types';
 import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
 import { Badge } from './ui/Badge';
 
@@ -8,20 +8,6 @@ interface ProductCardProps {
   onClick: () => void;
   index?: number;
 }
-
-const storeFavicons: Record<string, string> = {
-  "Sainsbury's": '/storeicon_sainsburys.png',
-  'Tesco': '/storeicon_tesco.png',
-  'Morrisons': '/storeicon_morrisons.png',
-  'ASDA': '/storeicon_asda.png',
-  'M&S': '/storeicon_mands.png',
-  'Waitrose': '/storeicon_waitrose.png',
-  'Ocado': '/storeicon_ocado.png',
-  'Aldi': '/storeicon_aldi.png',
-  'Lidl': '/storeicon_lidl.png',
-  'Iceland': '/storeicon_iceland.png',
-  'Co-op': '/storeicon_co-op.png',
-};
 
 export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
   const latestPrice = product.prices?.[product.prices.length - 1];
@@ -59,9 +45,9 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
         </div>
         {product.store && (
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3 flex items-center gap-1.5">
-            {storeFavicons[product.store] ? (
+            {STORE_FAVICONS[product.store] ? (
               <img 
-                src={storeFavicons[product.store]} 
+                src={STORE_FAVICONS[product.store]} 
                 alt={product.store}
                 className="w-5 h-5 rounded object-contain bg-white dark:bg-zinc-100 p-0.5" 
               />

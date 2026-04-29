@@ -150,16 +150,14 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         />
       </div>
 
-      <div>
-        <Input
-          label="Image URL"
-          type="url"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="Optional"
-          className="w-full"
-        />
-      </div>
+      <Input
+        label="Image URL"
+        type="url"
+        value={imageUrl}
+        onChange={(e) => setImageUrl(e.target.value)}
+        placeholder="Optional"
+        className="w-full"
+      />
       {imageUrl && (
         <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-lg inline-block">
           <img 
@@ -207,9 +205,17 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           <span className="text-[10px] font-semibold uppercase tracking-wider bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded-full mb-0.5">
             Auto-detected
           </span>
-        )}
+)}
       </div>
 
+      <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Notes</label>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={2}
+        className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-transparent border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-400 dark:focus:border-green-400/60 transition-all resize-none"
+        placeholder="e.g, Normal Price £x.xx | Nectar Price £x.xx"
+      />
       <div>
         <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Notes</label>
         <textarea

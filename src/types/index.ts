@@ -41,18 +41,6 @@ export interface User {
   trialExpiresAt?: number | null;
 }
 
-export interface MagicLink {
-  token: string;
-  userId: string;
-  expiresAt: number;
-}
-
-export interface AuthPayload {
-  userId: string;
-  role: UserRole;
-  exp: number;
-}
-
 export interface AuthResponse {
   user: {
     id: string;
@@ -101,6 +89,20 @@ export const STORES = [
 export type StoreName = typeof STORES[number];
 
 export const STORE_OPTIONS = STORES.map(store => ({ value: store, label: store }));
+
+export const STORE_FAVICONS: Record<string, string> = {
+  "Sainsbury's": '/storeicon_sainsburys.png',
+  'Tesco': '/storeicon_tesco.png',
+  'Morrisons': '/storeicon_morrisons.png',
+  'ASDA': '/storeicon_asda.png',
+  'M&S': '/storeicon_mands.png',
+  'Waitrose': '/storeicon_waitrose.png',
+  'Ocado': '/storeicon_ocado.png',
+  'Aldi': '/storeicon_aldi.png',
+  'Lidl': '/storeicon_lidl.png',
+  'Iceland': '/storeicon_iceland.png',
+  'Co-op': '/storeicon_co-op.png',
+};
 
 export interface AdminUser {
   id: string;
