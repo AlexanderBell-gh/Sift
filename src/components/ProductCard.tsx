@@ -1,4 +1,5 @@
 import type { Product } from '../types';
+import { CATEGORY_ICONS } from '../types';
 import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
 import { Badge } from './ui/Badge';
 
@@ -7,18 +8,6 @@ interface ProductCardProps {
   onClick: () => void;
   index?: number;
 }
-
-const categoryIcons: Record<string, string> = {
-  chilled: '🥛',
-  snacks: '🍿',
-  beverages: '🥤',
-  produce: '🥬',
-  frozen: '🧊',
-  bakery: '🥖',
-  pantry: '🥫',
-  condiments: '🧂',
-  other: '📦',
-};
 
 const storeFavicons: Record<string, string> = {
   "Sainsbury's": '/storeicon_sainsburys.png',
@@ -40,7 +29,7 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
   const { change, percent, direction } = calculatePriceChange(product.prices || []);
 
   const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-  const icon = categoryIcons[product.category] || '📦';
+  const icon = CATEGORY_ICONS[product.category] || '📦';
   const pillClass = direction === 'up' ? 'price-pill-up' : direction === 'down' ? 'price-pill-down' : 'price-pill-neutral';
 
   return (

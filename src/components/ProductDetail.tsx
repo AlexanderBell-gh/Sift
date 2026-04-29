@@ -1,6 +1,7 @@
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import type { Product } from '../types';
+import { CATEGORY_ICONS } from '../types';
 import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
 import { Pencil, Trash2, ExternalLink, Store, Calendar, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -83,11 +84,6 @@ export function ProductDetail({
 
   const TrendIcon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : Minus;
 
-  const categoryIconMap: Record<string, string> = {
-    chilled: '🥛', snacks: '🍿', beverages: '🥤', produce: '🥬',
-    frozen: '🧊', bakery: '🥖', pantry: '🥫', condiments: '🧂', other: '📦',
-  };
-
   return (
     <>
       {isOpen && (
@@ -114,7 +110,7 @@ export function ProductDetail({
                       }}
                     />
                   ) : (
-                    <span>{categoryIconMap[product.category] || '📦'}</span>
+                    <span>{CATEGORY_ICONS[product.category] || '📦'}</span>
                   )}
                 </div>
                 <div className="min-w-0">

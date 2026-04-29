@@ -79,6 +79,11 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'other', name: 'Other', icon: '📦' },
 ];
 
+export const CATEGORY_ICONS: Record<string, string> = DEFAULT_CATEGORIES.reduce((acc, cat) => {
+  acc[cat.id] = cat.icon;
+  return acc;
+}, {} as Record<string, string>);
+
 export interface AdminUser {
   id: string;
   email: string;
