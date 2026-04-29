@@ -119,12 +119,6 @@ export function AdminDashboard() {
                 <Moon className="w-4 h-4 text-zinc-500" />
               )}
             </button>
-            <button
-              onClick={() => navigate('/app')}
-              className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-            >
-              Exit Admin
-            </button>
           </div>
         </div>
 
