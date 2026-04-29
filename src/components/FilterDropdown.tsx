@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import type { Category } from '../types';
+import { STORES } from '../types';
 
 interface FilterDropdownProps {
   categories: Category[];
@@ -9,20 +10,6 @@ interface FilterDropdownProps {
   onCategoriesChange: (categories: string[]) => void;
   onStoresChange: (stores: string[]) => void;
 }
-
-const ALL_STORES = [
-  "Sainsbury's",
-  'Tesco',
-  'Morrisons',
-  'ASDA',
-  'M&S',
-  'Waitrose',
-  'Ocado',
-  'Aldi',
-  'Lidl',
-  'Iceland',
-  'Co-op',
-];
 
 export function FilterDropdown({
   categories,
@@ -119,7 +106,7 @@ export function FilterDropdown({
               <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider px-2 mb-1.5">
                 Stores
               </p>
-              {ALL_STORES.map((store) => (
+              {STORES.map((store) => (
                 <label
                   key={store}
                   className="flex items-center gap-2.5 py-2 px-2 hover:bg-zinc-50 dark:hover:bg-white/10 rounded-lg cursor-pointer transition-colors"

@@ -84,6 +84,24 @@ export const CATEGORY_ICONS: Record<string, string> = DEFAULT_CATEGORIES.reduce(
   return acc;
 }, {} as Record<string, string>);
 
+export const STORES = [
+  "Sainsbury's",
+  'Tesco',
+  'Morrisons',
+  'ASDA',
+  'M&S',
+  'Waitrose',
+  'Ocado',
+  'Aldi',
+  'Lidl',
+  'Iceland',
+  'Co-op',
+] as const;
+
+export type StoreName = typeof STORES[number];
+
+export const STORE_OPTIONS = STORES.map(store => ({ value: store, label: store }));
+
 export interface AdminUser {
   id: string;
   email: string;

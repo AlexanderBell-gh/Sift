@@ -4,6 +4,7 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import type { Product, Category, SearchResult } from '../types';
+import { STORE_OPTIONS } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
 import { Search, Loader2 } from 'lucide-react';
@@ -113,20 +114,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     label: c.name,
   }));
 
-  const storeOptions = [
-    { value: '', label: 'Select a store...' },
-    { value: "Sainsbury's", label: "Sainsbury's" },
-    { value: 'Tesco', label: 'Tesco' },
-    { value: 'Morrisons', label: 'Morrisons' },
-    { value: 'ASDA', label: 'ASDA' },
-    { value: 'M&S', label: 'M&S' },
-    { value: 'Waitrose', label: 'Waitrose' },
-    { value: 'Ocado', label: 'Ocado' },
-    { value: 'Aldi', label: 'Aldi' },
-    { value: 'Lidl', label: 'Lidl' },
-    { value: 'Iceland', label: 'Iceland' },
-    { value: 'Co-op', label: 'Co-op' },
-  ];
+  const storeOptions = [{ value: '', label: 'Select a store...' }, ...STORE_OPTIONS];
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-4">

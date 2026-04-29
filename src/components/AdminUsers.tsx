@@ -4,6 +4,8 @@ import { api } from '../lib/api';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
+import { Toast } from './ui/Toast';
+import { useToast } from './ui/useToast';
 import type { AdminUser, AdminUserDetail } from '../types';
 
 type FilterType = 'users' | 'trials' | 'all';
@@ -34,6 +36,7 @@ export function AdminUsers() {
   const [isCleanupModalOpen, setIsCleanupModalOpen] = useState(false);
   const [isCleanupLoading, setIsCleanupLoading] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<{ deletedCount: number } | null>(null);
+  const { toast, showToast, hideToast } = useToast();
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
@@ -80,7 +83,7 @@ export function AdminUsers() {
       setSelectedUser(user);
       setIsDetailModalOpen(true);
     } catch {
-      alert('Failed to load user details');
+      showToast('Failed to load user details', 'error');
     }
   };
 
@@ -97,8 +100,9 @@ export function AdminUsers() {
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
       loadUsers();
+      showToast('User deleted successfully', 'success');
     } catch {
-      alert('Failed to delete user');
+      showToast('Failed to delete user', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -118,8 +122,9 @@ export function AdminUsers() {
       setIsRoleModalOpen(false);
       setUserToChangeRole(null);
       loadUsers();
+      showToast('Role updated successfully', 'success');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update role');
+      showToast(err instanceof Error ? err.message : 'Failed to update role', 'error');
     } finally {
       setIsChangingRole(false);
     }
@@ -133,8 +138,9 @@ export function AdminUsers() {
       setCleanupResult(result);
       loadExpiredCount();
       loadUsers();
+      showToast('Expired trials cleaned up', 'success');
     } catch {
-      alert('Failed to cleanup trials');
+      showToast('Failed to cleanup trials', 'error');
     } finally {
       setIsCleanupLoading(false);
     }
@@ -459,6 +465,8 @@ export function AdminUsers() {
           )}
         </div>
       </Modal>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }

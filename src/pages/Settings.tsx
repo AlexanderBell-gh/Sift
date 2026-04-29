@@ -6,6 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
+import { Toast } from '../components/ui/Toast';
+import { useToast } from '../components/ui/useToast';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ export function Settings() {
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast, showToast, hideToast } = useToast();
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +54,7 @@ export function Settings() {
     try {
       await api.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      alert('Password changed successfully');
+      showToast('Password changed successfully', 'success');
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
@@ -72,7 +75,7 @@ export function Settings() {
     try {
       const updatedUser = await api.changeEmail(emailForm.newEmail, emailForm.password);
       setEmailForm({ newEmail: '', password: '' });
-      alert(`Email changed successfully to ${updatedUser.email}`);
+      showToast(`Email changed successfully to ${updatedUser.email}`, 'success');
     } catch (err) {
       setEmailError(err instanceof Error ? err.message : 'Failed to change email');
     } finally {
@@ -544,6 +547,8 @@ export function Settings() {
           </div>
         </div>
       </Modal>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }
