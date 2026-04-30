@@ -5,6 +5,48 @@ import { DEFAULT_CATEGORIES, STORE_FAVICONS, STORES } from '../types';
 
 const STORE_NAMES = STORES;
 
+type TimeRange = '7d' | '30d' | '90d' | 'all';
+
+function TimeSeriesChart({ data, color, label }: { data: { date: string; count: number }[]; color: string; label: string }) {
+  if (data.length === 0) {
+    return <div className="h-32 flex items-center justify-center text-zinc-400 text-sm">No data</div>;
+  }
+
+  const maxVal = Math.max(...data.map(d => d.count), 1);
+  const width = 100;
+  const height = 40;
+  const padding = 4;
+
+  const points = data.map((d, i) => ({
+    x: padding + (i / (data.length - 1 || 1)) * (width - padding * 2),
+    y: height - padding - (d.count / maxVal) * (height - padding * 2),
+  }));
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaD = `${pathD} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`;
+
+  return (
+    <div className="space-y-2">
+      <div className="h-32 relative">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id={`gradient-${label}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={areaD} fill={`url(#gradient-${label})`} />
+          <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <div className="flex justify-between text-xs text-zinc-400">
+        <span>{data[0]?.date.slice(5) || '-'}</span>
+        <span>{data[data.length - 1]?.date.slice(5) || '-'}</span>
+      </div>
+    </div>
+  );
+}
+
 export function AdminAnalytics() {
   const [analytics, setAnalytics] = useState<{
     categoryDistribution: Record<string, number>;
@@ -14,9 +56,12 @@ export function AdminAnalytics() {
     userCount: number;
     regularUsers: number;
     trialUsers: number;
+    userRegistrations: { date: string; count: number }[];
+    productCreations: { date: string; count: number }[];
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
 
   useEffect(() => {
     loadAnalytics();
@@ -63,6 +108,17 @@ export function AdminAnalytics() {
   })).sort((a, b) => b.count - a.count);
 
   const maxStoreCount = Math.max(...storeData.map(s => s.count), 1);
+
+  const filterByRange = (data: { date: string; count: number }[]): { date: string; count: number }[] => {
+    if (timeRange === 'all') return data;
+    const now = new Date();
+    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    return data.filter(d => d.date >= cutoff);
+  };
+
+  const filteredUsers = filterByRange(analytics?.userRegistrations || []);
+  const filteredProducts = filterByRange(analytics?.productCreations || []);
 
   return (
     <div className="space-y-8">
@@ -120,6 +176,37 @@ export function AdminAnalytics() {
               <p className="text-xs text-zinc-500 dark:text-zinc-400">Prices</p>
               <p className="text-xl font-semibold tracking-tight">{analytics?.totalPriceEntries ?? 0}</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold tracking-tight">Metrics Over Time</h3>
+          <div className="flex gap-1">
+            {(['7d', '30d', '90d', 'all'] as TimeRange[]).map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  timeRange === range
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">New Users</h4>
+            <TimeSeriesChart data={filteredUsers} color="#3b82f6" label="users" />
+          </div>
+          <div>
+            <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">New Products</h4>
+            <TimeSeriesChart data={filteredProducts} color="#10b981" label="products" />
           </div>
         </div>
       </div>

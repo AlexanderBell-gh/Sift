@@ -946,12 +946,19 @@ async function handleRequest(request, env) {
     let totalPriceEntries = 0;
     let regularUsers = 0;
     let trialUsers = 0;
+    const userRegistrations = {};
+    const productCreations = {};
 
     for (const userId of userIds) {
       const user = await getUserById(env, userId);
       if (user) {
         if (user.isTrial) trialUsers++;
         else regularUsers++;
+
+        if (user.createdAt) {
+          const date = user.createdAt.split('T')[0];
+          userRegistrations[date] = (userRegistrations[date] || 0) + 1;
+        }
       }
 
       const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
@@ -968,9 +975,20 @@ async function handleRequest(request, env) {
           }
           
           totalPriceEntries += product.prices?.length || 0;
+
+          if (product.createdAt) {
+            const date = product.createdAt.split('T')[0];
+            productCreations[date] = (productCreations[date] || 0) + 1;
+          }
         }
       }
     }
+
+    const formatTimeSeries = (obj) => {
+      return Object.entries(obj)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    };
 
     return jsonResponse({
       categoryDistribution: categoryCount,
@@ -980,6 +998,8 @@ async function handleRequest(request, env) {
       userCount: userIds.length,
       regularUsers,
       trialUsers,
+      userRegistrations: formatTimeSeries(userRegistrations),
+      productCreations: formatTimeSeries(productCreations),
     });
   }
 
