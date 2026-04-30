@@ -1362,7 +1362,7 @@ export default {
       const path = url.pathname;
       const method = request.method;
       
-      let userId: string | undefined;
+      let userId;
       try {
         const authHeader = request.headers.get('Authorization');
         if (authHeader && authHeader.startsWith('Bearer ')) {
