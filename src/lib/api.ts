@@ -263,6 +263,7 @@ export const api = {
     requests: { today: number; yesterday: number; total: number };
     avgLatencyMs: number;
     errorCount: number;
+    uptime: string;
     lastError: string | null;
     recentErrors: { timestamp: string; message: string }[];
     storage: { keys: number; estimatedBytes: number; estimatedMB: string };

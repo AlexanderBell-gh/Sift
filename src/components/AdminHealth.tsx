@@ -8,6 +8,7 @@ export function AdminHealth() {
     requests: { today: number; yesterday: number; total: number };
     avgLatencyMs: number;
     errorCount: number;
+    uptime: string;
     lastError: string | null;
     recentErrors: { timestamp: string; message: string }[];
     storage: { keys: number; estimatedBytes: number; estimatedMB: string };
@@ -91,12 +92,12 @@ export function AdminHealth() {
         </div>
         <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-500/10">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
+            <div className="p-2 rounded-lg bg-green-500/10">
+              <CheckCircle className="w-4 h-4 text-green-500" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Errors</p>
-              <p className="text-xl font-semibold tracking-tight">{health!.errorCount}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Uptime</p>
+              <p className="text-xl font-semibold tracking-tight">{health!.uptime}%</p>
             </div>
           </div>
         </div>
@@ -112,6 +113,25 @@ export function AdminHealth() {
           </div>
         </div>
       </div>
+
+      {(health!.recentErrors?.length ?? 0) > 0 && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <span className="text-sm font-medium text-red-500">Recent Errors (Last 10)</span>
+          </div>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {health!.recentErrors.map((err, idx) => (
+              <div key={idx} className="text-sm border-b border-red-500/20 pb-2 last:border-0">
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  {new Date(err.timestamp).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </p>
+                <p className="text-zinc-700 dark:text-zinc-300 font-mono text-xs mt-1 break-all">{err.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-6">
@@ -158,25 +178,6 @@ export function AdminHealth() {
           </div>
         </div>
       </div>
-
-      {(health!.recentErrors?.length ?? 0) > 0 && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-            <span className="text-sm font-medium text-red-500">Recent Errors</span>
-          </div>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {health!.recentErrors.map((err, idx) => (
-              <div key={idx} className="text-sm border-b border-red-500/20 pb-2 last:border-0">
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  {new Date(err.timestamp).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </p>
-                <p className="text-zinc-700 dark:text-zinc-300 font-mono text-xs mt-1 break-all">{err.message}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

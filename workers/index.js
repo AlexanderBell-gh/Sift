@@ -1064,6 +1064,7 @@ async function handleRequest(request, env) {
     }
 
     const status = safeError.count > 10 ? 'degraded' : 'healthy';
+    const uptimePercent = totalRequests > 0 ? (((totalRequests - safeError.count) / totalRequests) * 100).toFixed(1) : '100.0';
 
     return jsonResponse({
       status,
@@ -1074,6 +1075,7 @@ async function handleRequest(request, env) {
       },
       avgLatencyMs: avgLatency,
       errorCount: safeError.count,
+      uptime: uptimePercent,
       lastError: safeError.lastError,
       recentErrors: safeError.recentErrors || [],
       storage: {
