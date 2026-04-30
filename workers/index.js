@@ -1026,7 +1026,7 @@ async function handleRequest(request, env) {
     const safeToday = todayReqs || { count: 0, totalLatency: 0 };
     const safeYesterday = yesterdayReqs || { count: 0, totalLatency: 0 };
     const safeError = errorCount || { count: 0, lastError: null, recentErrors: [] };
-    if (safeError.recentErrors.length === 0 && safeError.lastError) {
+    if ((safeError.recentErrors?.length ?? 0) === 0 && safeError.lastError) {
       safeError.recentErrors = [{ timestamp: safeError.lastError, message: 'Legacy error (pre-recentErrors feature)' }];
     }
 
