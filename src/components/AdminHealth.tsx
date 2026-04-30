@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Database, AlertTriangle, CheckCircle, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Activity, Database, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
 import { api } from '../lib/api';
 
 export function AdminHealth() {
@@ -18,7 +18,6 @@ export function AdminHealth() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [errorsExpanded, setErrorsExpanded] = useState(false);
 
   useEffect(() => {
     loadHealth();
@@ -90,23 +89,15 @@ export function AdminHealth() {
             </div>
           </div>
         </div>
-        <div
-          onClick={() => health!.errorCount > 0 && setErrorsExpanded(!errorsExpanded)}
-          className={`bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4 ${health!.errorCount > 0 ? 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors' : ''}`}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-              </div>
-              <div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Errors</p>
-                <p className="text-xl font-semibold tracking-tight">{health!.errorCount}</p>
-              </div>
+        <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-red-500/10">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
             </div>
-            {health!.errorCount > 0 && (
-              errorsExpanded ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />
-            )}
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Errors</p>
+              <p className="text-xl font-semibold tracking-tight">{health!.errorCount}</p>
+            </div>
           </div>
         </div>
         <div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/80 dark:border-white/10 p-4">
@@ -168,7 +159,7 @@ export function AdminHealth() {
         </div>
       </div>
 
-      {errorsExpanded && health!.recentErrors && health!.recentErrors.length > 0 && (
+      {health!.recentErrors && health!.recentErrors.length > 0 && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-red-500" />
