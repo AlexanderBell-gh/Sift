@@ -1017,48 +1017,61 @@ async function handleRequest(request, env) {
     const versionKey = 'admin:version';
 
     const [todayReqs, yesterdayReqs, errorCount, version] = await Promise.all([
-      env.PRICETRACKR.get(todayKey, 'json') || { count: 0, totalLatency: 0 },
-      env.PRICETRACKR.get(yesterdayKey, 'json') || { count: 0, totalLatency: 0 },
-      env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null },
+      env.PRICETRACKR.get(todayKey, 'json'),
+      env.PRICETRACKR.get(yesterdayKey, 'json'),
+      env.PRICETRACKR.get(errorKey, 'json'),
       env.PRICETRACKR.get(versionKey),
     ]);
 
-    const allKeys = await env.PRICETRACKR.list({ prefix: 'admin:requests:' });
+    const safeToday = todayReqs || { count: 0, totalLatency: 0 };
+    const safeYesterday = yesterdayReqs || { count: 0, totalLatency: 0 };
+    const safeError = errorCount || { count: 0, lastError: null };
+
     let totalRequests = 0;
-    for (const key of allKeys.keys) {
-      const data = await env.PRICETRACKR.get(key.name, 'json');
-      if (data && data.count) totalRequests += data.count;
+    try {
+      const allKeys = await env.PRICETRACKR.list({ prefix: 'admin:requests:' }) || { keys: [] };
+      for (const key of allKeys.keys || []) {
+        const data = await env.PRICETRACKR.get(key.name, 'json');
+        if (data && data.count) totalRequests += data.count;
+      }
+    } catch (e) {
+      console.error('Failed to get request stats:', e);
     }
 
-    const avgLatency = todayReqs.count > 0 ? Math.round(todayReqs.totalLatency / todayReqs.count) : 0;
+    const avgLatency = safeToday.count > 0 ? Math.round((safeToday.totalLatency || 0) / safeToday.count) : 0;
 
-    const userCount = (await env.USERS.get('users', 'json') || []).length;
+    const userIds = await env.USERS.get('users', 'json') || [];
+    const userCount = userIds.length;
     let productCount = 0;
     let keyCount = 0;
     let estimatedBytes = 0;
-    for (const userId of (await env.USERS.get('users', 'json') || [])) {
-      const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
-      keyCount += 1 + productIds.length;
-      productCount += productIds.length;
-      for (const pid of productIds) {
-        const p = await env.PRICETRACKR.get(`user:${userId}:product:${pid}`, 'json');
-        if (p) estimatedBytes += JSON.stringify(p).length;
+    try {
+      for (const userId of userIds) {
+        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
+        keyCount += 1 + productIds.length;
+        productCount += productIds.length;
+        for (const pid of productIds) {
+          const p = await env.PRICETRACKR.get(`user:${userId}:product:${pid}`, 'json');
+          if (p) estimatedBytes += JSON.stringify(p).length;
+        }
       }
+      estimatedBytes += JSON.stringify(userIds).length;
+    } catch (e) {
+      console.error('Failed to calculate storage:', e);
     }
-    estimatedBytes += await env.USERS.get('users', 'json').then(v => JSON.stringify(v).length).catch(() => 0);
 
-    const status = errorCount.count > 10 ? 'degraded' : 'healthy';
+    const status = safeError.count > 10 ? 'degraded' : 'healthy';
 
     return jsonResponse({
       status,
       requests: {
-        today: todayReqs.count,
-        yesterday: yesterdayReqs.count,
+        today: safeToday.count,
+        yesterday: safeYesterday.count,
         total: totalRequests,
       },
       avgLatencyMs: avgLatency,
-      errorCount: errorCount.count,
-      lastError: errorCount.lastError,
+      errorCount: safeError.count,
+      lastError: safeError.lastError,
       storage: {
         keys: keyCount,
         estimatedBytes,
