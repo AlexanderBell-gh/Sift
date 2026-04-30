@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Server, Database, Clock, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
+import { Activity, Database, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
 import { api } from '../lib/api';
 
 export function AdminHealth() {
