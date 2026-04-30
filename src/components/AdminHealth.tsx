@@ -159,7 +159,7 @@ export function AdminHealth() {
         </div>
       </div>
 
-      {health!.recentErrors && health!.recentErrors.length > 0 && (
+      {(health!.recentErrors?.length ?? 0) > 0 && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-red-500" />

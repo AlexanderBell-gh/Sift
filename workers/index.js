@@ -1025,7 +1025,7 @@ async function handleRequest(request, env) {
 
     const safeToday = todayReqs || { count: 0, totalLatency: 0 };
     const safeYesterday = yesterdayReqs || { count: 0, totalLatency: 0 };
-    const safeError = errorCount || { count: 0, lastError: null };
+    const safeError = errorCount || { count: 0, lastError: null, recentErrors: [] };
 
     let totalRequests = 0;
     try {
