@@ -40,8 +40,8 @@ function TimeSeriesChart({ data, color, label }: { data: { date: string; count: 
         </svg>
       </div>
       <div className="flex justify-between text-xs text-zinc-400">
-        <span>{data[0]?.date.slice(5) || '-'}</span>
-        <span>{data[data.length - 1]?.date.slice(5) || '-'}</span>
+        <span>{data[0]?.date ? (() => { const [y, m, d] = data[0].date.split('-'); return `${d}/${m}`; })() : '-'}</span>
+        <span>{data[data.length - 1]?.date ? (() => { const [y, m, d] = data[data.length - 1].date.split('-'); return `${d}/${m}`; })() : '-'}</span>
       </div>
     </div>
   );
