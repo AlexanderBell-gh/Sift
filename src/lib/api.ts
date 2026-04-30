@@ -264,8 +264,6 @@ export const api = {
     avgLatencyMs: number;
     errorCount: number;
     uptime: string;
-    lastError: string | null;
-    recentErrors: { timestamp: string; message: string }[];
     storage: { keys: number; estimatedBytes: number; estimatedMB: string };
     version: string;
     userCount: number;

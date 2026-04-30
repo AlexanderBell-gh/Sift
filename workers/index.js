@@ -1025,10 +1025,7 @@ async function handleRequest(request, env) {
 
     const safeToday = todayReqs || { count: 0, totalLatency: 0 };
     const safeYesterday = yesterdayReqs || { count: 0, totalLatency: 0 };
-    const safeError = errorCount || { count: 0, lastError: null, recentErrors: [] };
-    if ((safeError.recentErrors?.length ?? 0) === 0 && safeError.lastError) {
-      safeError.recentErrors = [{ timestamp: safeError.lastError, message: 'Legacy error (pre-recentErrors feature)' }];
-    }
+    const safeError = errorCount || { count: 0, lastError: null };
 
     let totalRequests = 0;
     try {
@@ -1076,8 +1073,6 @@ async function handleRequest(request, env) {
       avgLatencyMs: avgLatency,
       errorCount: safeError.count,
       uptime: uptimePercent,
-      lastError: safeError.lastError,
-      recentErrors: safeError.recentErrors || [],
       storage: {
         keys: keyCount,
         estimatedBytes,
@@ -1320,29 +1315,6 @@ async function handleRequest(request, env) {
 return errorResponse('Not found', 404);
 }
 
-function getDetailedError(message, path, method, userId) {
-  let category = 'Server error';
-
-  if (message.includes('Cannot read properties of undefined') || message.includes('Cannot read property')) {
-    category = 'Data processing error';
-  } else if (message.includes('Cannot read properties of null')) {
-    category = 'Missing data error';
-  } else if (message.includes('KV') || message.includes('get') || message.includes('put') || message.includes('list')) {
-    category = 'Database operation error';
-  } else if (message.includes('JSON') || message.includes('parse') || message.includes('Unexpected')) {
-    category = 'Invalid request data';
-  } else if (message.includes('auth') || message.includes('token') || message.includes('unauthorized')) {
-    category = 'Authentication error';
-  } else if (message.includes('403') || message.includes('Forbidden')) {
-    category = 'Permission denied';
-  } else if (message.includes('404') || message.includes('not found')) {
-    category = 'Resource not found';
-  }
-
-  const userInfo = userId ? ` [User: ${userId.substring(0, 8)}...]` : '';
-  return `${category} - ${path} (${method})${userInfo}`;
-}
-
 export default {
   async fetch(request, env) {
     const startTime = Date.now();
@@ -1358,28 +1330,10 @@ export default {
       await env.PRICETRACKR.put(todayKey, JSON.stringify(data));
       return response;
     } catch (e) {
-      const url = new URL(request.url);
-      const path = url.pathname;
-      const method = request.method;
-      
-      let userId;
-      try {
-        const authHeader = request.headers.get('Authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          const token = authHeader.substring(7);
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          userId = payload.userId;
-        }
-      } catch {}
-      
       const errorKey = 'admin:errors';
-      const errorData = await env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null, recentErrors: [] };
+      const errorData = await env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null };
       errorData.count += 1;
       errorData.lastError = new Date().toISOString();
-      errorData.recentErrors = errorData.recentErrors || [];
-      const detailedMsg = getDetailedError(e.message || 'Unknown error', path, method, userId);
-      errorData.recentErrors.unshift({ timestamp: errorData.lastError, message: detailedMsg });
-      if (errorData.recentErrors.length > 10) errorData.recentErrors.pop();
       await env.PRICETRACKR.put(errorKey, JSON.stringify(errorData));
       return errorResponse('Internal server error', 500);
     }

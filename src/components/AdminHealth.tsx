@@ -9,8 +9,6 @@ export function AdminHealth() {
     avgLatencyMs: number;
     errorCount: number;
     uptime: string;
-    lastError: string | null;
-    recentErrors: { timestamp: string; message: string }[];
     storage: { keys: number; estimatedBytes: number; estimatedMB: string };
     version: string;
     userCount: number;
@@ -159,25 +157,6 @@ export function AdminHealth() {
           </div>
         </div>
       </div>
-
-      {(health!.recentErrors?.length ?? 0) > 0 && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mt-6">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-            <span className="text-sm font-medium text-red-500">Recent Errors (Last 10)</span>
-          </div>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {health!.recentErrors.map((err, idx) => (
-              <div key={idx} className="text-sm border-b border-red-500/20 pb-2 last:border-0">
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  {new Date(err.timestamp).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </p>
-                <p className="text-zinc-700 dark:text-zinc-300 font-mono text-xs mt-1 break-all">{err.message}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
