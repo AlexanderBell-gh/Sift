@@ -1320,7 +1320,7 @@ async function handleRequest(request, env) {
 return errorResponse('Not found', 404);
 }
 
-function getDetailedError(message: string, path: string, method: string, userId?: string): string {
+function getDetailedError(message, path, method, userId) {
   let category = 'Server error';
 
   if (message.includes('Cannot read properties of undefined') || message.includes('Cannot read property')) {
