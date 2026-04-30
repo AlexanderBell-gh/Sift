@@ -5,8 +5,9 @@ import { api } from '../lib/api';
 import { AdminUsers } from './AdminUsers';
 import { AdminAnalytics } from './AdminAnalytics';
 import { AdminActivity } from './AdminActivity';
+import { AdminHealth } from './AdminHealth';
 
-type TabId = 'users' | 'analytics' | 'activity';
+type TabId = 'users' | 'analytics' | 'activity' | 'health';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ export function AdminDashboard() {
     { id: 'users', label: 'Users' },
     { id: 'analytics', label: 'Analytics' },
     { id: 'activity', label: 'Activity' },
+    { id: 'health', label: 'Health' },
   ];
 
   if (isLoading) {
@@ -143,6 +145,7 @@ export function AdminDashboard() {
         {activeTab === 'users' && <AdminUsers />}
         {activeTab === 'analytics' && <AdminAnalytics />}
         {activeTab === 'activity' && <AdminActivity />}
+        {activeTab === 'health' && <AdminHealth />}
       </div>
     </div>
   );

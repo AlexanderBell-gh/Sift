@@ -1003,6 +1003,74 @@ async function handleRequest(request, env) {
     });
   }
 
+  // Admin health
+  if (path === '/api/admin/health') {
+    const admin = await requireAdmin(request, env);
+    if (admin && admin.error) return admin;
+
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+    const todayKey = `admin:requests:${today}`;
+    const yesterdayKey = `admin:requests:${yesterday}`;
+    const errorKey = 'admin:errors';
+    const versionKey = 'admin:version';
+
+    const [todayReqs, yesterdayReqs, errorCount, version] = await Promise.all([
+      env.PRICETRACKR.get(todayKey, 'json') || { count: 0, totalLatency: 0 },
+      env.PRICETRACKR.get(yesterdayKey, 'json') || { count: 0, totalLatency: 0 },
+      env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null },
+      env.PRICETRACKR.get(versionKey),
+    ]);
+
+    const allKeys = await env.PRICETRACKR.list({ prefix: 'admin:requests:' });
+    let totalRequests = 0;
+    for (const key of allKeys.keys) {
+      const data = await env.PRICETRACKR.get(key.name, 'json');
+      if (data && data.count) totalRequests += data.count;
+    }
+
+    const avgLatency = todayReqs.count > 0 ? Math.round(todayReqs.totalLatency / todayReqs.count) : 0;
+
+    const userCount = (await env.USERS.get('users', 'json') || []).length;
+    let productCount = 0;
+    let keyCount = 0;
+    let estimatedBytes = 0;
+    for (const userId of (await env.USERS.get('users', 'json') || [])) {
+      const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
+      keyCount += 1 + productIds.length;
+      productCount += productIds.length;
+      for (const pid of productIds) {
+        const p = await env.PRICETRACKR.get(`user:${userId}:product:${pid}`, 'json');
+        if (p) estimatedBytes += JSON.stringify(p).length;
+      }
+    }
+    estimatedBytes += await env.USERS.get('users', 'json').then(v => JSON.stringify(v).length).catch(() => 0);
+
+    const status = errorCount.count > 10 ? 'degraded' : 'healthy';
+
+    return jsonResponse({
+      status,
+      requests: {
+        today: todayReqs.count,
+        yesterday: yesterdayReqs.count,
+        total: totalRequests,
+      },
+      avgLatencyMs: avgLatency,
+      errorCount: errorCount.count,
+      lastError: errorCount.lastError,
+      storage: {
+        keys: keyCount,
+        estimatedBytes,
+        estimatedMB: (estimatedBytes / (1024 * 1024)).toFixed(2),
+      },
+      version: version || '1.0.0',
+      userCount,
+      productCount,
+      workerRegion: 'EU', // Cloudflare doesn't expose this in runtime
+    });
+  }
+
   // Admin trials list
   if (path === '/api/admin/trials') {
     const admin = await requireAdmin(request, env);
@@ -1235,9 +1303,24 @@ return errorResponse('Not found', 404);
 
 export default {
   async fetch(request, env) {
+    const startTime = Date.now();
+    const today = new Date().toISOString().split('T')[0];
+    const todayKey = `admin:requests:${today}`;
+
     try {
-      return await handleRequest(request, env);
+      const response = await handleRequest(request, env);
+      const latency = Date.now() - startTime;
+      const data = await env.PRICETRACKR.get(todayKey, 'json') || { count: 0, totalLatency: 0 };
+      data.count += 1;
+      data.totalLatency += latency;
+      await env.PRICETRACKR.put(todayKey, JSON.stringify(data));
+      return response;
     } catch (e) {
+      const errorKey = 'admin:errors';
+      const errorData = await env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null };
+      errorData.count += 1;
+      errorData.lastError = new Date().toISOString();
+      await env.PRICETRACKR.put(errorKey, JSON.stringify(errorData));
       return errorResponse('Internal server error', 500);
     }
   },
