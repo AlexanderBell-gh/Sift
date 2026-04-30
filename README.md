@@ -6,6 +6,8 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
+- **Health Tab** - New system health monitoring showing uptime %, latency, requests, storage stats
+- **Metrics Over Time** - Time series charts for user/product trends (7d/30d/90d/all)
 - **Image auto-fetch** - Find Product now also fetches product image from search results
 - **CSV import/export** - Export products as CSV, import via file upload or clipboard paste
 - **Toast notifications** - Better feedback for actions (replaced browser alerts)
@@ -76,8 +78,9 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
   - Role change: Promote users to admin or demote admins to user
   - Delete: Remove user accounts and their data
   - Cleanup Expired: Purge expired trial accounts
-- **Analytics Tab**: Stats cards + category/store distribution charts
+- **Analytics Tab**: Stats cards + category/store distribution + metrics over time charts
 - **Activity Tab**: Audit log of admin actions (user deletes, role changes, trial cleanups)
+- **Health Tab**: System health monitoring with uptime %, requests, latency, storage stats
 - **Dark/Light Mode**: Toggle in the header (synced with main app)
 
 ## Tech Stack
@@ -187,7 +190,8 @@ PriceTrackr/
 │   │   ├── AdminDashboard.tsx   # Admin dashboard
 │   │   ├── AdminUsers.tsx       # User management
 │   │   ├── AdminAnalytics.tsx   # Analytics + stats
-│   │   └── AdminActivity.tsx    # Activity/audit log
+│   │   ├── AdminActivity.tsx    # Activity/audit log
+│   │   └── AdminHealth.tsx      # System health monitoring
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
 │   ├── pages/
