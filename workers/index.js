@@ -1044,21 +1044,21 @@ async function handleRequest(request, env) {
     const avgLatency = safeToday.count > 0 ? Math.round((safeToday.totalLatency || 0) / safeToday.count) : 0;
 
     const userIds = await env.USERS.get('users', 'json') || [];
-    const userCount = userIds.length;
+    const userCount = (userIds || []).length;
     let productCount = 0;
     let keyCount = 0;
     let estimatedBytes = 0;
     try {
-      for (const userId of userIds) {
-        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
-        keyCount += 1 + productIds.length;
-        productCount += productIds.length;
-        for (const pid of productIds) {
+      for (const userId of (userIds || [])) {
+        const productIds = (await env.PRICETRACKR.get(`user:${userId}:products`, 'json')) || [];
+        keyCount += 1 + (productIds || []).length;
+        productCount += (productIds || []).length;
+        for (const pid of (productIds || [])) {
           const p = await env.PRICETRACKR.get(`user:${userId}:product:${pid}`, 'json');
           if (p) estimatedBytes += JSON.stringify(p).length;
         }
       }
-      estimatedBytes += JSON.stringify(userIds).length;
+      estimatedBytes += JSON.stringify(userIds || []).length;
     } catch (e) {
       console.error('Failed to calculate storage:', e);
     }
