@@ -1072,6 +1072,7 @@ async function handleRequest(request, env) {
       avgLatencyMs: avgLatency,
       errorCount: safeError.count,
       lastError: safeError.lastError,
+      recentErrors: safeError.recentErrors || [],
       storage: {
         keys: keyCount,
         estimatedBytes,
@@ -1330,9 +1331,12 @@ export default {
       return response;
     } catch (e) {
       const errorKey = 'admin:errors';
-      const errorData = await env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null };
+      const errorData = await env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null, recentErrors: [] };
       errorData.count += 1;
       errorData.lastError = new Date().toISOString();
+      errorData.recentErrors = errorData.recentErrors || [];
+      errorData.recentErrors.unshift({ timestamp: errorData.lastError, message: e.message || 'Unknown error' });
+      if (errorData.recentErrors.length > 10) errorData.recentErrors.pop();
       await env.PRICETRACKR.put(errorKey, JSON.stringify(errorData));
       return errorResponse('Internal server error', 500);
     }
