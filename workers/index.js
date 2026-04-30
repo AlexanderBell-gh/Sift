@@ -1236,7 +1236,6 @@ async function handleRequest(request, env) {
         }
       }
 
-      console.log('Search results:', results.length, 'image:', imageUrl ? 'found' : 'none');
       return jsonResponse({ results, imageUrl });
     } catch (e) {
       console.error('Search error:', e);

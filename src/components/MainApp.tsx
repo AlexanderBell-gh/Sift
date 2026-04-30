@@ -7,6 +7,7 @@ import { AddPriceModal } from './AddPriceModal';
 import { ProductDetail } from './ProductDetail';
 import { SortSelect, type SortOption } from './SortSelect';
 import { FilterDropdown } from './FilterDropdown';
+import { useToast } from './ui/useToast';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, Category } from '../types';
@@ -15,6 +16,7 @@ import { DEFAULT_CATEGORIES } from '../types';
 export function MainApp() {
   const navigate = useNavigate();
   const { user, isTrial, isTrialExpired, trialHoursRemaining, signOut } = useAuth();
+  const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -40,6 +42,7 @@ export function MainApp() {
       setCategories(categoriesData);
     } catch (error) {
       console.error('Failed to load data:', error);
+      showToast('Failed to load products. Please refresh the page.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -103,6 +106,7 @@ export function MainApp() {
       setIsProductModalOpen(false);
     } catch (error) {
       console.error('Failed to save product:', error);
+      showToast('Failed to save product. Please try again.', 'error');
     }
   };
 
@@ -116,6 +120,7 @@ export function MainApp() {
       setSelectedProduct(null);
     } catch (error) {
       console.error('Failed to delete product:', error);
+      showToast('Failed to delete product. Please try again.', 'error');
     }
   };
 
@@ -128,6 +133,7 @@ export function MainApp() {
       setIsPriceModalOpen(false);
     } catch (error) {
       console.error('Failed to add price:', error);
+      showToast('Failed to add price. Please try again.', 'error');
     }
   };
 
