@@ -216,16 +216,6 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-transparent border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-400 dark:focus:border-green-400/60 transition-all resize-none"
         placeholder="e.g, Normal Price £x.xx | Nectar Price £x.xx"
       />
-      <div>
-        <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Notes</label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-transparent border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-400 dark:focus:border-green-400/60 transition-all resize-none"
-          placeholder="e.g, Normal Price £x.xx | Nectar Price £x.xx"
-        />
-      </div>
 
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
