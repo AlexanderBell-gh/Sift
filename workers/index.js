@@ -58,7 +58,7 @@ function htmlResponse(html, status = 200) {
   });
 }
 
-function renderAdminDashboard(stats, users, auditLogs, health, analytics) {
+function renderAdminDashboard(stats, users, auditLogs, health, analytics, adminName) {
   const theme = `
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -117,7 +117,7 @@ function renderAdminDashboard(stats, users, auditLogs, health, analytics) {
   <div class="container">
     <div class="header">
       <h1>Admin Dashboard</h1>
-      <div class="user-info">PriceTrackr Admin</div>
+      <div class="user-info">${adminName || 'Admin'}</div>
     </div>
     <div class="tabs">
       <button class="tab active" data-tab="overview">Overview</button>
@@ -176,7 +176,10 @@ function renderAdminDashboard(stats, users, auditLogs, health, analytics) {
       setTimeout(() => flash.style.display = 'none', 3000);
     }
     async function apiCall(url, options = {}) {
-      const res = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers } });
+      const headers = { 'Content-Type': 'application/json' };
+      const token = new URLSearchParams(window.location.search).get('token');
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(url, { ...options, headers: { ...headers, ...options.headers } });
       return res.json();
     }
     async function promoteUser(id) {
@@ -339,14 +342,26 @@ async function handleRequest(request, env) {
 
   // Admin Dashboard (served as HTML)
   if (path === '/admin') {
+    const url = new URL(request.url);
+    const queryToken = url.searchParams.get('token');
     const auth = await authenticate(request, env);
-    if (!auth || auth.role !== 'admin') {
-      const loginUrl = new URL(request.url);
-      loginUrl.pathname = '/';
-      loginUrl.search = '?redirect=' + encodeURIComponent(request.url);
+    
+    if ((!auth || auth.role !== 'admin') && !queryToken) {
       return new Response(null, {
         status: 302,
-        headers: { 'Location': loginUrl.toString() }
+        headers: { 'Location': 'https://price-trackr.pages.dev/' }
+      });
+    }
+
+    let user = auth;
+    if (!user && queryToken) {
+      user = await verifyJWT(queryToken, env);
+    }
+    
+    if (!user || user.role !== 'admin') {
+      return new Response(null, {
+        status: 302,
+        headers: { 'Location': 'https://price-trackr.pages.dev/' }
       });
     }
 
@@ -393,7 +408,7 @@ async function handleRequest(request, env) {
 
     const auditLogs = await env.PRICETRACKR.get('audit_logs', 'json') || [];
 
-    return htmlResponse(renderAdminDashboard(stats, userList, auditLogs.map(l => ({ ...l, adminUsername: l.adminUsername || 'Admin' })), healthData, null));
+    return htmlResponse(renderAdminDashboard(stats, userList, auditLogs.map(l => ({ ...l, adminUsername: l.adminUsername || 'Admin' })), healthData, null, user.username));
   }
 
   // Auth Routes
