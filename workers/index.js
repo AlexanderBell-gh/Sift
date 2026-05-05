@@ -48,6 +48,16 @@ function errorResponse(message, status = 400) {
   return jsonResponse({ error: message }, status);
 }
 
+function htmlResponse(html, status = 200) {
+  return new Response(html, {
+    status,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      ...corsHeaders,
+    },
+  });
+}
+
 function isValidProduct(product) {
   return (
     product &&
@@ -179,7 +189,7 @@ async function handleRequest(request, env) {
   const path = url.pathname;
   const method = request.method;
 
-  // Handle CORS preflight
+// Handle CORS preflight
   if (method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -1312,6 +1322,237 @@ async function handleRequest(request, env) {
   }
 
 return errorResponse('Not found', 404);
+}
+
+function renderAdminDashboard(stats, users, auditLogs, health, analytics) {
+  const theme = `
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0A0A0A; color: #fafafa; line-height: 1.5; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      .header h1 { font-size: 24px; font-weight: 600; background: linear-gradient(90deg, #74da86, #4ade80); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      .user-info { color: #a1a1aa; font-size: 14px; }
+      .tabs { display: flex; gap: 4px; background: #18181b; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
+      .tab { padding: 10px 20px; border: none; background: transparent; color: #a1a1aa; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+      .tab.active { background: #27272a; color: #fff; }
+      .tab:hover:not(.active) { color: #fff; }
+      .card { background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+      .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #e4e4e7; }
+      .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+      .stat { background: #27272a; border-radius: 10px; padding: 16px; }
+      .stat-value { font-size: 28px; font-weight: 700; color: #74da86; font-variant-numeric: tabular-nums; }
+      .stat-label { font-size: 13px; color: #a1a1aa; margin-top: 4px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+      th { color: #71717a; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+      td { color: #e4e4e7; }
+      .badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 600; border-radius: 4px; text-transform: uppercase; }
+      .badge-admin { background: rgba(116, 218, 134, 0.2); color: #74da86; }
+      .badge-user { background: rgba(161, 161, 170, 0.2); color: #a1a1aa; }
+      .badge-trial { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+      .btn { padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+      .btn-danger { background: #dc2626; color: #fff; }
+      .btn-danger:hover { background: #b91c1c; }
+      .btn-success { background: #74da86; color: #000; }
+      .btn-success:hover { background: #4ade80; }
+      .actions { display: flex; gap: 8px; }
+      .flash { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+      .flash-success { background: rgba(116, 218, 134, 0.2); color: #74da86; }
+      .flash-error { background: rgba(220, 38, 38, 0.2); color: #fca5a5; }
+      .empty { text-align: center; padding: 40px; color: #71717a; }
+      .activity-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+      .activity-icon { width: 32px; height: 32px; border-radius: 8px; background: #27272a; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+      .activity-details { flex: 1; }
+      .activity-details strong { color: #e4e4e7; }
+      .activity-time { color: #71717a; font-size: 12px; }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+    </style>
+  `;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - PriceTrackr</title>
+  ${theme}
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Admin Dashboard</h1>
+      <div class="user-info">PriceTrackr Admin</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="users">Users</button>
+      <button class="tab" data-tab="activity">Activity</button>
+      <button class="tab" data-tab="health">Health</button>
+    </div>
+
+    <div id="flash" style="display:none"></div>
+
+    <div id="overview" class="tab-content active">
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-value">${stats?.totalUsers || 0}</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${stats?.regularUsers || 0}</div>
+          <div class="stat-label">Registered Users</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${stats?.trialUsers || 0}</div>
+          <div class="stat-label">Trial Users</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${stats?.totalProducts || 0}</div>
+          <div class="stat-label">Products</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${stats?.totalPrices || 0}</div>
+          <div class="stat-label">Price Entries</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${health?.storage?.estimatedMB || '0MB'}</div>
+          <div class="stat-label">Storage Used</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="users" class="tab-content">
+      <div class="card">
+        <h2>Users (${users?.length || 0})</h2>
+        ${users?.length ? `
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td>${u.username}</td>
+                <td>${u.email}</td>
+                <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role}</span>${u.isTrial ? '<span class="badge badge-trial">trial</span>' : ''}</td>
+                <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <div class="actions">
+                    ${u.role !== 'admin' ? `<button class="btn btn-success" onclick="promoteUser('${u.id}')">Promote</button>` : ''}
+                    ${u.role === 'admin' ? `<button class="btn btn-danger" onclick="demoteUser('${u.id}')">Demote</button>` : ''}
+                    ${!u.isTrial ? `<button class="btn btn-danger" onclick="deleteUser('${u.id}')">Delete</button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ` : '<div class="empty">No users found</div>'}
+      </div>
+    </div>
+
+    <div id="activity" class="tab-content">
+      <div class="card">
+        <h2>Activity Log</h2>
+        ${auditLogs?.length ? auditLogs.map(log => `
+          <div class="activity-item">
+            <div class="activity-icon">${log.action.includes('delete') ? '����' : '⚙️'}</div>
+            <div class="activity-details">
+              <strong>${log.adminUsername}</strong> ${log.details}
+            </div>
+            <div class="activity-time">${new Date(log.timestamp).toLocaleString()}</div>
+          </div>
+        `).join('') : '<div class="empty">No activity yet</div>'}
+      </div>
+    </div>
+
+    <div id="health" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-value" style="${health?.avgLatencyMs < 200 ? 'color:#74da86' : health?.avgLatencyMs < 500 ? 'color:#fbbf24' : 'color:#fca5a5'}">${health?.avgLatencyMs || 0}ms</div>
+          <div class="stat-label">Avg Latency</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${health?.requests?.today || 0}</div>
+          <div class="stat-label">Requests Today</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${health?.errorCount || 0}</div>
+          <div class="stat-label">Total Errors</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${health?.uptime || 'N/A'}</div>
+          <div class="stat-label">Uptime</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    function showFlash(msg, type) {
+      const flash = document.getElementById('flash');
+      flash.textContent = msg;
+      flash.className = 'flash ' + (type === 'error' ? 'flash-error' : 'flash-success');
+      flash.style.display = 'block';
+      setTimeout(() => flash.style.display = 'none', 3000);
+    }
+
+    async function apiCall(url, options = {}) {
+      const res = await fetch(url, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...options.headers }
+      });
+      return res.json();
+    }
+
+    async function promoteUser(id) {
+      const res = await apiCall('/api/admin/users/' + id + '/role', {
+        method: 'PUT',
+        body: JSON.stringify({ role: 'admin' })
+      });
+      if (res.error) showFlash(res.error, 'error');
+      else showFlash('User promoted to admin', 'success');
+    }
+
+    async function demoteUser(id) {
+      const res = await apiCall('/api/admin/users/' + id + '/role', {
+        method: 'PUT',
+        body: JSON.stringify({ role: 'user' })
+      });
+      if (res.error) showFlash(res.error, 'error');
+      else showFlash('User demoted to user', 'success');
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Delete this user and all their data?')) return;
+      const res = await apiCall('/api/admin/users/' + id, { method: 'DELETE' });
+      if (res.error) showFlash(res.error, 'error');
+      else showFlash('User deleted', 'success');
+    }
+  </script>
+</body>
+</html>
+  `;
+  return html;
 }
 
 export default {
