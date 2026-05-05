@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Sun, Moon, Plus, LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { Search, Sun, Moon, Plus, LogOut, User, Settings, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { Button } from './ui/Button';
 import type { UserRole } from '../types';
 
@@ -44,6 +44,11 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
   const handleSettings = () => {
     setIsMenuOpen(false);
     navigate('/app/settings');
+  };
+
+  const handleAdmin = () => {
+    setIsMenuOpen(false);
+    navigate('/admin');
   };
 
   return (
@@ -99,14 +104,23 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
                 </button>
 
                 {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-[0_16px_32px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_32px_-12px_rgba(0,0,0,0.4)] border border-zinc-200/80 dark:border-white/10 py-1.5 z-50 animate-slide-up">
-                    <button
-                      onClick={handleSettings}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/10 transition-colors"
-                    >
-                      <Settings className="w-3.5 h-3.5" />
-                      Settings
-                    </button>
+<div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-[0_16px_32px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_32px_-12px_rgba(0,0,0,0.4)] border border-zinc-200/80 dark:border-white/10 py-1.5 z-50 animate-slide-up">
+                      {user.role === 'admin' && (
+                        <button
+                          onClick={handleAdmin}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/10 transition-colors"
+                        >
+                          <LayoutDashboard className="w-3.5 h-3.5" />
+                          Admin Panel
+                        </button>
+                      )}
+                      <button
+                        onClick={handleSettings}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/10 transition-colors"
+                      >
+                        <Settings className="w-3.5 h-3.5" />
+                        Settings
+                      </button>
                     <button
                       onClick={() => setIsDark(!isDark)}
                       className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/10 transition-colors"
