@@ -48,7 +48,8 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
 
   const handleAdmin = () => {
     setIsMenuOpen(false);
-    navigate('/admin');
+    const token = localStorage.getItem('pricetrackr_token');
+    window.location.href = `https://pricetrackr-api.inbox-alexbell.workers.dev/admin?token=${token}`;
   };
 
   return (
