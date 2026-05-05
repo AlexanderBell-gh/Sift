@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Landing } from './pages/Landing';
 import { MainApp } from './components/MainApp';
 import { Settings } from './pages/Settings';
-import { AdminDashboard } from './components/AdminDashboard';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -42,10 +41,6 @@ function AppRoutes() {
             <Settings />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/admin"
-        element={<AdminDashboard />}
       />
       <Route
         path="/app/*"
