@@ -30,17 +30,6 @@ body {
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dot pattern for dark mode background */
-.dark body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* Glass effect */
 .glass {
   backdrop-filter: blur(16px) saturate(180%);
