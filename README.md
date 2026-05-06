@@ -6,12 +6,11 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
-- **Health Tab** - New system health monitoring showing uptime %, latency, requests, storage stats
-- **Metrics Over Time** - Time series charts for user/product trends (7d/30d/90d/all)
-- **Image auto-fetch** - Find Product now also fetches product image from search results
-- **CSV import/export** - Export products as CSV, import via file upload or clipboard paste
-- **Toast notifications** - Better feedback for actions (replaced browser alerts)
-- **Streamlined Add Product Flow** - Enter product name, click Find Product to search, select result to auto-fill URL + image
+- **Quick Add Price** - Click the price on any product card to add a new price entry directly (opens AddPriceModal)
+- **Filter Dropdown Redesign** - Filter button now uses icon instead of text, glassmorphism dropdown with custom checkboxes
+- **Pagination Component** - Reusable pagination in src/hooks/
+- **Removed dot pattern** - Dark mode background is now solid (no dots)
+- **Layering fixes** - Fixed z-index issues with filter dropdown and sticky header
 
 ## Design
 
@@ -23,7 +22,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Spring animations** for all transitions
 - **Sparkline charts** for price history visualization
 - **Skeleton loading** states for smooth content transitions
-- **Dark mode** with subtle dot pattern background
+- **Dark mode** with solid background (#0A0A0A)
 
 ## Features
 
@@ -39,6 +38,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Auto-detect Store**: Automatically detects store from product URL
 - **Import/Export**: Export products as CSV, import via file upload or clipboard paste (registered users only)
 - **Admin Dashboard**: System stats, user management, analytics, activity audit log (admin users only)
+- **Pagination**: Reusable pagination component for tables and lists
 
 ### Adding Products - Workflow
 

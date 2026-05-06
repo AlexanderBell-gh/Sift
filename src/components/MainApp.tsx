@@ -126,9 +126,27 @@ export function MainApp() {
 
   const handleSavePrice = async (priceData: { price: number; store?: string; date: string }) => {
     const productId = selectedProduct?.id;
+    console.log('handleSavePrice called:', { productId, productsCount: products.length });
+    
     if (!productId) return;
+    
+    // First check: is product still in our products array?
+    const currentProduct = products.find((p) => p.id === productId);
+    console.log('currentProduct found:', !!currentProduct, currentProduct?.name);
+    
+    if (!currentProduct) {
+      showToast('Product not found. Please refresh the page.', 'error');
+      return;
+    }
+    
+    // Double-check: does product have any prices?
+    console.log('currentProduct prices:', currentProduct.prices?.length);
+    
     try {
+      console.log('Calling API addPrice...');
       const updated = await api.addPrice(productId, priceData);
+      console.log('API returned:', updated);
+      
       setProducts(products.map((p) => (p.id === productId ? updated : p)));
       setSelectedProduct(updated);
       setIsPriceModalOpen(false);
