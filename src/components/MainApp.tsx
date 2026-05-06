@@ -125,12 +125,14 @@ export function MainApp() {
   };
 
   const handleSavePrice = async (priceData: { price: number; store?: string; date: string }) => {
-    if (!selectedProduct) return;
+    const productId = selectedProduct?.id;
+    if (!productId) return;
     try {
-      const updated = await api.addPrice(selectedProduct.id, priceData);
-      setProducts(products.map((p) => (p.id === selectedProduct.id ? updated : p)));
+      const updated = await api.addPrice(productId, priceData);
+      setProducts(products.map((p) => (p.id === productId ? updated : p)));
       setSelectedProduct(updated);
       setIsPriceModalOpen(false);
+      showToast('Price added successfully', 'success');
     } catch (error) {
       console.error('Failed to add price:', error);
       showToast('Failed to add price. Please try again.', 'error');
@@ -140,6 +142,11 @@ export function MainApp() {
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setIsDetailOpen(true);
+  };
+
+  const handleQuickAddPriceClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsPriceModalOpen(true);
   };
 
   const handleSignOut = () => {
@@ -189,6 +196,7 @@ export function MainApp() {
         <ProductGrid
           products={sortedProducts}
           onProductClick={handleProductClick}
+          onQuickAddPrice={handleQuickAddPriceClick}
           onAddProduct={handleAddProduct}
           isLoading={isLoading}
         />

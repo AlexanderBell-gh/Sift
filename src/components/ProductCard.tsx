@@ -2,14 +2,16 @@ import type { Product } from '../types';
 import { CATEGORY_ICONS, STORE_FAVICONS } from '../types';
 import { formatPrice, formatDate, calculatePriceChange } from '../lib/utils';
 import { Badge } from './ui/Badge';
+import { Plus } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
   onClick: () => void;
+  onQuickAddPrice: () => void;
   index?: number;
 }
 
-export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
+export function ProductCard({ product, onClick, onQuickAddPrice, index = 0 }: ProductCardProps) {
   const latestPrice = product.prices?.[product.prices.length - 1];
   const currentPrice = latestPrice?.price || 0;
   const { change, percent, direction } = calculatePriceChange(product.prices || []);
@@ -59,7 +61,14 @@ export function ProductCard({ product, onClick, index = 0 }: ProductCardProps) {
         )}
 
         <div className="flex items-end justify-between mb-3">
-          <p className="price-display">{formatPrice(currentPrice)}</p>
+          <button
+            onClick={(e) => { e.stopPropagation(); onQuickAddPrice(); }}
+            className="flex items-center gap-1.5 cursor-pointer group"
+            title="Add price"
+          >
+            <p className="price-display group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors">{formatPrice(currentPrice)}</p>
+            <Plus className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 group-hover:text-green-500 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
+          </button>
           <div className="text-right">
             <span className={`price-change-pill ${pillClass}`}>
               {arrow} {formatPrice(Math.abs(change))}
