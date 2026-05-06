@@ -179,9 +179,6 @@ async function handleRequest(request, env) {
   const path = url.pathname;
   const method = request.method;
 
-  // Debug logging
-  console.log('handleRequest:', { path, method });
-
   // Handle CORS preflight
   if (method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -468,9 +465,7 @@ async function handleRequest(request, env) {
     const userId = auth.userId;
 
     if (method === 'GET') {
-      console.log('GET products request:', { userId });
       const products = await getAllProducts(env, userId);
-      console.log('GET products response:', { userId, count: products.length });
       return jsonResponse(products);
     }
     
@@ -579,22 +574,14 @@ async function handleRequest(request, env) {
 // Add price to product
   const priceMatch = path.match(/^\/api\/products\/(.+)\/prices$/);
   if (priceMatch && method === 'POST') {
-    console.log('addPrice handler: before requireAuth');
     const auth = await requireAuth(request, env);
-    console.log('addPrice handler: after requireAuth', { auth, hasError: !!auth?.error });
-    if (auth && auth.error) {
-      console.log('addPrice: auth error', auth.error);
-      return auth;
-    }
+    if (auth && auth.error) return auth;
     const userId = auth.userId;
-    console.log('addPrice request:', { userId, id: priceMatch[1] });
+    const id = priceMatch[1];
     const products = await getAllProducts(env, userId);
-    console.log('addPrice products:', { userId, count: products.length, id: priceMatch[1] });
-    const product = products.find(p => p.id === priceMatch[1]);
-    console.log('addPrice product found:', { id: priceMatch[1], found: !!product, productId: product?.id });
+    const product = products.find(p => p.id === id);
     
     if (!product) {
-      console.log('Product not found - checking all product IDs:', products.map(p => p.id));
       return errorResponse('Product not found', 404);
     }
     
