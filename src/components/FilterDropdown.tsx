@@ -61,7 +61,9 @@ export function FilterDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-green-500/40 text-sm transition-all"
       >
-        <span className="text-zinc-600 dark:text-zinc-300">Filter</span>
+        <svg role="img" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8.895 4H14.5a.5.5 0 01.5.5v.3a.5.5 0 01-.5.5H8.889a2 2 0 01-3.778 0H3.5a.5.5 0 01-.5-.5v-.3a.5.5 0 01.5-.5h1.605a2 2 0 013.79 0zM3 8.852a.5.5 0 01.5-.5h5.608a2 2 0 013.784 0H14.5a.5.5 0 01.5.5v.3a.5.5 0 01-.5.5h-1.608a2 2 0 01-3.784 0H3.5a.5.5 0 01-.5-.5v-.3zM3 13.204a.5.5 0 01.5-.5h1.615a2 2 0 013.77 0H14.5a.5.5 0 01.5.5v.3a.5.5 0 01-.5.5H8.9a2 2 0 01-3.8 0h-1.6a.5.5 0 01-.5-.5v-.3z" fill="currentColor"></path>
+        </svg>
         {totalFilters > 0 && (
           <span className="bg-green-500/10 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-full text-xs font-semibold tabular-nums">
             {totalFilters}
