@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Loader2, ChevronLeft, ChevronRight, Shield, Clock, UserMinus } from 'lucide-react';
+import { Search, Loader2, Shield, Clock, UserMinus } from 'lucide-react';
 import { api } from '../lib/api';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Pagination } from '../hooks/Pagination';
 import type { AuditLog } from '../types';
 
 type ActionFilter = '' | 'admin.user_delete' | 'admin.role_change' | 'admin.trials_cleanup';
@@ -190,26 +191,7 @@ export function AdminActivity() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-              <p>Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total}</p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span>Page {page} of {totalPages}</span>
-                <Button
-                  variant="ghost"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+            <Pagination total={total} limit={limit} page={page} onPageChange={setPage} />
           )}
         </>
       )}
