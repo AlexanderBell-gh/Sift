@@ -73,11 +73,15 @@ export function FilterDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-[0_16px_32px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_32px_-12px_rgba(0,0,0,0.4)] animate-slide-up">
-          <div className="p-2 border-b border-zinc-200/80 dark:border-white/10">
+        <div className="absolute z-[60] mt-2 w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-[0_16px_32px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_32px_-12px_rgba(0,0,0,0.4)] animate-slide-up">
+          <div className="p-3 border-b border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Filters
+            </span>
             <button
               onClick={clearAll}
-              className="text-sm text-green-500 hover:text-green-400 transition-colors flex items-center gap-1"
+              disabled={totalFilters === 0}
+              className="text-xs text-green-500 hover:text-green-400 transition-colors flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <X className="w-3 h-3" /> Clear all
             </button>
@@ -91,15 +95,19 @@ export function FilterDropdown({
               {categories.map((category) => (
                 <label
                   key={category.id}
-                  className="flex items-center gap-2.5 py-2 px-2 hover:bg-zinc-50 dark:hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center gap-2.5 py-2 px-2 hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg cursor-pointer transition-colors group"
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedCategories.includes(category.id)}
-                    onChange={() => toggleCategory(category.id)}
-                    className="rounded border-zinc-300 dark:border-zinc-600 text-green-500 focus:ring-green-500/40 focus:ring-offset-0"
-                  />
-                  <span className="text-sm text-zinc-700 dark:text-zinc-200">{category.name}</span>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(category.id)}
+                      onChange={() => toggleCategory(category.id)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-4 h-4 border border-zinc-300 dark:border-zinc-600 rounded peer-checked:bg-green-500 peer-checked:border-green-500 transition-all group-hover:border-green-400/60"></div>
+                    <X className="absolute top-0.5 left-0.5 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
+                  </div>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{category.name}</span>
                 </label>
               ))}
             </div>
@@ -111,15 +119,19 @@ export function FilterDropdown({
               {STORES.map((store) => (
                 <label
                   key={store}
-                  className="flex items-center gap-2.5 py-2 px-2 hover:bg-zinc-50 dark:hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center gap-2.5 py-2 px-2 hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg cursor-pointer transition-colors group"
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedStores.includes(store)}
-                    onChange={() => toggleStore(store)}
-                    className="rounded border-zinc-300 dark:border-zinc-600 text-green-500 focus:ring-green-500/40 focus:ring-offset-0"
-                  />
-                  <span className="text-sm text-zinc-700 dark:text-zinc-200">{store}</span>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={selectedStores.includes(store)}
+                      onChange={() => toggleStore(store)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-4 h-4 border border-zinc-300 dark:border-zinc-600 rounded peer-checked:bg-green-500 peer-checked:border-green-500 transition-all group-hover:border-green-400/60"></div>
+                    <X className="absolute top-0.5 left-0.5 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
+                  </div>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{store}</span>
                 </label>
               ))}
             </div>
