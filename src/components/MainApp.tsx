@@ -31,6 +31,7 @@ export function MainApp() {
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quickAddProductId, setQuickAddProductId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -124,32 +125,18 @@ export function MainApp() {
     }
   };
 
-  const handleSavePrice = async (priceData: { price: number; store?: string; date: string }) => {
-    const productId = selectedProduct?.id;
-    console.log('handleSavePrice called:', { productId, productsCount: products.length });
+  const handleSavePrice = async (priceData: { price: number; date: string }) => {
+    const productId = quickAddProductId;
     
     if (!productId) return;
     
-    // First check: is product still in our products array?
-    const currentProduct = products.find((p) => p.id === productId);
-    console.log('currentProduct found:', !!currentProduct, currentProduct?.name);
-    
-    if (!currentProduct) {
-      showToast('Product not found. Please refresh the page.', 'error');
-      return;
-    }
-    
-    // Double-check: does product have any prices?
-    console.log('currentProduct prices:', currentProduct.prices?.length);
-    
     try {
-      console.log('Calling API addPrice...');
       const updated = await api.addPrice(productId, priceData);
-      console.log('API returned:', updated);
       
       setProducts(products.map((p) => (p.id === productId ? updated : p)));
       setSelectedProduct(updated);
       setIsPriceModalOpen(false);
+      setQuickAddProductId(null);
       showToast('Price added successfully', 'success');
     } catch (error) {
       console.error('Failed to add price:', error);
@@ -163,7 +150,7 @@ export function MainApp() {
   };
 
   const handleQuickAddPriceClick = (product: Product) => {
-    setSelectedProduct(product);
+    setQuickAddProductId(product.id);
     setIsPriceModalOpen(true);
   };
 
@@ -236,7 +223,7 @@ export function MainApp() {
 
       <AddPriceModal
         isOpen={isPriceModalOpen}
-        onClose={() => setIsPriceModalOpen(false)}
+        onClose={() => { setIsPriceModalOpen(false); setQuickAddProductId(null); }}
         onSave={handleSavePrice}
       />
 

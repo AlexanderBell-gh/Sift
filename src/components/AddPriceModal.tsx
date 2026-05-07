@@ -6,12 +6,11 @@ import { Button } from './ui/Button';
 interface AddPriceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (priceData: { price: number; store?: string; date: string }) => void;
+  onSave: (priceData: { price: number; date: string }) => void;
 }
 
 export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
   const [price, setPrice] = useState('');
-  const [store, setStore] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [priceError, setPriceError] = useState('');
 
@@ -27,11 +26,9 @@ export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
     
     onSave({
       price: numPrice,
-      store: store.trim() || undefined,
       date,
     });
     setPrice('');
-    setStore('');
     setDate(new Date().toISOString().split('T')[0]);
   };
 
@@ -51,26 +48,12 @@ export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
         />
         {priceError && <p className="text-sm text-red-500">{priceError}</p>}
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <div className="relative">
-              <Input
-                label="Store"
-                value={store}
-                onChange={(e) => setStore(e.target.value)}
-                placeholder="e.g., Tesco"
-              />
-            </div>
-          </div>
-          <div className="flex-1">
-            <Input
-              label="Date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
-        </div>
+        <Input
+          label="Date"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
 
         <div className="flex gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
