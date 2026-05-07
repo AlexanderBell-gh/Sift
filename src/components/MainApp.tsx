@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { ProductGrid } from './ProductGrid';
@@ -31,7 +31,8 @@ export function MainApp() {
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quickAddProductId, setQuickAddProductId] = useState<string | null>(null);
+  const [_, setQuickAddProductId] = useState<string | null>(null);
+  const quickAddProductIdRef = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -126,7 +127,7 @@ export function MainApp() {
   };
 
   const handleSavePrice = async (priceData: { price: number; date: string }) => {
-    const productId = quickAddProductId;
+    const productId = quickAddProductIdRef.current;
     
     if (!productId) return;
     
@@ -135,12 +136,14 @@ export function MainApp() {
       
       setProducts(products.map((p) => (p.id === productId ? updated : p)));
       setSelectedProduct(updated);
-      setIsPriceModalOpen(false);
-      setQuickAddProductId(null);
       showToast('Price added successfully', 'success');
     } catch (error) {
       console.error('Failed to add price:', error);
       showToast('Failed to add price. Please try again.', 'error');
+    } finally {
+      setIsPriceModalOpen(false);
+      setQuickAddProductId(null);
+      quickAddProductIdRef.current = null;
     }
   };
 
@@ -150,6 +153,7 @@ export function MainApp() {
   };
 
   const handleQuickAddPriceClick = (product: Product) => {
+    quickAddProductIdRef.current = product.id;
     setQuickAddProductId(product.id);
     setIsPriceModalOpen(true);
   };
