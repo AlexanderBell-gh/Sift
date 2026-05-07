@@ -495,6 +495,36 @@ async function handleRequest(request, env) {
       }
     }
   }
+
+  // Add price to product (must come before generic product route)
+  const priceMatch = path.match(/^\/api\/products\/(.+)\/prices$/);
+  if (priceMatch && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
+    const id = priceMatch[1];
+    const products = await getAllProducts(env, userId);
+    const product = products.find(p => p.id === id);
+    
+    if (!product) {
+      return errorResponse('Product not found', 404);
+    }
+    
+    try {
+      const body = await request.json();
+      product.prices = product.prices || [];
+      product.prices.push({
+        price: body.price,
+        store: body.store,
+        date: body.date || new Date().toISOString().split('T')[0]
+      });
+      
+      await saveProducts(env, userId, products);
+      return jsonResponse(product);
+    } catch (e) {
+      return errorResponse('Invalid request body');
+    }
+  }
   
   // Product by ID
   const productMatch = path.match(/^\/api\/products\/(.+)$/);
@@ -571,35 +601,7 @@ async function handleRequest(request, env) {
     }
   }
   
-// Add price to product
-  const priceMatch = path.match(/^\/api\/products\/(.+)\/prices$/);
-  if (priceMatch && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-    const id = priceMatch[1];
-    const products = await getAllProducts(env, userId);
-    const product = products.find(p => p.id === id);
-    
-    if (!product) {
-      return errorResponse('Product not found', 404);
-    }
-    
-    try {
-      const body = await request.json();
-      product.prices = product.prices || [];
-      product.prices.push({
-        price: body.price,
-        store: body.store,
-        date: body.date || new Date().toISOString().split('T')[0]
-      });
-      
-      await saveProducts(env, userId, products);
-      return jsonResponse(product);
-    } catch (e) {
-      return errorResponse('Invalid request body');
-    }
-  }
+
   
   // Categories
   if (path === '/api/categories') {
