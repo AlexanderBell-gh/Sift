@@ -52,7 +52,7 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
   };
 
   return (
-    <header className="glass border-b border-zinc-200/50 dark:border-white/10 sticky top-0 z-50">
+    <header className="backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-b border-zinc-200/50 dark:border-white/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
