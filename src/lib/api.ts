@@ -73,6 +73,14 @@ export const api = {
     return handleResponse(response);
   },
 
+  async deletePrice(id: string, priceIndex: number): Promise<Product> {
+    const response = await fetch(`${API_BASE_URL}/api/products/${id}/prices/${priceIndex}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   async getCategories(): Promise<Category[]> {
     const response = await fetch(`${API_BASE_URL}/api/categories`, {
       headers: getAuthHeaders(),

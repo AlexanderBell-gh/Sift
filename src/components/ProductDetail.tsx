@@ -11,6 +11,7 @@ interface ProductDetailProps {
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onDeletePrice?: (index: number) => void;
 }
 
 function Sparkline({ prices }: { prices: { price: number; date: string }[] }) {
@@ -69,6 +70,7 @@ export function ProductDetail({
   onClose,
   onEdit,
   onDelete,
+  onDeletePrice,
 }: ProductDetailProps) {
   if (!product) return null;
 
@@ -198,15 +200,29 @@ export function ProductDetail({
                 <div>
                   <h3 className="text-xs uppercase tracking-wider font-medium text-zinc-500 dark:text-zinc-400 mb-2">Recent Prices</h3>
                   <div className="price-log max-h-40 overflow-y-auto space-y-1.5">
-                    {[...product.prices].reverse().slice(0, 10).map((entry, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm px-3 py-2 rounded-lg bg-zinc-50 dark:bg-white/5">
-                        <span className="text-zinc-600 dark:text-zinc-300 tabular-nums font-medium">{formatPrice(entry.price)}</span>
-                        <div className="flex items-center gap-3 text-xs text-zinc-400">
-                          {entry.store && <span>{entry.store}</span>}
-                          <span className="tabular-nums">{formatDate(entry.date)}</span>
+                    {[...product.prices].reverse().slice(0, 10).map((entry, i) => {
+                      const actualIndex = product.prices.length - 1 - i;
+                      return (
+                        <div key={i} className="flex items-center justify-between text-sm px-3 py-2 rounded-lg bg-zinc-50 dark:bg-white/5 group">
+                          <span className="text-zinc-600 dark:text-zinc-300 tabular-nums font-medium">{formatPrice(entry.price)}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                              {entry.store && <span>{entry.store}</span>}
+                              <span className="tabular-nums">{formatDate(entry.date)}</span>
+                            </div>
+                            {onDeletePrice && (
+                              <button
+                                onClick={() => onDeletePrice(actualIndex)}
+                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                title="Delete price"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

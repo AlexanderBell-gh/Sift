@@ -525,6 +525,30 @@ async function handleRequest(request, env) {
       return errorResponse('Invalid request body');
     }
   }
+
+  // Delete price from product
+  const deletePriceMatch = path.match(/^\/api\/products\/(.+)\/prices\/(\d+)$/);
+  if (deletePriceMatch && method === 'DELETE') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
+    const id = deletePriceMatch[1];
+    const priceIndex = parseInt(deletePriceMatch[2], 10);
+    const products = await getAllProducts(env, userId);
+    const product = products.find(p => p.id === id);
+    
+    if (!product) {
+      return errorResponse('Product not found', 404);
+    }
+    
+    if (!product.prices || product.prices.length <= priceIndex) {
+      return errorResponse('Price not found', 404);
+    }
+    
+    product.prices.splice(priceIndex, 1);
+    await saveProducts(env, userId, products);
+    return jsonResponse(product);
+  }
   
   // Product by ID
   const productMatch = path.match(/^\/api\/products\/(.+)$/);

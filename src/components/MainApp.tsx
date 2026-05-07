@@ -147,6 +147,20 @@ export function MainApp() {
     }
   };
 
+  const handleDeletePrice = async (priceIndex: number) => {
+    if (!selectedProduct) return;
+    
+    try {
+      const updated = await api.deletePrice(selectedProduct.id, priceIndex);
+      setProducts(products.map((p) => (p.id === selectedProduct.id ? updated : p)));
+      setSelectedProduct(updated);
+      showToast('Price deleted', 'success');
+    } catch (error) {
+      console.error('Failed to delete price:', error);
+      showToast('Failed to delete price. Please try again.', 'error');
+    }
+  };
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setIsDetailOpen(true);
@@ -241,6 +255,7 @@ export function MainApp() {
           }
         }}
         onDelete={handleDeleteProduct}
+        onDeletePrice={handleDeletePrice}
       />
     </div>
   );
