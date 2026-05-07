@@ -73,7 +73,7 @@ export function FilterDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute z-[60] mt-2 w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-[0_16px_32px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_32px_-12px_rgba(0,0,0,0.4)] animate-slide-up">
+        <div className="absolute z-[60] mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-[0_16px_32px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_16px_32px_-12px_rgba(0,0,0,0.4)] animate-slide-up">
           <div className="p-3 border-b border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               Filters
