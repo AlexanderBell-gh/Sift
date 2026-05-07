@@ -8,7 +8,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 - **Delete Price Entries** - Remove individual prices from product detail view (mobile-friendly)
 - **Quick Add Price** - Click the price on any product card to add a new price entry directly
-- **Filter Dropdown Redesign** - Filter button now uses icon, glassmorphism dropdown with custom checkboxes
+- **Filter Dropdown Redesign** - Filter button now uses icon with custom checkboxes
 - **Removed Store Field** - Simplified add price entry form
 - **Pagination Component** - Reusable pagination in src/hooks/
 - **Removed dot pattern** - Dark mode background is now solid (no dots)
