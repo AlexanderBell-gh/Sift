@@ -137,11 +137,10 @@ This project includes a GitHub Actions workflow that automatically deploys to Cl
 
 ```bash
 # Deploy frontend to Cloudflare Pages
-npx wrangler pages deploy dist --project-name=price-trackr
+pnpm exec wrangler pages deploy dist --project-name=price-trackr
 
 # Deploy worker API
-cd workers
-npx wrangler deploy
+pnpm exec wrangler deploy --config workers/wrangler.toml
 ```
 
 ## Configuration
@@ -149,7 +148,6 @@ npx wrangler deploy
 ### Cloudflare KV Namespace
 
 The project uses a KV namespace for data storage. Update the namespace ID in:
-- `wrangler.jsonc` (for Pages)
 - `workers/wrangler.toml` (for Worker)
 
 ### API URL
