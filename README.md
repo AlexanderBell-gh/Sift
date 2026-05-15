@@ -100,23 +100,23 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 ### Prerequisites
 
 - Node.js 24
-- npm or pnpm
+- pnpm
 - Cloudflare account
 
 ### Local Development
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm run dev
 ```
 
 ### Build
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 The built files will be in the `dist/` directory.
