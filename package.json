@@ -38,13 +38,5 @@
     "typescript-eslint": "^8.59.3",
     "vite": "^7.3.3",
     "wrangler": "^4.91.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "workerd",
-      "sharp"
-    ],
-    "overrides": {}
   }
 }
