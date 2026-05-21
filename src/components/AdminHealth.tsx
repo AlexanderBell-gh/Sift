@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Activity, Database, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Activity, Database, AlertTriangle, CheckCircle, Zap, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
+import { Toast } from './ui/Toast';
+import { useToast } from './ui/useToast';
 
 export function AdminHealth() {
   const [health, setHealth] = useState<{
@@ -16,22 +18,36 @@ export function AdminHealth() {
     workerRegion: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    loadHealth();
-  }, []);
+  const isInitialLoad = useRef(true);
+  const { toast, showToast, hideToast } = useToast();
 
   const loadHealth = async () => {
     try {
       const data = await api.getAdminHealth();
       setHealth(data);
+      if (!isInitialLoad.current) {
+        showToast('Health data refreshed', 'success');
+      }
     } catch {
       setError('Failed to load health data');
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setError('');
+    await loadHealth();
+  };
+
+  useEffect(() => {
+    loadHealth();
+    isInitialLoad.current = false;
+  }, []);
 
   if (isLoading) {
     return (
@@ -51,17 +67,26 @@ export function AdminHealth() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold tracking-tight">System Health</h2>
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
-          health!.status === 'healthy' ? 'bg-emerald-500/10' : 'bg-amber-500/10'
-        }`}>
-          {health!.status === 'healthy' ? (
-            <CheckCircle className="w-4 h-4 text-emerald-500" />
-          ) : (
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-          )}
-          <span className={`text-sm font-medium ${health!.status === 'healthy' ? 'text-emerald-500' : 'text-amber-500'}`}>
-            {health!.status === 'healthy' ? 'Healthy' : 'Degraded'}
-          </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading || isRefreshing}
+            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 text-zinc-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+            health!.status === 'healthy' ? 'bg-emerald-500/10' : 'bg-amber-500/10'
+          }`}>
+            {health!.status === 'healthy' ? (
+              <CheckCircle className="w-4 h-4 text-emerald-500" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+            )}
+            <span className={`text-sm font-medium ${health!.status === 'healthy' ? 'text-emerald-500' : 'text-amber-500'}`}>
+              {health!.status === 'healthy' ? 'Healthy' : 'Degraded'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -157,6 +182,8 @@ export function AdminHealth() {
           </div>
         </div>
       </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }
