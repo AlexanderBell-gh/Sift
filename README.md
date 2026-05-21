@@ -6,6 +6,9 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
+- **Duplicate Detection** - Warns when adding a product with matching name (case-insensitive) or URL (exact match)
+- **Health Tab Refresh** - Manual refresh button on Admin Health tab with loading state and success toast
+- **Modal Backdrop Fix** - Fixed issue where clicking inside form inputs would close the modal
 - **Delete Price Entries** - Remove individual prices from product detail view (mobile-friendly)
 - **Quick Add Price** - Click the price on any product card to add a new price entry directly
 - **Filter Dropdown Redesign** - Filter button now uses icon with custom checkboxes
@@ -29,6 +32,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 ## Features
 
 - **Product Management**: Add, edit, delete products with name, URL, image, category, store
+- **Duplicate Detection**: Warns when adding a product with matching name (case-insensitive) or URL (exact match)
 - **Price Tracking**: Record price entries over time with date, delete individual entries
 - **Price History**: View price changes and trends with interactive sparkline charts
 - **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
@@ -82,7 +86,7 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
   - Cleanup Expired: Purge expired trial accounts
 - **Analytics Tab**: Stats cards + category/store distribution + metrics over time charts
 - **Activity Tab**: Audit log of admin actions (user deletes, role changes, trial cleanups)
-- **Health Tab**: System health monitoring with uptime %, requests, latency, storage stats
+- **Health Tab**: System health monitoring with uptime %, requests, latency, storage stats. Manual refresh button with loading state.
 - **Dark/Light Mode**: Toggle in the header (synced with main app)
 
 ## Tech Stack
