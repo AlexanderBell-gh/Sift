@@ -12,6 +12,9 @@ import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, Category } from '../types';
 import { DEFAULT_CATEGORIES } from '../types';
+import { Modal } from './ui/Modal';
+import { Button } from './ui/Button';
+import { AlertTriangle } from 'lucide-react';
 
 export function MainApp() {
   const navigate = useNavigate();
@@ -33,6 +36,10 @@ export function MainApp() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [_, setQuickAddProductId] = useState<string | null>(null);
   const quickAddProductIdRef = useRef<string | null>(null);
+
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [duplicateProduct, setDuplicateProduct] = useState<Product | null>(null);
+  const [pendingProductData, setPendingProductData] = useState<{ name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string } | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -96,6 +103,19 @@ export function MainApp() {
   };
 
   const handleSaveProduct = async (productData: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => {
+    if (!editingProduct) {
+      const nameMatch = products.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
+      const urlMatch = productData.url ? products.find(p => p.url === productData.url) : null;
+      const duplicate = nameMatch || urlMatch;
+
+      if (duplicate) {
+        setDuplicateProduct(duplicate);
+        setPendingProductData(productData);
+        setIsDuplicateModalOpen(true);
+        return;
+      }
+    }
+
     try {
       if (editingProduct) {
         const updated = await api.updateProduct(editingProduct.id, productData);
@@ -110,6 +130,31 @@ export function MainApp() {
       console.error('Failed to save product:', error);
       showToast('Failed to save product. Please try again.', 'error');
     }
+  };
+
+  const handleEditDuplicate = () => {
+    setIsDuplicateModalOpen(false);
+    setIsProductModalOpen(false);
+    if (duplicateProduct) {
+      handleEditProduct(duplicateProduct);
+    }
+    setDuplicateProduct(null);
+    setPendingProductData(null);
+  };
+
+  const handleAddDuplicateAnyway = async () => {
+    if (!pendingProductData) return;
+    setIsDuplicateModalOpen(false);
+    try {
+      const newProduct = await api.createProduct(pendingProductData);
+      setProducts([...products, newProduct]);
+      showToast('Product added', 'success');
+    } catch (error) {
+      console.error('Failed to save product:', error);
+      showToast('Failed to save product. Please try again.', 'error');
+    }
+    setDuplicateProduct(null);
+    setPendingProductData(null);
   };
 
   const handleDeleteProduct = async () => {
@@ -257,6 +302,42 @@ export function MainApp() {
         onDelete={handleDeleteProduct}
         onDeletePrice={handleDeletePrice}
       />
+
+      <Modal
+        isOpen={isDuplicateModalOpen}
+        onClose={() => { setIsDuplicateModalOpen(false); setDuplicateProduct(null); setPendingProductData(null); }}
+        title="Duplicate Product Found"
+        className="max-w-sm"
+      >
+        <div className="p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/10">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                <strong>"{duplicateProduct?.name}"</strong> already exists.
+              </p>
+              {duplicateProduct?.url && pendingProductData?.url && (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  Same URL detected.
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="secondary" onClick={() => { setIsDuplicateModalOpen(false); setDuplicateProduct(null); setPendingProductData(null); }} className="flex-1">
+              Cancel
+            </Button>
+            <Button variant="secondary" onClick={handleEditDuplicate} className="flex-1">
+              Edit Existing
+            </Button>
+            <Button onClick={handleAddDuplicateAnyway} className="flex-1">
+              Add Anyway
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
