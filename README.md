@@ -6,6 +6,9 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
+- **Receipt Scanning** - Upload receipt photo → OCR via Tesseract.js → auto-detect store/date/items → batch create products
+- **Batch Product Creation** - Create multiple products in one API request
+- **Scan Receipt in User Menu** - Scan Receipt button in dropdown menu (alongside Settings, Dark Mode)
 - **Duplicate Detection** - Warns when adding a product with matching name (case-insensitive) or URL (exact match)
 - **Health Tab Refresh** - Manual refresh button on Admin Health tab with loading state and success toast
 - **Modal Backdrop Fix** - Fixed issue where clicking inside form inputs would close the modal
@@ -43,6 +46,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
 - **Auto-detect Store**: Automatically detects store from product URL
 - **Import/Export**: Export products as CSV, import via file upload or clipboard paste (registered users only)
+- **Receipt Scanning**: Upload receipt photo → OCR via Tesseract.js → auto-detect store/date/items → batch create products
 - **Admin Dashboard**: System stats, user management, analytics, activity audit log (admin users only)
 - **Pagination**: Reusable pagination component for tables and lists
 
@@ -94,6 +98,7 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 - **Frontend**: React 19 + TypeScript + Vite
 - **Styling**: Tailwind CSS v4
 - **Icons**: Lucide React
+- **OCR**: Tesseract.js (client-side)
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
 - **Deployment**: Cloudflare Pages + GitHub Actions
@@ -129,19 +134,19 @@ The built files will be in the `dist/` directory.
 
 ### Automatic (GitHub Actions)
 
-This project includes a GitHub Actions workflow that automatically deploys to Cloudflare on push to main.
+This project includes a GitHub Actions workflow that automatically deploys to Cloudflare on push to main. Can also be triggered manually via `workflow_dispatch`.
 
 1. Add these secrets to your GitHub repository:
    - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token
    - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID
 
-2. Push to main to trigger deployment
+2. Push to main to trigger deployment, or use "Run workflow" in Actions tab
 
 ### Manual
 
 ```bash
-# Deploy frontend to Cloudflare Pages
-pnpm exec wrangler pages deploy dist --project-name=price-trackr
+# Deploy frontend to Cloudflare Pages (production)
+pnpm exec wrangler pages deploy dist --project-name=price-trackr --branch main
 
 # Deploy worker API
 pnpm exec wrangler deploy --config workers/wrangler.toml
@@ -195,7 +200,8 @@ PriceTrackr/
 │   │   ├── AdminUsers.tsx       # User management
 │   │   ├── AdminAnalytics.tsx   # Analytics + stats
 │   │   ├── AdminActivity.tsx    # Activity/audit log
-│   │   └── AdminHealth.tsx      # System health monitoring
+│   │   ├── AdminHealth.tsx      # System health monitoring
+│   │   └── ScanReceiptModal.tsx  # Receipt scanning with Tesseract.js OCR
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
 │   ├── pages/
@@ -203,7 +209,8 @@ PriceTrackr/
 │   │   └── Settings.tsx       # User settings (import/export, account)
 │   ├── lib/
 │   │   ├── api.ts               # API client
-│   │   └── utils.ts             # Utility functions
+│   │   ├── utils.ts             # Utility functions
+│   │   └── receiptParser.ts     # Receipt OCR text parser (store/date/items)
 │   ├── types/
 │   │   └── index.ts            # TypeScript types + constants
 │   ├── App.tsx
