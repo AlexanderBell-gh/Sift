@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -36,6 +37,18 @@ jobs:
 
       - name: Build frontend
         run: pnpm run build
+
+      - name: Check Cloudflare secrets
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "::error::Missing CLOUDFLARE_API_TOKEN secret"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "::error::Missing CLOUDFLARE_ACCOUNT_ID secret"
+            exit 1
+          fi
+          echo "Cloudflare secrets configured"
 
       - name: Deploy Worker API
         run: pnpm exec wrangler deploy --config workers/wrangler.toml
