@@ -496,6 +496,44 @@ async function handleRequest(request, env) {
     }
   }
 
+  // Batch create products
+  if (path === '/api/products/batch' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+    const userId = auth.userId;
+
+    try {
+      const body = await request.json();
+      const { products: incomingProducts } = body;
+
+      if (!Array.isArray(incomingProducts) || incomingProducts.length === 0) {
+        return errorResponse('Products array is required');
+      }
+
+      const existingProducts = await getAllProducts(env, userId);
+      const today = new Date().toISOString().split('T')[0];
+
+      const createdProducts = incomingProducts.map((item) => ({
+        id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${Math.random().toString(36).substr(2, 4)}`,
+        name: item.name,
+        url: item.url || '',
+        imageUrl: item.imageUrl || '',
+        category: item.category || 'other',
+        store: item.store || null,
+        notes: item.notes || '',
+        prices: [{ price: item.price, store: item.store || null, date: item.date || today }],
+        createdAt: new Date().toISOString(),
+      }));
+
+      existingProducts.push(...createdProducts);
+      await saveProducts(env, userId, existingProducts);
+
+      return jsonResponse({ products: createdProducts }, 201);
+    } catch (e) {
+      return errorResponse('Invalid request body');
+    }
+  }
+
   // Add price to product (must come before generic product route)
   const priceMatch = path.match(/^\/api\/products\/(.+)\/prices$/);
   if (priceMatch && method === 'POST') {

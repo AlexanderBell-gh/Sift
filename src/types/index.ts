@@ -151,6 +151,20 @@ export interface AuditLog {
   timestamp: number;
 }
 
+export interface ScannedItem {
+  name: string;
+  price: number;
+  category?: string;
+}
+
+export interface ScannedReceipt {
+  store: string | null;
+  date: string | null;
+  items: ScannedItem[];
+  total: number | null;
+  rawText: string;
+}
+
 export interface SearchResult {
   title: string;
   url: string;

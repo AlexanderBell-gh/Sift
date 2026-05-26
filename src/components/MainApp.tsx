@@ -12,6 +12,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, Category } from '../types';
 import { DEFAULT_CATEGORIES } from '../types';
+import { ScanReceiptModal } from './ScanReceiptModal';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { AlertTriangle } from 'lucide-react';
@@ -31,6 +32,7 @@ export function MainApp() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -217,6 +219,26 @@ export function MainApp() {
     setIsPriceModalOpen(true);
   };
 
+  const handleScanSave = async (items: import('../types').ScannedItem[], store: string | null, date: string | null) => {
+    try {
+      const productsToCreate = items.map((item) => ({
+        name: item.name,
+        price: item.price,
+        store: store || undefined,
+        category: item.category || 'other',
+        date: date || undefined,
+      }));
+      const result = await api.batchCreateProducts(productsToCreate);
+      setProducts(prev => [...prev, ...result.products]);
+      showToast(`Saved ${result.products.length} item${result.products.length !== 1 ? 's' : ''} from receipt`, 'success');
+    } catch (error) {
+      console.error('Failed to save scanned items:', error);
+      showToast('Failed to save items. Try again.', 'error');
+    } finally {
+      setIsScanModalOpen(false);
+    }
+  };
+
   const handleSignOut = () => {
     signOut();
     navigate('/');
@@ -238,6 +260,7 @@ export function MainApp() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onAddProduct={handleAddProduct}
+        onScanReceipt={() => setIsScanModalOpen(true)}
         user={user}
         onSignOut={handleSignOut}
       />
@@ -288,6 +311,13 @@ export function MainApp() {
         isOpen={isPriceModalOpen}
         onClose={() => { setIsPriceModalOpen(false); setQuickAddProductId(null); }}
         onSave={handleSavePrice}
+      />
+
+      <ScanReceiptModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        onSave={handleScanSave}
+        categories={categories}
       />
 
       <ProductDetail

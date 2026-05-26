@@ -332,6 +332,15 @@ export const api = {
     return handleResponse(response);
   },
 
+  async batchCreateProducts(products: { name: string; price: number; store?: string; category?: string; date?: string }[]): Promise<{ products: Product[] }> {
+    const response = await fetch(`${API_BASE_URL}/api/products/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ products }),
+    });
+    return handleResponse(response);
+  },
+
   async scrapeProduct(url: string): Promise<{ imageUrl: string }> {
     const response = await fetch(`${API_BASE_URL}/api/scrape-product`, {
       method: 'POST',

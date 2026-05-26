@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Sun, Moon, Plus, LogOut, User, Settings, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { Search, Sun, Moon, Plus, LogOut, User, Settings, ChevronDown, LayoutDashboard, Camera } from 'lucide-react';
 import { Button } from './ui/Button';
 import type { UserRole } from '../types';
 
@@ -8,11 +8,12 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onAddProduct: () => void;
+  onScanReceipt?: () => void;
   user?: { id: string; email: string; username: string; role: UserRole; isTrial?: boolean; trialExpiresAt?: number | null } | null;
   onSignOut?: () => void;
 }
 
-export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSignOut }: HeaderProps) {
+export function Header({ searchQuery, onSearchChange, onAddProduct, onScanReceipt, user, onSignOut }: HeaderProps) {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('pricetrackr_theme');
@@ -49,6 +50,11 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
   const handleAdmin = () => {
     setIsMenuOpen(false);
     navigate('/admin');
+  };
+
+  const handleScanReceipt = () => {
+    setIsMenuOpen(false);
+    onScanReceipt?.();
   };
 
   return (
@@ -120,6 +126,13 @@ export function Header({ searchQuery, onSearchChange, onAddProduct, user, onSign
                       >
                         <Settings className="w-3.5 h-3.5" />
                         Settings
+                      </button>
+                      <button
+                        onClick={handleScanReceipt}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-white/10 transition-colors"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        Scan Receipt
                       </button>
                     <button
                       onClick={() => setIsDark(!isDark)}
