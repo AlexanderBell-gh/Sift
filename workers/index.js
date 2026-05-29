@@ -174,6 +174,46 @@ async function requireAuth(request, env) {
   return auth;
 }
 
+async function enrichWithGemma(results, apiKey) {
+  const data = results.map(r => ({ title: r.title, snippet: r.snippet?.slice(0, 200), url: r.url }));
+  const prompt = JSON.stringify(data);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: 'You extract UK grocery product data from search results. Return JSON array matching input order. Each element: { "cleanName": string|null, "extractedPrice": number|null, "brand": string|null, "size": string|null, "suggestedCategory": string|null, "store": string|null }. Categories: chilled, snacks, beverages, produce, frozen, bakery, pantry, condiments, other. Use null for unknown.' }]
+          },
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 1024 }
+        }),
+        signal: controller.signal,
+      }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Gemma API error:', res.status, errText);
+      return null;
+    }
+
+    const json = await res.json();
+    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) return null;
+
+    return JSON.parse(text);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -1285,7 +1325,7 @@ async function handleRequest(request, env) {
       }
 
       const searchData = await searchRes.json();
-      const results = (searchData.organic || []).map((item) => ({
+      let results = (searchData.organic || []).map((item) => ({
         title: item.title || '',
         url: item.link || item.url || '',
         snippet: item.snippet || '',
@@ -1300,7 +1340,25 @@ async function handleRequest(request, env) {
         }
       }
 
-      return jsonResponse({ results, imageUrl });
+      let gemmaError = '';
+      if (env.GEMMA_API_KEY && results.length > 0) {
+        try {
+          const enriched = await enrichWithGemma(results, env.GEMMA_API_KEY);
+          if (enriched && Array.isArray(enriched)) {
+            results = results.map((r, i) => ({
+              ...r,
+              ...(enriched[i] || {}),
+            }));
+          }
+        } catch (e) {
+          console.error('Gemma enrichment failed:', e);
+          gemmaError = 'Google API currently unavailable';
+        }
+      }
+
+      const responseData = { results, imageUrl };
+      if (gemmaError) responseData.gemmaError = gemmaError;
+      return jsonResponse(responseData);
     } catch (e) {
       console.error('Search error:', e);
       return errorResponse('Search failed');

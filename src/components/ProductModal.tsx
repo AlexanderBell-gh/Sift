@@ -4,10 +4,10 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import type { Product, Category, SearchResult } from '../types';
-import { STORE_OPTIONS } from '../types';
+import { STORE_OPTIONS, CATEGORY_ICONS } from '../types';
 import { detectStoreFromUrl } from '../lib/utils';
 import { api } from '../lib/api';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, AlertTriangle } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -37,6 +37,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [webSearchQuery, setWebSearchQuery] = useState('');
   const [webResults, setWebResults] = useState<SearchResult[]>([]);
   const [isWebSearching, setIsWebSearching] = useState(false);
+  const [gemmaError, setGemmaError] = useState('');
 
   useEffect(() => {
     if (url && !store) {
@@ -82,9 +83,13 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const searchWeb = async () => {
     if (!webSearchQuery.trim()) return;
     setIsWebSearching(true);
+    setGemmaError('');
     try {
       const data = await api.searchProducts(webSearchQuery.trim());
       setWebResults(data.results || []);
+      if (data.gemmaError) {
+        setGemmaError(data.gemmaError);
+      }
       if (data.imageUrl) {
         setImageUrl(data.imageUrl);
       }
@@ -101,9 +106,21 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     if (detected) {
       setStore(detected);
       setIsStoreAutoDetected(true);
+    } else if (result.store) {
+      setStore(result.store);
+      setIsStoreAutoDetected(true);
     }
     if (result.imageUrl) {
       setImageUrl(result.imageUrl);
+    }
+    if (result.extractedPrice) {
+      setPrice(result.extractedPrice.toString());
+    }
+    if (result.suggestedCategory) {
+      setCategory(result.suggestedCategory);
+    }
+    if (result.cleanName) {
+      setName(result.cleanName);
     }
     setIsWebSearchOpen(false);
     setWebResults([]);
@@ -255,6 +272,13 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
             </Button>
           </div>
 
+          {gemmaError && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-sm">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{gemmaError} — showing basic results</span>
+            </div>
+          )}
+
           {isWebSearching ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
@@ -268,10 +292,39 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
                   onClick={() => selectWebResult(result)}
                   className="w-full text-left p-3 rounded-lg border border-zinc-200 dark:border-white/10 hover:border-green-500 transition-colors"
                 >
-                  <p className="font-medium text-sm line-clamp-2">{result.title}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{result.url}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-sm line-clamp-2 flex-1">{result.title}</p>
+                    {result.extractedPrice && (
+                      <span className="shrink-0 text-xs font-semibold text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full tabular-nums">
+                        £{result.extractedPrice.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  {result.cleanName && result.cleanName !== result.title && (
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">{result.cleanName}</p>
+                  )}
+                  {(result.brand || result.size || result.suggestedCategory) && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      {result.brand && (
+                        <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5 bg-zinc-100 dark:bg-white/5 rounded">
+                          {result.brand}
+                        </span>
+                      )}
+                      {result.size && (
+                        <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5 bg-zinc-100 dark:bg-white/5 rounded">
+                          {result.size}
+                        </span>
+                      )}
+                      {result.suggestedCategory && CATEGORY_ICONS[result.suggestedCategory] && (
+                        <span className="text-[10px]" title={result.suggestedCategory}>
+                          {CATEGORY_ICONS[result.suggestedCategory]}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-1">{result.url}</p>
                   {result.snippet && (
-                    <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 line-clamp-2">{result.snippet}</p>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5 line-clamp-2">{result.snippet}</p>
                   )}
                 </button>
               ))}

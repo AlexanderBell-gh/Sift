@@ -170,5 +170,10 @@ export interface SearchResult {
   url: string;
   snippet?: string;
   imageUrl?: string;
-  price?: string;
+  cleanName?: string;
+  extractedPrice?: number;
+  brand?: string;
+  size?: string;
+  suggestedCategory?: string;
+  store?: string;
 }

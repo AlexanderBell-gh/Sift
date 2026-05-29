@@ -323,7 +323,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  async searchProducts(query: string): Promise<{ results: SearchResult[]; imageUrl: string }> {
+  async searchProducts(query: string): Promise<{ results: SearchResult[]; imageUrl: string; gemmaError?: string }> {
     const response = await fetch(`${API_BASE_URL}/api/search/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
