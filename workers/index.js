@@ -175,11 +175,8 @@ async function requireAuth(request, env) {
 }
 
 async function enrichWithGemma(results, apiKey) {
-  const data = results.map(r => ({ title: r.title, snippet: r.snippet?.slice(0, 200), url: r.url }));
+  const data = results.slice(0, 5).map(r => ({ title: r.title, snippet: r.snippet?.slice(0, 200), url: r.url }));
   const prompt = JSON.stringify(data);
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   try {
     const res = await fetch(
@@ -194,7 +191,6 @@ async function enrichWithGemma(results, apiKey) {
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 1024 }
         }),
-        signal: controller.signal,
       }
     );
 
@@ -209,8 +205,9 @@ async function enrichWithGemma(results, apiKey) {
     if (!text) return null;
 
     return JSON.parse(text);
-  } finally {
-    clearTimeout(timeoutId);
+  } catch (e) {
+    console.error('Gemma enrichment failed:', e?.message || e);
+    return null;
   }
 }
 
