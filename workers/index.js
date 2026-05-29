@@ -186,10 +186,10 @@ async function enrichWithGemma(results, apiKey) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: 'You extract UK grocery product data from search results. Return JSON array matching input order. Each element: { "cleanName": string|null, "extractedPrice": number|null, "brand": string|null, "size": string|null, "suggestedCategory": string|null, "store": string|null }. Categories: chilled, snacks, beverages, produce, frozen, bakery, pantry, condiments, other. Use null for unknown.' }]
+            parts: [{ text: 'You extract UK grocery product data from search results. Return ONLY a valid JSON array. No markdown, no code blocks, no explanations. Each element must follow: { "cleanName": string|null, "extractedPrice": number|null, "brand": string|null, "size": string|null, "suggestedCategory": string|null, "store": string|null }. Categories: chilled, snacks, beverages, produce, frozen, bakery, pantry, condiments, other.' }]
           },
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 1024 }
+          generationConfig: { temperature: 0.2, maxOutputTokens: 1024 }
         }),
       }
     );
@@ -204,7 +204,14 @@ async function enrichWithGemma(results, apiKey) {
     const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) return null;
 
-    return JSON.parse(text);
+    let clean = text.trim()
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '');
+    const start = clean.indexOf('[');
+    const end = clean.lastIndexOf(']');
+    if (start === -1 || end <= start) return null;
+
+    return JSON.parse(clean.slice(start, end + 1));
   } catch (e) {
     console.error('Gemma enrichment failed:', e?.message || e);
     return null;
