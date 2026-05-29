@@ -19,6 +19,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 - **Pagination Component** - Reusable pagination in src/hooks/
 - **Removed dot pattern** - Dark mode background is now solid (no dots)
 - **Layering fixes** - Fixed z-index issues with filter dropdown and sticky header
+- **AI-Enriched Product Search** - Gemma 4 (Google AI Studio) enriches Serper search results with extracted price, brand, size, category, and store — auto-fills product form on selection
 
 ## Design
 
@@ -47,6 +48,7 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 - **Auto-detect Store**: Automatically detects store from product URL
 - **Import/Export**: Export products as CSV, import via file upload or clipboard paste (registered users only)
 - **Receipt Scanning**: Upload receipt photo → OCR via Tesseract.js → auto-detect store/date/items → batch create products
+- **AI-Enriched Product Search**: Serper web search results enriched via Gemma 4 — auto-extracts price, brand, size, category, store from snippets; auto-fills product form on selection
 - **Admin Dashboard**: System stats, user management, analytics, activity audit log (admin users only)
 - **Pagination**: Reusable pagination component for tables and lists
 
@@ -55,9 +57,9 @@ PriceTrackr features a refined Linear/Vercel-inspired UI with:
 The Product Modal provides a streamlined workflow:
 
 1. **Enter product name** in the name field
-2. Click **Find Product** button → Serper returns web search results
-3. Click a result → URL auto-fills, store auto-detected
-4. Enter price, select category, add optional notes, Save
+2. Click **Find Product** button → Serper returns web search results, Gemma 4 extracts price/brand/size/category from snippets
+3. Click a result → URL auto-fills, store auto-detected, price/category/name auto-filled from enriched data
+4. Adjust any fields, add optional notes, Save
 
 ## Admin Dashboard
 
@@ -102,7 +104,7 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers KV
 - **Deployment**: Cloudflare Pages + GitHub Actions
-- **External APIs**: Serper API (web search)
+- **External APIs**: Serper API (web search), Google AI Studio / Gemma 4 (product data enrichment)
 
 ## Getting Started
 
@@ -169,7 +171,7 @@ const API_BASE_URL = 'https://your-worker-url.workers.dev';
 
 ### API Keys
 
-For product search, you need an API key:
+For product search, you need API keys:
 
 1. **Serper API Key** (web search):
    - Sign up at https://serper.dev
@@ -177,6 +179,14 @@ For product search, you need an API key:
    ```bash
    cd workers
    wrangler secret put SERPER_API_KEY
+   ```
+
+2. **Google AI Studio API Key** (Gemma 4 product enrichment):
+   - Get a free key at https://aistudio.google.com (Gemma 4 free tier: 15 RPM)
+   - Add the secret to Cloudflare Workers:
+   ```bash
+   cd workers
+   wrangler secret put GEMMA_API_KEY
    ```
 
 ## Project Structure
@@ -204,6 +214,8 @@ PriceTrackr/
 │   │   └── ScanReceiptModal.tsx  # Receipt scanning with Tesseract.js OCR
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
+│   ├── hooks/
+│   │   └── Pagination.tsx      # Reusable pagination hook + component
 │   ├── pages/
 │   │   ├── Landing.tsx          # Sign in/up page
 │   │   └── Settings.tsx       # User settings (import/export, account)

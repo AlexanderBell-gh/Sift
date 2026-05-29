@@ -186,7 +186,7 @@ async function enrichWithGemma(results, apiKey) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: 'Extract product data from each search result. Respond with exactly: [JSON_START][{"cleanName": null or string, "extractedPrice": null or number, "brand": null or string, "size": null or string, "suggestedCategory": null or string, "store": null or string}][JSON_END]. Categories: chilled|snacks|beverages|produce|frozen|bakery|pantry|condiments|other.' }]
+            parts: [{ text: 'Extract product data from search results. Respond with [JSON_START] then a JSON array of extracted items, then [JSON_END]. Fields: {"cleanName":"product name or null","extractedPrice":1.99 or null,"brand":"brand name or null","size":"500g or null","suggestedCategory":"chilled or null","store":"Tesco or null"}. Categories: chilled, snacks, beverages, produce, frozen, bakery, pantry, condiments, other.' }]
           },
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.2, maxOutputTokens: 1024 }
@@ -209,7 +209,7 @@ async function enrichWithGemma(results, apiKey) {
 
     const parsed = JSON.parse(match[1]);
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    if (parsed[0]?.cleanName === undefined) return null;
+    if (parsed[0]?.cleanName === undefined && parsed[0]?.extractedPrice === undefined) return null;
 
     return parsed;
   } catch (e) {
