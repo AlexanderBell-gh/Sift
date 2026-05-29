@@ -179,7 +179,7 @@ async function enrichWithGemma(results, apiKey) {
   const prompt = JSON.stringify(data);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   try {
     const res = await fetch(
