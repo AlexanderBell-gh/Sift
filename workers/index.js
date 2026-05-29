@@ -186,7 +186,7 @@ async function enrichWithGemma(results, apiKey) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: 'You extract UK grocery product data from search results. Return ONLY a valid JSON array. No markdown, no code blocks, no explanations. Each element must follow: { "cleanName": string|null, "extractedPrice": number|null, "brand": string|null, "size": string|null, "suggestedCategory": string|null, "store": string|null }. Categories: chilled, snacks, beverages, produce, frozen, bakery, pantry, condiments, other.' }]
+            parts: [{ text: 'Extract product data from each search result. Respond with exactly: [JSON_START][{"cleanName": null or string, "extractedPrice": null or number, "brand": null or string, "size": null or string, "suggestedCategory": null or string, "store": null or string}][JSON_END]. Categories: chilled|snacks|beverages|produce|frozen|bakery|pantry|condiments|other.' }]
           },
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.2, maxOutputTokens: 1024 }
@@ -204,14 +204,14 @@ async function enrichWithGemma(results, apiKey) {
     const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) return null;
 
-    let clean = text.trim()
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/i, '');
-    const start = clean.indexOf('[');
-    const end = clean.lastIndexOf(']');
-    if (start === -1 || end <= start) return null;
+    const match = text.match(/\[JSON_START\](.*?)\[JSON_END\]/s);
+    if (!match) return null;
 
-    return JSON.parse(clean.slice(start, end + 1));
+    const parsed = JSON.parse(match[1]);
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    if (parsed[0]?.cleanName === undefined) return null;
+
+    return parsed;
   } catch (e) {
     console.error('Gemma enrichment failed:', e?.message || e);
     return null;
@@ -1353,6 +1353,8 @@ async function handleRequest(request, env) {
               ...r,
               ...(enriched[i] || {}),
             }));
+          } else {
+            gemmaError = 'Google API currently unavailable';
           }
         } catch (e) {
           console.error('Gemma enrichment failed:', e);
