@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { api } from '../lib/api';
 import type { UserRole } from '../types';
 
@@ -92,10 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  const handleUnauthorized = () => {
+  const handleUnauthorized = useCallback(() => {
     api.signOut();
     setUser(null);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
