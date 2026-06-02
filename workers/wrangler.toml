@@ -8,13 +8,10 @@ enabled = false
 logs = { enabled = true, head_sampling_rate = 1, persist = true, invocation_logs = true }
 traces = { enabled = false, persist = true, head_sampling_rate = 1 }
 
-[[kv_namespaces]]
-binding = "PRICETRACKR"
-id = "a901eb966d144e3081024b10a345b88a"
-
-[[kv_namespaces]]
-binding = "USERS"
-id = "247e9ac8a5a249a183f7974ff1b2718a"
+[[d1_databases]]
+binding = "DB"
+database_name = "pricetrackr"
+database_id = "451b6a38-7e22-46e2-89d2-09a5bd1d231e"
 
 [vars]
 ADMIN_SECRET = "4f2338808548e8e3f4b35ca1c2187e1e"
