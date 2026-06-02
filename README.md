@@ -19,6 +19,8 @@ A personal grocery price tracker to monitor price changes on products you freque
 - **Removed dot pattern** - Dark mode background is now solid (no dots)
 - **Layering fixes** - Fixed z-index issues with filter dropdown and sticky header
 - **AI-Enriched Product Search** - Gemma 4 (Google AI Studio) enriches Serper search results with extracted price, brand, size, category, and store — auto-fills product form on selection
+- **Performance Optimization** - Fixed critical infinite API request loop caused by unstable function references in `AuthContext` and `useToast` hooks
+- **Linting Clean-up** - Resolved hoisting issues in Admin components and fixed regex escape errors in receipt parsing logic
 
 ## Design
 
@@ -75,8 +77,8 @@ The admin dashboard provides system management capabilities for users with admin
 Admin users are created via the registration endpoint with an admin secret:
 
 ```bash
-curl -X POST https://your-worker-url/api/auth/register-admin \
-  -H "Content-Type: application/json" \
+curl -X POST https://your-worker-url/api/auth/register-admin \\
+  -H "Content-Type: application/json" \\
   -d '{"email": "admin@example.com", "username": "admin", "password": "password", "adminSecret": "your-admin-secret"}'
 ```
 
@@ -219,15 +221,15 @@ PriceTrackr/
 ├── src/
 │   ├── components/
 │   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select, Toast)
-│   │   ├── useToast.ts   # Toast notification hook
-│   │   ├── Header.tsx    # App header with glassmorphism, search, theme toggle
-│   │   ├── MainApp.tsx   # Main application logic
+│   │   ├── useToast.ts    # Toast notification hook
+│   │   ├── Header.tsx     # App header with glassmorphism, search, theme toggle
+│   │   ├── MainApp.tsx    # Main application logic
 │   │   ├── ProductCard.tsx      # Product display card with staggered animations
 │   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
-│   │   ├── ProductModal.tsx     # Add/Edit product form with search + auto-fetch
-│   │   ├── ProductDetail.tsx    # Product detail with sparkline chart
+│   │   ├── ProductModal.tsx    # Add/Edit product form with search + auto-fetch
+│   │   ├── ProductDetail.tsx   # Product detail with sparkline chart
 │   │   ├── AddPriceModal.tsx    # Add price entry
-│   │   ├── FilterDropdown.tsx   # Multi-select filter dropdown
+│   │   ├── FilterDropdown.tsx    # Multi-select filter dropdown
 │   │   ├── SortSelect.tsx       # Sort dropdown
 │   │   ├── AdminDashboard.tsx   # Admin dashboard
 │   │   ├── AdminUsers.tsx       # User management
@@ -252,13 +254,13 @@ PriceTrackr/
 │   └── index.css                # Global styles
 ├── workers/
 │   ├── index.js                 # Worker API endpoints
-│   ├── auth.js                  # JWT + password hashing + user CRUD
+│   ├── auth.js                # JWT + password hashing + user CRUD
 │   ├── db.js                    # D1 query helpers
 │   ├── schema.sql               # D1 table DDL
 │   ├── seed.sql                 # Default category seed data
 │   └── wrangler.toml
 ├── public/                      # Static assets (store icons)
-├── .github/workflows/           # CI/CD
+├── .github/workflows/        # CI/CD
 └── package.json
 ```
 

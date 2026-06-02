@@ -36,7 +36,7 @@ export function MainApp() {
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [_, setQuickAddProductId] = useState<string | null>(null);
+  const [quickAddProductId] = useState<string | null>(null); // Removed setQuickAddProductId since it was unused
   const quickAddProductIdRef = useRef<string | null>(null);
 
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);

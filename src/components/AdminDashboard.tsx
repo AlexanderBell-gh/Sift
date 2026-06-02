@@ -15,27 +15,11 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabId>('users');
   const [isDark, setIsDark] = useState(true);
 
-  useEffect(() => {
-    checkAdminStatus();
-    initTheme();
-  }, []);
-
   const initTheme = () => {
     const stored = localStorage.getItem('pricetrackr_theme');
     const dark = stored !== 'light';
     setIsDark(dark);
     if (dark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
-
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-    localStorage.setItem('pricetrackr_theme', newIsDark ? 'dark' : 'light');
-    if (newIsDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -54,6 +38,22 @@ export function AdminDashboard() {
       setIsAdmin(false);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkAdminStatus();
+    initTheme();
+  }, []);
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    localStorage.setItem('pricetrackr_theme', newIsDark ? 'dark' : 'light');
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   };
 

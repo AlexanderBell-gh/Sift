@@ -56,7 +56,6 @@ export function AdminActivity() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    loadLogs();
   };
 
   const handleActionChange = (action: ActionFilter) => {

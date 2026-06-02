@@ -70,7 +70,6 @@ export function AdminUsers() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    loadUsers();
   };
 
   const handleFilterChange = (newFilter: FilterType) => {

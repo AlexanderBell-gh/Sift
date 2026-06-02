@@ -63,10 +63,6 @@ export function AdminAnalytics() {
   const [error, setError] = useState('');
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
 
-  useEffect(() => {
-    loadAnalytics();
-  }, []);
-
   const loadAnalytics = async () => {
     try {
       const data = await api.getAdminAnalytics();
@@ -77,6 +73,10 @@ export function AdminAnalytics() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadAnalytics();
+  }, []);
 
   if (isLoading) {
     return (
