@@ -67,48 +67,19 @@ function isValidCategory(category) {
   );
 }
 
-async function getAllProducts(env, userId) {
-  const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json');
-  if (!productIds) return [];
-  
+async function listProducts(env, userId) {
+  const list = await env.PRICETRACKR.list({ prefix: `user:${userId}:product:` });
   const products = await Promise.all(
-    productIds.map(async (id) => {
-      const product = await env.PRICETRACKR.get(`user:${userId}:product:${id}`, 'json');
-      return product;
-    })
+    list.keys.map(key => env.PRICETRACKR.get(key.name, 'json'))
   );
-  
-  const validProducts = products.filter(isValidProduct);
-  const validIds = validProducts.map(p => p.id);
-  
-  if (validIds.length !== productIds.length) {
-    await env.PRICETRACKR.put(`user:${userId}:products`, JSON.stringify(validIds));
-  }
-  
-  return validProducts;
-}
-
-async function saveProducts(env, userId, products) {
-  const ids = products.map(p => p.id);
-  await env.PRICETRACKR.put(`user:${userId}:products`, JSON.stringify(ids));
-  
-  await Promise.all(
-    products.map(async (product) => {
-      await env.PRICETRACKR.put(`user:${userId}:product:${product.id}`, JSON.stringify(product));
-    })
-  );
+  return products.filter(isValidProduct);
 }
 
 async function deleteUserData(env, userId) {
-  const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json');
-  if (productIds && Array.isArray(productIds)) {
-    await Promise.all(
-      productIds.map(async (id) => {
-        await env.PRICETRACKR.delete(`user:${userId}:product:${id}`);
-      })
-    );
-  }
-  await env.PRICETRACKR.delete(`user:${userId}:products`);
+  const list = await env.PRICETRACKR.list({ prefix: `user:${userId}:product:` });
+  await Promise.all(
+    list.keys.map(key => env.PRICETRACKR.delete(key.name))
+  );
   await env.PRICETRACKR.delete(`user:${userId}:categories`);
 }
 
@@ -509,14 +480,13 @@ async function handleRequest(request, env) {
     const userId = auth.userId;
 
     if (method === 'GET') {
-      const products = await getAllProducts(env, userId);
+      const products = await listProducts(env, userId);
       return jsonResponse(products);
     }
     
     if (method === 'POST') {
       try {
         const body = await request.json();
-        const products = await getAllProducts(env, userId);
         
         const newProduct = {
           id: body.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -530,8 +500,7 @@ async function handleRequest(request, env) {
           createdAt: new Date().toISOString()
         };
         
-        products.push(newProduct);
-        await saveProducts(env, userId, products);
+        await env.PRICETRACKR.put(`user:${userId}:product:${newProduct.id}`, JSON.stringify(newProduct));
         
         return jsonResponse(newProduct, 201);
       } catch (e) {
@@ -554,7 +523,6 @@ async function handleRequest(request, env) {
         return errorResponse('Products array is required');
       }
 
-      const existingProducts = await getAllProducts(env, userId);
       const today = new Date().toISOString().split('T')[0];
 
       const createdProducts = incomingProducts.map((item) => ({
@@ -569,8 +537,9 @@ async function handleRequest(request, env) {
         createdAt: new Date().toISOString(),
       }));
 
-      existingProducts.push(...createdProducts);
-      await saveProducts(env, userId, existingProducts);
+      await Promise.all(
+        createdProducts.map(p => env.PRICETRACKR.put(`user:${userId}:product:${p.id}`, JSON.stringify(p)))
+      );
 
       return jsonResponse({ products: createdProducts }, 201);
     } catch (e) {
@@ -585,7 +554,7 @@ async function handleRequest(request, env) {
     if (auth && auth.error) return auth;
     const userId = auth.userId;
     const id = priceMatch[1];
-    const products = await getAllProducts(env, userId);
+    const products = await listProducts(env, userId);
     const product = products.find(p => p.id === id);
     
     if (!product) {
@@ -601,7 +570,7 @@ async function handleRequest(request, env) {
         date: body.date || new Date().toISOString().split('T')[0]
       });
       
-      await saveProducts(env, userId, products);
+      await env.PRICETRACKR.put(`user:${userId}:product:${id}`, JSON.stringify(product));
       return jsonResponse(product);
     } catch (e) {
       return errorResponse('Invalid request body');
@@ -616,7 +585,7 @@ async function handleRequest(request, env) {
     const userId = auth.userId;
     const id = deletePriceMatch[1];
     const priceIndex = parseInt(deletePriceMatch[2], 10);
-    const products = await getAllProducts(env, userId);
+    const products = await listProducts(env, userId);
     const product = products.find(p => p.id === id);
     
     if (!product) {
@@ -628,7 +597,7 @@ async function handleRequest(request, env) {
     }
     
     product.prices.splice(priceIndex, 1);
-    await saveProducts(env, userId, products);
+    await env.PRICETRACKR.put(`user:${userId}:product:${id}`, JSON.stringify(product));
     return jsonResponse(product);
   }
   
@@ -639,7 +608,7 @@ async function handleRequest(request, env) {
     if (auth && auth.error) return auth;
     const userId = auth.userId;
     const id = productMatch[1];
-    const products = await getAllProducts(env, userId);
+    const products = await listProducts(env, userId);
     const product = products.find(p => p.id === id);
     
     if (!product) {
@@ -654,42 +623,36 @@ async function handleRequest(request, env) {
       try {
         const body = await request.json();
         
-        const updatedProducts = products.map(p => {
-          if (p.id !== id) return p;
-          
-          const updated = { ...p };
-          
-          if (body.price !== undefined) {
-            const existingPrices = p.prices || [];
-            const latestPrice = existingPrices.length > 0 
-              ? existingPrices[existingPrices.length - 1].price 
-              : null;
-            
-            if (latestPrice === null || Math.abs(body.price - latestPrice) > 0.001) {
-              const newPriceEntry = {
-                price: body.price,
-                store: body.store || p.store,
-                date: new Date().toISOString().split('T')[0]
-              };
-              updated.prices = [...existingPrices, newPriceEntry];
-            }
-          }
-          
-          if (body.store !== undefined) {
-            updated.store = body.store;
-          }
-          
-          if (body.name !== undefined) updated.name = body.name;
-          if (body.url !== undefined) updated.url = body.url;
-          if (body.imageUrl !== undefined) updated.imageUrl = body.imageUrl;
-          if (body.category !== undefined) updated.category = body.category;
-          if (body.notes !== undefined) updated.notes = body.notes;
-          
-          return updated;
-        });
+        const updated = { ...product };
         
-        await saveProducts(env, userId, updatedProducts);
-        return jsonResponse(updatedProducts.find(p => p.id === id));
+        if (body.price !== undefined) {
+          const existingPrices = updated.prices || [];
+          const latestPrice = existingPrices.length > 0 
+            ? existingPrices[existingPrices.length - 1].price 
+            : null;
+          
+          if (latestPrice === null || Math.abs(body.price - latestPrice) > 0.001) {
+            const newPriceEntry = {
+              price: body.price,
+              store: body.store || updated.store,
+              date: new Date().toISOString().split('T')[0]
+            };
+            updated.prices = [...existingPrices, newPriceEntry];
+          }
+        }
+        
+        if (body.store !== undefined) {
+          updated.store = body.store;
+        }
+        
+        if (body.name !== undefined) updated.name = body.name;
+        if (body.url !== undefined) updated.url = body.url;
+        if (body.imageUrl !== undefined) updated.imageUrl = body.imageUrl;
+        if (body.category !== undefined) updated.category = body.category;
+        if (body.notes !== undefined) updated.notes = body.notes;
+        
+        await env.PRICETRACKR.put(`user:${userId}:product:${id}`, JSON.stringify(updated));
+        return jsonResponse(updated);
       } catch (e) {
         return errorResponse('Invalid request body');
       }
@@ -697,12 +660,6 @@ async function handleRequest(request, env) {
     
     if (method === 'DELETE') {
       await env.PRICETRACKR.delete(`user:${userId}:product:${id}`);
-      const filtered = products.filter(p => p.id !== id);
-      if (filtered.length === 0) {
-        await env.PRICETRACKR.delete(`user:${userId}:products`);
-      } else {
-        await saveProducts(env, userId, filtered);
-      }
       return jsonResponse({ success: true });
     }
   }
@@ -775,27 +732,35 @@ async function handleRequest(request, env) {
     if (admin && admin.error) return admin;
 
     const userIds = await env.USERS.get('users', 'json') || [];
+    
+    const stats = await Promise.all(userIds.map(async (userId) => {
+      const user = await getUserById(env, userId);
+      if (!user) return null;
+
+      const products = await listProducts(env, userId);
+      let priceCount = 0;
+      for (const p of products) {
+        if (p.prices) priceCount += p.prices.length;
+      }
+
+      return {
+        isTrial: user.isTrial || false,
+        productCount: products.length,
+        priceCount: priceCount
+      };
+    }));
+
     let totalProducts = 0;
     let totalPrices = 0;
     let trialUsers = 0;
     let regularUsers = 0;
 
-    for (const userId of userIds) {
-      const user = await getUserById(env, userId);
-      if (user) {
-        if (user.isTrial) trialUsers++;
-        else regularUsers++;
-
-        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
-        totalProducts += productIds.length;
-
-        for (const prodId of productIds) {
-          const product = await env.PRICETRACKR.get(`user:${userId}:product:${prodId}`, 'json');
-          if (product && product.prices) {
-            totalPrices += product.prices.length;
-          }
-        }
-      }
+    for (const s of stats) {
+      if (!s) continue;
+      if (s.isTrial) trialUsers++;
+      else regularUsers++;
+      totalProducts += s.productCount;
+      totalPrices += s.priceCount;
     }
 
     return jsonResponse({
@@ -1057,38 +1022,67 @@ async function handleRequest(request, env) {
     const userRegistrations = {};
     const productCreations = {};
 
-    for (const userId of userIds) {
+    const analyticsResults = await Promise.all(userIds.map(async (userId) => {
       const user = await getUserById(env, userId);
-      if (user) {
-        if (user.isTrial) trialUsers++;
-        else regularUsers++;
+      if (!user) return null;
 
-        if (user.createdAt) {
-          const date = user.createdAt.split('T')[0];
-          userRegistrations[date] = (userRegistrations[date] || 0) + 1;
-        }
+      if (user.isTrial) trialUsers++;
+      else regularUsers++;
+
+      if (user.createdAt) {
+        const date = user.createdAt.split('T')[0];
+        userRegistrations[date] = (userRegistrations[date] || 0) + 1;
       }
 
-      const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
-      totalProductCount += productIds.length;
+      const products = await listProducts(env, userId);
+      
+      const userData = {
+        productCount: products.length,
+        priceCount: 0,
+        categories: {},
+        stores: {},
+        creations: {}
+      };
 
-      for (const prodId of productIds) {
-        const product = await env.PRICETRACKR.get(`user:${userId}:product:${prodId}`, 'json');
-        if (product) {
-          const cat = product.category || 'other';
-          categoryCount[cat] = (categoryCount[cat] || 0) + 1;
-          
-          if (product.store) {
-            storeCount[product.store] = (storeCount[product.store] || 0) + 1;
-          }
-          
-          totalPriceEntries += product.prices?.length || 0;
-
-          if (product.createdAt) {
-            const date = product.createdAt.split('T')[0];
-            productCreations[date] = (productCreations[date] || 0) + 1;
-          }
+      for (const product of products) {
+        const cat = product.category || 'other';
+        userData.categories[cat] = (userData.categories[cat] || 0) + 1;
+        
+        if (product.store) {
+          userData.stores[product.store] = (userData.stores[product.store] || 0) + 1;
         }
+        
+        userData.priceCount += (product.prices?.length || 0);
+
+        if (product.createdAt) {
+          const date = product.createdAt.split('T')[0];
+          userData.creations[date] = (userData.creations[date] || 0) + 1;
+        }
+      }
+      
+      return {
+        isTrial: user.isTrial || false,
+        productCount: products.length,
+        priceCount: userData.priceCount,
+        categories: userData.categories,
+        stores: userData.stores,
+        creations: userData.creations
+      };
+    }));
+
+    for (const res of analyticsResults) {
+      if (!res) continue;
+      totalProductCount += res.productCount;
+      totalPriceEntries += res.priceCount;
+
+      for (const [cat, count] of Object.entries(res.categories)) {
+        categoryCount[cat] = (categoryCount[cat] || 0) + count;
+      }
+      for (const [store, count] of Object.entries(res.stores)) {
+        storeCount[store] = (storeCount[store] || 0) + count;
+      }
+      for (const [date, count] of Object.entries(res.creations)) {
+        productCreations[date] = (productCreations[date] || 0) + count;
       }
     }
 
@@ -1155,11 +1149,11 @@ async function handleRequest(request, env) {
     let estimatedBytes = 0;
     try {
       for (const userId of (userIds || [])) {
-        const productIds = (await env.PRICETRACKR.get(`user:${userId}:products`, 'json')) || [];
-        keyCount += 1 + (productIds || []).length;
-        productCount += (productIds || []).length;
-        for (const pid of (productIds || [])) {
-          const p = await env.PRICETRACKR.get(`user:${userId}:product:${pid}`, 'json');
+        const productIds = await env.PRICETRACKR.list({ prefix: `user:${userId}:product:` });
+        keyCount += 1 + productIds.keys.length;
+        productCount += productIds.keys.length;
+        for (const key of productIds.keys) {
+          const p = await env.PRICETRACKR.get(key.name, 'json');
           if (p) estimatedBytes += JSON.stringify(p).length;
         }
       }
