@@ -8,7 +8,7 @@ import { ProductDetail } from './ProductDetail';
 import { SortSelect, type SortOption } from './SortSelect';
 import { FilterDropdown } from './FilterDropdown';
 import { useToast } from './ui/useToast';
-import { api } from '../lib/api';
+import { api, UnauthorizedError } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, Category } from '../types';
 import { DEFAULT_CATEGORIES } from '../types';
@@ -19,7 +19,7 @@ import { AlertTriangle } from 'lucide-react';
 
 export function MainApp() {
   const navigate = useNavigate();
-  const { user, isTrial, isTrialExpired, trialHoursRemaining, signOut } = useAuth();
+  const { user, isTrial, isTrialExpired, trialHoursRemaining, signOut, handleUnauthorized } = useAuth();
   const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
@@ -52,12 +52,16 @@ export function MainApp() {
       setProducts(productsData);
       setCategories(categoriesData);
     } catch (error) {
-      console.error('Failed to load data:', error);
-      showToast('Failed to load products. Please refresh the page.', 'error');
+      if (error instanceof UnauthorizedError) {
+        handleUnauthorized();
+      } else {
+        console.error('Failed to load data:', error);
+        showToast('Failed to load products. Please refresh the page.', 'error');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [handleUnauthorized, showToast]);
 
   useEffect(() => {
     loadData();

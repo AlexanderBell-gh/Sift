@@ -12,7 +12,17 @@ function getAuthHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+export class UnauthorizedError extends Error {
+  constructor(message: string = 'Unauthorized') {
+    super(message);
+    this.name = 'UnauthorizedError';
+  }
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
+  if (response.status === 401) {
+    throw new UnauthorizedError();
+  }
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(error.error || 'Request failed');

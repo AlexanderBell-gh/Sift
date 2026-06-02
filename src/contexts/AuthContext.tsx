@@ -29,6 +29,7 @@ interface AuthContextType {
   signUp: (credentials: { email: string; username: string; password: string }) => Promise<void>;
   createTrial: (username?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  handleUnauthorized: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -91,6 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const handleUnauthorized = () => {
+    api.signOut();
+    setUser(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -104,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         createTrial,
         signOut,
+        handleUnauthorized,
       }}
     >
       {children}

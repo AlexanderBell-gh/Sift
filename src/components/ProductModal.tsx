@@ -12,7 +12,7 @@ import { Search, Loader2, AlertTriangle } from 'lucide-react';
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (product: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => void;
+  onSave: (product: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => Promise<void>;
   product?: Product | null;
   categories: Category[];
 }
@@ -20,7 +20,7 @@ interface ProductModalProps {
 function ProductForm({ product, categories, onSubmit, onCancel }: {
   product?: Product | null;
   categories: Category[];
-  onSubmit: (data: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => void;
+  onSubmit: (data: { name: string; url?: string; imageUrl?: string; category: string; price: number; store?: string; notes?: string }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(product?.name || '');
@@ -37,6 +37,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [webSearchQuery, setWebSearchQuery] = useState('');
   const [webResults, setWebResults] = useState<SearchResult[]>([]);
   const [isWebSearching, setIsWebSearching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [gemmaError, setGemmaError] = useState('');
 
   useEffect(() => {
@@ -54,7 +55,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     setIsStoreAutoDetected(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPriceError('');
     
@@ -64,15 +65,20 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       return;
     }
     
-    onSubmit({
-      name: name.trim(),
-      url: url.trim(),
-      imageUrl: imageUrl.trim(),
-      category,
-      price: numPrice,
-      store: store.trim(),
-      notes: notes.trim(),
-    });
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        name: name.trim(),
+        url: url.trim(),
+        imageUrl: imageUrl.trim(),
+        category,
+        price: numPrice,
+        store: store.trim(),
+        notes: notes.trim(),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const openWebSearch = () => {
@@ -148,11 +154,11 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           type="button"
           variant="secondary"
           onClick={openWebSearch}
-          disabled={!name.trim()}
+          disabled={!name.trim() || isWebSearching}
           className="h-full px-4 whitespace-nowrap"
           title="Find Product"
         >
-          <Search className="w-4 h-4" />
+          {isWebSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
         </Button>
       </div>
 
@@ -222,7 +228,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
           <span className="text-[10px] font-semibold uppercase tracking-wider bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded-full mb-0.5">
             Auto-detected
           </span>
-)}
+        )}
       </div>
 
       <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Notes</label>
@@ -235,15 +241,13 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
       />
 
       <div className="flex gap-2 pt-2">
-        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1" disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button type="submit" className="flex-1">
-          Save Product
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Save Product'}
         </Button>
       </div>
-
-      
 
       <Modal
         isOpen={isWebSearchOpen}
