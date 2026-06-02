@@ -6,11 +6,9 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
-- **Receipt Scanning** - Upload receipt photo → OCR via Tesseract.js → auto-detect store/date/items → batch create products
 - **Batch Product Creation** - Create multiple products in one API request
 - **Scan Receipt in User Menu** - Scan Receipt button in dropdown menu (alongside Settings, Dark Mode)
 - **Duplicate Detection** - Warns when adding a product with matching name (case-insensitive) or URL (exact match)
-- **Health Tab Refresh** - Manual refresh button on Admin Health tab with loading state and success toast
 - **Modal Backdrop Fix** - Fixed issue where clicking inside form inputs would close the modal
 - **Delete Price Entries** - Remove individual prices from product detail view (mobile-friendly)
 - **Quick Add Price** - Click the price on any product card to add a new price entry directly
@@ -92,7 +90,6 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
   - Cleanup Expired: Purge expired trial accounts
 - **Analytics Tab**: Stats cards + category/store distribution + metrics over time charts
 - **Activity Tab**: Audit log of admin actions (user deletes, role changes, trial cleanups)
-- **Health Tab**: System health monitoring with uptime %, requests, latency, storage stats. Manual refresh button with loading state.
 - **Dark/Light Mode**: Toggle in the header (synced with main app)
 
 ## Tech Stack
@@ -210,7 +207,6 @@ PriceTrackr/
 │   │   ├── AdminUsers.tsx       # User management
 │   │   ├── AdminAnalytics.tsx   # Analytics + stats
 │   │   ├── AdminActivity.tsx    # Activity/audit log
-│   │   ├── AdminHealth.tsx      # System health monitoring
 │   │   └── ScanReceiptModal.tsx  # Receipt scanning with Tesseract.js OCR
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
