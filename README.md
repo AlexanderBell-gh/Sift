@@ -6,6 +6,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
+- **D1 SQLite Migration** - Migrated storage from Cloudflare KV to D1 (SQLite) for relational queries, transactions, and normalized pricing data
 - **Batch Product Creation** - Create multiple products in one API request
 - **Scan Receipt in User Menu** - Scan Receipt button in dropdown menu (alongside Settings, Dark Mode)
 - **Duplicate Detection** - Warns when adding a product with matching name (case-insensitive) or URL (exact match)
@@ -99,7 +100,7 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 - **Icons**: Lucide React
 - **OCR**: Tesseract.js (client-side)
 - **Backend**: Cloudflare Workers
-- **Storage**: Cloudflare Workers KV
+- **Storage**: Cloudflare Workers D1 (SQLite)
 - **Deployment**: Cloudflare Pages + GitHub Actions
 - **External APIs**: Serper API (web search), Google AI Studio / Gemma 4 (product data enrichment)
 
@@ -153,10 +154,35 @@ pnpm exec wrangler deploy --config workers/wrangler.toml
 
 ## Configuration
 
-### Cloudflare KV Namespace
+### Cloudflare D1 Database
 
-The project uses a KV namespace for data storage. Update the namespace ID in:
-- `workers/wrangler.toml` (for Worker)
+The project uses a D1 (SQLite) database for data storage. Schema lives in `workers/schema.sql`.
+
+**Local setup:**
+```bash
+# Create the database (note the database_id from the output)
+wrangler d1 create pricetrackr
+
+# Apply schema locally
+wrangler d1 execute pricetrackr --file=./workers/schema.sql
+
+# Seed default categories
+wrangler d1 execute pricetrackr --file=./workers/seed.sql
+```
+
+**Production setup (apply to remote D1):**
+```bash
+wrangler d1 execute pricetrackr --remote --file=./workers/schema.sql
+wrangler d1 execute pricetrackr --remote --file=./workers/seed.sql
+```
+
+Update the `database_id` in `workers/wrangler.toml`:
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "pricetrackr"
+database_id = "<your-database-id>"
+```
 
 ### API URL
 
@@ -226,6 +252,10 @@ PriceTrackr/
 │   └── index.css                # Global styles
 ├── workers/
 │   ├── index.js                 # Worker API endpoints
+│   ├── auth.js                  # JWT + password hashing + user CRUD
+│   ├── db.js                    # D1 query helpers
+│   ├── schema.sql               # D1 table DDL
+│   ├── seed.sql                 # Default category seed data
 │   └── wrangler.toml
 ├── public/                      # Static assets (store icons)
 ├── .github/workflows/           # CI/CD
