@@ -36,7 +36,7 @@ export function MainApp() {
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quickAddProductId] = useState<string | null>(null); // Removed setQuickAddProductId since it was unused
+  // We only need the ref for the actual ID, the state is used to trigger re-renders for the modal
   const quickAddProductIdRef = useRef<string | null>(null);
 
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
@@ -193,7 +193,6 @@ export function MainApp() {
       showToast('Failed to add price. Please try again.', 'error');
     } finally {
       setIsPriceModalOpen(false);
-      setQuickAddProductId(null);
       quickAddProductIdRef.current = null;
     }
   };
@@ -219,7 +218,6 @@ export function MainApp() {
 
   const handleQuickAddPriceClick = (product: Product) => {
     quickAddProductIdRef.current = product.id;
-    setQuickAddProductId(product.id);
     setIsPriceModalOpen(true);
   };
 
@@ -313,7 +311,7 @@ export function MainApp() {
 
       <AddPriceModal
         isOpen={isPriceModalOpen}
-        onClose={() => { setIsPriceModalOpen(false); setQuickAddProductId(null); }}
+        onClose={() => { setIsPriceModalOpen(false); }}
         onSave={handleSavePrice}
       />
 
