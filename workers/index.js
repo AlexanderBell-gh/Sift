@@ -1,18 +1,5 @@
-const DEFAULT_CATEGORIES = [
-  { id: 'chilled', name: 'Chilled', icon: '🥛' },
-  { id: 'snacks', name: 'Snacks', icon: '🍿' },
-  { id: 'beverages', name: 'Beverages', icon: '🥤' },
-  { id: 'produce', name: 'Produce', icon: '🥬' },
-  { id: 'frozen', name: 'Frozen', icon: '🧊' },
-  { id: 'bakery', name: 'Bakery', icon: '🥖' },
-  { id: 'pantry', name: 'Pantry', icon: '🥫' },
-  { id: 'condiments', name: 'Condiments', icon: '🧂' },
-  { id: 'other', name: 'Other', icon: '📦' },
-];
-
 import {
   isValidUser,
-  isValidMagicLink,
   hashPassword,
   verifyPassword,
   generateToken,
@@ -25,8 +12,19 @@ import {
   saveUser,
   deleteUser,
 } from './auth.js';
+import { queryAll, queryOne, execute, batch } from './db.js';
 
-// PriceTrackr Cloudflare Worker API
+const DEFAULT_CATEGORIES = [
+  { id: 'chilled', name: 'Chilled', icon: '🥛' },
+  { id: 'snacks', name: 'Snacks', icon: '🍿' },
+  { id: 'beverages', name: 'Beverages', icon: '🥤' },
+  { id: 'produce', name: 'Produce', icon: '🥬' },
+  { id: 'frozen', name: 'Frozen', icon: '🧊' },
+  { id: 'bakery', name: 'Bakery', icon: '🥖' },
+  { id: 'pantry', name: 'Pantry', icon: '🥫' },
+  { id: 'condiments', name: 'Condiments', icon: '🧂' },
+  { id: 'other', name: 'Other', icon: '📦' },
+];
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -67,20 +65,74 @@ function isValidCategory(category) {
   );
 }
 
-async function listProducts(env, userId) {
-  const list = await env.PRICETRACKR.list({ prefix: `user:${userId}:product:` });
-  const products = await Promise.all(
-    list.keys.map(key => env.PRICETRACKR.get(key.name, 'json'))
-  );
-  return products.filter(isValidProduct);
+function generateId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-async function deleteUserData(env, userId) {
-  const list = await env.PRICETRACKR.list({ prefix: `user:${userId}:product:` });
-  await Promise.all(
-    list.keys.map(key => env.PRICETRACKR.delete(key.name))
+function rowToProduct(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    url: row.url || undefined,
+    imageUrl: row.image_url || undefined,
+    category: row.category,
+    store: row.store || undefined,
+    notes: row.notes || undefined,
+    prices: [],
+    createdAt: row.created_at,
+  };
+}
+
+function rowToPrice(row) {
+  return {
+    price: row.price,
+    store: row.store || undefined,
+    date: row.date,
+  };
+}
+
+async function listProducts(env, userId) {
+  const productRows = await queryAll(
+    env,
+    'SELECT * FROM products WHERE user_id = ? ORDER BY created_at DESC',
+    [userId]
   );
-  await env.PRICETRACKR.delete(`user:${userId}:categories`);
+  if (productRows.length === 0) return [];
+
+  const productIds = productRows.map((p) => p.id);
+  const placeholders = productIds.map(() => '?').join(',');
+  const priceRows = await queryAll(
+    env,
+    `SELECT * FROM prices WHERE product_id IN (${placeholders}) ORDER BY date ASC, created_at ASC`,
+    productIds
+  );
+
+  const byProduct = {};
+  for (const p of priceRows) {
+    if (!byProduct[p.product_id]) byProduct[p.product_id] = [];
+    byProduct[p.product_id].push(rowToPrice(p));
+  }
+
+  return productRows
+    .map((row) => {
+      const product = rowToProduct(row);
+      product.prices = byProduct[row.id] || [];
+      return product;
+    })
+    .filter(isValidProduct);
+}
+
+async function getProduct(env, userId, productId) {
+  const row = await queryOne(env, 'SELECT * FROM products WHERE id = ? AND user_id = ?', [productId, userId]);
+  if (!row) return null;
+  const product = rowToProduct(row);
+  const priceRows = await queryAll(
+    env,
+    'SELECT * FROM prices WHERE product_id = ? ORDER BY date ASC, created_at ASC',
+    [productId]
+  );
+  product.prices = priceRows.map(rowToPrice);
+  return isValidProduct(product) ? product : null;
 }
 
 async function scrapeImageFromUrl(url) {
@@ -89,16 +141,16 @@ async function scrapeImageFromUrl(url) {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PriceTrackr/1.0)' },
     });
     const html = await response.text();
-    
+
     let match = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
     if (match) return match[1];
-    
+
     match = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
     if (match) return match[1];
-    
+
     match = html.match(/<meta[^>]*property=["']product:image["'][^>]*content=["']([^"']+)["']/i);
     if (match) return match[1];
-    
+
     return '';
   } catch (e) {
     console.error('Image scrape error:', e);
@@ -106,28 +158,32 @@ async function scrapeImageFromUrl(url) {
   }
 }
 
-const MAX_AUDIT_LOGS = 1000;
-
 async function logAudit(env, entry) {
-  const logs = await env.PRICETRACKR.get('audit_logs', 'json') || [];
-  logs.unshift({
-    id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    ...entry,
-    timestamp: Date.now(),
-  });
-  if (logs.length > MAX_AUDIT_LOGS) {
-    logs.length = MAX_AUDIT_LOGS;
-  }
-  await env.PRICETRACKR.put('audit_logs', JSON.stringify(logs));
+  const id = `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  await execute(
+    env,
+    `INSERT INTO audit_logs (id, action, admin_id, admin_username, target_user_id, target_username, details, timestamp)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      entry.action,
+      entry.adminId,
+      entry.adminUsername,
+      entry.targetUserId || null,
+      entry.targetUsername || null,
+      entry.details || null,
+      Date.now(),
+    ]
+  );
 }
 
 async function authenticate(request, env) {
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/auth_token=([^;]+)/);
-  
+
   const authHeader = request.headers.get('Authorization');
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  
+
   const token = tokenMatch?.[1] || bearerToken;
   if (!token) return null;
 
@@ -194,224 +250,231 @@ async function handleRequest(request, env) {
   const path = url.pathname;
   const method = request.method;
 
-  // Handle CORS preflight
   if (method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Auth Routes
-  if (path === '/api/auth/register') {
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        const { email, username, password } = body;
+  // ===== AUTH ROUTES =====
 
-        if (!email || !username || !password) {
-          return errorResponse('Email, username, and password are required');
-        }
+  if (path === '/api/auth/register' && method === 'POST') {
+    try {
+      const body = await request.json();
+      const { email, username, password } = body;
 
-        if (password.length < 6) {
-          return errorResponse('Password must be at least 6 characters');
-        }
-
-        const existingEmail = await getUserByEmail(env, email);
-        if (existingEmail) {
-          return errorResponse('Email already in use');
-        }
-
-        const existingUsername = await getUserByUsername(env, username);
-        if (existingUsername) {
-          return errorResponse('Username already in use');
-        }
-
-        const passwordHash = await hashPassword(password);
-        const user = {
-          id: createUserId(),
-          email,
-          username,
-          passwordHash,
-          role: 'user',
-          preferences: {
-            currency: body.currency || 'USD',
-            defaultStore: body.defaultStore || null,
-          },
-          createdAt: new Date().toISOString(),
-        };
-
-        await saveUser(env, user);
-        const token = await createJWT(user, env);
-
-        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, trialExpiresAt: null }, token }, 201);
-      } catch (e) {
-        return errorResponse('Invalid request body');
+      if (!email || !username || !password) {
+        return errorResponse('Email, username, and password are required');
       }
+      if (password.length < 6) {
+        return errorResponse('Password must be at least 6 characters');
+      }
+
+      if (await getUserByEmail(env, email)) {
+        return errorResponse('Email already in use');
+      }
+      if (await getUserByUsername(env, username)) {
+        return errorResponse('Username already in use');
+      }
+
+      const user = {
+        id: createUserId(),
+        email,
+        username,
+        passwordHash: await hashPassword(password),
+        role: 'user',
+        preferences: {
+          currency: body.currency || 'USD',
+          defaultStore: body.defaultStore || null,
+        },
+        createdAt: new Date().toISOString(),
+      };
+
+      await saveUser(env, user);
+      const token = await createJWT(user, env);
+
+      return jsonResponse({
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          preferences: user.preferences,
+          trialExpiresAt: null,
+        },
+        token,
+      }, 201);
+    } catch (e) {
+      console.error('Register error:', e);
+      return errorResponse('Invalid request body');
     }
   }
 
-  if (path === '/api/auth/register-admin') {
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        const { email, username, password, adminSecret } = body;
+  if (path === '/api/auth/register-admin' && method === 'POST') {
+    try {
+      const body = await request.json();
+      const { email, username, password, adminSecret } = body;
 
-        if (!adminSecret || adminSecret !== env.ADMIN_SECRET) {
-          return errorResponse('Invalid admin secret', 403);
-        }
-
-        if (!email || !username || !password) {
-          return errorResponse('Email, username, and password are required');
-        }
-
-        if (password.length < 6) {
-          return errorResponse('Password must be at least 6 characters');
-        }
-
-        const existingEmail = await getUserByEmail(env, email);
-        if (existingEmail) {
-          return errorResponse('Email already in use');
-        }
-
-        const existingUsername = await getUserByUsername(env, username);
-        if (existingUsername) {
-          return errorResponse('Username already in use');
-        }
-
-        const passwordHash = await hashPassword(password);
-        const user = {
-          id: createUserId(),
-          email,
-          username,
-          passwordHash,
-          role: 'admin',
-          preferences: {
-            currency: body.currency || 'USD',
-            defaultStore: body.defaultStore || null,
-          },
-          createdAt: new Date().toISOString(),
-        };
-
-        await saveUser(env, user);
-        const token = await createJWT(user, env);
-
-        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences }, token }, 201);
-      } catch (e) {
-        return errorResponse('Invalid request body');
+      if (!adminSecret || adminSecret !== env.ADMIN_SECRET) {
+        return errorResponse('Invalid admin secret', 403);
       }
+      if (!email || !username || !password) {
+        return errorResponse('Email, username, and password are required');
+      }
+      if (password.length < 6) {
+        return errorResponse('Password must be at least 6 characters');
+      }
+
+      if (await getUserByEmail(env, email)) {
+        return errorResponse('Email already in use');
+      }
+      if (await getUserByUsername(env, username)) {
+        return errorResponse('Username already in use');
+      }
+
+      const user = {
+        id: createUserId(),
+        email,
+        username,
+        passwordHash: await hashPassword(password),
+        role: 'admin',
+        preferences: {
+          currency: body.currency || 'USD',
+          defaultStore: body.defaultStore || null,
+        },
+        createdAt: new Date().toISOString(),
+      };
+
+      await saveUser(env, user);
+      const token = await createJWT(user, env);
+
+      return jsonResponse({
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          preferences: user.preferences,
+        },
+        token,
+      }, 201);
+    } catch (e) {
+      console.error('Register admin error:', e);
+      return errorResponse('Invalid request body');
     }
   }
 
-  if (path === '/api/auth/login') {
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        const { username, password } = body;
+  if (path === '/api/auth/login' && method === 'POST') {
+    try {
+      const body = await request.json();
+      const { username, password } = body;
 
-        if (!username || !password) {
-          return errorResponse('Username and password are required');
-        }
-
-        const user = await getUserByUsername(env, username);
-        if (!user) {
-          return errorResponse('Invalid credentials');
-        }
-
-        const validPassword = await verifyPassword(password, user.passwordHash);
-        if (!validPassword) {
-          return errorResponse('Invalid credentials');
-        }
-
-        const token = await createJWT(user, env);
-
-        return jsonResponse({ user: { id: user.id, email: user.email, username: user.username, role: user.role, preferences: user.preferences, trialExpiresAt: null }, token });
-      } catch (e) {
-        return errorResponse('Invalid request body');
+      if (!username || !password) {
+        return errorResponse('Username and password are required');
       }
+
+      const user = await getUserByUsername(env, username);
+      if (!user || !(await verifyPassword(password, user.passwordHash))) {
+        return errorResponse('Invalid credentials');
+      }
+
+      const token = await createJWT(user, env);
+
+      return jsonResponse({
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          preferences: user.preferences,
+          trialExpiresAt: null,
+        },
+        token,
+      });
+    } catch (e) {
+      console.error('Login error:', e);
+      return errorResponse('Invalid request body');
     }
   }
 
-  if (path === '/api/auth/trial') {
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        const { username } = body;
+  if (path === '/api/auth/trial' && method === 'POST') {
+    try {
+      const body = await request.json();
+      const { username } = body;
 
-        const trialUsername = username || `trial_${Date.now()}`;
-        const trialEmail = `${trialUsername}@trial.pricetrackr`;
-        const trialPassword = generateToken();
+      const trialUsername = username || `trial_${Date.now()}`;
+      const trialEmail = `${trialUsername}@trial.pricetrackr`;
 
-        const trialPasswordHash = await hashPassword(trialPassword);
-        const TRIAL_HOURS = 12;
-        const trialExpiresAt = Date.now() + TRIAL_HOURS * 60 * 60 * 1000;
+      if (await getUserByUsername(env, trialUsername)) {
+        return errorResponse('Username already in use');
+      }
 
-        const user = {
-          id: createUserId(),
-          email: trialEmail,
-          username: trialUsername,
-          passwordHash: trialPasswordHash,
-          role: 'user',
+      const TRIAL_HOURS = 12;
+      const trialExpiresAt = Date.now() + TRIAL_HOURS * 60 * 60 * 1000;
+
+      const user = {
+        id: createUserId(),
+        email: trialEmail,
+        username: trialUsername,
+        passwordHash: await hashPassword(generateToken()),
+        role: 'user',
+        isTrial: true,
+        trialExpiresAt,
+        preferences: { currency: 'USD', defaultStore: null },
+        createdAt: new Date().toISOString(),
+      };
+
+      await saveUser(env, user);
+      const token = await createJWT(user, env);
+
+      return jsonResponse({
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
           isTrial: true,
           trialExpiresAt,
-          preferences: {
-            currency: 'USD',
-            defaultStore: null,
-          },
-          createdAt: new Date().toISOString(),
-        };
-
-        await saveUser(env, user);
-        const token = await createJWT(user, env);
-
-        return jsonResponse({
-          user: {
-            id: user.id,
-            email: user.email,
-            username: user.username,
-            role: user.role,
-            isTrial: true,
-            trialExpiresAt,
-            preferences: user.preferences
-          },
-          token,
-          trialHoursRemaining: TRIAL_HOURS
-        }, 201);
-      } catch (e) {
-        return errorResponse('Invalid request body');
-      }
+          preferences: user.preferences,
+        },
+        token,
+        trialHoursRemaining: TRIAL_HOURS,
+      }, 201);
+    } catch (e) {
+      console.error('Trial error:', e);
+      return errorResponse('Invalid request body');
     }
   }
 
   if (path === '/api/auth/me') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
     if (method === 'GET') {
-      const auth = await requireAuth(request, env);
-      if (auth && auth.error) return auth;
-
       const user = await getUserById(env, auth.userId);
-      if (!user) {
-        return errorResponse('User not found', 404);
-      }
-
-        return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences, createdAt: user.createdAt });
+      if (!user) return errorResponse('User not found', 404);
+      return jsonResponse({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        isTrial: user.isTrial || false,
+        trialExpiresAt: user.trialExpiresAt || null,
+        preferences: user.preferences,
+        createdAt: user.createdAt,
+      });
     }
 
     if (method === 'PUT') {
-      const auth = await requireAuth(request, env);
-      if (auth && auth.error) return auth;
-
       try {
         const body = await request.json();
         const user = await getUserById(env, auth.userId);
-
-        if (!user) {
-          return errorResponse('User not found', 404);
-        }
+        if (!user) return errorResponse('User not found', 404);
 
         if (body.preferences) {
           user.preferences = { ...user.preferences, ...body.preferences };
         }
 
         if (body.currentPassword && body.newPassword) {
-          const passwordValid = await verifyPassword(body.currentPassword, user.passwordHash);
-          if (!passwordValid) {
+          if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
             return errorResponse('Current password is incorrect');
           }
           if (body.newPassword.length < 6) {
@@ -421,59 +484,60 @@ async function handleRequest(request, env) {
         }
 
         if (body.newEmail && body.password) {
-          const passwordValid = await verifyPassword(body.password, user.passwordHash);
-          if (!passwordValid) {
+          if (!(await verifyPassword(body.password, user.passwordHash))) {
             return errorResponse('Password is incorrect');
           }
-          const existingUser = await getUserByEmail(env, body.newEmail);
-          if (existingUser && existingUser.id !== user.id) {
+          const existing = await getUserByEmail(env, body.newEmail);
+          if (existing && existing.id !== user.id) {
             return errorResponse('Email already in use');
           }
-          await env.USERS.delete(`email:${user.email.toLowerCase()}`);
           user.email = body.newEmail;
-          await env.USERS.put(`email:${user.email.toLowerCase()}`, user.id);
         }
 
         await saveUser(env, user);
 
-      return jsonResponse({ id: user.id, email: user.email, username: user.username, role: user.role, isTrial: user.isTrial || false, trialExpiresAt: user.trialExpiresAt || null, preferences: user.preferences, createdAt: user.createdAt });
+        return jsonResponse({
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          isTrial: user.isTrial || false,
+          trialExpiresAt: user.trialExpiresAt || null,
+          preferences: user.preferences,
+          createdAt: user.createdAt,
+        });
       } catch (e) {
+        console.error('Update me error:', e);
         return errorResponse('Invalid request body');
       }
     }
 
     if (method === 'DELETE') {
-      const auth = await requireAuth(request, env);
-      if (auth && auth.error) return auth;
-
       try {
         const user = await getUserById(env, auth.userId);
-        if (!user) {
-          return errorResponse('User not found', 404);
-        }
+        if (!user) return errorResponse('User not found', 404);
 
         if (!user.isTrial) {
           const body = await request.json();
           if (!body.password) {
             return errorResponse('Password is required to delete account');
           }
-          const passwordValid = await verifyPassword(body.password, user.passwordHash);
-          if (!passwordValid) {
+          if (!(await verifyPassword(body.password, user.passwordHash))) {
             return errorResponse('Password is incorrect');
           }
         }
 
-        await deleteUserData(env, auth.userId);
         await deleteUser(env, auth.userId);
-
         return jsonResponse({ success: true });
       } catch (e) {
+        console.error('Delete account error:', e);
         return errorResponse('Invalid request body');
       }
     }
   }
 
-  // Products
+  // ===== PRODUCTS =====
+
   if (path === '/api/products') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -483,33 +547,64 @@ async function handleRequest(request, env) {
       const products = await listProducts(env, userId);
       return jsonResponse(products);
     }
-    
+
     if (method === 'POST') {
       try {
         const body = await request.json();
-        
-        const newProduct = {
-          id: body.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        const today = new Date().toISOString().split('T')[0];
+        const createdAt = new Date().toISOString();
+        const productId = generateId('prod');
+        const priceId = generateId('price');
+
+        const stmts = [
+          {
+            sql: `INSERT INTO products (id, user_id, name, url, image_url, category, store, notes, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            params: [
+              productId,
+              userId,
+              body.name,
+              body.url || null,
+              body.imageUrl || null,
+              body.category || 'other',
+              body.store || null,
+              body.notes || null,
+              createdAt,
+            ],
+          },
+          {
+            sql: `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
+            params: [
+              priceId,
+              productId,
+              userId,
+              body.price,
+              body.store || null,
+              today,
+            ],
+          },
+        ];
+
+        await batch(env, stmts);
+
+        return jsonResponse({
+          id: productId,
           name: body.name,
           url: body.url,
           imageUrl: body.imageUrl,
           category: body.category || 'other',
           store: body.store,
           notes: body.notes,
-          prices: body.prices || [{ price: body.price, store: body.store, date: new Date().toISOString().split('T')[0] }],
-          createdAt: new Date().toISOString()
-        };
-        
-        await env.PRICETRACKR.put(`user:${userId}:product:${newProduct.id}`, JSON.stringify(newProduct));
-        
-        return jsonResponse(newProduct, 201);
+          prices: [{ price: body.price, store: body.store, date: today }],
+          createdAt,
+        }, 201);
       } catch (e) {
+        console.error('Create product error:', e);
         return errorResponse('Invalid request body');
       }
     }
   }
 
-  // Batch create products
   if (path === '/api/products/batch' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -524,307 +619,312 @@ async function handleRequest(request, env) {
       }
 
       const today = new Date().toISOString().split('T')[0];
+      const createdAt = new Date().toISOString();
 
-      const createdProducts = incomingProducts.map((item) => ({
-        id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${Math.random().toString(36).substr(2, 4)}`,
-        name: item.name,
-        url: item.url || '',
-        imageUrl: item.imageUrl || '',
-        category: item.category || 'other',
-        store: item.store || null,
-        notes: item.notes || '',
-        prices: [{ price: item.price, store: item.store || null, date: item.date || today }],
-        createdAt: new Date().toISOString(),
-      }));
+      const stmts = [];
+      const createdProducts = [];
 
-      await Promise.all(
-        createdProducts.map(p => env.PRICETRACKR.put(`user:${userId}:product:${p.id}`, JSON.stringify(p)))
-      );
+      for (const item of incomingProducts) {
+        const productId = generateId('prod');
+        const priceId = generateId('price');
+        const store = item.store || null;
+        const date = item.date || today;
+
+        stmts.push({
+          sql: `INSERT INTO products (id, user_id, name, url, image_url, category, store, notes, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          params: [
+            productId,
+            userId,
+            item.name,
+            item.url || null,
+            item.imageUrl || null,
+            item.category || 'other',
+            store,
+            item.notes || null,
+            createdAt,
+          ],
+        });
+        stmts.push({
+          sql: `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
+          params: [priceId, productId, userId, item.price, store, date],
+        });
+
+        createdProducts.push({
+          id: productId,
+          name: item.name,
+          url: item.url || '',
+          imageUrl: item.imageUrl || '',
+          category: item.category || 'other',
+          store,
+          notes: item.notes || '',
+          prices: [{ price: item.price, store, date }],
+          createdAt,
+        });
+      }
+
+      await batch(env, stmts);
 
       return jsonResponse({ products: createdProducts }, 201);
     } catch (e) {
+      console.error('Batch create error:', e);
       return errorResponse('Invalid request body');
     }
   }
 
-  // Add price to product (must come before generic product route)
   const priceMatch = path.match(/^\/api\/products\/(.+)\/prices$/);
   if (priceMatch && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
-    const id = priceMatch[1];
-    const products = await listProducts(env, userId);
-    const product = products.find(p => p.id === id);
-    
-    if (!product) {
-      return errorResponse('Product not found', 404);
-    }
-    
+    const productId = priceMatch[1];
+    const product = await getProduct(env, userId, productId);
+    if (!product) return errorResponse('Product not found', 404);
+
     try {
       const body = await request.json();
-      product.prices = product.prices || [];
-      product.prices.push({
-        price: body.price,
-        store: body.store,
-        date: body.date || new Date().toISOString().split('T')[0]
-      });
-      
-      await env.PRICETRACKR.put(`user:${userId}:product:${id}`, JSON.stringify(product));
-      return jsonResponse(product);
+      const priceId = generateId('price');
+      await execute(
+        env,
+        `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
+        [priceId, productId, userId, body.price, body.store || null, body.date || new Date().toISOString().split('T')[0]]
+      );
+      const updated = await getProduct(env, userId, productId);
+      return jsonResponse(updated);
     } catch (e) {
+      console.error('Add price error:', e);
       return errorResponse('Invalid request body');
     }
   }
 
-  // Delete price from product
   const deletePriceMatch = path.match(/^\/api\/products\/(.+)\/prices\/(\d+)$/);
   if (deletePriceMatch && method === 'DELETE') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
-    const id = deletePriceMatch[1];
+    const productId = deletePriceMatch[1];
     const priceIndex = parseInt(deletePriceMatch[2], 10);
-    const products = await listProducts(env, userId);
-    const product = products.find(p => p.id === id);
-    
-    if (!product) {
-      return errorResponse('Product not found', 404);
-    }
-    
+
+    const product = await getProduct(env, userId, productId);
+    if (!product) return errorResponse('Product not found', 404);
     if (!product.prices || product.prices.length <= priceIndex) {
       return errorResponse('Price not found', 404);
     }
-    
-    product.prices.splice(priceIndex, 1);
-    await env.PRICETRACKR.put(`user:${userId}:product:${id}`, JSON.stringify(product));
-    return jsonResponse(product);
+
+    const priceRows = await queryAll(
+      env,
+      'SELECT id FROM prices WHERE product_id = ? ORDER BY date ASC, created_at ASC',
+      [productId]
+    );
+    if (priceRows[priceIndex]) {
+      await execute(env, 'DELETE FROM prices WHERE id = ?', [priceRows[priceIndex].id]);
+    }
+    const updated = await getProduct(env, userId, productId);
+    return jsonResponse(updated);
   }
-  
-  // Product by ID
+
   const productMatch = path.match(/^\/api\/products\/(.+)$/);
   if (productMatch) {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
-    const id = productMatch[1];
-    const products = await listProducts(env, userId);
-    const product = products.find(p => p.id === id);
-    
-    if (!product) {
-      return errorResponse('Product not found', 404);
-    }
-    
+    const productId = productMatch[1];
+    const product = await getProduct(env, userId, productId);
+    if (!product) return errorResponse('Product not found', 404);
+
     if (method === 'GET') {
       return jsonResponse(product);
     }
-    
+
     if (method === 'PUT') {
       try {
         const body = await request.json();
-        
-        const updated = { ...product };
-        
+        const updates = [];
+        const params = [];
+
         if (body.price !== undefined) {
-          const existingPrices = updated.prices || [];
-          const latestPrice = existingPrices.length > 0 
-            ? existingPrices[existingPrices.length - 1].price 
-            : null;
-          
-          if (latestPrice === null || Math.abs(body.price - latestPrice) > 0.001) {
-            const newPriceEntry = {
-              price: body.price,
-              store: body.store || updated.store,
-              date: new Date().toISOString().split('T')[0]
-            };
-            updated.prices = [...existingPrices, newPriceEntry];
+          const latest = await queryOne(
+            env,
+            'SELECT price FROM prices WHERE product_id = ? ORDER BY date DESC, created_at DESC LIMIT 1',
+            [productId]
+          );
+          if (!latest || Math.abs(body.price - latest.price) > 0.001) {
+            const priceId = generateId('price');
+            await execute(
+              env,
+              `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
+              [priceId, productId, userId, body.price, body.store || product.store || null, new Date().toISOString().split('T')[0]]
+            );
           }
         }
-        
-        if (body.store !== undefined) {
-          updated.store = body.store;
+
+        const fieldMap = {
+          name: body.name,
+          url: body.url,
+          imageUrl: body.imageUrl,
+          category: body.category,
+          store: body.store,
+          notes: body.notes,
+        };
+        const colMap = { name: 'name', url: 'url', imageUrl: 'image_url', category: 'category', store: 'store', notes: 'notes' };
+
+        for (const [k, v] of Object.entries(fieldMap)) {
+          if (v !== undefined) {
+            updates.push(`${colMap[k]} = ?`);
+            params.push(v);
+          }
         }
-        
-        if (body.name !== undefined) updated.name = body.name;
-        if (body.url !== undefined) updated.url = body.url;
-        if (body.imageUrl !== undefined) updated.imageUrl = body.imageUrl;
-        if (body.category !== undefined) updated.category = body.category;
-        if (body.notes !== undefined) updated.notes = body.notes;
-        
-        await env.PRICETRACKR.put(`user:${userId}:product:${id}`, JSON.stringify(updated));
+
+        if (updates.length > 0) {
+          params.push(productId);
+          await execute(env, `UPDATE products SET ${updates.join(', ')} WHERE id = ?`, params);
+        }
+
+        const updated = await getProduct(env, userId, productId);
         return jsonResponse(updated);
       } catch (e) {
+        console.error('Update product error:', e);
         return errorResponse('Invalid request body');
       }
     }
-    
+
     if (method === 'DELETE') {
-      await env.PRICETRACKR.delete(`user:${userId}:product:${id}`);
+      await execute(env, 'DELETE FROM products WHERE id = ? AND user_id = ?', [productId, userId]);
       return jsonResponse({ success: true });
     }
   }
-  
 
-  
-  // Categories
+  // ===== CATEGORIES =====
+
   if (path === '/api/categories') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
 
     if (method === 'GET') {
-      const rawCategories = await env.PRICETRACKR.get(`user:${userId}:categories`, 'json');
-      const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [];
-      return jsonResponse(categories.length > 0 ? categories : DEFAULT_CATEGORIES);
+      const rows = await queryAll(
+        env,
+        'SELECT id, name, icon FROM categories WHERE user_id IS NULL OR user_id = ? ORDER BY name',
+        [userId]
+      );
+      const categories = rows.length > 0 ? rows : DEFAULT_CATEGORIES;
+      return jsonResponse(categories);
     }
-    
+
     if (method === 'POST') {
       try {
         const body = await request.json();
-        const rawCategories = await env.PRICETRACKR.get(`user:${userId}:categories`, 'json');
-        const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [...DEFAULT_CATEGORIES];
         const newCategory = {
           id: body.id || `cat_${Date.now()}`,
           name: body.name,
-          icon: body.icon || '📦'
+          icon: body.icon || '📦',
         };
         if (!isValidCategory(newCategory)) {
           return errorResponse('Invalid category data');
         }
-        categories.push(newCategory);
-        await env.PRICETRACKR.put(`user:${userId}:categories`, JSON.stringify(categories));
+        await execute(
+          env,
+          `INSERT INTO categories (id, user_id, name, icon) VALUES (?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET name = excluded.name, icon = excluded.icon`,
+          [newCategory.id, userId, newCategory.name, newCategory.icon]
+        );
         return jsonResponse(newCategory, 201);
       } catch (e) {
+        console.error('Create category error:', e);
         return errorResponse('Invalid request body');
       }
     }
   }
 
-  // Delete category
   const categoryMatch = path.match(/^\/api\/categories\/(.+)$/);
   if (categoryMatch && method === 'DELETE') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
     const userId = auth.userId;
     const id = categoryMatch[1];
-    const rawCategories = await env.PRICETRACKR.get(`user:${userId}:categories`, 'json');
-    const categories = Array.isArray(rawCategories) ? rawCategories.filter(isValidCategory) : [...DEFAULT_CATEGORIES];
-    const filtered = categories.filter(c => c.id !== id);
-    await env.PRICETRACKR.put(`user:${userId}:categories`, JSON.stringify(filtered));
+    await execute(
+      env,
+      'DELETE FROM categories WHERE id = ? AND user_id = ?',
+      [id, userId]
+    );
     return jsonResponse({ success: true });
   }
 
-  // Admin Routes - require admin role in JWT
+  // ===== ADMIN =====
+
   async function requireAdmin(request, env) {
     const auth = await authenticate(request, env);
-    if (!auth) {
-      return errorResponse('Authentication required', 401);
-    }
-    if (auth.role !== 'admin') {
-      return errorResponse('Admin access denied', 403);
-    }
+    if (!auth) return errorResponse('Authentication required', 401);
+    if (auth.role !== 'admin') return errorResponse('Admin access denied', 403);
     return auth;
   }
 
-  // Admin stats
   if (path === '/api/admin/stats') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
 
-    const userIds = await env.USERS.get('users', 'json') || [];
-    
-    const stats = await Promise.all(userIds.map(async (userId) => {
-      const user = await getUserById(env, userId);
-      if (!user) return null;
-
-      const products = await listProducts(env, userId);
-      let priceCount = 0;
-      for (const p of products) {
-        if (p.prices) priceCount += p.prices.length;
-      }
-
-      return {
-        isTrial: user.isTrial || false,
-        productCount: products.length,
-        priceCount: priceCount
-      };
-    }));
-
-    let totalProducts = 0;
-    let totalPrices = 0;
-    let trialUsers = 0;
-    let regularUsers = 0;
-
-    for (const s of stats) {
-      if (!s) continue;
-      if (s.isTrial) trialUsers++;
-      else regularUsers++;
-      totalProducts += s.productCount;
-      totalPrices += s.priceCount;
-    }
+    const userStats = await queryOne(
+      env,
+      `SELECT
+         COUNT(*) as total,
+         SUM(CASE WHEN is_trial = 1 THEN 1 ELSE 0 END) as trial,
+         SUM(CASE WHEN is_trial = 0 THEN 1 ELSE 0 END) as regular
+       FROM users`
+    );
+    const productCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM products'))?.c || 0;
+    const priceCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM prices'))?.c || 0;
 
     return jsonResponse({
-      totalUsers: userIds.length,
-      regularUsers,
-      trialUsers,
-      totalProducts,
-      totalPrices,
+      totalUsers: userStats?.total || 0,
+      regularUsers: userStats?.regular || 0,
+      trialUsers: userStats?.trial || 0,
+      totalProducts: productCount,
+      totalPrices: priceCount,
     });
   }
 
-  // Admin users list
   if (path === '/api/admin/users') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
 
-    const userIds = await env.USERS.get('users', 'json') || [];
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
     const search = url.searchParams.get('search')?.toLowerCase() || '';
     const filter = url.searchParams.get('filter') || 'users';
 
-    const usersWithStats = await Promise.all(
-      userIds.map(async (userId) => {
-        const user = await getUserById(env, userId);
-        if (!user) return null;
+    const where = [];
+    const params = [];
+    if (filter === 'users') where.push('is_trial = 0');
+    else if (filter === 'trials') where.push('is_trial = 1');
+    if (search) {
+      where.push('(LOWER(username) LIKE ? OR LOWER(email) LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
+    }
+    const whereClause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
-        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
-        const productCount = productIds.length;
-
-        return {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          role: user.role,
-          isTrial: user.isTrial || false,
-          trialExpiresAt: user.trialExpiresAt || null,
-          createdAt: user.createdAt,
-          productCount,
-        };
-      })
+    const total = (await queryOne(env, `SELECT COUNT(*) as c FROM users ${whereClause}`, params))?.c || 0;
+    const rows = await queryAll(
+      env,
+      `SELECT u.id, u.email, u.username, u.role, u.is_trial, u.trial_expires_at, u.created_at,
+              (SELECT COUNT(*) FROM products WHERE user_id = u.id) as product_count
+       FROM users u ${whereClause}
+       ORDER BY u.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, (page - 1) * limit]
     );
 
-    let filteredUsers = usersWithStats.filter(u => u !== null);
-
-    if (filter === 'users') {
-      filteredUsers = filteredUsers.filter(u => !u.isTrial);
-    } else if (filter === 'trials') {
-      filteredUsers = filteredUsers.filter(u => u.isTrial);
-    }
-
-    if (search) {
-      filteredUsers = filteredUsers.filter(u => 
-        u.username.toLowerCase().includes(search) || 
-        u.email.toLowerCase().includes(search)
-      );
-    }
-
-    const total = filteredUsers.length;
-    const start = (page - 1) * limit;
-    const paginatedUsers = filteredUsers.slice(start, start + limit);
+    const users = rows.map((r) => ({
+      id: r.id,
+      email: r.email,
+      username: r.username,
+      role: r.role,
+      isTrial: !!r.is_trial,
+      trialExpiresAt: r.trial_expires_at,
+      createdAt: r.created_at,
+      productCount: r.product_count,
+    }));
 
     return jsonResponse({
-      users: paginatedUsers,
+      users,
       total,
       page,
       limit,
@@ -832,7 +932,6 @@ async function handleRequest(request, env) {
     });
   }
 
-  // Admin user detail
   const adminUserMatch = path.match(/^\/api\/admin\/users\/(.+)$/);
   if (adminUserMatch && method === 'GET') {
     const admin = await requireAdmin(request, env);
@@ -840,27 +939,23 @@ async function handleRequest(request, env) {
 
     const userId = adminUserMatch[1];
     const user = await getUserById(env, userId);
-    if (!user) {
-      return errorResponse('User not found', 404);
-    }
+    if (!user) return errorResponse('User not found', 404);
 
-    const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
-    let totalPrices = 0;
-    const products = [];
-
-    for (const prodId of productIds) {
-      const product = await env.PRICETRACKR.get(`user:${userId}:product:${prodId}`, 'json');
-      if (product) {
-        totalPrices += (product.prices?.length || 0);
-        products.push({
-          id: product.id,
-          name: product.name,
-          category: product.category,
-          store: product.store,
-          priceCount: product.prices?.length || 0,
-        });
-      }
-    }
+    const productRows = await queryAll(
+      env,
+      `SELECT p.id, p.name, p.category, p.store,
+              (SELECT COUNT(*) FROM prices WHERE product_id = p.id) as price_count
+       FROM products p WHERE p.user_id = ?`,
+      [userId]
+    );
+    const products = productRows.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      store: p.store,
+      priceCount: p.price_count,
+    }));
+    const totalPrices = products.reduce((s, p) => s + p.priceCount, 0);
 
     return jsonResponse({
       id: user.id,
@@ -871,24 +966,20 @@ async function handleRequest(request, env) {
       trialExpiresAt: user.trialExpiresAt || null,
       preferences: user.preferences,
       createdAt: user.createdAt,
-      productCount: productIds.length,
+      productCount: products.length,
       totalPrices,
       products,
     });
   }
 
-  // Admin delete user
   if (adminUserMatch && method === 'DELETE') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
 
     const userId = adminUserMatch[1];
     const user = await getUserById(env, userId);
-    if (!user) {
-      return errorResponse('User not found', 404);
-    }
+    if (!user) return errorResponse('User not found', 404);
 
-    await deleteUserData(env, userId);
     await deleteUser(env, userId);
 
     const adminUser = await getUserById(env, admin.userId);
@@ -904,7 +995,6 @@ async function handleRequest(request, env) {
     return jsonResponse({ success: true });
   }
 
-  // Admin update user role
   const roleMatch = path.match(/^\/api\/admin\/users\/(.+)\/role$/);
   if (roleMatch && method === 'PUT') {
     const admin = await requireAdmin(request, env);
@@ -912,58 +1002,50 @@ async function handleRequest(request, env) {
 
     const targetUserId = roleMatch[1];
     const targetUser = await getUserById(env, targetUserId);
-    if (!targetUser) {
-      return errorResponse('User not found', 404);
-    }
+    if (!targetUser) return errorResponse('User not found', 404);
 
     try {
       const body = await request.json();
       const newRole = body.role;
-
       if (!newRole || (newRole !== 'admin' && newRole !== 'user')) {
         return errorResponse('Invalid role. Must be "admin" or "user"');
       }
 
       if (newRole === 'user' && targetUser.role === 'admin') {
-        const userIds = await env.USERS.get('users', 'json') || [];
-        let adminCount = 0;
-        for (const uid of userIds) {
-          const u = await getUserById(env, uid);
-          if (u && u.role === 'admin' && u.id !== targetUserId) {
-            adminCount++;
-          }
-        }
+        const adminCount = (await queryOne(
+          env,
+          `SELECT COUNT(*) as c FROM users WHERE role = 'admin' AND id != ?`,
+          [targetUserId]
+        ))?.c || 0;
         if (adminCount === 0) {
           return errorResponse('Cannot demote the last admin');
         }
       }
 
       const oldRole = targetUser.role;
-      targetUser.role = newRole;
-      await saveUser(env, targetUser);
+      await execute(env, 'UPDATE users SET role = ? WHERE id = ?', [newRole, targetUserId]);
 
       const adminUser = await getUserById(env, admin.userId);
       await logAudit(env, {
         action: 'admin.role_change',
         adminId: admin.userId,
         adminUsername: adminUser?.username || 'unknown',
-        targetUserId: targetUserId,
+        targetUserId,
         targetUsername: targetUser.username,
         details: `changed ${targetUser.username} from ${oldRole} to ${newRole}`,
       });
 
       return jsonResponse({ success: true, role: newRole });
     } catch (e) {
+      console.error('Role update error:', e);
       return errorResponse('Invalid request body');
     }
   }
 
-  // Admin audit logs
   if (path === '/api/admin/audit') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
 
-    const logs = await env.PRICETRACKR.get('audit_logs', 'json') || [];
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
     const actionFilter = url.searchParams.get('action') || '';
@@ -971,35 +1053,35 @@ async function handleRequest(request, env) {
     const startDate = url.searchParams.get('startDate');
     const endDate = url.searchParams.get('endDate');
 
-    let filtered = logs;
-
+    const where = [];
+    const params = [];
     if (actionFilter) {
-      filtered = filtered.filter(l => l.action === actionFilter);
+      where.push('action = ?');
+      params.push(actionFilter);
     }
-
     if (search) {
-      filtered = filtered.filter(l => 
-        l.adminUsername.toLowerCase().includes(search) ||
-        l.targetUsername?.toLowerCase().includes(search)
-      );
+      where.push('(LOWER(admin_username) LIKE ? OR LOWER(target_username) LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
     }
-
     if (startDate) {
-      const startMs = new Date(startDate).getTime();
-      filtered = filtered.filter(l => l.timestamp >= startMs);
+      where.push('timestamp >= ?');
+      params.push(new Date(startDate).getTime());
     }
-
     if (endDate) {
-      const endMs = new Date(endDate).getTime() + 86400000;
-      filtered = filtered.filter(l => l.timestamp <= endMs);
+      where.push('timestamp <= ?');
+      params.push(new Date(endDate).getTime() + 86400000);
     }
+    const whereClause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
-    const total = filtered.length;
-    const start = (page - 1) * limit;
-    const paginatedLogs = filtered.slice(start, start + limit);
+    const total = (await queryOne(env, `SELECT COUNT(*) as c FROM audit_logs ${whereClause}`, params))?.c || 0;
+    const rows = await queryAll(
+      env,
+      `SELECT * FROM audit_logs ${whereClause} ORDER BY timestamp DESC LIMIT ? OFFSET ?`,
+      [...params, limit, (page - 1) * limit]
+    );
 
     return jsonResponse({
-      logs: paginatedLogs,
+      logs: rows,
       total,
       page,
       limit,
@@ -1007,156 +1089,101 @@ async function handleRequest(request, env) {
     });
   }
 
-  // Admin analytics
   if (path === '/api/admin/analytics') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
 
-    const userIds = await env.USERS.get('users', 'json') || [];
-    const categoryCount = {};
-    const storeCount = {};
-    let totalProductCount = 0;
-    let totalPriceEntries = 0;
-    let regularUsers = 0;
-    let trialUsers = 0;
-    const userRegistrations = {};
-    const productCreations = {};
+    const userStats = await queryOne(
+      env,
+      `SELECT
+         COUNT(*) as total,
+         SUM(CASE WHEN is_trial = 1 THEN 1 ELSE 0 END) as trial,
+         SUM(CASE WHEN is_trial = 0 THEN 1 ELSE 0 END) as regular
+       FROM users`
+    );
+    const categoryRows = await queryAll(
+      env,
+      'SELECT category, COUNT(*) as count FROM products GROUP BY category'
+    );
+    const categoryDistribution = Object.fromEntries(categoryRows.map((r) => [r.category, r.count]));
 
-    const analyticsResults = await Promise.all(userIds.map(async (userId) => {
-      const user = await getUserById(env, userId);
-      if (!user) return null;
+    const storeRows = await queryAll(
+      env,
+      'SELECT store, COUNT(*) as count FROM products WHERE store IS NOT NULL GROUP BY store'
+    );
+    const storeDistribution = Object.fromEntries(storeRows.map((r) => [r.store, r.count]));
 
-      if (user.isTrial) trialUsers++;
-      else regularUsers++;
-
-      if (user.createdAt) {
-        const date = user.createdAt.split('T')[0];
-        userRegistrations[date] = (userRegistrations[date] || 0) + 1;
-      }
-
-      const products = await listProducts(env, userId);
-      
-      const userData = {
-        productCount: products.length,
-        priceCount: 0,
-        categories: {},
-        stores: {},
-        creations: {}
-      };
-
-      for (const product of products) {
-        const cat = product.category || 'other';
-        userData.categories[cat] = (userData.categories[cat] || 0) + 1;
-        
-        if (product.store) {
-          userData.stores[product.store] = (userData.stores[product.store] || 0) + 1;
-        }
-        
-        userData.priceCount += (product.prices?.length || 0);
-
-        if (product.createdAt) {
-          const date = product.createdAt.split('T')[0];
-          userData.creations[date] = (userData.creations[date] || 0) + 1;
-        }
-      }
-      
-      return {
-        isTrial: user.isTrial || false,
-        productCount: products.length,
-        priceCount: userData.priceCount,
-        categories: userData.categories,
-        stores: userData.stores,
-        creations: userData.creations
-      };
-    }));
-
-    for (const res of analyticsResults) {
-      if (!res) continue;
-      totalProductCount += res.productCount;
-      totalPriceEntries += res.priceCount;
-
-      for (const [cat, count] of Object.entries(res.categories)) {
-        categoryCount[cat] = (categoryCount[cat] || 0) + count;
-      }
-      for (const [store, count] of Object.entries(res.stores)) {
-        storeCount[store] = (storeCount[store] || 0) + count;
-      }
-      for (const [date, count] of Object.entries(res.creations)) {
-        productCreations[date] = (productCreations[date] || 0) + count;
-      }
-    }
-
-    const formatTimeSeries = (obj) => {
-      return Object.entries(obj)
-        .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-    };
+    const totalProducts = (await queryOne(env, 'SELECT COUNT(*) as c FROM products'))?.c || 0;
+    const totalPriceEntries = (await queryOne(env, 'SELECT COUNT(*) as c FROM prices'))?.c || 0;
+    const userRegRows = await queryAll(
+      env,
+      `SELECT date(created_at) as date, COUNT(*) as count FROM users GROUP BY date(created_at) ORDER BY date`
+    );
+    const productCreaRows = await queryAll(
+      env,
+      `SELECT date(created_at) as date, COUNT(*) as count FROM products GROUP BY date(created_at) ORDER BY date`
+    );
 
     return jsonResponse({
-      categoryDistribution: categoryCount,
-      storeDistribution: storeCount,
-      totalProducts: totalProductCount,
+      categoryDistribution,
+      storeDistribution,
+      totalProducts,
       totalPriceEntries,
-      userCount: userIds.length,
-      regularUsers,
-      trialUsers,
-      userRegistrations: formatTimeSeries(userRegistrations),
-      productCreations: formatTimeSeries(productCreations),
+      userCount: userStats?.total || 0,
+      regularUsers: userStats?.regular || 0,
+      trialUsers: userStats?.trial || 0,
+      userRegistrations: userRegRows,
+      productCreations: productCreaRows,
     });
   }
 
-  // Admin trials list
   if (path === '/api/admin/trials') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
 
-    const userIds = await env.USERS.get('users', 'json') || [];
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
     const status = url.searchParams.get('status') || 'all';
     const search = url.searchParams.get('search')?.toLowerCase() || '';
 
-    const trialsWithStats = await Promise.all(
-      userIds.map(async (userId) => {
-        const user = await getUserById(env, userId);
-        if (!user || !user.isTrial) return null;
+    const where = ['is_trial = 1'];
+    const params = [];
+    if (status === 'active') {
+      where.push('(trial_expires_at IS NULL OR trial_expires_at > ?)');
+      params.push(Date.now());
+    } else if (status === 'expired') {
+      where.push('trial_expires_at IS NOT NULL AND trial_expires_at <= ?');
+      params.push(Date.now());
+    }
+    if (search) {
+      where.push('LOWER(username) LIKE ?');
+      params.push(`%${search}%`);
+    }
+    const whereClause = `WHERE ${where.join(' AND ')}`;
 
-        const productIds = await env.PRICETRACKR.get(`user:${userId}:products`, 'json') || [];
-        const productCount = productIds.length;
-        const isExpired = user.trialExpiresAt && user.trialExpiresAt < Date.now();
-
-        return {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          createdAt: user.createdAt,
-          trialExpiresAt: user.trialExpiresAt,
-          isExpired,
-          productCount,
-        };
-      })
+    const total = (await queryOne(env, `SELECT COUNT(*) as c FROM users ${whereClause}`, params))?.c || 0;
+    const rows = await queryAll(
+      env,
+      `SELECT u.id, u.username, u.email, u.created_at, u.trial_expires_at,
+              (SELECT COUNT(*) FROM products WHERE user_id = u.id) as product_count
+       FROM users u ${whereClause}
+       ORDER BY u.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, (page - 1) * limit]
     );
 
-    let filteredTrials = trialsWithStats.filter(t => t !== null);
-
-    if (status === 'active') {
-      filteredTrials = filteredTrials.filter(t => !t.isExpired);
-    } else if (status === 'expired') {
-      filteredTrials = filteredTrials.filter(t => t.isExpired);
-    }
-
-    if (search) {
-      filteredTrials = filteredTrials.filter(t =>
-        t.username.toLowerCase().includes(search)
-      );
-    }
-
-    const total = filteredTrials.length;
-    const start = (page - 1) * limit;
-    const paginatedTrials = filteredTrials.slice(start, start + limit);
+    const now = Date.now();
+    const trials = rows.map((r) => ({
+      id: r.id,
+      username: r.username,
+      email: r.email,
+      createdAt: r.created_at,
+      trialExpiresAt: r.trial_expires_at,
+      isExpired: r.trial_expires_at != null && r.trial_expires_at < now,
+      productCount: r.product_count,
+    }));
 
     return jsonResponse({
-      trials: paginatedTrials,
+      trials,
       total,
       page,
       limit,
@@ -1164,22 +1191,16 @@ async function handleRequest(request, env) {
     });
   }
 
-  // Admin trials cleanup
   if (path === '/api/admin/trials/cleanup' && method === 'DELETE') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
 
-    const userIds = await env.USERS.get('users', 'json') || [];
-    let deletedCount = 0;
-
-    for (const userId of userIds) {
-      const user = await getUserById(env, userId);
-      if (user && user.isTrial && user.trialExpiresAt && user.trialExpiresAt < Date.now()) {
-        await deleteUserData(env, userId);
-        await deleteUser(env, userId);
-        deletedCount++;
-      }
-    }
+    const result = await execute(
+      env,
+      'DELETE FROM users WHERE is_trial = 1 AND trial_expires_at IS NOT NULL AND trial_expires_at <= ?',
+      [Date.now()]
+    );
+    const deletedCount = result.meta?.changes || 0;
 
     const adminUser = await getUserById(env, admin.userId);
     await logAudit(env, {
@@ -1192,7 +1213,8 @@ async function handleRequest(request, env) {
     return jsonResponse({ deletedCount });
   }
 
-  // Product search via Serper API (web search)
+  // ===== SEARCH / SCRAPE =====
+
   if (path === '/api/search/products' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -1204,7 +1226,6 @@ async function handleRequest(request, env) {
       if (!q || typeof q !== 'string') {
         return errorResponse('Query is required');
       }
-
       if (!env.SERPER_API_KEY) {
         return errorResponse('Search service not configured', 503);
       }
@@ -1216,10 +1237,7 @@ async function handleRequest(request, env) {
             'X-API-KEY': env.SERPER_API_KEY,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            q: q + ' UK supermarket price',
-            num: 10,
-          }),
+          body: JSON.stringify({ q: q + ' UK supermarket price', num: 10 }),
         }),
         fetch('https://google.serper.dev/images', {
           method: 'POST',
@@ -1227,10 +1245,7 @@ async function handleRequest(request, env) {
             'X-API-KEY': env.SERPER_API_KEY,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            q: q,
-            num: 10,
-          }),
+          body: JSON.stringify({ q, num: 10 }),
         }),
       ]);
 
@@ -1283,7 +1298,6 @@ async function handleRequest(request, env) {
     }
   }
 
-  // Scrape product image from URL
   if (path === '/api/scrape-product' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -1304,7 +1318,6 @@ async function handleRequest(request, env) {
     }
   }
 
-  // Image search via Serper API
   if (path === '/api/images' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;
@@ -1316,7 +1329,6 @@ async function handleRequest(request, env) {
       if (!q || typeof q !== 'string') {
         return errorResponse('Query is required');
       }
-
       if (!env.SERPER_API_KEY) {
         return errorResponse('Image search service not configured', 503);
       }
@@ -1327,10 +1339,7 @@ async function handleRequest(request, env) {
           'X-API-KEY': env.SERPER_API_KEY,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          q: q,
-          num: 20,
-        }),
+        body: JSON.stringify({ q, num: 20 }),
       });
 
       if (!response.ok) {
@@ -1347,33 +1356,20 @@ async function handleRequest(request, env) {
 
       return jsonResponse({ images });
     } catch (e) {
+      console.error('Image search error:', e);
       return errorResponse('Failed to search images');
     }
   }
 
-return errorResponse('Not found', 404);
+  return errorResponse('Not found', 404);
 }
 
 export default {
   async fetch(request, env) {
-    const startTime = Date.now();
-    const today = new Date().toISOString().split('T')[0];
-    const todayKey = `admin:requests:${today}`;
-
     try {
-      const response = await handleRequest(request, env);
-      const latency = Date.now() - startTime;
-      const data = await env.PRICETRACKR.get(todayKey, 'json') || { count: 0, totalLatency: 0 };
-      data.count += 1;
-      data.totalLatency += latency;
-      await env.PRICETRACKR.put(todayKey, JSON.stringify(data));
-      return response;
+      return await handleRequest(request, env);
     } catch (e) {
-      const errorKey = 'admin:errors';
-      const errorData = await env.PRICETRACKR.get(errorKey, 'json') || { count: 0, lastError: null };
-      errorData.count += 1;
-      errorData.lastError = new Date().toISOString();
-      await env.PRICETRACKR.put(errorKey, JSON.stringify(errorData));
+      console.error('Unhandled error:', e);
       return errorResponse('Internal server error', 500);
     }
   },

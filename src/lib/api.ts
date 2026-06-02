@@ -276,24 +276,6 @@ export const api = {
     return handleResponse(response);
   },
 
-  async getAdminHealth(): Promise<{
-    status: 'healthy' | 'degraded';
-    requests: { today: number; yesterday: number; total: number };
-    avgLatencyMs: number;
-    errorCount: number;
-    uptime: string;
-    storage: { keys: number; estimatedBytes: number; estimatedMB: string };
-    version: string;
-    userCount: number;
-    productCount: number;
-    workerRegion: string;
-  }> {
-    const response = await fetch(`${API_BASE_URL}/api/admin/health`, {
-      headers: getAuthHeaders(),
-    });
-    return handleResponse(response);
-  },
-
   async getAdminTrials(page = 1, limit = 20, status?: 'active' | 'expired', search?: string): Promise<{ trials: AdminTrial[]; total: number; page: number; limit: number; totalPages: number }> {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (status) params.set('status', status);

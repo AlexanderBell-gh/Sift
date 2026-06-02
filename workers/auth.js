@@ -1,3 +1,5 @@
+import { queryOne, execute } from './db.js';
+
 const SALT_LENGTH = 16;
 const ITERATIONS = 100000;
 const JWT_EXPIRY_DAYS = 7;
@@ -121,6 +123,23 @@ function createUserId() {
   return `user_${generateToken()}`;
 }
 
+function rowToUser(row) {
+  return {
+    id: row.id,
+    email: row.email,
+    username: row.username,
+    passwordHash: row.password_hash,
+    role: row.role,
+    isTrial: !!row.is_trial,
+    trialExpiresAt: row.trial_expires_at,
+    preferences: {
+      currency: row.currency || 'USD',
+      defaultStore: row.default_store || null,
+    },
+    createdAt: row.created_at,
+  };
+}
+
 async function createJWT(user, env) {
   const payload = {
     userId: user.id,
@@ -180,52 +199,53 @@ async function verifyJWT(token, env) {
 }
 
 async function getUserById(env, userId) {
-  const user = await env.USERS.get(`user:${userId}`, 'json');
-  return user && isValidUser(user) ? user : null;
+  const row = await queryOne(env, 'SELECT * FROM users WHERE id = ?', [userId]);
+  if (!row) return null;
+  const user = rowToUser(row);
+  return isValidUser(user) ? user : null;
 }
 
 async function getUserByEmail(env, email) {
-  const userId = await env.USERS.get(`email:${email.toLowerCase()}`);
-  if (!userId) return null;
-  return getUserById(env, userId);
+  const row = await queryOne(env, 'SELECT * FROM users WHERE email = ?', [email.toLowerCase()]);
+  return row ? rowToUser(row) : null;
 }
 
 async function getUserByUsername(env, username) {
-  const userId = await env.USERS.get(`username:${username.toLowerCase()}`);
-  if (!userId) return null;
-  return getUserById(env, userId);
+  const row = await queryOne(env, 'SELECT * FROM users WHERE username = ?', [username.toLowerCase()]);
+  return row ? rowToUser(row) : null;
 }
 
 async function saveUser(env, user) {
-  await env.USERS.put(`user:${user.id}`, JSON.stringify(user));
-  await env.USERS.put(`email:${user.email.toLowerCase()}`, user.id);
-  await env.USERS.put(`username:${user.username.toLowerCase()}`, user.id);
-
-  const userIds = await env.USERS.get('users', 'json');
-  const ids = userIds && Array.isArray(userIds) ? userIds : [];
-  if (!ids.includes(user.id)) {
-    ids.push(user.id);
-    await env.USERS.put('users', JSON.stringify(ids));
-  }
+  await execute(
+    env,
+    `INSERT INTO users (id, email, username, password_hash, role, is_trial, trial_expires_at, currency, default_store, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       email = excluded.email,
+       username = excluded.username,
+       password_hash = excluded.password_hash,
+       role = excluded.role,
+       is_trial = excluded.is_trial,
+       trial_expires_at = excluded.trial_expires_at,
+       currency = excluded.currency,
+       default_store = excluded.default_store`,
+    [
+      user.id,
+      user.email.toLowerCase(),
+      user.username.toLowerCase(),
+      user.passwordHash,
+      user.role,
+      user.isTrial ? 1 : 0,
+      user.trialExpiresAt || null,
+      user.preferences?.currency || 'USD',
+      user.preferences?.defaultStore || null,
+      user.createdAt,
+    ]
+  );
 }
 
 async function deleteUser(env, userId) {
-  const user = await getUserById(env, userId);
-  if (!user) return;
-
-  await env.USERS.delete(`user:${userId}`);
-  await env.USERS.delete(`email:${user.email.toLowerCase()}`);
-  await env.USERS.delete(`username:${user.username.toLowerCase()}`);
-
-  const userIds = await env.USERS.get('users', 'json');
-  if (userIds && Array.isArray(userIds)) {
-    const filtered = userIds.filter(id => id !== userId);
-    if (filtered.length === 0) {
-      await env.USERS.delete('users');
-    } else {
-      await env.USERS.put('users', JSON.stringify(filtered));
-    }
-  }
+  await execute(env, 'DELETE FROM users WHERE id = ?', [userId]);
 }
 
 export {

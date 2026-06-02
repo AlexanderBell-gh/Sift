@@ -68,15 +68,3 @@ CREATE TABLE audit_logs (
 
 CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp DESC);
 CREATE INDEX idx_audit_action ON audit_logs(action);
-
-CREATE TABLE request_metrics (
-  date TEXT PRIMARY KEY,
-  request_count INTEGER NOT NULL DEFAULT 0,
-  total_latency_ms INTEGER NOT NULL DEFAULT 0
-);
-
-CREATE TABLE error_metrics (
-  id INTEGER PRIMARY KEY CHECK(id = 1),
-  count INTEGER NOT NULL DEFAULT 0,
-  last_error TEXT
-);

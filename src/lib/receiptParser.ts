@@ -48,38 +48,38 @@ function extractDate(text: string): string | null {
     if (!m) continue;
 
     if (pattern === datePatterns[0]) {
-      let [, d, mo, y] = m;
-      let year = y.length === 2 ? '20' + y : y;
+      const [, d, mo, y] = m;
+      const year = y.length === 2 ? '20' + y : y;
       if (parseInt(d) > 31) continue;
       if (parseInt(mo) > 12) continue;
-      let month = mo.padStart(2, '0');
-      let day = d.padStart(2, '0');
+      const month = mo.padStart(2, '0');
+      const day = d.padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
 
     if (pattern === datePatterns[1]) {
-      let [, d, monStr, y] = m;
+      const [, d, monStr, y] = m;
       const months: Record<string, string> = {
         jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
         jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
       };
       const monthNum = months[monStr.toLowerCase().slice(0, 3)];
       if (!monthNum) continue;
-      let year = y.length === 2 ? '20' + y : y;
-      let day = d.padStart(2, '0');
+      const year = y.length === 2 ? '20' + y : y;
+      const day = d.padStart(2, '0');
       return `${year}-${monthNum}-${day}`;
     }
 
     if (pattern === datePatterns[2]) {
-      let [, monStr, d, y] = m;
+      const [, monStr, d, y] = m;
       const months: Record<string, string> = {
         jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
         jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
       };
       const monthNum = months[monStr.toLowerCase().slice(0, 3)];
       if (!monthNum) continue;
-      let year = y.length === 2 ? '20' + y : y;
-      let day = d.padStart(2, '0');
+      const year = y.length === 2 ? '20' + y : y;
+      const day = d.padStart(2, '0');
       return `${year}-${monthNum}-${day}`;
     }
   }
