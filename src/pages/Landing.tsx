@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { TrendingDown, History, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -9,8 +9,9 @@ type Tab = 'signin' | 'signup';
 
 export function Landing() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp, createTrial } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('signin');
+  const [activeTab, setActiveTab] = useState<Tab>((location.state as { tab?: string })?.tab === 'signup' ? 'signup' : 'signin');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -162,7 +163,7 @@ export function Landing() {
                     type="password"
                     value={signUpData.password}
                     onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                    placeholder="At least 6 characters"
+                    placeholder="At least 8 characters"
                     required
                   />
                   <Button type="submit" className="w-full" disabled={isLoading}>
