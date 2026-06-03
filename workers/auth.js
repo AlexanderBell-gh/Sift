@@ -99,7 +99,7 @@ async function verifyPassword(password, storedHash) {
   const [saltBase64, hashBase64] = storedHash.split(':');
   if (!saltBase64 || !hashBase64) return false;
 
-  const salt = base64ToArrayBuffer(saltBase64);
+  const salt = base64UrlToArrayBuffer(saltBase64);
   const encoder = new TextEncoder();
   const passwordBuffer = encoder.encode(password);
 
