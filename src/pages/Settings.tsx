@@ -123,13 +123,19 @@ export function Settings() {
             priceEntry.price.toString(),
             priceEntry.date,
             product.createdAt
-          ].map(field => `"${String(field).replace(/"/g, '""')}"`);
+          ].map(field => {
+            const str = String(field);
+            if (str.includes(',') || str.includes('"') || str.includes('\\n') || str.includes('\\r')) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          });
           
           rows.push(fields.join(','));
         }
       }
       
-      const data = rows.join('\n');
+      const data = rows.join('\\n');
       const blob = new Blob([data], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -166,13 +172,19 @@ export function Settings() {
             priceEntry.price.toString(),
             priceEntry.date,
             product.createdAt
-          ].map(field => `"${String(field).replace(/"/g, '""')}"`);
+          ].map(field => {
+            const str = String(field);
+            if (str.includes(',') || str.includes('"') || str.includes('\\n') || str.includes('\\r')) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          });
           
           rows.push(fields.join(','));
         }
       }
       
-      const data = rows.join('\n');
+      const data = rows.join('\\n');
       await navigator.clipboard.writeText(data);
       setCopied(true);
       setImportStatus({ type: 'success', message: `Copied ${products.length} products (${rows.length - 1} price entries) to clipboard` });
@@ -213,12 +225,51 @@ export function Settings() {
 
   const processImport = async (text: string) => {
     try {
-      const lines = text.trim().split('\n');
-      if (lines.length < 2) {
+      const rows: string[][] = [];
+      let currentField = '';
+      let currentRow: string[] = [];
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+
+        if (inQuotes) {
+          if (char === '"' && nextChar === '"') {
+            currentField += '"';
+            i++;
+          } else if (char === '"') {
+            inQuotes = false;
+          } else {
+            currentField += char;
+          }
+        } else {
+          if (char === '"') {
+            inQuotes = true;
+          } else if (char === ',') {
+            currentRow.push(currentField);
+            currentField = '';
+          } else if (char === '\\n' || char === '\\r') {
+            currentRow.push(currentField);
+            rows.push(currentRow);
+            currentRow = [];
+            currentField = '';
+            if (char === '\\r' && nextChar === '\\n') i++;
+          } else {
+            currentField += char;
+          }
+        }
+      }
+      if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+      }
+
+      if (rows.length < 2) {
         throw new Error('Invalid format: CSV must have header row and at least one data row');
       }
 
-      const header = lines[0].toLowerCase().split(',');
+      const header = rows[0].map(h => h.toLowerCase().trim());
       const idIdx = header.indexOf('product_id');
       const nameIdx = header.indexOf('name');
       const urlIdx = header.indexOf('url');
@@ -242,20 +293,10 @@ export function Settings() {
       let imported = 0;
       let skipped = 0;
 
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
+      for (let i = 1; i < rows.length; i++) {
+        const values = rows[i];
+        if (values.length === 1 && !values[0]) continue;
 
-        const parseCSVValue = (str: string): string => {
-          if (str.startsWith('"') && str.endsWith('"')) {
-            return str.slice(1, -1).replace(/""/g, '"');
-          }
-          return str;
-        };
-
-        const values = line.split(',').map(v => parseCSVValue(v.trim()));
-        
-        const productId = idIdx >= 0 ? values[idIdx] : '';
         const name = values[nameIdx] || '';
         const price = parseFloat(values[priceIdx]);
         const date = values[dateIdx];
@@ -266,12 +307,13 @@ export function Settings() {
         }
 
         const category = catIdx >= 0 ? values[catIdx] || 'other' : 'other';
-        const url = urlIdx >= 0 ? values[urlIdx] : '';
-        const imageUrl = imageIdx >= 0 ? values[imageIdx] : '';
-        const store = storeIdx >= 0 ? values[storeIdx] : '';
-        const notes = notesIdx >= 0 ? values[notesIdx] : '';
-        const createdAt = createdIdx >= 0 ? values[createdIdx] : new Date().toISOString().split('T')[0];
+        const url = urlIdx >= 0 ? values[urlIdx] || '' : '';
+        const imageUrl = imageIdx >= 0 ? values[imageIdx] || '' : '';
+        const store = storeIdx >= 0 ? values[storeIdx] || '' : '';
+        const notes = notesIdx >= 0 ? values[notesIdx] || '' : '';
+        const createdAt = createdIdx >= 0 ? values[createdIdx] || new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
+        const productId = idIdx >= 0 ? values[idIdx] : '';
         const key = productId || `${name}-${url}`;
 
         if (!productPrices.has(key)) {
@@ -309,7 +351,7 @@ export function Settings() {
           }
         } else {
           const latestPrice = productData.prices[productData.prices.length - 1];
-          await api.createProduct({
+          const createdProduct = await api.createProduct({
             name: productData.name,
             url: productData.url,
             imageUrl: productData.imageUrl,
@@ -319,12 +361,9 @@ export function Settings() {
             notes: productData.notes
           });
 
-          const newProduct = await api.getProducts();
-          const created = newProduct.find(p => p.name === productData.name && p.category === productData.category);
-          
-          if (created && productData.prices.length > 1) {
+          if (productData.prices.length > 1) {
             for (const priceEntry of productData.prices.slice(0, -1)) {
-              await api.addPrice(created.id, {
+              await api.addPrice(createdProduct.id, {
                 price: priceEntry.price,
                 store: productData.store,
                 date: priceEntry.date
