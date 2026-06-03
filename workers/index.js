@@ -792,6 +792,10 @@ async function handleRequest(request, env) {
     const productId = deletePriceMatch[1];
     const priceIndex = parseInt(deletePriceMatch[2], 10);
 
+    if (!Number.isInteger(priceIndex) || priceIndex < 0) {
+      return errorResponse('Invalid price index', 400);
+    }
+
     const product = await getProduct(env, userId, productId);
     if (!product) return errorResponse('Product not found', 404);
     if (!product.prices || product.prices.length <= priceIndex) {
