@@ -26,11 +26,24 @@ const DEFAULT_CATEGORIES = [
   { id: 'other', name: 'Other', icon: '📦' },
 ];
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+const ALLOWED_ORIGINS = [
+  'https://price-trackr.pages.dev',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+let corsHeaders = {};
+
+function setCorsHeaders(request) {
+  const origin = request?.headers?.get('Origin') || '';
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  corsHeaders = {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -63,6 +76,14 @@ function isValidCategory(category) {
     typeof category.name === 'string' &&
     typeof category.icon === 'string'
   );
+}
+
+function isValidEmail(email) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
+function isValidPassword(password) {
+  return password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
 }
 
 function generateId(prefix) {
@@ -137,18 +158,54 @@ async function getProduct(env, userId, productId) {
 
 async function scrapeImageFromUrl(url) {
   try {
-    const response = await fetch(url, {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return '';
+    }
+
+    if (parsed.protocol !== 'https:') return '';
+
+    const hostname = parsed.hostname;
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '[::1]' ||
+      hostname === '0.0.0.0' ||
+      hostname === '169.254.169.254' ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^fc00:/i.test(hostname) ||
+      /^fe80:/i.test(hostname)
+    ) {
+      return '';
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(parsed.href, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PriceTrackr/1.0)' },
+      signal: controller.signal,
+      redirect: 'follow',
     });
+    clearTimeout(timeout);
+
+    const contentLength = response.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > 5 * 1024 * 1024) return '';
+
     const html = await response.text();
+    const text = html.slice(0, 500000);
 
-    let match = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+    let match = text.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
     if (match) return match[1];
 
-    match = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
+    match = text.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
     if (match) return match[1];
 
-    match = html.match(/<meta[^>]*property=["']product:image["'][^>]*content=["']([^"']+)["']/i);
+    match = text.match(/<meta[^>]*property=["']product:image["'][^>]*content=["']([^"']+)["']/i);
     if (match) return match[1];
 
     return '';
@@ -246,6 +303,7 @@ async function enrichWithGemma(results, apiKey) {
 }
 
 async function handleRequest(request, env) {
+  setCorsHeaders(request);
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
@@ -264,8 +322,11 @@ async function handleRequest(request, env) {
       if (!email || !username || !password) {
         return errorResponse('Email, username, and password are required');
       }
-      if (password.length < 6) {
-        return errorResponse('Password must be at least 6 characters');
+      if (!isValidEmail(email)) {
+        return errorResponse('Invalid email format');
+      }
+      if (!isValidPassword(password)) {
+        return errorResponse('Password must be at least 8 characters with at least one letter and one number');
       }
 
       if (await getUserByEmail(env, email)) {
@@ -313,14 +374,24 @@ async function handleRequest(request, env) {
       const body = await request.json();
       const { email, username, password, adminSecret } = body;
 
-      if (!adminSecret || adminSecret !== env.ADMIN_SECRET) {
+      if (!adminSecret || !env.ADMIN_SECRET) {
+        return errorResponse('Invalid admin secret', 403);
+      }
+      const secretMatch = crypto.timingSafeEqual(
+        new TextEncoder().encode(adminSecret),
+        new TextEncoder().encode(env.ADMIN_SECRET)
+      );
+      if (!secretMatch) {
         return errorResponse('Invalid admin secret', 403);
       }
       if (!email || !username || !password) {
         return errorResponse('Email, username, and password are required');
       }
-      if (password.length < 6) {
-        return errorResponse('Password must be at least 6 characters');
+      if (!isValidEmail(email)) {
+        return errorResponse('Invalid email format');
+      }
+      if (!isValidPassword(password)) {
+        return errorResponse('Password must be at least 8 characters with at least one letter and one number');
       }
 
       if (await getUserByEmail(env, email)) {
@@ -372,7 +443,11 @@ async function handleRequest(request, env) {
       }
 
       const user = await getUserByUsername(env, username);
-      if (!user || !(await verifyPassword(password, user.passwordHash))) {
+      const dummyHash = '$dummy$dummy';
+      const passwordValid = user
+        ? await verifyPassword(password, user.passwordHash)
+        : await verifyPassword(password, dummyHash);
+      if (!user || !passwordValid) {
         return errorResponse('Invalid credentials');
       }
 
@@ -400,7 +475,7 @@ async function handleRequest(request, env) {
       const body = await request.json();
       const { username } = body;
 
-      const trialUsername = username || `trial_${Date.now()}`;
+      const trialUsername = username || `trial_${crypto.randomUUID().slice(0, 8)}`;
       const trialEmail = `${trialUsername}@trial.pricetrackr`;
 
       if (await getUserByUsername(env, trialUsername)) {
@@ -477,15 +552,18 @@ async function handleRequest(request, env) {
           if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
             return errorResponse('Current password is incorrect');
           }
-          if (body.newPassword.length < 6) {
-            return errorResponse('New password must be at least 6 characters');
+          if (!isValidPassword(body.newPassword)) {
+            return errorResponse('New password must be at least 8 characters with at least one letter and one number');
           }
           user.passwordHash = await hashPassword(body.newPassword);
         }
 
-        if (body.newEmail && body.password) {
-          if (!(await verifyPassword(body.password, user.passwordHash))) {
+        if (body.newEmail && body.currentPassword) {
+          if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
             return errorResponse('Password is incorrect');
+          }
+          if (!isValidEmail(body.newEmail)) {
+            return errorResponse('Invalid email format');
           }
           const existing = await getUserByEmail(env, body.newEmail);
           if (existing && existing.id !== user.id) {
@@ -551,6 +629,9 @@ async function handleRequest(request, env) {
     if (method === 'POST') {
       try {
         const body = await request.json();
+        if (body.price !== undefined && (typeof body.price !== 'number' || body.price <= 0 || !Number.isFinite(body.price))) {
+          return errorResponse('Price must be a positive number');
+        }
         const today = new Date().toISOString().split('T')[0];
         const createdAt = new Date().toISOString();
         const productId = generateId('prod');
@@ -625,6 +706,9 @@ async function handleRequest(request, env) {
       const createdProducts = [];
 
       for (const item of incomingProducts) {
+        if (item.price !== undefined && (typeof item.price !== 'number' || item.price <= 0 || !Number.isFinite(item.price))) {
+          return errorResponse('Each product must have a valid positive price');
+        }
         const productId = generateId('prod');
         const priceId = generateId('price');
         const store = item.store || null;
@@ -683,6 +767,9 @@ async function handleRequest(request, env) {
 
     try {
       const body = await request.json();
+      if (typeof body.price !== 'number' || body.price <= 0 || !Number.isFinite(body.price)) {
+        return errorResponse('Price must be a positive number');
+      }
       const priceId = generateId('price');
       await execute(
         env,
@@ -743,6 +830,9 @@ async function handleRequest(request, env) {
         const params = [];
 
         if (body.price !== undefined) {
+          if (typeof body.price !== 'number' || body.price <= 0 || !Number.isFinite(body.price)) {
+            return errorResponse('Price must be a positive number');
+          }
           const latest = await queryOne(
             env,
             'SELECT price FROM prices WHERE product_id = ? ORDER BY date DESC, created_at DESC LIMIT 1',
@@ -977,8 +1067,23 @@ async function handleRequest(request, env) {
     if (admin && admin.error) return admin;
 
     const userId = adminUserMatch[1];
+    if (userId === admin.userId) {
+      return errorResponse('Cannot delete your own admin account');
+    }
+
     const user = await getUserById(env, userId);
     if (!user) return errorResponse('User not found', 404);
+
+    if (user.role === 'admin') {
+      const adminCount = (await queryOne(
+        env,
+        `SELECT COUNT(*) as c FROM users WHERE role = 'admin' AND id != ?`,
+        [userId]
+      ))?.c || 0;
+      if (adminCount === 0) {
+        return errorResponse('Cannot delete the last admin');
+      }
+    }
 
     await deleteUser(env, userId);
 
@@ -1012,18 +1117,18 @@ async function handleRequest(request, env) {
       }
 
       if (newRole === 'user' && targetUser.role === 'admin') {
-        const adminCount = (await queryOne(
+        const result = await execute(
           env,
-          `SELECT COUNT(*) as c FROM users WHERE role = 'admin' AND id != ?`,
-          [targetUserId]
-        ))?.c || 0;
-        if (adminCount === 0) {
+          `UPDATE users SET role = 'user' WHERE id = ? AND role = 'admin'
+           AND (SELECT COUNT(*) FROM users WHERE role = 'admin' AND id != ?) > 0`,
+          [targetUserId, targetUserId]
+        );
+        if (result.meta?.changes === 0) {
           return errorResponse('Cannot demote the last admin');
         }
+      } else {
+        await execute(env, 'UPDATE users SET role = ? WHERE id = ?', [newRole, targetUserId]);
       }
-
-      const oldRole = targetUser.role;
-      await execute(env, 'UPDATE users SET role = ? WHERE id = ?', [newRole, targetUserId]);
 
       const adminUser = await getUserById(env, admin.userId);
       await logAudit(env, {

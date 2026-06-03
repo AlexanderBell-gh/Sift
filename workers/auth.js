@@ -44,13 +44,25 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
-function base64ToArrayBuffer(base64) {
+function arrayBufferToBase64Url(buffer) {
+  return arrayBufferToBase64(buffer).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToArrayBuffer(base64Url) {
+  let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes.buffer;
+}
+
+function base64UrlDecode(str) {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
+  return atob(base64);
 }
 
 async function hashPassword(password) {
@@ -146,7 +158,7 @@ async function createJWT(user, env) {
     role: user.role,
     exp: Date.now() + JWT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
   };
-  const payloadBase64 = btoa(JSON.stringify(payload));
+  const payloadBase64 = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
   const JWT_SECRET = getJwtSecret(env);
   const keyData = encoder.encode(JWT_SECRET);
@@ -159,7 +171,7 @@ async function createJWT(user, env) {
   );
 
   const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(payloadBase64));
-  const signatureBase64 = arrayBufferToBase64(signatureBuffer);
+  const signatureBase64 = arrayBufferToBase64Url(signatureBuffer);
 
   return `${payloadBase64}.${signatureBase64}`;
 }
@@ -183,13 +195,13 @@ async function verifyJWT(token, env) {
     const signatureValid = await crypto.subtle.verify(
       'HMAC',
       key,
-      base64ToArrayBuffer(signatureBase64),
+      base64UrlToArrayBuffer(signatureBase64),
       encoder.encode(payloadBase64)
     );
 
     if (!signatureValid) return null;
 
-    const payload = JSON.parse(atob(payloadBase64));
+    const payload = JSON.parse(base64UrlDecode(payloadBase64));
     if (payload.exp < Date.now()) return null;
 
     return payload;
@@ -245,6 +257,13 @@ async function saveUser(env, user) {
 }
 
 async function deleteUser(env, userId) {
+  const products = await queryAll(env, 'SELECT id FROM products WHERE user_id = ?', [userId]);
+  if (products.length > 0) {
+    const productIds = products.map(p => p.id);
+    const placeholders = productIds.map(() => '?').join(',');
+    await execute(env, `DELETE FROM prices WHERE product_id IN (${placeholders})`, productIds);
+  }
+  await execute(env, 'DELETE FROM products WHERE user_id = ?', [userId]);
   await execute(env, 'DELETE FROM users WHERE id = ?', [userId]);
 }
 
