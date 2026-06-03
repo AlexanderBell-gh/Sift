@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { TrendingDown, History, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -9,11 +9,11 @@ type Tab = 'signin' | 'signup';
 
 export function Landing() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { signIn, signUp, createTrial } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get('tab') === 'signup' ? 'signup' : 'signin';
+    const tab = localStorage.getItem('pricetrackr_landing_tab');
+    localStorage.removeItem('pricetrackr_landing_tab');
+    return tab === 'signup' ? 'signup' : 'signin';
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');

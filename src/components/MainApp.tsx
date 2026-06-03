@@ -253,7 +253,7 @@ export function MainApp() {
           {isTrialExpired ? (
             'Your trial has expired. Sign up to continue using PriceTrackr.'
           ) : (
-            <>Free trial • {trialHoursRemaining} hour{trialHoursRemaining !== 1 ? 's' : ''} remaining • <button onClick={async () => { await signOut(); navigate('/?tab=signup'); }} className="underline hover:no-underline font-semibold">Sign up now</button></>
+            <>Free trial • {trialHoursRemaining} hour{trialHoursRemaining !== 1 ? 's' : ''} remaining • <button onClick={async () => { localStorage.setItem('pricetrackr_landing_tab', 'signup'); await signOut(); }} className="underline hover:no-underline font-semibold">Sign up now</button></>
           )}
         </div>
       )}
