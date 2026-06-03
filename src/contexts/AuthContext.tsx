@@ -46,23 +46,18 @@ function computeTrialInfo(user: AuthUser | null): TrialInfo {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
-    const stored = api.getStoredUser();
-    return stored || null;
+    return api.getStoredUser() || null;
   });
-  const [trialInfo, setTrialInfo] = useState<TrialInfo>(() => computeTrialInfo(user));
-  const [isLoading, setIsLoading] = useState(!user);
+  const [trialInfo, setTrialInfo] = useState<TrialInfo>(() => {
+    const stored = api.getStoredUser();
+    return computeTrialInfo(stored);
+  });
 
   useEffect(() => {
-    const storedUser = api.getStoredUser();
-    if (storedUser && !user) {
-      setUser(storedUser);
-      setTrialInfo(computeTrialInfo(storedUser));
-    }
-    setIsLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    setTrialInfo(computeTrialInfo(user));
+    const updateTrial = () => {
+      setTrialInfo(computeTrialInfo(user));
+    };
+    updateTrial();
   }, [user]);
 
   const signIn = async (credentials: { username: string; password: string }) => {
@@ -105,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isTrial: trialInfo.isTrial,
         isTrialExpired: trialInfo.isTrialExpired,
         trialHoursRemaining: trialInfo.trialHoursRemaining,
-        isLoading,
+        isLoading: false,
         signIn,
         signUp,
         createTrial,

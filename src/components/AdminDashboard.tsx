@@ -42,11 +42,11 @@ export function AdminDashboard() {
   };
 
   useEffect(() => {
-    const init = async () => {
-      await checkAdminStatus();
+    const init = () => {
+      checkAdminStatus();
       initTheme();
     };
-    init();
+    setTimeout(init, 0);
   }, []);
 
   const toggleTheme = () => {

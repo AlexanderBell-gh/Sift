@@ -64,7 +64,9 @@ export function MainApp() {
   }, [handleUnauthorized, showToast]);
 
   useEffect(() => {
-    loadData();
+    setTimeout(() => {
+      loadData();
+    }, 0);
   }, [loadData]);
 
   const filteredProducts = products.filter((product) => {

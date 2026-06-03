@@ -50,7 +50,9 @@ export function AdminActivity() {
   }, [page, limit, search, actionFilter, startDate, endDate]);
 
   useEffect(() => {
-    loadLogs();
+    setTimeout(() => {
+      loadLogs();
+    }, 0);
   }, [loadLogs]);
 
   const handleSearch = (e: React.FormEvent) => {

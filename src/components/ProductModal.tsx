@@ -44,10 +44,13 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
     if (url && !store) {
       const detected = detectStoreFromUrl(url);
       if (detected) {
-        setStore(detected);
-        setIsStoreAutoDetected(true);
+        setTimeout(() => {
+          setStore(detected);
+          setIsStoreAutoDetected(true);
+        }, 0);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

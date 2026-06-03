@@ -75,7 +75,9 @@ export function AdminAnalytics() {
   };
 
   useEffect(() => {
-    loadAnalytics();
+    setTimeout(() => {
+      loadAnalytics();
+    }, 0);
   }, []);
 
   if (isLoading) {

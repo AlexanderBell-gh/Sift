@@ -63,8 +63,10 @@ export function AdminUsers() {
   }, []);
 
   useEffect(() => {
-    loadUsers();
-    loadExpiredCount();
+    setTimeout(() => {
+      loadUsers();
+      loadExpiredCount();
+    }, 0);
   }, [loadUsers, loadExpiredCount]);
 
   const handleSearch = (e: React.FormEvent) => {
