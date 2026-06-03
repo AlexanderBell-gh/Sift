@@ -120,6 +120,18 @@ export function MainApp() {
         setIsDuplicateModalOpen(true);
         return;
       }
+    } else {
+      // Duplicate check on edit, excluding current product
+      const nameMatch = products.find(p => p.id !== editingProduct.id && p.name.toLowerCase() === productData.name.toLowerCase());
+      const urlMatch = productData.url ? products.find(p => p.id !== editingProduct.id && p.url === productData.url) : null;
+      const duplicate = nameMatch || urlMatch;
+
+      if (duplicate) {
+        setDuplicateProduct(duplicate);
+        setPendingProductData(productData);
+        setIsDuplicateModalOpen(true);
+        return;
+      }
     }
 
     try {

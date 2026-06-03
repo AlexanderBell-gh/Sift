@@ -14,7 +14,7 @@ export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [priceError, setPriceError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPriceError('');
     
@@ -24,12 +24,16 @@ export function AddPriceModal({ isOpen, onClose, onSave }: AddPriceModalProps) {
       return;
     }
     
-    onSave({
-      price: numPrice,
-      date,
-    });
-    setPrice('');
-    setDate(new Date().toISOString().split('T')[0]);
+    try {
+      await onSave({
+        price: numPrice,
+        date,
+      });
+      setPrice('');
+      setDate(new Date().toISOString().split('T')[0]);
+    } catch {
+      // Error handled by parent
+    }
   };
 
   return (

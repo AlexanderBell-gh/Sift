@@ -48,7 +48,7 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
         setIsStoreAutoDetected(true);
       }
     }
-  }, [url, store]);
+  }, [url]);
 
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStore(e.target.value);

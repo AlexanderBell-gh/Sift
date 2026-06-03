@@ -108,11 +108,16 @@ export function ProductDetail({
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
+                        target.style.opacity = '0';
                       }}
                     />
                   ) : (
                     <span>{CATEGORY_ICONS[product.category] || '📦'}</span>
+                  )}
+                  {product.imageUrl && (
+                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      {CATEGORY_ICONS[product.category] || '📦'}
+                    </span>
                   )}
                 </div>
                 <div className="min-w-0">
