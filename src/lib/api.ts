@@ -125,8 +125,12 @@ export const api = {
       body: JSON.stringify(credentials),
     });
     const data = await handleResponse<AuthResponse>(response);
-    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    } catch (e) {
+      console.error('LocalStorage quota exceeded during signup:', e);
+    }
     return data;
   },
 
@@ -137,8 +141,12 @@ export const api = {
       body: JSON.stringify(credentials),
     });
     const data = await handleResponse<AuthResponse>(response);
-    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    } catch (e) {
+      console.error('LocalStorage quota exceeded during signin:', e);
+    }
     return data;
   },
 
@@ -149,8 +157,12 @@ export const api = {
       body: JSON.stringify({ username }),
     });
     const data = await handleResponse<AuthResponse>(response);
-    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data.user));
+    } catch (e) {
+      console.error('LocalStorage quota exceeded during trial creation:', e);
+    }
     return data;
   },
 
@@ -165,7 +177,11 @@ export const api = {
       });
       if (!response.ok) return null;
       const user = await response.json();
-      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+      try {
+        localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+      } catch (e) {
+        console.error('LocalStorage quota exceeded during user update:', e);
+      }
       return user;
     } catch {
       return null;
@@ -191,7 +207,11 @@ export const api = {
       body: JSON.stringify({ newEmail, password }),
     });
     const user = await handleResponse<AuthResponse['user']>(response);
-    localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+    } catch (e) {
+      console.error('LocalStorage quota exceeded during email change:', e);
+    }
     return user;
   },
 
@@ -216,7 +236,13 @@ export const api = {
 
   getStoredUser(): AuthResponse['user'] | null {
     const userStr = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
-    return userStr ? JSON.parse(userStr) : null;
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch (e) {
+      console.error('Failed to parse stored user:', e);
+      return null;
+    }
   },
 
   getToken(): string | null {

@@ -125,11 +125,11 @@ export function MainApp() {
     try {
       if (editingProduct) {
         const updated = await api.updateProduct(editingProduct.id, productData);
-        setProducts(products.map((p) => (p.id === editingProduct.id ? updated : p)));
+        setProducts(prev => prev.map((p) => (p.id === editingProduct.id ? updated : p)));
         setSelectedProduct(updated);
       } else {
         const newProduct = await api.createProduct(productData);
-        setProducts([...products, newProduct]);
+        setProducts(prev => [...prev, newProduct]);
       }
       setIsProductModalOpen(false);
     } catch (error) {
@@ -168,7 +168,7 @@ export function MainApp() {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
       await api.deleteProduct(selectedProduct.id);
-      setProducts(products.filter((p) => p.id !== selectedProduct.id));
+      setProducts(prev => prev.filter((p) => p.id !== selectedProduct.id));
       setIsDetailOpen(false);
       setSelectedProduct(null);
     } catch (error) {
@@ -185,7 +185,7 @@ export function MainApp() {
     try {
       const updated = await api.addPrice(productId, priceData);
       
-      setProducts(products.map((p) => (p.id === productId ? updated : p)));
+      setProducts(prev => prev.map((p) => (p.id === productId ? updated : p)));
       setSelectedProduct(updated);
       showToast('Price added successfully', 'success');
     } catch (error) {
@@ -202,7 +202,7 @@ export function MainApp() {
     
     try {
       const updated = await api.deletePrice(selectedProduct.id, priceIndex);
-      setProducts(products.map((p) => (p.id === selectedProduct.id ? updated : p)));
+      setProducts(prev => prev.map((p) => (p.id === selectedProduct.id ? updated : p)));
       setSelectedProduct(updated);
       showToast('Price deleted', 'success');
     } catch (error) {
