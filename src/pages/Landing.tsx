@@ -11,7 +11,10 @@ export function Landing() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, signUp, createTrial } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>((location.state as { tab?: string })?.tab === 'signup' ? 'signup' : 'signin');
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('tab') === 'signup' ? 'signup' : 'signin';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
