@@ -14,20 +14,11 @@ A personal grocery price tracker to monitor price changes on products you freque
 - **Scan Receipt in User Menu** - Scan Receipt button in dropdown menu (alongside Settings, Dark Mode)
 - **Duplicate Detection** - Warns when adding a product with matching name (case-insensitive) or URL (exact match)
 - **Modal Backdrop Fix** - Fixed issue where clicking inside form inputs would close the modal
-- **Delete Price Entries** - Remove individual prices from product detail view (mobile-friendly)
-- **Quick Add Price** - Click the price on any product card to add a new price entry directly
-- **Filter Dropdown Redesign** - Filter button now uses icon with custom checkboxes
-- **Removed Store Field** - Simplified add price entry form
-- **Pagination Component** - Reusable pagination in src/hooks/
-- **Removed dot pattern** - Dark mode background is now solid (no dots)
-- **Layering fixes** - Fixed z-index issues with filter dropdown and sticky header
-- **AI-Enriched Product Search** - Gemma 4 (Google AI Studio) enriches Serper search results with extracted price, brand, size, category, and store — auto-fills product form on selection
-- **Performance Optimization** - Fixed critical infinite API request loop caused by unstable function references in `AuthContext` and `useToast` hooks
-- **Linting Clean-up** - Resolved hoisting issues in Admin components and fixed regex escape errors in receipt parsing logic
+
 
 ## Design
 
-PriceTrackr features a refined Linear/Vercel-inspired UI with:
+PriceTrackr features a refined modern UI with:
 
 - **Green accent colors** matching the logo (`#74da86`)
 - **Glassmorphism** on sticky header and filter bar
