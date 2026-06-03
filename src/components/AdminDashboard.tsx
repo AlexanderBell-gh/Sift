@@ -42,8 +42,11 @@ export function AdminDashboard() {
   };
 
   useEffect(() => {
-    checkAdminStatus();
-    initTheme();
+    const init = async () => {
+      await checkAdminStatus();
+      initTheme();
+    };
+    init();
   }, []);
 
   const toggleTheme = () => {

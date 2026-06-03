@@ -198,6 +198,11 @@ export const api = {
       const error = await response.json().catch(() => ({ error: 'Failed to change password' }));
       throw new Error(error.error || 'Failed to change password');
     }
+    // Refresh user data to ensure token/session is updated if server side invalidation happened
+    const user = await this.getCurrentUser();
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+    }
   },
 
   async changeEmail(newEmail: string, password: string): Promise<AuthResponse['user']> {

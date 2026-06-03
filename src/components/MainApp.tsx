@@ -153,7 +153,7 @@ export function MainApp() {
     setIsDuplicateModalOpen(false);
     try {
       const newProduct = await api.createProduct(pendingProductData);
-      setProducts([...products, newProduct]);
+      setProducts(prev => [...prev, newProduct]);
       showToast('Product added', 'success');
     } catch (error) {
       console.error('Failed to save product:', error);
