@@ -6,6 +6,9 @@ A personal grocery price tracker to monitor price changes on products you freque
 
 ## What's New (Recent Updates)
 
+- **Security Hardening** - SSRF protection, CORS allowlist, JWT base64url encoding, timing-safe admin secret comparison, cascade user deletion, admin self-delete protection, last-admin demotion/delete guards
+- **Password Policy** - Minimum 8 characters with at least one letter and one number
+- **Input Validation** - Email format validation, price type/positive checks on all endpoints
 - **D1 SQLite Migration** - Migrated storage from Cloudflare KV to D1 (SQLite) for relational queries, transactions, and normalized pricing data
 - **Batch Product Creation** - Create multiple products in one API request
 - **Scan Receipt in User Menu** - Scan Receipt button in dropdown menu (alongside Settings, Dark Mode)
@@ -82,7 +85,12 @@ curl -X POST https://your-worker-url/api/auth/register-admin \\
   -d '{"email": "admin@example.com", "username": "admin", "password": "password", "adminSecret": "your-admin-secret"}'
 ```
 
-The admin secret must match the `ADMIN_SECRET` environment variable in your Worker configuration.
+The admin secret must be set as a Cloudflare Workers secret (never committed to source):
+
+```bash
+cd workers
+npx wrangler secret put ADMIN_SECRET
+```
 
 ### Features
 
@@ -110,8 +118,8 @@ The admin secret must match the `ADMIN_SECRET` environment variable in your Work
 
 ### Prerequisites
 
-- Node.js 24
-- pnpm
+- Node.js 24+
+- pnpm 11+
 - Cloudflare account
 
 ### Local Development
@@ -188,7 +196,7 @@ database_id = "<your-database-id>"
 
 ### API URL
 
-After deploying the Worker, update the API URL in `src/lib/api.ts`:
+The API URL is configured in `src/lib/api.ts`. After deploying the Worker, update it to point to your worker URL.
 
 ```typescript
 const API_BASE_URL = 'https://your-worker-url.workers.dev';
@@ -212,6 +220,20 @@ For product search, you need API keys:
    ```bash
    cd workers
    wrangler secret put GEMMA_API_KEY
+   ```
+
+3. **Admin Secret** (admin registration):
+   - Set a secure random string as the admin registration secret:
+   ```bash
+   cd workers
+   wrangler secret put ADMIN_SECRET
+   ```
+
+4. **JWT Secret** (authentication tokens):
+   - Set a secure random string for JWT signing:
+   ```bash
+   cd workers
+   wrangler secret put JWT_SECRET
    ```
 
 ## Project Structure

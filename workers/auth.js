@@ -1,4 +1,4 @@
-import { queryOne, execute } from './db.js';
+import { queryOne, queryAll, execute } from './db.js';
 
 const SALT_LENGTH = 16;
 const ITERATIONS = 100000;
