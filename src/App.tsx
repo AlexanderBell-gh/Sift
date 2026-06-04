@@ -6,8 +6,8 @@ import { Settings } from './pages/Settings';
 
 import { AdminDashboard } from './components/AdminDashboard';
 
-function ProtectedRoute({ children, requireAdmin }: { children: React.ReactNode; requireAdmin?: boolean }) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -22,10 +22,6 @@ function ProtectedRoute({ children, requireAdmin }: { children: React.ReactNode;
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
-  }
-
-  if (requireAdmin && user?.role !== 'admin') {
-    return <Navigate to="/app" replace />;
   }
 
   return <>{children}</>;
@@ -51,7 +47,7 @@ function AppRoutes() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute requireAdmin>
+          <ProtectedRoute>
             <AdminDashboard />
           </ProtectedRoute>
         }

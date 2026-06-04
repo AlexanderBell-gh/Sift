@@ -7,6 +7,7 @@ A personal grocery price tracker to monitor price changes on products you freque
 ## What's New (Recent Updates)
 
 - **Security Hardening** - SSRF protection, CORS allowlist, JWT base64url encoding, timing-safe admin secret comparison, cascade user deletion, admin self-delete protection, last-admin demotion/delete guards
+- **Admin Rate Limit** - 5 attempts per 15 min per IP on `/api/auth/register-admin` (D1-backed counter)
 - **Password Policy** - Minimum 8 characters with at least one letter and one number
 - **Input Validation** - Email format validation, price type/positive checks on all endpoints
 - **D1 SQLite Migration** - Migrated storage from Cloudflare KV to D1 (SQLite) for relational queries, transactions, and normalized pricing data
@@ -14,6 +15,12 @@ A personal grocery price tracker to monitor price changes on products you freque
 - **Scan Receipt in User Menu** - Scan Receipt button in dropdown menu (alongside Settings, Dark Mode)
 - **Duplicate Detection** - Warns when adding a product with matching name (case-insensitive) or URL (exact match)
 - **Modal Backdrop Fix** - Fixed issue where clicking inside form inputs would close the modal
+- **Admin Role Server-Side Check** - `/admin` route validates role via `/api/auth/me` (no longer trusts localStorage)
+- **ProductDetail Hardening** - Escape key closes, body scroll locks, image fallback renders on load error
+- **Store Auto-Detect on URL Change** - Switching/editing a product URL re-detects store; clearing URL clears the manual selection
+- **CSV Import/Export** - Real newlines (`\n`/`\r`) handled correctly; existing products matched by name+url when `product_id` column absent
+- **AI-Enriched Product Search** - Serper results enriched via Gemma 4 (Google AI Studio); extracts price, brand, size, category, store from snippets; auto-fills product form on result click; graceful fallback on API failure
+- **Performance** - Fixed infinite API request loop from unstable function refs in `AuthContext` and `useToast`
 
 
 ## Design
@@ -63,8 +70,8 @@ The admin dashboard provides system management capabilities for users with admin
 ### Access
 
 - Navigate to `/admin` route
-- Requires user account with `role: admin`
-- Non-admin users see an "Access Denied" message
+- Requires user account with `role: admin` (validated server-side via `/api/auth/me` on every load — demoted users lose access immediately, no local cache bypass)
+- Non-admin users see an "Access Denied" message with a link back to the app
 
 ### Creating an Admin User
 
@@ -102,7 +109,8 @@ npx wrangler secret put ADMIN_SECRET
 - **OCR**: Tesseract.js (client-side)
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers D1 (SQLite)
-- **Deployment**: Cloudflare Pages + GitHub Actions
+- **Deployment**: Cloudflare Pages + GitHub Actions (Wrangler CLI)
+- **Package manager**: pnpm 11
 - **External APIs**: Serper API (web search), Google AI Studio / Gemma 4 (product data enrichment)
 
 ## Getting Started
@@ -147,7 +155,7 @@ This project includes a GitHub Actions workflow that automatically deploys to Cl
 
 ```bash
 # Deploy frontend to Cloudflare Pages (production)
-pnpm exec wrangler pages deploy dist --project-name=price-trackr --branch main
+pnpm exec wrangler pages deploy dist --project-name=price-trackr
 
 # Deploy worker API
 pnpm exec wrangler deploy --config workers/wrangler.toml
@@ -187,11 +195,14 @@ database_id = "<your-database-id>"
 
 ### API URL
 
-The API URL is configured in `src/lib/api.ts`. After deploying the Worker, update it to point to your worker URL.
+The API URL is hardcoded in `src/lib/api.ts` as `API_BASE_URL`. After deploying the Worker, update it to point to your worker URL and rebuild the frontend.
 
 ```typescript
+// src/lib/api.ts
 const API_BASE_URL = 'https://your-worker-url.workers.dev';
 ```
+
+The Workers CORS allowlist in `workers/index.js` (`ALLOWED_ORIGINS`) must include your Pages origin — update both together.
 
 ### API Keys
 
@@ -233,18 +244,17 @@ For product search, you need API keys:
 PriceTrackr/
 ├── src/
 │   ├── components/
-│   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select, Toast)
-│   │   ├── useToast.ts    # Toast notification hook
+│   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select, Toast, useToast)
 │   │   ├── Header.tsx     # App header with glassmorphism, search, theme toggle
 │   │   ├── MainApp.tsx    # Main application logic
 │   │   ├── ProductCard.tsx      # Product display card with staggered animations
 │   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
 │   │   ├── ProductModal.tsx    # Add/Edit product form with search + auto-fetch
-│   │   ├── ProductDetail.tsx   # Product detail with sparkline chart
+│   │   ├── ProductDetail.tsx   # Product detail with sparkline chart, price log, edit/delete
 │   │   ├── AddPriceModal.tsx    # Add price entry
 │   │   ├── FilterDropdown.tsx    # Multi-select filter dropdown
 │   │   ├── SortSelect.tsx       # Sort dropdown
-│   │   ├── AdminDashboard.tsx   # Admin dashboard
+│   │   ├── AdminDashboard.tsx   # Admin dashboard (server-side role check)
 │   │   ├── AdminUsers.tsx       # User management
 │   │   ├── AdminAnalytics.tsx   # Analytics + stats
 │   │   ├── AdminActivity.tsx    # Activity/audit log
@@ -252,7 +262,7 @@ PriceTrackr/
 │   ├── contexts/
 │   │   └── AuthContext.tsx      # Authentication state
 │   ├── hooks/
-│   │   └── Pagination.tsx      # Reusable pagination hook + component
+│   │   └── Pagination.tsx      # Reusable pagination component (table + list)
 │   ├── pages/
 │   │   ├── Landing.tsx          # Sign in/up page
 │   │   └── Settings.tsx       # User settings (import/export, account)
