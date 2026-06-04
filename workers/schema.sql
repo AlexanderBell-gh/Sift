@@ -68,3 +68,11 @@ CREATE TABLE audit_logs (
 
 CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp DESC);
 CREATE INDEX idx_audit_action ON audit_logs(action);
+
+CREATE TABLE rate_limits (
+  key TEXT PRIMARY KEY,
+  count INTEGER NOT NULL,
+  reset_at INTEGER NOT NULL
+);
+
+CREATE INDEX idx_rate_limits_reset ON rate_limits(reset_at);

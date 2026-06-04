@@ -28,7 +28,7 @@ export function AdminDashboard() {
 
   const checkAdminStatus = async () => {
     try {
-      const user = api.getStoredUser();
+      const user = await api.getCurrentUser();
       if (user && user.role === 'admin') {
         setIsAdmin(true);
       } else {

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import type { Product } from '../types';
@@ -72,6 +73,22 @@ export function ProductDetail({
   onDelete,
   onDeletePrice,
 }: ProductDetailProps) {
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen, onClose]);
+
   if (!product) return null;
 
   const latestPrice = product.prices?.[product.prices.length - 1];
@@ -85,6 +102,8 @@ export function ProductDetail({
       : 'text-zinc-400';
 
   const TrendIcon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : Minus;
+  const fallbackIcon = CATEGORY_ICONS[product.category] || '📦';
+  const showImage = product.imageUrl && !imageError;
 
   return (
     <>
@@ -100,24 +119,17 @@ export function ProductDetail({
           >
             <div className="flex items-start justify-between p-5 sm:p-6 border-b border-zinc-200/80 dark:border-white/10">
               <div className="flex items-start gap-4">
-                <div className="w-20 h-20 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-white/10 flex items-center justify-center text-3xl overflow-hidden flex-shrink-0">
-                  {product.imageUrl ? (
+                <div className="relative w-20 h-20 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-white/10 flex items-center justify-center text-3xl overflow-hidden flex-shrink-0">
+                  {showImage ? (
                     <img
+                      key={product.imageUrl}
                       src={product.imageUrl}
                       alt={product.name}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.opacity = '0';
-                      }}
+                      onError={() => setImageError(true)}
                     />
                   ) : (
-                    <span>{CATEGORY_ICONS[product.category] || '📦'}</span>
-                  )}
-                  {product.imageUrl && (
-                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      {CATEGORY_ICONS[product.category] || '📦'}
-                    </span>
+                    <span aria-hidden="true">{fallbackIcon}</span>
                   )}
                 </div>
                 <div className="min-w-0">

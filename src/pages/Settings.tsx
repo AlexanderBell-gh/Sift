@@ -125,17 +125,17 @@ export function Settings() {
             product.createdAt
           ].map(field => {
             const str = String(field);
-            if (str.includes(',') || str.includes('"') || str.includes('\\n') || str.includes('\\r')) {
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
               return `"${str.replace(/"/g, '""')}"`;
             }
             return str;
           });
-          
+
           rows.push(fields.join(','));
         }
       }
-      
-      const data = rows.join('\\n');
+
+      const data = rows.join('\n');
       const blob = new Blob([data], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -156,9 +156,9 @@ export function Settings() {
   const handleExportCopy = async () => {
     try {
       const products = await api.getProducts();
-      
+
       const rows: string[] = ['product_id,name,url,imageUrl,category,store,notes,price,date,createdAt'];
-      
+
       for (const product of products) {
         for (const priceEntry of product.prices || []) {
           const fields = [
@@ -174,17 +174,17 @@ export function Settings() {
             product.createdAt
           ].map(field => {
             const str = String(field);
-            if (str.includes(',') || str.includes('"') || str.includes('\\n') || str.includes('\\r')) {
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
               return `"${str.replace(/"/g, '""')}"`;
             }
             return str;
           });
-          
+
           rows.push(fields.join(','));
         }
       }
-      
-      const data = rows.join('\\n');
+
+      const data = rows.join('\n');
       await navigator.clipboard.writeText(data);
       setCopied(true);
       setImportStatus({ type: 'success', message: `Copied ${products.length} products (${rows.length - 1} price entries) to clipboard` });
@@ -249,12 +249,12 @@ export function Settings() {
           } else if (char === ',') {
             currentRow.push(currentField);
             currentField = '';
-          } else if (char === '\\n' || char === '\\r') {
+          } else if (char === '\n' || char === '\r') {
             currentRow.push(currentField);
             rows.push(currentRow);
             currentRow = [];
             currentField = '';
-            if (char === '\\r' && nextChar === '\\n') i++;
+            if (char === '\r' && nextChar === '\n') i++;
           } else {
             currentField += char;
           }
@@ -287,8 +287,10 @@ export function Settings() {
 
       const existingProducts = await api.getProducts();
       const existingById = new Map(existingProducts.map(p => [p.id, p]));
+      const normalizeKey = (name: string, url: string) => `${(name || '').toLowerCase().trim()}|${(url || '').trim()}`;
+      const existingByKey = new Map(existingProducts.map(p => [normalizeKey(p.name, p.url || ''), p]));
 
-      const productPrices = new Map<string, { name: string; url: string; imageUrl: string; category: string; store: string; notes: string; createdAt: string; prices: { price: number; date: string }[] }>();
+      const productPrices = new Map<string, { name: string; url: string; imageUrl: string; category: string; store: string; notes: string; createdAt: string; prices: { price: number; date: string }[]; existingId?: string; existingKey: string }>();
 
       let imported = 0;
       let skipped = 0;
@@ -314,9 +316,12 @@ export function Settings() {
         const createdAt = createdIdx >= 0 ? values[createdIdx] || new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
         const productId = idIdx >= 0 ? values[idIdx] : '';
-        const key = productId || `${name}-${url}`;
+        const nameUrlKey = normalizeKey(name, url);
+        const key = productId || nameUrlKey;
 
         if (!productPrices.has(key)) {
+          const existingId = productId ? existingById.get(productId)?.id : undefined;
+          const matchedExisting = !existingId ? existingByKey.get(nameUrlKey) : undefined;
           productPrices.set(key, {
             name,
             url,
@@ -325,7 +330,9 @@ export function Settings() {
             store,
             notes,
             createdAt,
-            prices: []
+            prices: [],
+            existingId: existingId || matchedExisting?.id,
+            existingKey: nameUrlKey,
           });
         }
 
@@ -333,15 +340,15 @@ export function Settings() {
         imported++;
       }
 
-      for (const [key, productData] of productPrices) {
+      for (const [, productData] of productPrices) {
         productData.prices.sort((a, b) => a.date.localeCompare(b.date));
 
-        const existingProduct = existingById.get(key);
+        const existingProduct = productData.existingId ? existingById.get(productData.existingId) : null;
 
         if (existingProduct) {
           const existingDates = new Set(existingProduct.prices.map(p => p.date));
           const newPrices = productData.prices.filter(p => !existingDates.has(p.date));
-          
+
           for (const newPrice of newPrices) {
             await api.addPrice(existingProduct.id, {
               price: newPrice.price,
@@ -373,10 +380,10 @@ export function Settings() {
         }
       }
 
-      const newCount = productPrices.size - (productPrices.size > 0 ? Array.from(productPrices.keys()).filter(k => existingById.has(k)).length : 0);
-      setImportStatus({ 
-        type: 'success', 
-        message: `Imported ${imported} price entries across ${productPrices.size} products (${newCount} new, ${skipped} skipped)` 
+      const newCount = Array.from(productPrices.values()).filter(p => !p.existingId).length;
+      setImportStatus({
+        type: 'success',
+        message: `Imported ${imported} price entries across ${productPrices.size} products (${newCount} new, ${skipped} skipped)`
       });
     } catch (err) {
       console.error('Import error:', err);

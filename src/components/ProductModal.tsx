@@ -41,17 +41,20 @@ function ProductForm({ product, categories, onSubmit, onCancel }: {
   const [gemmaError, setGemmaError] = useState('');
 
   useEffect(() => {
-    if (url && !store) {
-      const detected = detectStoreFromUrl(url);
-      if (detected) {
-        setTimeout(() => {
-          setStore(detected);
-          setIsStoreAutoDetected(true);
-        }, 0);
+    if (!url) {
+      if (store) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStore('');
+        setIsStoreAutoDetected(false);
       }
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url]);
+    const detected = detectStoreFromUrl(url);
+    if (detected && detected !== store) {
+      setStore(detected);
+      setIsStoreAutoDetected(true);
+    }
+  }, [url, store]);
 
   const handleStoreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStore(e.target.value);

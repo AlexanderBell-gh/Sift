@@ -234,6 +234,41 @@ async function logAudit(env, entry) {
   );
 }
 
+async function ensureRateLimitTable(env) {
+  await execute(
+    env,
+    `CREATE TABLE IF NOT EXISTS rate_limits (
+       key TEXT PRIMARY KEY,
+       count INTEGER NOT NULL,
+       reset_at INTEGER NOT NULL
+     )`
+  );
+  await execute(env, 'CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)');
+}
+
+async function checkRateLimit(env, key, max, windowMs) {
+  await ensureRateLimitTable(env);
+  const now = Date.now();
+  const resetAt = now + windowMs;
+  const row = await queryOne(
+    env,
+    `INSERT INTO rate_limits (key, count, reset_at) VALUES (?, 1, ?)
+     ON CONFLICT(key) DO UPDATE SET
+       count = CASE WHEN rate_limits.reset_at <= ? THEN 1 ELSE rate_limits.count + 1 END,
+       reset_at = CASE WHEN rate_limits.reset_at <= ? THEN ? ELSE rate_limits.reset_at END
+     RETURNING count, reset_at`,
+    [key, resetAt, now, now, resetAt]
+  );
+  if (row && row.count > max) {
+    return { ok: false, retryAfter: Math.max(0, (row.reset_at || now) - now) };
+  }
+  return { ok: true };
+}
+
+function getClientIp(request) {
+  return request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+}
+
 async function authenticate(request, env) {
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/auth_token=([^;]+)/);
@@ -371,6 +406,11 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/register-admin' && method === 'POST') {
     try {
+      const rl = await checkRateLimit(env, `register_admin:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+      if (!rl.ok) {
+        return errorResponse(`Too many attempts. Try again in ${Math.ceil(rl.retryAfter / 1000)}s`, 429);
+      }
+
       const body = await request.json();
       const { email, username, password, adminSecret } = body;
 
