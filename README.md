@@ -71,7 +71,7 @@ The admin dashboard provides system management capabilities for users with admin
 
 - Navigate to `/admin` route
 - Requires user account with `role: admin` (validated server-side via `/api/auth/me` on every load — demoted users lose access immediately, no local cache bypass)
-- Non-admin users see an "Access Denied" message with a link back to the app
+- Non-admin / unauthenticated users see an inline "Access Denied" page (rendered inside `AdminDashboard`, not a router redirect) with a link back to `/app`
 
 ### Creating an Admin User
 
