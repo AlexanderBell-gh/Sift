@@ -28,4 +28,6 @@ dist-ssr
 
 # Context
 CONTEXT.md
-fixes.md
+CHANGES.md
+PLAN.md
+SPEC.md
