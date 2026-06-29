@@ -223,9 +223,9 @@ async function searchSupermarket(store, query, apiKey) {
 }
 
 async function enrichWithGemma(results, apiKey) {
-  const data = results.slice(0, 10).map(r => ({
+  const data = results.slice(0, 8).map(r => ({
     title: r.title,
-    snippet: r.snippet?.slice(0, 300),
+    snippet: r.snippet?.slice(0, 200),
     url: r.url,
     store: r.store,
   }));
@@ -265,7 +265,7 @@ Rules:
           generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
         }),
       },
-      15000
+      30000
     );
 
     if (!res.ok) {
