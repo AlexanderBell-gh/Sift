@@ -1071,7 +1071,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/watchlist/ids' && method === 'GET') {
     const auth = await requireAuth(request, env);
-    if (auth instanceof Response) return auth;
+    if (!auth?.userId) return auth;
 
     try {
       const rows = await queryAll(
@@ -1088,7 +1088,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/watchlist' && method === 'GET') {
     const auth = await requireAuth(request, env);
-    if (auth instanceof Response) return auth;
+    if (!auth?.userId) return auth;
 
     try {
       const rows = await queryAll(
@@ -1127,7 +1127,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/watchlist' && method === 'POST') {
     const auth = await requireAuth(request, env);
-    if (auth instanceof Response) return auth;
+    if (!auth?.userId) return auth;
 
     try {
       const body = await request.json();
@@ -1210,7 +1210,7 @@ async function handleRequest(request, env) {
   const watchlistItemMatch = path.match(/^\/api\/watchlist\/(.+)$/);
   if (watchlistItemMatch && method === 'DELETE') {
     const auth = await requireAuth(request, env);
-    if (auth instanceof Response) return auth;
+    if (!auth?.userId) return auth;
 
     const itemId = watchlistItemMatch[1];
     try {

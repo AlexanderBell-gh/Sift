@@ -1,26 +1,17 @@
-# PriceTrackr
+# PriceTrackr → Sift (WIP)
 
-A personal grocery price tracker to monitor price changes on products you frequently buy.
+> 🚧 **Under Construction** — Major rewrite in progress. Old PriceTrackr UI/features being replaced with Sift (real-time supermarket search + smart watchlist).
 
 **Live:** https://price-trackr.pages.dev/
 
 ## What's New (Recent Updates)
 
-- **Security Hardening** - SSRF protection, CORS allowlist, JWT base64url encoding, timing-safe admin secret comparison, cascade user deletion, admin self-delete protection, last-admin demotion/delete guards
-- **Admin Rate Limit** - 5 attempts per 15 min per IP on `/api/auth/register-admin` (D1-backed counter)
-- **Password Policy** - Minimum 8 characters with at least one letter and one number
-- **Input Validation** - Email format validation, price type/positive checks on all endpoints
-- **D1 SQLite Migration** - Migrated storage from Cloudflare KV to D1 (SQLite) for relational queries, transactions, and normalized pricing data
-- **Batch Product Creation** - Create multiple products in one API request
-- **Scan Receipt in User Menu** - Scan Receipt button in dropdown menu (alongside Settings, Dark Mode)
-- **Duplicate Detection** - Warns when adding a product with matching name (case-insensitive) or URL (exact match)
-- **Modal Backdrop Fix** - Fixed issue where clicking inside form inputs would close the modal
-- **Admin Role Server-Side Check** - `/admin` route validates role via `/api/auth/me` (no longer trusts localStorage)
-- **ProductDetail Hardening** - Escape key closes, body scroll locks, image fallback renders on load error
-- **Store Auto-Detect on URL Change** - Switching/editing a product URL re-detects store; clearing URL clears the manual selection
-- **CSV Import/Export** - Real newlines (`\n`/`\r`) handled correctly; existing products matched by name+url when `product_id` column absent
-- **AI-Enriched Product Search** - Serper results enriched via Gemma 4 (Google AI Studio); extracts price, brand, size, category, store from snippets; auto-fills product form on result click; graceful fallback on API failure
-- **Performance** - Fixed infinite API request loop from unstable function refs in `AuthContext` and `useToast`
+- **Rebrand to Sift** — Real-time supermarket price comparison across 7 UK stores (Tesco, Sainsbury's, Asda, Morrisons, Waitrose, M&S, Ocado)
+- **AI-Powered Search** — Serper API + Gemma 4 (Google AI Studio) parses messy web snippets into structured pricing data
+- **Dual Pricing** — Shows normal price vs loyalty price (Clubcard/Nectar) with unit price comparison
+- **Watchlist (MVP)** — Pin products to save them, view in dashboard, remove anytime
+- **Auth** — Lightweight JWT accounts with login/register to persist watchlists
+- **Deployed** — Frontend on Cloudflare Pages, API on Cloudflare Workers, D1 database
 
 
 ## Design
@@ -35,78 +26,19 @@ PriceTrackr features a refined modern UI with:
 - **Skeleton loading** states for smooth content transitions
 - **Dark mode** with solid background (#0A0A0A)
 
-## Features
+## Features (MVP)
 
-- **Product Management**: Add, edit, delete products with name, URL, image, category, store
-- **Duplicate Detection**: Warns when adding a product with matching name (case-insensitive) or URL (exact match)
-- **Price Tracking**: Record price entries over time with date, delete individual entries
-- **Price History**: View price changes and trends with interactive sparkline charts
-- **Categories**: Organize products (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Pantry, Condiments, Other)
-- **Search & Filter**: Search by name/store, filter by multiple categories and stores via dropdown
-- **Dark/Light Mode**: Toggle or follow system preference
-- **Product Web Search**: Search products to find URLs (uses Serper API)
-- **User Authentication**: Sign up, sign in, and free trial accounts (12-hour trial, auto-deleted on sign out)
-- **Store Icons**: Visual store icons (Sainsbury's, Tesco, Morrisons, ASDA, M&S, Waitrose, Ocado, Aldi, Lidl, Iceland, Co-op)
-- **Auto-detect Store**: Automatically detects store from product URL
-- **Import/Export**: Export products as CSV, import via file upload or clipboard paste (registered users only)
-- **Receipt Scanning**: Upload receipt photo → OCR via Tesseract.js → auto-detect store/date/items → batch create products
-- **AI-Enriched Product Search**: Serper web search results enriched via Gemma 4 — auto-extracts price, brand, size, category, store from snippets; auto-fills product form on selection
-- **Admin Dashboard**: System stats, user management, analytics, activity audit log (admin users only)
-- **Pagination**: Reusable pagination component for tables and lists
-
-### Adding Products - Workflow
-
-The Product Modal provides a streamlined workflow:
-
-1. **Enter product name** in the name field
-2. Click **Find Product** button → Serper returns web search results, Gemma 4 extracts price/brand/size/category from snippets
-3. Click a result → URL auto-fills, store auto-detected, price/category/name auto-filled from enriched data
-4. Adjust any fields, add optional notes, Save
-
-## Admin Dashboard
-
-The admin dashboard provides system management capabilities for users with admin role.
-
-### Access
-
-- Navigate to `/admin` route
-- Requires user account with `role: admin` (validated server-side via `/api/auth/me` on every load — demoted users lose access immediately, no local cache bypass)
-- Non-admin / unauthenticated users see an inline "Access Denied" page (rendered inside `AdminDashboard`, not a router redirect) with a link back to `/app`
-
-### Creating an Admin User
-
-Admin users are created via the registration endpoint with an admin secret:
-
-```bash
-curl -X POST https://your-worker-url/api/auth/register-admin \\
-  -H "Content-Type: application/json" \\
-  -d '{"email": "admin@example.com", "username": "admin", "password": "password", "adminSecret": "your-admin-secret"}'
-```
-
-The admin secret must be set as a Cloudflare Workers secret (never committed to source):
-
-```bash
-cd workers
-npx wrangler secret put ADMIN_SECRET
-```
-
-### Features
-
-- **Users Tab**: Manage users with:
-  - Filter: Users / Trials / All
-  - Role change: Promote users to admin or demote admins to user
-  - Delete: Remove user accounts and their data
-  - Cleanup Expired: Purge expired trial accounts
-- **Analytics Tab**: Stats cards + category/store distribution + metrics over time charts
-- **Activity Tab**: Audit log of admin actions (user deletes, role changes, trial cleanups)
-- **Dark/Light Mode**: Toggle in the header (synced with main app)
+- **Supermarket Search** — Search 7 UK supermarkets simultaneously (Tesco, Sainsbury's, Asda, Morrisons, Waitrose, M&S, Ocado)
+- **AI-Enriched Results** — Serper web search + Gemma 4 extracts normal price, loyalty price, unit price, expiry dates from snippets
+- **Dual Pricing** — Normal price vs loyalty price (Clubcard / Nectar) with unit price comparison
+- **Watchlist** — Pin products to save them, view all pinned items in dashboard, remove anytime
+- **Auth** — Lightweight JWT accounts with login/register to persist watchlists
 
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite
 - **Styling**: Tailwind CSS v4
 - **Icons**: Lucide React
-- **OCR**: Tesseract.js (client-side)
 - **Backend**: Cloudflare Workers
 - **Storage**: Cloudflare Workers D1 (SQLite)
 - **Deployment**: Cloudflare Pages + GitHub Actions (Wrangler CLI)
@@ -246,7 +178,11 @@ PriceTrackr/
 │   ├── components/
 │   │   ├── ui/           # Reusable UI (Badge, Button, Input, Modal, Select, Toast, useToast)
 │   │   ├── Header.tsx     # App header with glassmorphism, search, theme toggle
-│   │   ├── MainApp.tsx    # Main application logic
+│   │   ├── SearchPage.tsx      # Full-page search with nav, auth-aware pin button
+│   │   ├── SearchResultCard.tsx # Product card with dual pricing, store logo, pin/unpin
+│   │   ├── WatchlistPage.tsx    # Watchlist dashboard with grid view, remove button
+│   │   ├── AuthPage.tsx         # Login/register page with toggle tabs
+│   │   ├── MainApp.tsx    # Main application logic (legacy PriceTrackr)
 │   │   ├── ProductCard.tsx      # Product display card with staggered animations
 │   │   ├── ProductGrid.tsx      # Grid layout with skeleton loading
 │   │   ├── ProductModal.tsx    # Add/Edit product form with search + auto-fetch
@@ -260,26 +196,26 @@ PriceTrackr/
 │   │   ├── AdminActivity.tsx    # Activity/audit log
 │   │   └── ScanReceiptModal.tsx  # Receipt scanning with Tesseract.js OCR
 │   ├── contexts/
-│   │   └── AuthContext.tsx      # Authentication state
+│   │   └── AuthContext.tsx      # Authentication state (JWT persistence, auto-verify)
 │   ├── hooks/
 │   │   └── Pagination.tsx      # Reusable pagination component (table + list)
 │   ├── pages/
 │   │   ├── Landing.tsx          # Sign in/up page
 │   │   └── Settings.tsx       # User settings (import/export, account)
 │   ├── lib/
-│   │   ├── api.ts               # API client
+│   │   ├── api.ts               # API client (search, watchlist, auth)
 │   │   ├── utils.ts             # Utility functions
-│   │   └── receiptParser.ts     # Receipt OCR text parser (store/date/items)
+│   │   └── receiptParser.ts     # Receipt OCR text parser
 │   ├── types/
-│   │   └── index.ts            # TypeScript types + constants
-│   ├── App.tsx
+│   │   └── index.ts            # TypeScript types (SearchResult, WatchlistItem)
+│   ├── App.tsx                  # Router (/, /auth, /watchlist)
 │   ├── main.tsx
 │   └── index.css                # Global styles
 ├── workers/
-│   ├── index.js                 # Worker API endpoints
+│   ├── index.js                 # Worker API endpoints (search, watchlist, auth, admin)
 │   ├── auth.js                # JWT + password hashing + user CRUD
 │   ├── db.js                    # D1 query helpers
-│   ├── schema.sql               # D1 table DDL
+│   ├── schema.sql               # D1 table DDL (users, products, prices, search_cache, watchlist)
 │   ├── seed.sql                 # Default category seed data
 │   └── wrangler.toml
 ├── public/                      # Static assets (store icons)

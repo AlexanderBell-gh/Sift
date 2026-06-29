@@ -31,3 +31,9 @@ Add info after the last line of '#' you see, if the date is different add a line
 - `src/components/WatchlistPage.tsx` — Created watchlist dashboard with grid view, remove button, pin date display
 - `src/App.tsx` — Added `/auth` and `/watchlist` routes; wrapped app in `AuthProvider`
 
+### Phase 2 Completion & Testing
+- `workers/index.js` — Fixed auth check in watchlist routes (`!auth?.userId` instead of `auth instanceof Response`)
+- `workers/index.js` — Removed stale Phase 2 placeholder comment (line 634)
+- Frontend build verified (`pnpm run build` passes)
+- End-to-end test: register → login → pin → get IDs → unpin → empty list — all endpoints verified working
+

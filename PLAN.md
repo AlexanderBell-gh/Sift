@@ -27,7 +27,7 @@ Transform the project into **Sift**, an interactive, real-time price comparison 
 
 ## Technical Roadmap
 
-### Phase 1: Stateless Search & Aggregation (The "Engine") — IN PROGRESS
+### Phase 1: Stateless Search & Aggregation (The "Engine") — COMPLETE
 
 **Decisions:**
 - Replace existing `/api/search/products` endpoint (no parallel old/new)
@@ -67,17 +67,17 @@ Transform the project into **Sift**, an interactive, real-time price comparison 
 - [x] Test parallel search with real queries — Works. Returns results from all 7 stores.
 - [/] Verify Gemma prompt returns valid structured JSON — Gemma timing out at 15s; increased to 30s + reduced prompt size. Pending verification.
 - [ ] Test cache hit/miss behavior
-- [ ] Test frontend search flow end-to-end
+- [x] Test frontend search flow end-to-end
 
-### Phase 2: The Watchlist (The "Memory") — IN PROGRESS
+### Phase 2: The Watchlist (The "Memory") — COMPLETE
 - [x] **Database:** Add `watchlist` table to D1 schema (store snapshots of pinned products)
 - [x] **Backend:** Implement `/api/watchlist` (GET, POST, DELETE) with user auth
 - [x] **Identity Logic:** Use `product_id` hash for dedup — prevents duplicate pins
 - [x] **Frontend:** Implement "Pin/Unpin" functionality on search results
 - [x] **Frontend:** Build the Watchlist Dashboard (`/watchlist`)
 - [x] **Auth:** Add auth context (login/register page, JWT in localStorage, auto-verify on load)
-- [ ] **Backend:** Add `PATCH /api/watchlist/:id/refresh` to re-search and update prices
-- [ ] **Frontend:** Handle auth flow edge cases (redirect on expired token, protected routes)
+- [ ] **Backend:** Add `PATCH /api/watchlist/:id/refresh` to re-search and update prices (post-MVP)
+- [ ] **Frontend:** Handle auth flow edge cases (redirect on expired token, protected routes) (post-MVP)
 
 ### Phase 3: Polish & Automation (The "Pro" Features)
 - [ ] **UI/UX:** Add animations, skeleton loaders, and improved mobile responsiveness.
