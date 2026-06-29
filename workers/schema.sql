@@ -85,3 +85,29 @@ CREATE TABLE IF NOT EXISTS search_cache (
 );
 
 CREATE INDEX IF NOT EXISTS idx_cache_created ON search_cache(created_at);
+
+CREATE TABLE IF NOT EXISTS watchlist (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  store TEXT NOT NULL,
+  store_logo TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+  unit TEXT,
+  normal_price REAL,
+  loyalty_price REAL,
+  unit_price REAL,
+  currency TEXT NOT NULL DEFAULT 'GBP',
+  loyalty_type TEXT,
+  offer_expires_at TEXT,
+  product_url TEXT NOT NULL DEFAULT '',
+  is_on_offer INTEGER NOT NULL DEFAULT 0,
+  notes TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_watchlist_user_product ON watchlist(user_id, product_id);

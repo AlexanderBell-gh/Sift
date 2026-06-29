@@ -1071,6 +1071,151 @@ async function handleRequest(request, env) {
     }
   }
 
+  // ===== WATCHLIST =====
+
+  if (path === '/api/watchlist' && method === 'GET') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const rows = await queryAll(
+        env,
+        'SELECT * FROM watchlist WHERE user_id = ? ORDER BY updated_at DESC',
+        [auth.userId]
+      );
+      const items = rows.map(r => ({
+        id: r.id,
+        product_id: r.product_id,
+        product_name: r.product_name,
+        store: r.store,
+        store_logo: r.store_logo,
+        image_url: r.image_url,
+        unit: r.unit,
+        prices: {
+          normal: r.normal_price,
+          loyalty: r.loyalty_price,
+          unit_price: r.unit_price,
+          currency: r.currency,
+        },
+        loyalty_type: r.loyalty_type,
+        offer_expires_at: r.offer_expires_at,
+        product_url: r.product_url,
+        is_on_offer: !!r.is_on_offer,
+        notes: r.notes,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+      }));
+      return jsonResponse(items);
+    } catch (e) {
+      console.error('Watchlist GET error:', e);
+      return errorResponse('Failed to fetch watchlist');
+    }
+  }
+
+  if (path === '/api/watchlist' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const body = await request.json();
+      const result = body.result;
+      if (!result || !result.id || !result.name || !result.store) {
+        return errorResponse('Invalid product data');
+      }
+
+      const existing = await queryOne(
+        env,
+        'SELECT id FROM watchlist WHERE user_id = ? AND product_id = ?',
+        [auth.userId, result.id]
+      );
+      if (existing) {
+        return jsonResponse({ id: existing.id, already_pinned: true });
+      }
+
+      const now = Date.now();
+      const id = `wl_${now}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await execute(
+        env,
+        `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, product_url, is_on_offer, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          auth.userId,
+          result.id,
+          result.name,
+          result.store,
+          result.store_logo || '',
+          result.image_url || '',
+          result.unit || null,
+          result.prices?.normal ?? null,
+          result.prices?.loyalty ?? null,
+          result.prices?.unit_price ?? null,
+          result.prices?.currency || 'GBP',
+          result.loyalty_type || null,
+          result.offer_expires_at || null,
+          result.product_url || '',
+          result.is_on_offer ? 1 : 0,
+          null,
+          now,
+          now,
+        ]
+      );
+
+      const row = await queryOne(env, 'SELECT * FROM watchlist WHERE id = ?', [id]);
+      if (row) {
+        return jsonResponse({
+          id: row.id,
+          product_id: row.product_id,
+          product_name: row.product_name,
+          store: row.store,
+          store_logo: row.store_logo,
+          image_url: row.image_url,
+          unit: row.unit,
+          prices: {
+            normal: row.normal_price,
+            loyalty: row.loyalty_price,
+            unit_price: row.unit_price,
+            currency: row.currency,
+          },
+          loyalty_type: row.loyalty_type,
+          offer_expires_at: row.offer_expires_at,
+          product_url: row.product_url,
+          is_on_offer: !!row.is_on_offer,
+          notes: row.notes,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+        }, 201);
+      }
+      return jsonResponse({ id }, 201);
+    } catch (e) {
+      console.error('Watchlist POST error:', e);
+      return errorResponse('Failed to add to watchlist');
+    }
+  }
+
+  const watchlistItemMatch = path.match(/^\/api\/watchlist\/(.+)$/);
+  if (watchlistItemMatch && method === 'DELETE') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    const itemId = watchlistItemMatch[1];
+    try {
+      const row = await queryOne(
+        env,
+        'SELECT id FROM watchlist WHERE id = ? AND user_id = ?',
+        [itemId, auth.userId]
+      );
+      if (!row) return errorResponse('Watchlist item not found', 404);
+
+      await execute(env, 'DELETE FROM watchlist WHERE id = ?', [itemId]);
+      return jsonResponse({ success: true });
+    } catch (e) {
+      console.error('Watchlist DELETE error:', e);
+      return errorResponse('Failed to remove from watchlist');
+    }
+  }
+
   return errorResponse('Not found', 404);
 }
 
