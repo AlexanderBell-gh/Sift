@@ -76,3 +76,12 @@ CREATE TABLE rate_limits (
 );
 
 CREATE INDEX idx_rate_limits_reset ON rate_limits(reset_at);
+
+CREATE TABLE search_cache (
+  query_hash TEXT PRIMARY KEY,
+  query TEXT NOT NULL,
+  results TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX idx_cache_created ON search_cache(created_at);

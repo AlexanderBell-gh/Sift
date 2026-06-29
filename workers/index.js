@@ -14,17 +14,7 @@ import {
 } from './auth.js';
 import { queryAll, queryOne, execute, batch } from './db.js';
 
-const DEFAULT_CATEGORIES = [
-  { id: 'chilled', name: 'Chilled', icon: '🥛' },
-  { id: 'snacks', name: 'Snacks', icon: '🍿' },
-  { id: 'beverages', name: 'Beverages', icon: '🥤' },
-  { id: 'produce', name: 'Produce', icon: '🥬' },
-  { id: 'frozen', name: 'Frozen', icon: '🧊' },
-  { id: 'bakery', name: 'Bakery', icon: '🥖' },
-  { id: 'pantry', name: 'Pantry', icon: '🥫' },
-  { id: 'condiments', name: 'Condiments', icon: '🧂' },
-  { id: 'other', name: 'Other', icon: '📦' },
-];
+
 
 const ALLOWED_ORIGINS = [
   'https://price-trackr.pages.dev',
@@ -59,24 +49,7 @@ function errorResponse(message, status = 400) {
   return jsonResponse({ error: message }, status);
 }
 
-function isValidProduct(product) {
-  return (
-    product &&
-    typeof product.id === 'string' &&
-    typeof product.name === 'string' &&
-    typeof product.category === 'string' &&
-    Array.isArray(product.prices)
-  );
-}
 
-function isValidCategory(category) {
-  return (
-    category &&
-    typeof category.id === 'string' &&
-    typeof category.name === 'string' &&
-    typeof category.icon === 'string'
-  );
-}
 
 function isValidEmail(email) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
@@ -90,130 +63,7 @@ function generateId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-function rowToProduct(row) {
-  return {
-    id: row.id,
-    name: row.name,
-    url: row.url || undefined,
-    imageUrl: row.image_url || undefined,
-    category: row.category,
-    store: row.store || undefined,
-    notes: row.notes || undefined,
-    prices: [],
-    createdAt: row.created_at,
-  };
-}
 
-function rowToPrice(row) {
-  return {
-    price: row.price,
-    store: row.store || undefined,
-    date: row.date,
-  };
-}
-
-async function listProducts(env, userId) {
-  const productRows = await queryAll(
-    env,
-    'SELECT * FROM products WHERE user_id = ? ORDER BY created_at DESC',
-    [userId]
-  );
-  if (productRows.length === 0) return [];
-
-  const productIds = productRows.map((p) => p.id);
-  const placeholders = productIds.map(() => '?').join(',');
-  const priceRows = await queryAll(
-    env,
-    `SELECT * FROM prices WHERE product_id IN (${placeholders}) ORDER BY date ASC, created_at ASC`,
-    productIds
-  );
-
-  const byProduct = {};
-  for (const p of priceRows) {
-    if (!byProduct[p.product_id]) byProduct[p.product_id] = [];
-    byProduct[p.product_id].push(rowToPrice(p));
-  }
-
-  return productRows
-    .map((row) => {
-      const product = rowToProduct(row);
-      product.prices = byProduct[row.id] || [];
-      return product;
-    })
-    .filter(isValidProduct);
-}
-
-async function getProduct(env, userId, productId) {
-  const row = await queryOne(env, 'SELECT * FROM products WHERE id = ? AND user_id = ?', [productId, userId]);
-  if (!row) return null;
-  const product = rowToProduct(row);
-  const priceRows = await queryAll(
-    env,
-    'SELECT * FROM prices WHERE product_id = ? ORDER BY date ASC, created_at ASC',
-    [productId]
-  );
-  product.prices = priceRows.map(rowToPrice);
-  return isValidProduct(product) ? product : null;
-}
-
-async function scrapeImageFromUrl(url) {
-  try {
-    let parsed;
-    try {
-      parsed = new URL(url);
-    } catch {
-      return '';
-    }
-
-    if (parsed.protocol !== 'https:') return '';
-
-    const hostname = parsed.hostname;
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '[::1]' ||
-      hostname === '0.0.0.0' ||
-      hostname === '169.254.169.254' ||
-      /^10\./.test(hostname) ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
-      /^192\.168\./.test(hostname) ||
-      /^fc00:/i.test(hostname) ||
-      /^fe80:/i.test(hostname)
-    ) {
-      return '';
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    const response = await fetch(parsed.href, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PriceTrackr/1.0)' },
-      signal: controller.signal,
-      redirect: 'follow',
-    });
-    clearTimeout(timeout);
-
-    const contentLength = response.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > 5 * 1024 * 1024) return '';
-
-    const html = await response.text();
-    const text = html.slice(0, 500000);
-
-    let match = text.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-    if (match) return match[1];
-
-    match = text.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
-    if (match) return match[1];
-
-    match = text.match(/<meta[^>]*property=["']product:image["'][^>]*content=["']([^"']+)["']/i);
-    if (match) return match[1];
-
-    return '';
-  } catch (e) {
-    console.error('Image scrape error:', e);
-    return '';
-  }
-}
 
 async function logAudit(env, entry) {
   const id = `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -293,9 +143,108 @@ async function requireAuth(request, env) {
   return auth;
 }
 
+const TARGET_STORES = [
+  { domain: 'tesco.com', name: 'Tesco', logo: '/storeicon_tesco.png' },
+  { domain: 'sainsburys.co.uk', name: "Sainsbury's", logo: '/storeicon_sainsburys.png' },
+  { domain: 'asda.com', name: 'ASDA', logo: '/storeicon_asda.png' },
+  { domain: 'morrisons.co.uk', name: 'Morrisons', logo: '/storeicon_morrisons.png' },
+  { domain: 'marksandspencer.com', name: 'M&S', logo: '/storeicon_mands.png' },
+  { domain: 'aldi.co.uk', name: 'Aldi', logo: '/storeicon_aldi.png' },
+  { domain: 'lidl.co.uk', name: 'Lidl', logo: '/storeicon_lidl.png' },
+];
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+async function getCachedResults(env, query) {
+  const hash = hashString(query.toLowerCase().trim());
+  const row = await queryOne(
+    env,
+    'SELECT results, created_at FROM search_cache WHERE query_hash = ?',
+    [hash]
+  );
+  if (!row) return null;
+  const age = Date.now() - row.created_at;
+  if (age > 24 * 60 * 60 * 1000) return null;
+  try {
+    return JSON.parse(row.results);
+  } catch {
+    return null;
+  }
+}
+
+async function setCachedResults(env, query, results) {
+  const hash = hashString(query.toLowerCase().trim());
+  await execute(
+    env,
+    `INSERT INTO search_cache (query_hash, query, results, created_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(query_hash) DO UPDATE SET results = excluded.results, created_at = excluded.created_at`,
+    [hash, query, JSON.stringify(results), Date.now()]
+  );
+}
+
+async function searchSupermarket(store, query, apiKey) {
+  const siteQuery = `site:${store.domain} "${query}"`;
+  try {
+    const res = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ q: siteQuery, num: 5 }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.organic || []).map(item => ({
+      title: item.title || '',
+      url: item.link || item.url || '',
+      snippet: item.snippet || '',
+      store: store.name,
+      store_logo: store.logo,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 async function enrichWithGemma(results, apiKey) {
-  const data = results.slice(0, 5).map(r => ({ title: r.title, snippet: r.snippet?.slice(0, 200), url: r.url }));
+  const data = results.slice(0, 10).map(r => ({
+    title: r.title,
+    snippet: r.snippet?.slice(0, 300),
+    url: r.url,
+    store: r.store,
+  }));
   const prompt = JSON.stringify(data);
+
+  const systemPrompt = `Extract grocery product data from UK supermarket search results. Respond with [JSON_START] then a JSON array, then [JSON_END].
+
+Each object must have:
+- "name": product name (cleaned, no store name)
+- "store": store name exactly as provided
+- "normal": normal price as number (e.g. 3.50) or null if not found
+- "loyalty": loyalty/clubcard/nectar price as number or null
+- "loyalty_type": "Clubcard", "Nectar", "Aldi Price Lock", "Lidl Plus", "M&S Club", or null
+- "unit": weight/volume string like "200g", "1L", "pack of 4" or null
+- "unit_price": price per base unit (e.g. per 100g) as number or null
+- "offer_expires": expiry date as YYYY-MM-DD string or null
+- "is_on_offer": true if any offer/loyalty price exists, else false
+- "product_url": the product page URL
+- "image_url": product image URL or empty string
+
+Rules:
+- If you see "Clubcard price", "Nectar price", "with Smartcard" etc, extract as loyalty price
+- If only one price shown, put it in normal, loyalty stays null
+- Discard non-product results (recipes, reviews, news)
+- If unit price can be calculated from given data, do it
+- Return empty array [] if no valid products found`;
 
   try {
     const res = await fetch(
@@ -304,18 +253,15 @@ async function enrichWithGemma(results, apiKey) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: 'Extract product data from search results. Respond with [JSON_START] then a JSON array of extracted items, then [JSON_END]. Fields: {"cleanName":"product name or null","extractedPrice":1.99 or null,"brand":"brand name or null","size":"500g or null","suggestedCategory":"chilled or null","store":"Tesco or null"}. Categories: chilled, snacks, beverages, produce, frozen, bakery, pantry, condiments, other.' }]
-          },
+          systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 1024 }
+          generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
         }),
       }
     );
 
     if (!res.ok) {
-      const errText = await res.text();
-      console.error('Gemma API error:', res.status, errText);
+      console.error('Gemma API error:', res.status);
       return null;
     }
 
@@ -327,10 +273,26 @@ async function enrichWithGemma(results, apiKey) {
     if (!match) return null;
 
     const parsed = JSON.parse(match[1]);
-    if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    if (parsed[0]?.cleanName === undefined && parsed[0]?.extractedPrice === undefined) return null;
+    if (!Array.isArray(parsed)) return null;
 
-    return parsed;
+    return parsed.map((item, i) => ({
+      id: hashString(`${item.store || results[i]?.store}_${item.name}`),
+      name: item.name || results[i]?.title || '',
+      store: item.store || results[i]?.store || '',
+      store_logo: results[i]?.store_logo || '',
+      image_url: item.image_url || '',
+      unit: item.unit || null,
+      prices: {
+        normal: typeof item.normal === 'number' ? item.normal : null,
+        loyalty: typeof item.loyalty === 'number' ? item.loyalty : null,
+        unit_price: typeof item.unit_price === 'number' ? item.unit_price : null,
+        currency: 'GBP',
+      },
+      loyalty_type: item.loyalty_type || null,
+      offer_expires_at: item.offer_expires || null,
+      product_url: item.product_url || results[i]?.url || '',
+      is_on_offer: item.is_on_offer || false,
+    }));
   } catch (e) {
     console.error('Gemma enrichment failed:', e?.message || e);
     return null;
@@ -654,335 +616,9 @@ async function handleRequest(request, env) {
     }
   }
 
-  // ===== PRODUCTS =====
+  // ===== WATCHLIST (Phase 2) =====
 
-  if (path === '/api/products') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-
-    if (method === 'GET') {
-      const products = await listProducts(env, userId);
-      return jsonResponse(products);
-    }
-
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        if (body.price !== undefined && (typeof body.price !== 'number' || body.price <= 0 || !Number.isFinite(body.price))) {
-          return errorResponse('Price must be a positive number');
-        }
-        const today = new Date().toISOString().split('T')[0];
-        const createdAt = new Date().toISOString();
-        const productId = generateId('prod');
-        const priceId = generateId('price');
-
-        const stmts = [
-          {
-            sql: `INSERT INTO products (id, user_id, name, url, image_url, category, store, notes, created_at)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            params: [
-              productId,
-              userId,
-              body.name,
-              body.url || null,
-              body.imageUrl || null,
-              body.category || 'other',
-              body.store || null,
-              body.notes || null,
-              createdAt,
-            ],
-          },
-          {
-            sql: `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
-            params: [
-              priceId,
-              productId,
-              userId,
-              body.price,
-              body.store || null,
-              today,
-            ],
-          },
-        ];
-
-        await batch(env, stmts);
-
-        return jsonResponse({
-          id: productId,
-          name: body.name,
-          url: body.url,
-          imageUrl: body.imageUrl,
-          category: body.category || 'other',
-          store: body.store,
-          notes: body.notes,
-          prices: [{ price: body.price, store: body.store, date: today }],
-          createdAt,
-        }, 201);
-      } catch (e) {
-        console.error('Create product error:', e);
-        return errorResponse('Invalid request body');
-      }
-    }
-  }
-
-  if (path === '/api/products/batch' && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-
-    try {
-      const body = await request.json();
-      const { products: incomingProducts } = body;
-
-      if (!Array.isArray(incomingProducts) || incomingProducts.length === 0) {
-        return errorResponse('Products array is required');
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      const createdAt = new Date().toISOString();
-
-      const stmts = [];
-      const createdProducts = [];
-
-      for (const item of incomingProducts) {
-        if (item.price !== undefined && (typeof item.price !== 'number' || item.price <= 0 || !Number.isFinite(item.price))) {
-          return errorResponse('Each product must have a valid positive price');
-        }
-        const productId = generateId('prod');
-        const priceId = generateId('price');
-        const store = item.store || null;
-        const date = item.date || today;
-
-        stmts.push({
-          sql: `INSERT INTO products (id, user_id, name, url, image_url, category, store, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          params: [
-            productId,
-            userId,
-            item.name,
-            item.url || null,
-            item.imageUrl || null,
-            item.category || 'other',
-            store,
-            item.notes || null,
-            createdAt,
-          ],
-        });
-        stmts.push({
-          sql: `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
-          params: [priceId, productId, userId, item.price, store, date],
-        });
-
-        createdProducts.push({
-          id: productId,
-          name: item.name,
-          url: item.url || '',
-          imageUrl: item.imageUrl || '',
-          category: item.category || 'other',
-          store,
-          notes: item.notes || '',
-          prices: [{ price: item.price, store, date }],
-          createdAt,
-        });
-      }
-
-      await batch(env, stmts);
-
-      return jsonResponse({ products: createdProducts }, 201);
-    } catch (e) {
-      console.error('Batch create error:', e);
-      return errorResponse('Invalid request body');
-    }
-  }
-
-  const priceMatch = path.match(/^\/api\/products\/(.+)\/prices$/);
-  if (priceMatch && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-    const productId = priceMatch[1];
-    const product = await getProduct(env, userId, productId);
-    if (!product) return errorResponse('Product not found', 404);
-
-    try {
-      const body = await request.json();
-      if (typeof body.price !== 'number' || body.price <= 0 || !Number.isFinite(body.price)) {
-        return errorResponse('Price must be a positive number');
-      }
-      const priceId = generateId('price');
-      await execute(
-        env,
-        `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
-        [priceId, productId, userId, body.price, body.store || null, body.date || new Date().toISOString().split('T')[0]]
-      );
-      const updated = await getProduct(env, userId, productId);
-      return jsonResponse(updated);
-    } catch (e) {
-      console.error('Add price error:', e);
-      return errorResponse('Invalid request body');
-    }
-  }
-
-  const deletePriceMatch = path.match(/^\/api\/products\/(.+)\/prices\/(\d+)$/);
-  if (deletePriceMatch && method === 'DELETE') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-    const productId = deletePriceMatch[1];
-    const priceIndex = parseInt(deletePriceMatch[2], 10);
-
-    if (!Number.isInteger(priceIndex) || priceIndex < 0) {
-      return errorResponse('Invalid price index', 400);
-    }
-
-    const product = await getProduct(env, userId, productId);
-    if (!product) return errorResponse('Product not found', 404);
-    if (!product.prices || product.prices.length <= priceIndex) {
-      return errorResponse('Price not found', 404);
-    }
-
-    const priceRows = await queryAll(
-      env,
-      'SELECT id FROM prices WHERE product_id = ? ORDER BY date ASC, created_at ASC',
-      [productId]
-    );
-    if (priceRows[priceIndex]) {
-      await execute(env, 'DELETE FROM prices WHERE id = ?', [priceRows[priceIndex].id]);
-    }
-    const updated = await getProduct(env, userId, productId);
-    return jsonResponse(updated);
-  }
-
-  const productMatch = path.match(/^\/api\/products\/(.+)$/);
-  if (productMatch) {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-    const productId = productMatch[1];
-    const product = await getProduct(env, userId, productId);
-    if (!product) return errorResponse('Product not found', 404);
-
-    if (method === 'GET') {
-      return jsonResponse(product);
-    }
-
-    if (method === 'PUT') {
-      try {
-        const body = await request.json();
-        const updates = [];
-        const params = [];
-
-        if (body.price !== undefined) {
-          if (typeof body.price !== 'number' || body.price <= 0 || !Number.isFinite(body.price)) {
-            return errorResponse('Price must be a positive number');
-          }
-          const latest = await queryOne(
-            env,
-            'SELECT price FROM prices WHERE product_id = ? ORDER BY date DESC, created_at DESC LIMIT 1',
-            [productId]
-          );
-          if (!latest || Math.abs(body.price - latest.price) > 0.001) {
-            const priceId = generateId('price');
-            await execute(
-              env,
-              `INSERT INTO prices (id, product_id, user_id, price, store, date) VALUES (?, ?, ?, ?, ?, ?)`,
-              [priceId, productId, userId, body.price, body.store || product.store || null, new Date().toISOString().split('T')[0]]
-            );
-          }
-        }
-
-        const fieldMap = {
-          name: body.name,
-          url: body.url,
-          imageUrl: body.imageUrl,
-          category: body.category,
-          store: body.store,
-          notes: body.notes,
-        };
-        const colMap = { name: 'name', url: 'url', imageUrl: 'image_url', category: 'category', store: 'store', notes: 'notes' };
-
-        for (const [k, v] of Object.entries(fieldMap)) {
-          if (v !== undefined) {
-            updates.push(`${colMap[k]} = ?`);
-            params.push(v);
-          }
-        }
-
-        if (updates.length > 0) {
-          params.push(productId);
-          await execute(env, `UPDATE products SET ${updates.join(', ')} WHERE id = ?`, params);
-        }
-
-        const updated = await getProduct(env, userId, productId);
-        return jsonResponse(updated);
-      } catch (e) {
-        console.error('Update product error:', e);
-        return errorResponse('Invalid request body');
-      }
-    }
-
-    if (method === 'DELETE') {
-      await execute(env, 'DELETE FROM products WHERE id = ? AND user_id = ?', [productId, userId]);
-      return jsonResponse({ success: true });
-    }
-  }
-
-  // ===== CATEGORIES =====
-
-  if (path === '/api/categories') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-
-    if (method === 'GET') {
-      const rows = await queryAll(
-        env,
-        'SELECT id, name, icon FROM categories WHERE user_id IS NULL OR user_id = ? ORDER BY name',
-        [userId]
-      );
-      const categories = rows.length > 0 ? rows : DEFAULT_CATEGORIES;
-      return jsonResponse(categories);
-    }
-
-    if (method === 'POST') {
-      try {
-        const body = await request.json();
-        const newCategory = {
-          id: body.id || `cat_${Date.now()}`,
-          name: body.name,
-          icon: body.icon || '📦',
-        };
-        if (!isValidCategory(newCategory)) {
-          return errorResponse('Invalid category data');
-        }
-        await execute(
-          env,
-          `INSERT INTO categories (id, user_id, name, icon) VALUES (?, ?, ?, ?)
-           ON CONFLICT(id) DO UPDATE SET name = excluded.name, icon = excluded.icon`,
-          [newCategory.id, userId, newCategory.name, newCategory.icon]
-        );
-        return jsonResponse(newCategory, 201);
-      } catch (e) {
-        console.error('Create category error:', e);
-        return errorResponse('Invalid request body');
-      }
-    }
-  }
-
-  const categoryMatch = path.match(/^\/api\/categories\/(.+)$/);
-  if (categoryMatch && method === 'DELETE') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-    const userId = auth.userId;
-    const id = categoryMatch[1];
-    await execute(
-      env,
-      'DELETE FROM categories WHERE id = ? AND user_id = ?',
-      [id, userId]
-    );
-    return jsonResponse({ success: true });
-  }
+  // Placeholder for Phase 2 watchlist routes
 
   // ===== ADMIN =====
 
@@ -1362,151 +998,70 @@ async function handleRequest(request, env) {
     return jsonResponse({ deletedCount });
   }
 
-  // ===== SEARCH / SCRAPE =====
+  // ===== SEARCH =====
 
-  if (path === '/api/search/products' && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
+  if (path === '/api/search' && method === 'GET') {
+    const q = url.searchParams.get('q');
+    if (!q || typeof q !== 'string' || q.trim().length === 0) {
+      return errorResponse('Query parameter q is required');
+    }
+    if (!env.SERPER_API_KEY) {
+      return errorResponse('Search service not configured', 503);
+    }
 
     try {
-      const body = await request.json();
-      const { q } = body;
-
-      if (!q || typeof q !== 'string') {
-        return errorResponse('Query is required');
-      }
-      if (!env.SERPER_API_KEY) {
-        return errorResponse('Search service not configured', 503);
+      const cached = await getCachedResults(env, q);
+      if (cached) {
+        return jsonResponse({ results: cached, cached: true });
       }
 
-      const [searchRes, imagesRes] = await Promise.all([
-        fetch('https://google.serper.dev/search', {
-          method: 'POST',
-          headers: {
-            'X-API-KEY': env.SERPER_API_KEY,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ q: q + ' UK supermarket price', num: 10 }),
-        }),
-        fetch('https://google.serper.dev/images', {
-          method: 'POST',
-          headers: {
-            'X-API-KEY': env.SERPER_API_KEY,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ q, num: 10 }),
-        }),
-      ]);
+      const searchPromises = TARGET_STORES.map(store =>
+        searchSupermarket(store, q, env.SERPER_API_KEY)
+      );
+      const storeResults = await Promise.all(searchPromises);
+      const allResults = storeResults.flat();
 
-      if (!searchRes.ok) {
-        const errText = await searchRes.text();
-        console.error('Serper search error:', searchRes.status, errText);
-        return errorResponse('Search failed', searchRes.status);
+      if (allResults.length === 0) {
+        return jsonResponse({ results: [], cached: false });
       }
 
-      const searchData = await searchRes.json();
-      let results = (searchData.organic || []).map((item) => ({
-        title: item.title || '',
-        url: item.link || item.url || '',
-        snippet: item.snippet || '',
-      }));
-
-      let imageUrl = '';
-      if (imagesRes.ok) {
-        const imagesData = await imagesRes.json();
-        const images = imagesData.images || [];
-        if (images.length > 0) {
-          imageUrl = images[0].imageUrl || images[0].link || '';
-        }
+      let results;
+      if (env.GEMMA_API_KEY) {
+        const enriched = await enrichWithGemma(allResults, env.GEMMA_API_KEY);
+        results = enriched || allResults.map((r, i) => ({
+          id: hashString(`${r.store}_${r.title}`),
+          name: r.title,
+          store: r.store,
+          store_logo: r.store_logo,
+          image_url: '',
+          unit: null,
+          prices: { normal: null, loyalty: null, unit_price: null, currency: 'GBP' },
+          loyalty_type: null,
+          offer_expires_at: null,
+          product_url: r.url,
+          is_on_offer: false,
+        }));
+      } else {
+        results = allResults.map((r, i) => ({
+          id: hashString(`${r.store}_${r.title}`),
+          name: r.title,
+          store: r.store,
+          store_logo: r.store_logo,
+          image_url: '',
+          unit: null,
+          prices: { normal: null, loyalty: null, unit_price: null, currency: 'GBP' },
+          loyalty_type: null,
+          offer_expires_at: null,
+          product_url: r.url,
+          is_on_offer: false,
+        }));
       }
 
-      let gemmaError = '';
-      if (env.GEMMA_API_KEY && results.length > 0) {
-        try {
-          const enriched = await enrichWithGemma(results, env.GEMMA_API_KEY);
-          if (enriched && Array.isArray(enriched)) {
-            results = results.map((r, i) => ({
-              ...r,
-              ...(enriched[i] || {}),
-            }));
-          } else {
-            gemmaError = 'Google API currently unavailable';
-          }
-        } catch (e) {
-          console.error('Gemma enrichment failed:', e);
-          gemmaError = 'Google API currently unavailable';
-        }
-      }
-
-      const responseData = { results, imageUrl };
-      if (gemmaError) responseData.gemmaError = gemmaError;
-      return jsonResponse(responseData);
+      await setCachedResults(env, q, results);
+      return jsonResponse({ results, cached: false });
     } catch (e) {
       console.error('Search error:', e);
       return errorResponse('Search failed');
-    }
-  }
-
-  if (path === '/api/scrape-product' && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-
-    try {
-      const body = await request.json();
-      const { url } = body;
-
-      if (!url || typeof url !== 'string') {
-        return errorResponse('URL is required');
-      }
-
-      const imageUrl = await scrapeImageFromUrl(url);
-      return jsonResponse({ imageUrl });
-    } catch (e) {
-      console.error('Product scrape error:', e);
-      return errorResponse('Failed to scrape product');
-    }
-  }
-
-  if (path === '/api/images' && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
-
-    try {
-      const body = await request.json();
-      const { q } = body;
-
-      if (!q || typeof q !== 'string') {
-        return errorResponse('Query is required');
-      }
-      if (!env.SERPER_API_KEY) {
-        return errorResponse('Image search service not configured', 503);
-      }
-
-      const response = await fetch('https://google.serper.dev/images', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': env.SERPER_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ q, num: 20 }),
-      });
-
-      if (!response.ok) {
-        return errorResponse('Failed to fetch images', response.status);
-      }
-
-      const data = await response.json();
-      const images = (data.images || []).map((img) => ({
-        title: img.title || '',
-        imageUrl: img.imageUrl || img.link || '',
-        source: img.source || '',
-        sourceUrl: img.sourceUrl || img.link || '',
-      }));
-
-      return jsonResponse({ images });
-    } catch (e) {
-      console.error('Image search error:', e);
-      return errorResponse('Failed to search images');
     }
   }
 
