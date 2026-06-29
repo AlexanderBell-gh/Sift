@@ -269,16 +269,23 @@ Rules:
     );
 
     if (!res.ok) {
-      console.error('Gemma API error:', res.status);
+      const errText = await res.text().catch(() => '');
+      console.error('Gemma API error:', res.status, errText.slice(0, 200));
       return null;
     }
 
     const json = await res.json();
     const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return null;
+    if (!text) {
+      console.error('Gemma: no text in response', JSON.stringify(json).slice(0, 500));
+      return null;
+    }
 
     const match = text.match(/\[JSON_START\](.*?)\[JSON_END\]/s);
-    if (!match) return null;
+    if (!match) {
+      console.error('Gemma: no JSON markers in response', text.slice(0, 500));
+      return null;
+    }
 
     const parsed = JSON.parse(match[1]);
     if (!Array.isArray(parsed)) return null;
@@ -1035,7 +1042,9 @@ async function handleRequest(request, env) {
 
       let results;
       if (env.GEMMA_API_KEY) {
+        console.log('Gemma key present, calling enrichWithGemma');
         const enriched = await enrichWithGemma(allResults, env.GEMMA_API_KEY);
+        if (!enriched) console.log('enrichWithGemma returned null, using fallback');
         results = enriched || allResults.map((r, i) => ({
           id: hashString(`${r.store}_${r.title}`),
           name: r.title,
