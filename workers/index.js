@@ -1062,20 +1062,6 @@ async function handleRequest(request, env) {
           is_on_offer: false,
         }));
       }
-        results = allResults.map((r, i) => ({
-          id: hashString(`${r.store}_${r.title}`),
-          name: r.title,
-          store: r.store,
-          store_logo: r.store_logo,
-          image_url: '',
-          unit: null,
-          prices: { normal: null, loyalty: null, unit_price: null, currency: 'GBP' },
-          loyalty_type: null,
-          offer_expires_at: null,
-          product_url: r.url,
-          is_on_offer: false,
-        }));
-      }
 
       await setCachedResults(env, q, results);
       return jsonResponse({ results, cached: false });
