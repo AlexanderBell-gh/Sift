@@ -631,10 +631,6 @@ async function handleRequest(request, env) {
     }
   }
 
-  // ===== WATCHLIST (Phase 2) =====
-
-  // Placeholder for Phase 2 watchlist routes
-
   // ===== ADMIN =====
 
   async function requireAdmin(request, env) {
