@@ -1041,11 +1041,14 @@ async function handleRequest(request, env) {
       }
 
       let results;
-      if (env.GEMMA_API_KEY) {
-        console.log('Gemma key present, calling enrichWithGemma');
-        const enriched = await enrichWithGemma(allResults, env.GEMMA_API_KEY);
-        if (!enriched) console.log('enrichWithGemma returned null, using fallback');
-        results = enriched || allResults.map((r, i) => ({
+      const enriched = env.GEMMA_API_KEY ? await enrichWithGemma(allResults, env.GEMMA_API_KEY) : null;
+      if (enriched) {
+        results = enriched;
+      } else {
+        if (env.GEMMA_API_KEY) {
+          console.error('Gemma enrichment failed, using raw results');
+        }
+        results = allResults.map((r, i) => ({
           id: hashString(`${r.store}_${r.title}`),
           name: r.title,
           store: r.store,
@@ -1058,7 +1061,7 @@ async function handleRequest(request, env) {
           product_url: r.url,
           is_on_offer: false,
         }));
-      } else {
+      }
         results = allResults.map((r, i) => ({
           id: hashString(`${r.store}_${r.title}`),
           name: r.title,
