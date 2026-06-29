@@ -190,18 +190,24 @@ async function setCachedResults(env, query, results) {
   );
 }
 
+function timeoutFetch(url, opts, ms) {
+  return Promise.race([
+    fetch(url, opts),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
 async function searchSupermarket(store, query, apiKey) {
   const siteQuery = `site:${store.domain} "${query}"`;
   try {
-    const res = await fetch('https://google.serper.dev/search', {
+    const res = await timeoutFetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ q: siteQuery, num: 5 }),
-      signal: AbortSignal.timeout(5000),
-    });
+    }, 5000);
     if (!res.ok) return [];
     const data = await res.json();
     return (data.organic || []).map(item => ({
@@ -248,7 +254,7 @@ Rules:
 - Return empty array [] if no valid products found`;
 
   try {
-    const res = await fetch(
+    const res = await timeoutFetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=${apiKey}`,
       {
         method: 'POST',
@@ -258,8 +264,8 @@ Rules:
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
         }),
-        signal: AbortSignal.timeout(15000),
-      }
+      },
+      15000
     );
 
     if (!res.ok) {
