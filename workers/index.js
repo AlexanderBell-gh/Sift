@@ -200,6 +200,7 @@ async function searchSupermarket(store, query, apiKey) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ q: siteQuery, num: 5 }),
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -257,6 +258,7 @@ Rules:
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
         }),
+        signal: AbortSignal.timeout(15000),
       }
     );
 
