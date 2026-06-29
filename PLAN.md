@@ -64,8 +64,8 @@ Transform the project into **Sift**, an interactive, real-time price comparison 
 - [x] Remove unused imports/components from old PriceTrackr
 
 #### 6. Testing
-- [ ] Test parallel search with real queries
-- [ ] Verify Gemma prompt returns valid structured JSON
+- [x] Test parallel search with real queries — Works. Returns results from all 7 stores.
+- [/] Verify Gemma prompt returns valid structured JSON — Gemma timing out at 15s; increased to 30s + reduced prompt size. Pending verification.
 - [ ] Test cache hit/miss behavior
 - [ ] Test frontend search flow end-to-end
 
