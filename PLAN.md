@@ -27,17 +27,47 @@ Transform the project into **Sift**, an interactive, real-time price comparison 
 
 ## Technical Roadmap
 
-### Phase 1: Stateless Search & Aggregation (The "Engine")
-- [ ] **API Design: Define the `SearchResult` schema (Name, Normal Price, Loyalty Price, Expiry, Store, Image).**
-- [ ] **Intelligence Layer: Develop and test Gemma 4 prompts to ensure consistent, valid JSON output.**
-- [ ] **Backend:** Implement `/api/search` endpoint in Cloudflare Worker.
-- [ ] **Backend:** Integrate Serper API for web search results.
-- [ ] **Backend:** Integrate Gemma 4 to normalize search results into a structured `SearchResult` type.
-- [ ] **Backend:** Implement basic caching for common queries to optimize API usage.
-- [ ] **Frontend:** Build the Search UI and Result Card components.
-- [ ] **Frontend:** Implement the search flow (Query $\rightarrow$ API $\rightarrow$ Display).
-- [ ] **Frontend:** Implement Error/Empty states (No results found, parsing errors, etc.).
-- [ ] **Frontend:** Remove Landing Page (Transition to direct search/app access).
+### Phase 1: Stateless Search & Aggregation (The "Engine") — IN PROGRESS
+
+**Decisions:**
+- Replace existing `/api/search/products` endpoint (no parallel old/new)
+- Full replace: Remove manual product/price entry, products/prices tables
+- Cache: D1 `search_cache` table (24h TTL)
+
+**Execution Order:**
+
+#### 1. Schema & Types
+- [x] Add `search_cache` table to D1 schema
+- [x] Update `SearchResult` interface in `src/types/index.ts` (dual pricing, unit price, loyalty type, offer expiry)
+
+#### 2. Backend Search Endpoint
+- [x] Rewrite `/api/search/products` → `/api/search` (GET method per SPEC.md)
+- [x] Parallel search: `site:tesco.com "query"`, `site:sainsburys.co.uk "query"`, etc. (7 stores)
+- [x] Rewrite `enrichWithGemma()` prompt for: normal price, loyalty price, loyalty_type, unit, unit_price, offer_expires_at, is_on_offer
+- [x] D1 cache: Check cache before Serper, store after successful fetch (24h TTL)
+- [x] Remove auth requirement for search (guest can search)
+
+#### 3. Backend Cleanup
+- [x] Remove product CRUD routes (`/api/products/*`)
+- [x] Remove category routes (`/api/categories/*`)
+- [x] Remove `/api/scrape-product`, `/api/images`
+- [x] Remove helper functions (`isValidProduct`, `rowToProduct`, etc.)
+
+#### 4. Frontend - New Search UI
+- [x] Create `src/components/SearchPage.tsx` - Full-page search, prominent input, results grid
+- [x] Create `src/components/SearchResultCard.tsx` - Dual pricing, store logo, unit price, offer expiry badge
+
+#### 5. Frontend - Routing & Cleanup
+- [x] Update `src/App.tsx` - `/` → `SearchPage` (public), remove Landing route
+- [x] Delete `src/pages/Landing.tsx`
+- [x] Update `src/lib/api.ts` - New search call, remove product/category calls
+- [x] Remove unused imports/components from old PriceTrackr
+
+#### 6. Testing
+- [ ] Test parallel search with real queries
+- [ ] Verify Gemma prompt returns valid structured JSON
+- [ ] Test cache hit/miss behavior
+- [ ] Test frontend search flow end-to-end
 
 ### Phase 2: The Watchlist (The "Memory")
 - [ ] **Database:** Refactor D1 schema to support "Pinned Products" (Snapshots).
