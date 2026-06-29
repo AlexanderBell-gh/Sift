@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Loader2, ShoppingBag, BookmarkCheck, LogOut } from 'lucide-react';
 import type { SearchResult } from '../types';
-import { searchProducts, addToWatchlist } from '../lib/api';
+import { searchProducts, addToWatchlist, removeFromWatchlist, getPinnedIds } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import SearchResultCard from './SearchResultCard';
 
@@ -14,7 +14,15 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [pinned, setPinned] = useState<Set<string>>(new Set());
+  // productId -> watchlistId
+  const [pinned, setPinned] = useState<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    if (!token) return;
+    getPinnedIds(token).then(items => {
+      setPinned(new Map(items.map(i => [i.product_id, i.id])));
+    }).catch(() => {});
+  }, [token]);
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,10 +48,12 @@ export default function SearchPage() {
     if (!token) return;
     try {
       if (pinned.has(result.id)) {
-        setPinned(prev => { const next = new Set(prev); next.delete(result.id); return next; });
+        const wlId = pinned.get(result.id)!;
+        await removeFromWatchlist(token, wlId);
+        setPinned(prev => { const next = new Map(prev); next.delete(result.id); return next; });
       } else {
         const item = await addToWatchlist(token, result);
-        setPinned(prev => { const next = new Set(prev); next.add(item.product_id); return next; });
+        setPinned(prev => { const next = new Map(prev); next.set(item.product_id, item.id); return next; });
       }
     } catch {
       // silent

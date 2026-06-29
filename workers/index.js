@@ -1073,6 +1073,23 @@ async function handleRequest(request, env) {
 
   // ===== WATCHLIST =====
 
+  if (path === '/api/watchlist/ids' && method === 'GET') {
+    const auth = await requireAuth(request, env);
+    if (auth && auth.error) return auth;
+
+    try {
+      const rows = await queryAll(
+        env,
+        'SELECT id, product_id FROM watchlist WHERE user_id = ?',
+        [auth.userId]
+      );
+      return jsonResponse(rows);
+    } catch (e) {
+      console.error('Watchlist IDs error:', e);
+      return errorResponse('Failed to fetch pinned IDs');
+    }
+  }
+
   if (path === '/api/watchlist' && method === 'GET') {
     const auth = await requireAuth(request, env);
     if (auth && auth.error) return auth;

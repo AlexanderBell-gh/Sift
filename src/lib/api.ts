@@ -16,6 +16,13 @@ export async function searchProducts(query: string): Promise<{ results: SearchRe
   return handleResponse(response);
 }
 
+export async function getPinnedIds(token: string): Promise<{ id: string; product_id: string }[]> {
+  const response = await fetch(`${API_BASE_URL}/api/watchlist/ids`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
 export async function getWatchlist(token: string): Promise<WatchlistItem[]> {
   const response = await fetch(`${API_BASE_URL}/api/watchlist`, {
     headers: { Authorization: `Bearer ${token}` },
