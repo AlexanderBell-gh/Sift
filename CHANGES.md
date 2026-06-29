@@ -18,3 +18,16 @@ Add info after the last line of '#' you see, if the date is different add a line
 - Remote D1 `pricetrackr` — Created `search_cache` table manually, then applied full schema.sql
 - GitHub Actions — `main` branch deploy configured; fixed build error in CI
 
+### Phase 2: Watchlist (Memory)
+- `workers/schema.sql` — Added `watchlist` table with product snapshot columns + user/product indexes
+- `workers/index.js` — Added `/api/watchlist` CRUD (GET user's items, POST pin, DELETE unpin)
+- `workers/index.js` — Dedup via `product_id` hash; returns `already_pinned` if duplicate
+- `src/types/index.ts` — Added `WatchlistItem` interface
+- `src/lib/api.ts` — Added `getWatchlist`, `addToWatchlist`, `removeFromWatchlist` functions
+- `src/contexts/AuthContext.tsx` — Created auth context with login, register, logout, token persistence via localStorage
+- `src/components/AuthPage.tsx` — Created login/register page with toggle tabs, error display, loading state
+- `src/components/SearchPage.tsx` — Added nav header with sign in/out, watchlist link; passes auth/pin props to cards
+- `src/components/SearchResultCard.tsx` — Added pin/unpin button (MapPin icon), authenticated/pinned props
+- `src/components/WatchlistPage.tsx` — Created watchlist dashboard with grid view, remove button, pin date display
+- `src/App.tsx` — Added `/auth` and `/watchlist` routes; wrapped app in `AuthProvider`
+

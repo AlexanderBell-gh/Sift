@@ -69,13 +69,15 @@ Transform the project into **Sift**, an interactive, real-time price comparison 
 - [ ] Test cache hit/miss behavior
 - [ ] Test frontend search flow end-to-end
 
-### Phase 2: The Watchlist (The "Memory")
-- [ ] **Database:** Refactor D1 schema to support "Pinned Products" (Snapshots).
-- [ ] **Identity Logic:** Implement logic to match new search results against existing pinned items to prevent duplicates.
-- [ ] **Backend:** Implement `/api/watchlist` (GET, POST, DELETE).
-- [ ] **Frontend:** Implement "Pin/Unpin" functionality on search results.
-- [ ] **Frontend:** Build the Watchlist Dashboard.
-- [ ] **Auth:** Implement a simplified Auth system (minimalist JWT/Session).
+### Phase 2: The Watchlist (The "Memory") — IN PROGRESS
+- [x] **Database:** Add `watchlist` table to D1 schema (store snapshots of pinned products)
+- [x] **Backend:** Implement `/api/watchlist` (GET, POST, DELETE) with user auth
+- [x] **Identity Logic:** Use `product_id` hash for dedup — prevents duplicate pins
+- [x] **Frontend:** Implement "Pin/Unpin" functionality on search results
+- [x] **Frontend:** Build the Watchlist Dashboard (`/watchlist`)
+- [x] **Auth:** Add auth context (login/register page, JWT in localStorage, auto-verify on load)
+- [ ] **Backend:** Add `PATCH /api/watchlist/:id/refresh` to re-search and update prices
+- [ ] **Frontend:** Handle auth flow edge cases (redirect on expired token, protected routes)
 
 ### Phase 3: Polish & Automation (The "Pro" Features)
 - [ ] **UI/UX:** Add animations, skeleton loaders, and improved mobile responsiveness.
