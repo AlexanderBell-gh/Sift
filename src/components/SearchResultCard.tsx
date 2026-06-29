@@ -1,119 +1,129 @@
-import { ExternalLink, Clock, Tag } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, ExternalLink, Tag } from 'lucide-react';
 import type { SearchResult } from '../types';
 
 interface Props {
   result: SearchResult;
+  authenticated?: boolean;
+  pinned?: boolean;
+  onPin?: () => void;
 }
 
-export default function SearchResultCard({ result }: Props) {
-  const { name, store, store_logo, image_url, unit, prices, loyalty_type, offer_expires_at, product_url, is_on_offer } = result;
+function formatPrice(value: number | null): string | null {
+  if (value === null) return null;
+  return `£${value.toFixed(2)}`;
+}
 
-  const formatPrice = (price: number | null) => {
-    if (price === null) return null;
-    return `£${price.toFixed(2)}`;
-  };
+export default function SearchResultCard({ result, authenticated, pinned, onPin }: Props) {
+  const [imgError, setImgError] = useState(false);
+  const { name, store, store_logo, image_url, unit, prices, loyalty_type, offer_expires_at, product_url, is_on_offer } = result;
 
   const normalPrice = formatPrice(prices.normal);
   const loyaltyPrice = formatPrice(prices.loyalty);
-  const unitPrice = prices.unit_price ? `£${prices.unit_price.toFixed(2)}/unit` : null;
+  const unitPrice = formatPrice(prices.unit_price);
 
-  const isExpired = offer_expires_at && new Date(offer_expires_at) < new Date();
+  const offerExpired = offer_expires_at ? new Date(offer_expires_at) < new Date() : false;
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden backdrop-blur-sm hover:border-emerald-500/50 transition-colors">
-      {/* Image */}
-      <div className="relative h-40 bg-gray-900">
-        {image_url ? (
-          <img
-            src={image_url}
-            alt={name}
-            className="w-full h-full object-contain p-2"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-4xl">🛒</span>
-          </div>
-        )}
-        {is_on_offer && (
-          <div className="absolute top-2 left-2 px-2 py-1 bg-orange-500 rounded text-xs font-medium text-white">
+    <div className="product-card group relative animate-fade-in-up">
+      {is_on_offer && !offerExpired && (
+        <div className="absolute top-3 left-3 z-10">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/90 text-white shadow-lg">
+            <Tag className="w-3 h-3" />
             ON OFFER
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        {/* Store */}
-        <div className="flex items-center gap-2 mb-2">
-          {store_logo && (
-            <img src={store_logo} alt={store} className="w-5 h-5 object-contain" />
-          )}
-          <span className="text-sm text-gray-400">{store}</span>
+          </span>
         </div>
+      )}
 
-        {/* Name */}
-        <h3 className="text-white font-medium mb-2 line-clamp-2">{name}</h3>
+      {authenticated && onPin && (
+        <button
+          onClick={onPin}
+          className={`absolute top-3 right-3 z-10 p-2 rounded-lg transition-colors ${
+            pinned
+              ? 'bg-accent text-black'
+              : 'bg-black/30 text-white/70 hover:text-white hover:bg-black/50 backdrop-blur-sm'
+          }`}
+          title={pinned ? 'Remove from watchlist' : 'Add to watchlist'}
+        >
+          <MapPin className={`w-4 h-4 ${pinned ? 'fill-current' : ''}`} />
+        </button>
+      )}
 
-        {/* Unit */}
-        {unit && (
-          <p className="text-xs text-gray-500 mb-2">{unit}</p>
-        )}
-
-        {/* Prices */}
-        <div className="space-y-1 mb-3">
-          {normalPrice && (
-            <div className="flex items-center gap-2">
-              <span className={`text-lg font-bold ${loyaltyPrice ? 'text-gray-500 line-through' : 'text-white'}`}>
-                {normalPrice}
-              </span>
-              {loyaltyPrice && (
-                <span className="text-lg font-bold text-emerald-400">
-                  {loyaltyPrice}
-                </span>
-              )}
+      <a href={product_url} target="_blank" rel="noopener noreferrer" className="block">
+        <div className="product-image">
+          {image_url && !imgError ? (
+            <img
+              src={image_url}
+              alt={name}
+              onError={() => setImgError(true)}
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-400 text-xs font-medium">
+              {store.slice(0, 2).toUpperCase()}
             </div>
           )}
-          {!normalPrice && loyaltyPrice && (
-            <span className="text-lg font-bold text-emerald-400">{loyaltyPrice}</span>
+        </div>
+      </a>
+
+      <div className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          {store_logo && (
+            <img src={store_logo} alt={store} className="w-5 h-5 rounded-full object-contain" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          )}
+          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{store}</span>
+        </div>
+
+        <a href={product_url} target="_blank" rel="noopener noreferrer">
+          <h3 className="font-medium text-zinc-800 dark:text-white leading-snug line-clamp-2 hover:text-accent transition-colors">
+            {name}
+          </h3>
+        </a>
+
+        {unit && (
+          <p className="text-xs text-zinc-400">{unit}</p>
+        )}
+
+        <div className="flex items-baseline gap-3">
+          {normalPrice && (
+            <span className="price-display text-zinc-800 dark:text-white">{normalPrice}</span>
+          )}
+          {loyaltyPrice && loyaltyPrice !== normalPrice && (
+            <span className="text-sm font-medium text-emerald-500">{loyaltyPrice}</span>
           )}
           {unitPrice && (
-            <p className="text-xs text-gray-500">{unitPrice}</p>
+            <span className="text-xs text-zinc-400">({unitPrice}/{unit?.replace(/[\d.\s]/g, '') || 'unit'})</span>
           )}
         </div>
 
-        {/* Loyalty Type */}
-        {loyalty_type && (
-          <div className="flex items-center gap-1 mb-2">
-            <Tag className="w-3 h-3 text-emerald-400" />
-            <span className="text-xs text-emerald-400">{loyalty_type}</span>
-          </div>
-        )}
-
-        {/* Expiry */}
-        {offer_expires_at && (
-          <div className={`flex items-center gap-1 mb-3 ${isExpired ? 'text-red-400' : 'text-yellow-400'}`}>
-            <Clock className="w-3 h-3" />
-            <span className="text-xs">
-              {isExpired ? 'Expired' : `Expires ${new Date(offer_expires_at).toLocaleDateString('en-GB')}`}
+        {loyalty_type && loyaltyPrice && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+              {loyalty_type}
             </span>
+            <span className="text-xs text-zinc-400">price</span>
           </div>
         )}
 
-        {/* Link */}
-        {product_url && (
+        <div className="flex items-center justify-between pt-1">
+          {offer_expires_at && !offerExpired && (
+            <span className="text-[11px] text-amber-500 font-medium">
+              Offer ends {new Date(offer_expires_at).toLocaleDateString('en-GB')}
+            </span>
+          )}
+          {offerExpired && (
+            <span className="text-[11px] text-zinc-500">Offer expired</span>
+          )}
           <a
             href={product_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+            className="ml-auto text-zinc-400 hover:text-accent transition-colors"
+            title="View product"
           >
             <ExternalLink className="w-4 h-4" />
-            <span>View product</span>
           </a>
-        )}
+        </div>
       </div>
     </div>
   );

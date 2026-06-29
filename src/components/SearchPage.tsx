@@ -1,15 +1,20 @@
 import { useState, useCallback } from 'react';
-import { Search, Loader2, ShoppingBag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Loader2, ShoppingBag, BookmarkCheck, LogOut } from 'lucide-react';
 import type { SearchResult } from '../types';
-import { searchProducts } from '../lib/api';
+import { searchProducts, addToWatchlist } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 import SearchResultCard from './SearchResultCard';
 
 export default function SearchPage() {
+  const { token, user, logout } = useAuth();
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [pinned, setPinned] = useState<Set<string>>(new Set());
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,16 +36,62 @@ export default function SearchPage() {
     }
   }, [query]);
 
+  async function handlePin(result: SearchResult) {
+    if (!token) return;
+    try {
+      if (pinned.has(result.id)) {
+        setPinned(prev => { const next = new Set(prev); next.delete(result.id); return next; });
+      } else {
+        const item = await addToWatchlist(token, result);
+        setPinned(prev => { const next = new Set(prev); next.add(item.product_id); return next; });
+      }
+    } catch {
+      // silent
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Nav */}
+      <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <span className="text-xl font-bold gradient-text">Sift</span>
+          <div className="flex items-center gap-3">
+            {token && (
+              <button
+                onClick={() => navigate('/watchlist')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <BookmarkCheck className="w-4 h-4" />
+                Watchlist
+              </button>
+            )}
+            {token ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-400">{user?.username}</span>
+                <button
+                  onClick={() => { logout(); navigate('/'); }}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/auth')}
+                className="px-3 py-1.5 rounded-lg text-sm bg-accent text-black font-medium hover:bg-accent-light transition-colors"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
-              Sift
-            </span>
-          </h1>
           <p className="text-gray-400">Compare prices across UK supermarkets</p>
         </div>
 
@@ -95,7 +146,13 @@ export default function SearchPage() {
         {!loading && results.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {results.map((result) => (
-              <SearchResultCard key={result.id} result={result} />
+              <SearchResultCard
+                key={result.id}
+                result={result}
+                authenticated={!!token}
+                pinned={pinned.has(result.id)}
+                onPin={() => handlePin(result)}
+              />
             ))}
           </div>
         )}
