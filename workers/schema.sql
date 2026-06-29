@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   username TEXT UNIQUE NOT NULL,
@@ -11,9 +11,9 @@ CREATE TABLE users (
   created_at TEXT NOT NULL
 );
 
-CREATE INDEX idx_users_trial_expires ON users(trial_expires_at) WHERE is_trial = 1;
+CREATE INDEX IF NOT EXISTS idx_users_trial_expires ON users(trial_expires_at) WHERE is_trial = 1;
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   name TEXT NOT NULL,
@@ -26,12 +26,12 @@ CREATE TABLE products (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_products_user ON products(user_id);
-CREATE INDEX idx_products_user_category ON products(user_id, category);
-CREATE INDEX idx_products_user_store ON products(user_id, store);
-CREATE INDEX idx_products_user_created ON products(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_products_user ON products(user_id);
+CREATE INDEX IF NOT EXISTS idx_products_user_category ON products(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_products_user_store ON products(user_id, store);
+CREATE INDEX IF NOT EXISTS idx_products_user_created ON products(user_id, created_at);
 
-CREATE TABLE prices (
+CREATE TABLE IF NOT EXISTS prices (
   id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
@@ -42,10 +42,10 @@ CREATE TABLE prices (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_prices_product ON prices(product_id);
-CREATE INDEX idx_prices_user_date ON prices(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_prices_product ON prices(product_id);
+CREATE INDEX IF NOT EXISTS idx_prices_user_date ON prices(user_id, date);
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id TEXT PRIMARY KEY,
   user_id TEXT,
   name TEXT NOT NULL,
@@ -53,9 +53,9 @@ CREATE TABLE categories (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_categories_user ON categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id);
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY,
   action TEXT NOT NULL,
   admin_id TEXT NOT NULL,
@@ -66,22 +66,22 @@ CREATE TABLE audit_logs (
   timestamp INTEGER NOT NULL
 );
 
-CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp DESC);
-CREATE INDEX idx_audit_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
 
-CREATE TABLE rate_limits (
+CREATE TABLE IF NOT EXISTS rate_limits (
   key TEXT PRIMARY KEY,
   count INTEGER NOT NULL,
   reset_at INTEGER NOT NULL
 );
 
-CREATE INDEX idx_rate_limits_reset ON rate_limits(reset_at);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at);
 
-CREATE TABLE search_cache (
+CREATE TABLE IF NOT EXISTS search_cache (
   query_hash TEXT PRIMARY KEY,
   query TEXT NOT NULL,
   results TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
 
-CREATE INDEX idx_cache_created ON search_cache(created_at);
+CREATE INDEX IF NOT EXISTS idx_cache_created ON search_cache(created_at);
