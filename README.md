@@ -1,4 +1,4 @@
-# PriceTrackr → Sift (WIP)
+# Sift (WIP) - Previously PriceTrackr  
 
 > 🚧 **Under Construction** — Major rewrite in progress. Old PriceTrackr UI/features being replaced with Sift (real-time supermarket search + smart watchlist).
 
