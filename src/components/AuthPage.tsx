@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
 
 export default function AuthPage() {
   const { login, register } = useAuth();
@@ -41,24 +43,22 @@ export default function AuthPage() {
 
         <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
           <div className="flex gap-2 mb-2">
-            <button
+            <Button
               type="button"
+              variant={isLogin ? 'primary' : 'ghost'}
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isLogin ? 'bg-accent text-black' : 'bg-white/5 text-zinc-400 hover:text-white'
-              }`}
+              className="flex-1"
             >
               <LogIn className="inline w-4 h-4 mr-1" /> Sign In
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant={!isLogin ? 'primary' : 'ghost'}
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                !isLogin ? 'bg-accent text-black' : 'bg-white/5 text-zinc-400 hover:text-white'
-              }`}
+              className="flex-1"
             >
               <UserPlus className="inline w-4 h-4 mr-1" /> Register
-            </button>
+            </Button>
           </div>
 
           {error && (
@@ -67,50 +67,42 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div>
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-accent/50 transition-colors text-sm"
-            />
-          </div>
+          <Input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            required
+          />
 
           {!isLogin && (
-            <div>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-accent/50 transition-colors text-sm"
-              />
-            </div>
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           )}
 
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              minLength={8}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-accent/50 transition-colors text-sm"
-            />
-          </div>
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            minLength={8}
+          />
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
             disabled={loading}
-            className="w-full bg-accent hover:bg-accent-light text-black font-medium rounded-xl px-4 py-3 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             {isLogin ? 'Sign In' : 'Create Account'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

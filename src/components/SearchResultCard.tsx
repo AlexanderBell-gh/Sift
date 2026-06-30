@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { MapPin, ExternalLink, Tag } from 'lucide-react';
 import type { SearchResult } from '../types';
+import { cn, formatPrice } from '../lib/utils';
 
 interface Props {
   result: SearchResult;
   authenticated?: boolean;
   pinned?: boolean;
   onPin?: () => void;
+  onRemove?: () => void;
+  showRemove?: boolean;
 }
 
-function formatPrice(value: number | null): string | null {
-  if (value === null) return null;
-  return `£${value.toFixed(2)}`;
-}
-
-export default function SearchResultCard({ result, authenticated, pinned, onPin }: Props) {
+export default function SearchResultCard({ result, authenticated, pinned, onPin, onRemove, showRemove }: Props) {
   const [imgError, setImgError] = useState(false);
   const { name, store, store_logo, image_url, unit, prices, loyalty_type, offer_expires_at, product_url, is_on_offer } = result;
 
@@ -38,14 +36,25 @@ export default function SearchResultCard({ result, authenticated, pinned, onPin 
       {authenticated && onPin && (
         <button
           onClick={onPin}
-          className={`absolute top-3 right-3 z-10 p-2 rounded-lg transition-colors ${
+          className={cn(
+            'absolute top-3 right-3 z-10 p-2 rounded-lg transition-colors',
             pinned
               ? 'bg-accent text-black'
               : 'bg-black/30 text-white/70 hover:text-white hover:bg-black/50 backdrop-blur-sm'
-          }`}
+          )}
           title={pinned ? 'Remove from watchlist' : 'Add to watchlist'}
         >
-          <MapPin className={`w-4 h-4 ${pinned ? 'fill-current' : ''}`} />
+          <MapPin className={cn('w-4 h-4', pinned && 'fill-current')} />
+        </button>
+      )}
+
+      {showRemove && onRemove && (
+        <button
+          onClick={onRemove}
+          className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-black/30 text-white/70 hover:text-red-400 hover:bg-black/50 backdrop-blur-sm transition-colors"
+          title="Remove from watchlist"
+        >
+          <MapPin className="w-4 h-4" />
         </button>
       )}
 
@@ -59,7 +68,7 @@ export default function SearchResultCard({ result, authenticated, pinned, onPin 
               loading="lazy"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-400 text-xs font-medium">
+            <div className="w-16 h-16 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-400 text-xs font-medium">
               {store.slice(0, 2).toUpperCase()}
             </div>
           )}
@@ -71,37 +80,37 @@ export default function SearchResultCard({ result, authenticated, pinned, onPin 
           {store_logo && (
             <img src={store_logo} alt={store} className="w-5 h-5 rounded-full object-contain" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           )}
-          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{store}</span>
+          <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{store}</span>
         </div>
 
         <a href={product_url} target="_blank" rel="noopener noreferrer">
-          <h3 className="font-medium text-zinc-800 dark:text-white leading-snug line-clamp-2 hover:text-accent transition-colors">
+          <h3 className="font-medium text-white leading-snug line-clamp-2 hover:text-accent transition-colors">
             {name}
           </h3>
         </a>
 
         {unit && (
-          <p className="text-xs text-zinc-400">{unit}</p>
+          <p className="text-xs text-zinc-500">{unit}</p>
         )}
 
         <div className="flex items-baseline gap-3">
           {normalPrice && (
-            <span className="price-display text-zinc-800 dark:text-white">{normalPrice}</span>
+            <span className="price-display text-white">{normalPrice}</span>
           )}
           {loyaltyPrice && loyaltyPrice !== normalPrice && (
             <span className="text-sm font-medium text-emerald-500">{loyaltyPrice}</span>
           )}
           {unitPrice && (
-            <span className="text-xs text-zinc-400">({unitPrice}/{unit?.replace(/[\d.\s]/g, '') || 'unit'})</span>
+            <span className="text-xs text-zinc-500">({unitPrice}/{unit?.replace(/[\d.\s]/g, '') || 'unit'})</span>
           )}
         </div>
 
         {loyalty_type && loyaltyPrice && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
               {loyalty_type}
             </span>
-            <span className="text-xs text-zinc-400">price</span>
+            <span className="text-xs text-zinc-500">price</span>
           </div>
         )}
 
@@ -112,13 +121,13 @@ export default function SearchResultCard({ result, authenticated, pinned, onPin 
             </span>
           )}
           {offerExpired && (
-            <span className="text-[11px] text-zinc-500">Offer expired</span>
+            <span className="text-[11px] text-zinc-600">Offer expired</span>
           )}
           <a
             href={product_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-auto text-zinc-400 hover:text-accent transition-colors"
+            className="ml-auto text-zinc-500 hover:text-accent transition-colors"
             title="View product"
           >
             <ExternalLink className="w-4 h-4" />

@@ -114,6 +114,15 @@ pnpm exec wrangler secret put JWT_SECRET
 Sift/
 ├── src/
 │   ├── components/
+│   │   ├── ui/
+│   │   │   ├── Button.tsx        # Primary/secondary/danger/ghost variants
+│   │   │   ├── Badge.tsx         # Simple badge wrapper
+│   │   │   ├── Input.tsx         # Form input with label/error states
+│   │   │   ├── Modal.tsx         # Dialog with backdrop, animations
+│   │   │   ├── Select.tsx        # Dropdown select with chevron
+│   │   │   ├── Toast.tsx         # Toast notification system
+│   │   │   └── useToast.ts       # Toast hook
+│   │   ├── NavHeader.tsx         # Shared nav bar (search + watchlist)
 │   │   ├── SearchPage.tsx        # Search bar + results grid
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
 │   │   ├── WatchlistPage.tsx     # Pinned items dashboard
@@ -121,7 +130,8 @@ Sift/
 │   ├── contexts/
 │   │   └── AuthContext.tsx       # JWT persistence + auto-verify
 │   ├── lib/
-│   │   └── api.ts                # API client
+│   │   ├── api.ts                # API client
+│   │   └── utils.ts              # cn(), formatPrice(), formatDate()
 │   ├── types/
 │   │   └── index.ts              # SearchResult, WatchlistItem
 │   ├── App.tsx                   # Router
