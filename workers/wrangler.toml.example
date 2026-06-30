@@ -3,7 +3,7 @@ main = "index.js"
 compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
-binding = "PRICETRACKR"
+binding = "DB"
 id = "a901eb966d144e3081024b10a345b88a"
 
 [[kv_namespaces]]
