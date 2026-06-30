@@ -13,6 +13,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Unit Price** — Price per 100g/litre for true comparison
 - **Watchlist** — Pin products, track prices, get offer expiry dates
 - **Auth** — JWT accounts to persist watchlists across devices
+- **Autocomplete** — Search suggestions via Serper
 
 ## Tech Stack
 
@@ -23,7 +24,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 | Icons | Lucide React |
 | Backend | Cloudflare Workers |
 | Database | Cloudflare D1 (SQLite) |
-| Search | Serper API |
+| Search | Serper API (web + shopping + autocomplete) |
 | AI | Google AI Studio (Gemma 4) |
 | CI/CD | GitHub Actions |
 | Package Manager | pnpm 11 |
@@ -120,15 +121,14 @@ Sift/
 │   ├── contexts/
 │   │   └── AuthContext.tsx       # JWT persistence + auto-verify
 │   ├── lib/
-│   │   ├── api.ts                # API client
-│   │   └── utils.ts              # Helpers
+│   │   └── api.ts                # API client
 │   ├── types/
 │   │   └── index.ts              # SearchResult, WatchlistItem
 │   ├── App.tsx                   # Router
 │   ├── main.tsx
 │   └── index.css                 # Tailwind + custom styles
 ├── workers/
-│   ├── index.js                  # API routes (~1244 lines)
+│   ├── index.js                  # API routes (~1275 lines)
 │   ├── auth.js                   # JWT + password hashing
 │   ├── db.js                     # D1 query helpers
 │   ├── schema.sql                # Database DDL
@@ -142,7 +142,7 @@ Sift/
 
 1. User submits query → `GET /api/search?q=butter`
 2. Check D1 cache (24h TTL)
-3. Cache miss → parallel fetch 7 stores via Serper API
+3. Cache miss → parallel fetch 7 stores via Serper (web + shopping endpoints)
 4. Raw snippets → Gemma 4 enriches to structured JSON
 5. Returns: `{ results: SearchResult[], cached: boolean }`
 
