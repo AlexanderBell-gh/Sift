@@ -122,13 +122,16 @@ Sift/
 │   │   │   ├── Select.tsx        # Dropdown select with chevron
 │   │   │   ├── Toast.tsx         # Toast notification system
 │   │   │   └── useToast.ts       # Toast hook
-│   │   ├── NavHeader.tsx         # Shared nav bar (search + watchlist)
+│   │   ├── NavHeader.tsx         # Shared nav with theme toggle
 │   │   ├── SearchPage.tsx        # Search bar + results grid
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
 │   │   ├── WatchlistPage.tsx     # Pinned items dashboard
 │   │   └── AuthPage.tsx          # Login/register
 │   ├── contexts/
-│   │   └── AuthContext.tsx       # JWT persistence + auto-verify
+│   │   ├── AuthContext.tsx       # JWT persistence + auto-verify
+│   │   └── ThemeContext.tsx      # Dark/light mode toggle + system pref
+│   ├── hooks/
+│   │   └── useTheme.ts          # Theme context hook
 │   ├── lib/
 │   │   ├── api.ts                # API client
 │   │   └── utils.ts              # cn(), formatPrice(), formatDate()

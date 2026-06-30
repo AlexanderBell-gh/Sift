@@ -64,28 +64,28 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A]">
       <NavHeader />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <p className="text-gray-400">Compare prices across UK supermarkets</p>
+          <p className="text-zinc-500 dark:text-gray-400">Compare prices across UK supermarkets</p>
         </div>
 
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search for products (e.g., Medjool dates, almond milk)"
-              className="w-full pl-12 pr-24 py-4 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm"
+              className="w-full pl-12 pr-24 py-4 bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm transition-colors"
             />
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500               disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -98,22 +98,22 @@ export default function SearchPage() {
 
         {error && (
           <div className="max-w-2xl mx-auto mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
           </div>
         )}
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-16">
             <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
-            <p className="text-gray-400">Searching supermarkets...</p>
+            <p className="text-zinc-500 dark:text-gray-400">Searching supermarkets...</p>
           </div>
         )}
 
         {!loading && hasSearched && results.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center py-16">
-            <ShoppingBag className="w-16 h-16 text-gray-600 mb-4" />
-            <p className="text-gray-400 text-lg">No products found</p>
-            <p className="text-gray-500 text-sm mt-1">Try a different search term</p>
+            <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
+            <p className="text-zinc-600 dark:text-gray-400 text-lg">No products found</p>
+            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Try a different search term</p>
           </div>
         )}
 
@@ -133,9 +133,9 @@ export default function SearchPage() {
 
         {!hasSearched && !loading && (
           <div className="flex flex-col items-center justify-center py-16">
-            <ShoppingBag className="w-16 h-16 text-gray-600 mb-4" />
-            <p className="text-gray-400 text-lg">Start comparing prices</p>
-            <p className="text-gray-500 text-sm mt-1">Search for any product to see prices from 7 UK supermarkets</p>
+            <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
+            <p className="text-zinc-600 dark:text-gray-400 text-lg">Start comparing prices</p>
+            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Search for any product to see prices from 7 UK supermarkets</p>
           </div>
         )}
       </div>
