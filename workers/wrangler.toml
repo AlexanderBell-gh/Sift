@@ -1,4 +1,4 @@
-name = "pricetrackr-api"
+name = "siftapi"
 main = "index.js"
 compatibility_date = "2025-09-15"
 compatibility_flags = ["nodejs_compat"]
@@ -10,12 +10,12 @@ traces = { enabled = false, persist = true, head_sampling_rate = 1 }
 
 [[d1_databases]]
 binding = "DB"
-database_name = "pricetrackr"
-database_id = "451b6a38-7e22-46e2-89d2-09a5bd1d231e"
+database_name = "sift"
+database_id = "d12d4b6e-44d7-4176-b782-57afcfee84e1"
 
 # Secrets must be set via CLI (never commit plaintext):
-#   npx wrangler secret put ADMIN_SECRET
-#   npx wrangler secret put JWT_SECRET
-#   npx wrangler secret put RESEND_API_KEY
-#   npx wrangler secret put SERPER_API_KEY
-#   npx wrangler secret put GEMMA_API_KEY
+#   pnpm exec wrangler secret put ADMIN_SECRET
+#   pnpm exec wrangler secret put JWT_SECRET
+#   pnpm exec wrangler secret put RESEND_API_KEY
+#   pnpm exec wrangler secret put SERPER_API_KEY
+#   pnpm exec wrangler secret put GEMMA_API_KEY

@@ -17,7 +17,8 @@ import { queryAll, queryOne, execute, batch } from './db.js';
 
 
 const ALLOWED_ORIGINS = [
-  'https://price-trackr.pages.dev',
+  'https://sift.pages.dev',
+  'https://sift-a5w.pages.dev',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
