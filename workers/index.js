@@ -207,7 +207,7 @@ async function searchSupermarket(store, query, apiKey) {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ q: siteQuery, num: 5 }),
+      body: JSON.stringify({ q: siteQuery, num: 10, gl: 'uk', hl: 'en' }),
     }, 5000);
     if (!res.ok) return [];
     const data = await res.json();
@@ -217,6 +217,33 @@ async function searchSupermarket(store, query, apiKey) {
       snippet: item.snippet || '',
       store: store.name,
       store_logo: store.logo,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function searchSupermarketShopping(store, query, apiKey) {
+  const siteQuery = `site:${store.domain} "${query}"`;
+  try {
+    const res = await timeoutFetch('https://google.serper.dev/shopping', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ q: siteQuery, num: 10, gl: 'uk', hl: 'en' }),
+    }, 5000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.shopping || []).map(item => ({
+      title: item.title || '',
+      url: item.link || item.url || '',
+      snippet: item.snippet || '',
+      store: store.name,
+      store_logo: store.logo,
+      price: item.price || null,
+      image: item.image || '',
     }));
   } catch {
     return [];
@@ -494,7 +521,7 @@ async function handleRequest(request, env) {
       const { username } = body;
 
       const trialUsername = username || `trial_${crypto.randomUUID().slice(0, 8)}`;
-      const trialEmail = `${trialUsername}@trial.pricetrackr`;
+      const trialEmail = `${trialUsername}@trial.sift`;
 
       if (await getUserByUsername(env, trialUsername)) {
         return errorResponse('Username already in use');
@@ -1012,6 +1039,28 @@ async function handleRequest(request, env) {
 
   // ===== SEARCH =====
 
+  if (path === '/api/search/suggest' && method === 'GET') {
+    const q = url.searchParams.get('q');
+    if (!q || q.length < 2) return jsonResponse({ suggestions: [] });
+    if (!env.SERPER_API_KEY) return jsonResponse({ suggestions: [] });
+
+    try {
+      const res = await timeoutFetch('https://google.serper.dev/autocomplete', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': env.SERPER_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ q, gl: 'uk', hl: 'en' }),
+      }, 3000);
+      if (!res.ok) return jsonResponse({ suggestions: [] });
+      const data = await res.json();
+      return jsonResponse({ suggestions: data.suggestions || [] });
+    } catch {
+      return jsonResponse({ suggestions: [] });
+    }
+  }
+
   if (path === '/api/search' && method === 'GET') {
     const q = url.searchParams.get('q');
     if (!q || typeof q !== 'string' || q.trim().length === 0) {
@@ -1028,7 +1077,10 @@ async function handleRequest(request, env) {
       }
 
       const searchPromises = TARGET_STORES.map(store =>
-        searchSupermarket(store, q, env.SERPER_API_KEY)
+        Promise.all([
+          searchSupermarket(store, q, env.SERPER_API_KEY),
+          searchSupermarketShopping(store, q, env.SERPER_API_KEY),
+        ]).then(([web, shopping]) => [...shopping, ...web])
       );
       const storeResults = await Promise.all(searchPromises);
       const allResults = storeResults.flat();
