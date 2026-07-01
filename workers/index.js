@@ -1089,12 +1089,11 @@ async function handleRequest(request, env) {
         return jsonResponse({ results: cached, cached: true });
       }
 
-      const searchPromises = TARGET_STORES.map(store =>
-        Promise.all([
-          searchSupermarket(store, q, env.SERPER_API_KEY),
-          searchSupermarketShopping(store, q, env.SERPER_API_KEY),
-        ]).then(([web, shopping]) => [...shopping, ...web])
-      );
+      const searchPromises = TARGET_STORES.map(async store => {
+        const shopping = await searchSupermarketShopping(store, q, env.SERPER_API_KEY);
+        if (shopping.length > 0) return shopping;
+        return searchSupermarket(store, q, env.SERPER_API_KEY);
+      });
       const storeResults = await Promise.all(searchPromises);
       const allResults = storeResults.flat();
 
@@ -1110,19 +1109,24 @@ async function handleRequest(request, env) {
         if (env.GEMMA_API_KEY) {
           console.error('Gemma enrichment failed, using raw results');
         }
-        results = allResults.map((r, i) => ({
-          id: hashString(`${r.store}_${r.title}`),
-          name: r.title,
-          store: r.store,
-          store_logo: r.store_logo,
-          image_url: '',
-          unit: null,
-          prices: { normal: null, loyalty: null, unit_price: null, currency: 'GBP' },
-          loyalty_type: null,
-          offer_expires_at: null,
-          product_url: r.url,
-          is_on_offer: false,
-        }));
+         results = allResults.map((r) => ({
+           id: hashString(`${r.store}_${r.title}`),
+           name: r.title,
+           store: r.store,
+           store_logo: r.store_logo,
+           image_url: r.image || '',
+           unit: null,
+           prices: { 
+             normal: r.price ? parseFloat(r.price.replace(/[^\d.]/g, '')) : null, 
+             loyalty: null, 
+             unit_price: null, 
+             currency: 'GBP' 
+           },
+           loyalty_type: null,
+           offer_expires_at: null,
+           product_url: r.url,
+           is_on_offer: false,
+         }));
       }
 
       await setCachedResults(env, q, results);
@@ -1292,11 +1296,8 @@ async function handleRequest(request, env) {
       }
 
       const searchQuery = item.product_name;
-      const [web, shopping] = await Promise.all([
-        searchSupermarket(store, searchQuery, env.SERPER_API_KEY),
-        searchSupermarketShopping(store, searchQuery, env.SERPER_API_KEY),
-      ]);
-      const allResults = [...shopping, ...web];
+      const shopping = await searchSupermarketShopping(store, searchQuery, env.SERPER_API_KEY);
+      const allResults = shopping.length > 0 ? shopping : await searchSupermarket(store, searchQuery, env.SERPER_API_KEY);
 
       let matched = null;
       if (allResults.length > 0 && env.GEMMA_API_KEY) {
@@ -1497,11 +1498,8 @@ async function handleScheduled(env) {
         const store = TARGET_STORES.find(s => s.name === item.store);
         if (!store || !env.SERPER_API_KEY) continue;
 
-        const [web, shopping] = await Promise.all([
-          searchSupermarket(store, item.product_name, env.SERPER_API_KEY),
-          searchSupermarketShopping(store, item.product_name, env.SERPER_API_KEY),
-        ]);
-        const allResults = [...shopping, ...web];
+        const shopping = await searchSupermarketShopping(store, item.product_name, env.SERPER_API_KEY);
+        const allResults = shopping.length > 0 ? shopping : await searchSupermarket(store, item.product_name, env.SERPER_API_KEY);
 
         let matched = null;
         if (allResults.length > 0 && env.GEMMA_API_KEY) {
