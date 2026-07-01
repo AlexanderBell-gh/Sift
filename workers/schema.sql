@@ -83,3 +83,16 @@ CREATE TABLE IF NOT EXISTS alerts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_alerts_user ON alerts(user_id, read, triggered_at);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id TEXT PRIMARY KEY,
+  action TEXT NOT NULL,
+  admin_id TEXT NOT NULL,
+  admin_username TEXT NOT NULL,
+  target_user_id TEXT,
+  target_username TEXT,
+  details TEXT,
+  timestamp INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);

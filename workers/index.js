@@ -705,15 +705,15 @@ async function handleRequest(request, env) {
          SUM(CASE WHEN is_trial = 0 THEN 1 ELSE 0 END) as regular
        FROM users`
     );
-    const productCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM products'))?.c || 0;
-    const priceCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM prices'))?.c || 0;
+    const watchlistCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist'))?.c || 0;
+    const priceHistoryCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM price_history'))?.c || 0;
 
     return jsonResponse({
       totalUsers: userStats?.total || 0,
       regularUsers: userStats?.regular || 0,
       trialUsers: userStats?.trial || 0,
-      totalProducts: productCount,
-      totalPrices: priceCount,
+      totalProducts: watchlistCount,
+      totalPrices: priceHistoryCount,
     });
   }
 
@@ -740,7 +740,7 @@ async function handleRequest(request, env) {
     const rows = await queryAll(
       env,
       `SELECT u.id, u.email, u.username, u.role, u.is_trial, u.trial_expires_at, u.created_at,
-              (SELECT COUNT(*) FROM products WHERE user_id = u.id) as product_count
+              (SELECT COUNT(*) FROM watchlist WHERE user_id = u.id) as product_count
        FROM users u ${whereClause}
        ORDER BY u.created_at DESC LIMIT ? OFFSET ?`,
       [...params, limit, (page - 1) * limit]
@@ -777,15 +777,14 @@ async function handleRequest(request, env) {
 
     const productRows = await queryAll(
       env,
-      `SELECT p.id, p.name, p.category, p.store,
-              (SELECT COUNT(*) FROM prices WHERE product_id = p.id) as price_count
-       FROM products p WHERE p.user_id = ?`,
+      `SELECT w.id, w.product_name as name, w.store, w.product_id,
+              (SELECT COUNT(*) FROM price_history WHERE product_id = w.product_id) as price_count
+       FROM watchlist w WHERE w.user_id = ?`,
       [userId]
     );
     const products = productRows.map((p) => ({
       id: p.id,
       name: p.name,
-      category: p.category,
       store: p.store,
       priceCount: p.price_count,
     }));
@@ -881,7 +880,7 @@ async function handleRequest(request, env) {
         adminUsername: adminUser?.username || 'unknown',
         targetUserId,
         targetUsername: targetUser.username,
-        details: `changed ${targetUser.username} from ${oldRole} to ${newRole}`,
+        details: `changed ${targetUser.username} from ${targetUser.role} to ${newRole}`,
       });
 
       return jsonResponse({ success: true, role: newRole });
@@ -950,31 +949,21 @@ async function handleRequest(request, env) {
          SUM(CASE WHEN is_trial = 0 THEN 1 ELSE 0 END) as regular
        FROM users`
     );
-    const categoryRows = await queryAll(
-      env,
-      'SELECT category, COUNT(*) as count FROM products GROUP BY category'
-    );
-    const categoryDistribution = Object.fromEntries(categoryRows.map((r) => [r.category, r.count]));
 
     const storeRows = await queryAll(
       env,
-      'SELECT store, COUNT(*) as count FROM products WHERE store IS NOT NULL GROUP BY store'
+      'SELECT store, COUNT(*) as count FROM watchlist WHERE store IS NOT NULL GROUP BY store'
     );
     const storeDistribution = Object.fromEntries(storeRows.map((r) => [r.store, r.count]));
 
-    const totalProducts = (await queryOne(env, 'SELECT COUNT(*) as c FROM products'))?.c || 0;
-    const totalPriceEntries = (await queryOne(env, 'SELECT COUNT(*) as c FROM prices'))?.c || 0;
+    const totalProducts = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist'))?.c || 0;
+    const totalPriceEntries = (await queryOne(env, 'SELECT COUNT(*) as c FROM price_history'))?.c || 0;
     const userRegRows = await queryAll(
       env,
       `SELECT date(created_at) as date, COUNT(*) as count FROM users GROUP BY date(created_at) ORDER BY date`
     );
-    const productCreaRows = await queryAll(
-      env,
-      `SELECT date(created_at) as date, COUNT(*) as count FROM products GROUP BY date(created_at) ORDER BY date`
-    );
 
     return jsonResponse({
-      categoryDistribution,
       storeDistribution,
       totalProducts,
       totalPriceEntries,
@@ -982,7 +971,6 @@ async function handleRequest(request, env) {
       regularUsers: userStats?.regular || 0,
       trialUsers: userStats?.trial || 0,
       userRegistrations: userRegRows,
-      productCreations: productCreaRows,
     });
   }
 
@@ -1014,7 +1002,7 @@ async function handleRequest(request, env) {
     const rows = await queryAll(
       env,
       `SELECT u.id, u.username, u.email, u.created_at, u.trial_expires_at,
-              (SELECT COUNT(*) FROM products WHERE user_id = u.id) as product_count
+              (SELECT COUNT(*) FROM watchlist WHERE user_id = u.id) as product_count
        FROM users u ${whereClause}
        ORDER BY u.created_at DESC LIMIT ? OFFSET ?`,
       [...params, limit, (page - 1) * limit]
@@ -1458,16 +1446,6 @@ async function handleRequest(request, env) {
       console.error('Alert read error:', e);
       return errorResponse('Failed to mark alert as read');
     }
-  }
-
-  // ===== HEALTH =====
-
-  if (path === '/api/health' && method === 'GET') {
-    return jsonResponse({
-      status: 'ok',
-      version: '1.0.0',
-      timestamp: Date.now(),
-    });
   }
 
   return errorResponse('Not found', 404);
