@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BookmarkCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -6,8 +6,11 @@ import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import type { WatchlistItem } from '../types';
 import SearchResultCard from './SearchResultCard';
 import NavHeader from './NavHeader';
+import FilterDropdown from './FilterDropdown';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
+
+const ALL_STORES = ['Tesco', "Sainsbury's", 'ASDA', 'Morrisons', 'M&S', 'Aldi', 'Lidl'];
 
 export default function WatchlistPage() {
   const { token } = useAuth();
@@ -15,6 +18,9 @@ export default function WatchlistPage() {
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast, showToast, hideToast } = useToast();
+
+  const [selectedStores, setSelectedStores] = useState<string[]>(ALL_STORES);
+  const [sortBy, setSortBy] = useState('relevance');
 
   useEffect(() => {
     if (!token) {
@@ -26,6 +32,24 @@ export default function WatchlistPage() {
       .catch(() => showToast('Failed to load watchlist', 'error'))
       .finally(() => setLoading(false));
   }, [token, navigate]);
+
+  const filtered = useMemo(() => {
+    let result = items.filter(i => selectedStores.includes(i.store));
+
+    switch (sortBy) {
+      case 'price_asc':
+        result = [...result].sort((a, b) => (a.prices.normal ?? Infinity) - (b.prices.normal ?? Infinity));
+        break;
+      case 'price_desc':
+        result = [...result].sort((a, b) => (b.prices.normal ?? -1) - (a.prices.normal ?? -1));
+        break;
+      case 'store_asc':
+        result = [...result].sort((a, b) => a.store.localeCompare(b.store));
+        break;
+    }
+
+    return result;
+  }, [items, selectedStores, sortBy]);
 
   async function handleRemove(id: string) {
     if (!token) return;
@@ -43,6 +67,18 @@ export default function WatchlistPage() {
       <NavHeader title="Watchlist" showBack />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Filter toolbar */}
+        {!loading && items.length > 0 && (
+          <div className="mb-6">
+            <FilterDropdown
+              selectedStores={selectedStores}
+              onStoresChange={setSelectedStores}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
+          </div>
+        )}
+
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -74,9 +110,16 @@ export default function WatchlistPage() {
           </div>
         )}
 
-        {!loading && items.length > 0 && (
+        {!loading && items.length > 0 && filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <p className="text-zinc-600 dark:text-gray-400 text-lg">No items match filters</p>
+            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Try selecting more stores</p>
+          </div>
+        )}
+
+        {!loading && filtered.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map((item) => (
+            {filtered.map((item) => (
               <SearchResultCard
                 key={item.id}
                 result={{
