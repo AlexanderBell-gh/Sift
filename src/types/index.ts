@@ -39,3 +39,15 @@ export interface WatchlistItem {
   created_at: number;
   updated_at: number;
 }
+
+export interface Alert {
+  id: string;
+  user_id: string;
+  watchlist_id: string;
+  type: 'price_drop' | 'offer_expiry' | 'offer_created';
+  message: string;
+  old_price: number | null;
+  new_price: number | null;
+  triggered_at: number;
+  read: boolean;
+}

@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { BookmarkCheck } from 'lucide-react';
+import { BookmarkCheck, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getWatchlist, removeFromWatchlist } from '../lib/api';
+import { getWatchlist, removeFromWatchlist, refreshWatchlistItem } from '../lib/api';
 import type { WatchlistItem } from '../types';
 import SearchResultCard from './SearchResultCard';
 import NavHeader from './NavHeader';
@@ -21,6 +21,7 @@ export default function WatchlistPage() {
 
   const [selectedStores, setSelectedStores] = useState<string[]>(ALL_STORES);
   const [sortBy, setSortBy] = useState('relevance');
+  const [refreshing, setRefreshing] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!token) {
@@ -60,6 +61,42 @@ export default function WatchlistPage() {
     } catch {
       showToast('Failed to remove item', 'error');
     }
+  }
+
+  async function handleRefresh(id: string) {
+    if (!token) return;
+    setRefreshing(prev => new Set(prev).add(id));
+    try {
+      const result = await refreshWatchlistItem(token, id);
+      setItems(prev => prev.map(i => i.id === id ? result.item : i));
+      if (result.priceChanged && result.previousPrices) {
+        const old = result.previousPrices.normal;
+        const curr = result.item.prices.normal;
+        if (old !== null && curr !== null) {
+          showToast(`Price updated: £${old.toFixed(2)} → £${curr.toFixed(2)}`, 'success');
+        } else {
+          showToast('Price updated', 'success');
+        }
+      } else {
+        showToast('Price checked — no change', 'info');
+      }
+    } catch {
+      showToast('Failed to refresh price', 'error');
+    } finally {
+      setRefreshing(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
+
+  function formatTimeAgo(ts: number) {
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
   }
 
   return (
@@ -120,24 +157,38 @@ export default function WatchlistPage() {
         {!loading && filtered.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((item) => (
-              <SearchResultCard
-                key={item.id}
-                result={{
-                  id: item.product_id,
-                  name: item.product_name,
-                  store: item.store,
-                  store_logo: item.store_logo,
-                  image_url: item.image_url,
-                  unit: item.unit,
-                  prices: item.prices,
-                  loyalty_type: item.loyalty_type,
-                  offer_expires_at: item.offer_expires_at,
-                  product_url: item.product_url,
-                  is_on_offer: item.is_on_offer,
-                }}
-                showRemove
-                onRemove={() => handleRemove(item.id)}
-              />
+              <div key={item.id} className="relative">
+                <SearchResultCard
+                  result={{
+                    id: item.product_id,
+                    name: item.product_name,
+                    store: item.store,
+                    store_logo: item.store_logo,
+                    image_url: item.image_url,
+                    unit: item.unit,
+                    prices: item.prices,
+                    loyalty_type: item.loyalty_type,
+                    offer_expires_at: item.offer_expires_at,
+                    product_url: item.product_url,
+                    is_on_offer: item.is_on_offer,
+                  }}
+                  showRemove
+                  onRemove={() => handleRemove(item.id)}
+                />
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleRefresh(item.id)}
+                    disabled={refreshing.has(item.id)}
+                    className="p-2 rounded-lg bg-black/30 dark:bg-black/30 text-white/70 hover:text-white hover:bg-black/50 backdrop-blur-sm transition-colors disabled:opacity-50"
+                    title="Refresh price"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${refreshing.has(item.id) ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+                <div className="px-4 pb-1">
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">Updated {formatTimeAgo(item.updated_at)}</p>
+                </div>
+              </div>
             ))}
           </div>
         )}

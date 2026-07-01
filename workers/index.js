@@ -342,6 +342,31 @@ Rules:
   }
 }
 
+function reassembleWatchlistItem(r) {
+  return {
+    id: r.id,
+    product_id: r.product_id,
+    product_name: r.product_name,
+    store: r.store,
+    store_logo: r.store_logo,
+    image_url: r.image_url,
+    unit: r.unit,
+    prices: {
+      normal: r.normal_price,
+      loyalty: r.loyalty_price,
+      unit_price: r.unit_price,
+      currency: r.currency,
+    },
+    loyalty_type: r.loyalty_type,
+    offer_expires_at: r.offer_expires_at,
+    product_url: r.product_url,
+    is_on_offer: !!r.is_on_offer,
+    notes: r.notes,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  };
+}
+
 async function handleRequest(request, env) {
   setCorsHeaders(request);
   const url = new URL(request.url);
@@ -1260,6 +1285,105 @@ async function handleRequest(request, env) {
     }
   }
 
+  if (path.match(/^\/api\/watchlist\/.+\/refresh$/) && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    const itemId = path.split('/')[3];
+    try {
+      const item = await queryOne(
+        env,
+        'SELECT * FROM watchlist WHERE id = ? AND user_id = ?',
+        [itemId, auth.userId]
+      );
+      if (!item) return errorResponse('Watchlist item not found', 404);
+
+      const store = TARGET_STORES.find(s => s.name === item.store);
+      if (!store || !env.SERPER_API_KEY) {
+        return errorResponse('Search service not available', 503);
+      }
+
+      const searchQuery = item.product_name;
+      const [web, shopping] = await Promise.all([
+        searchSupermarket(store, searchQuery, env.SERPER_API_KEY),
+        searchSupermarketShopping(store, searchQuery, env.SERPER_API_KEY),
+      ]);
+      const allResults = [...shopping, ...web];
+
+      let matched = null;
+      if (allResults.length > 0 && env.GEMMA_API_KEY) {
+        const enriched = await enrichWithGemma(allResults, env.GEMMA_API_KEY);
+        if (enriched) {
+          matched = enriched.find(r => r.store === item.store) || enriched[0];
+        }
+      }
+
+      if (!matched) {
+        return jsonResponse({
+          item: reassembleWatchlistItem(item),
+          priceChanged: false,
+          previousPrices: null,
+        });
+      }
+
+      const oldPrices = {
+        normal: item.normal_price,
+        loyalty: item.loyalty_price,
+      };
+
+      const newNormal = matched.prices?.normal ?? item.normal_price;
+      const newLoyalty = matched.prices?.loyalty ?? item.loyalty_price;
+      const newUnit = matched.prices?.unit_price ?? item.unit_price;
+      const priceChanged = newNormal !== item.normal_price || newLoyalty !== item.loyalty_price;
+
+      const historyId = `ph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      await execute(
+        env,
+        `INSERT INTO price_history (id, product_id, store, normal_price, loyalty_price, unit_price, recorded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [historyId, item.product_id, item.store, item.normal_price, item.loyalty_price, item.unit_price, Date.now()]
+      );
+
+      await execute(
+        env,
+        `UPDATE watchlist SET
+          normal_price = ?, loyalty_price = ?, unit_price = ?,
+          image_url = COALESCE(NULLIF(?, ''), image_url),
+          offer_expires_at = COALESCE(?, offer_expires_at),
+          is_on_offer = ?, updated_at = ?
+         WHERE id = ?`,
+        [
+          newNormal, newLoyalty, newUnit,
+          matched.image_url || '',
+          matched.offer_expires_at || item.offer_expires_at,
+          matched.is_on_offer ? 1 : (item.is_on_offer),
+          Date.now(),
+          itemId,
+        ]
+      );
+
+      if (priceChanged && newNormal !== null && oldPrices.normal !== null && newNormal < oldPrices.normal) {
+        const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await execute(
+          env,
+          `INSERT INTO alerts (id, user_id, watchlist_id, type, message, old_price, new_price, triggered_at, read)
+           VALUES (?, ?, ?, 'price_drop', ?, ?, ?, ?, 0)`,
+          [alertId, auth.userId, itemId, `Price dropped: £${oldPrices.normal.toFixed(2)} → £${newNormal.toFixed(2)}`, oldPrices.normal, newNormal, Date.now()]
+        );
+      }
+
+      const updated = await queryOne(env, 'SELECT * FROM watchlist WHERE id = ?', [itemId]);
+      return jsonResponse({
+        item: reassembleWatchlistItem(updated),
+        priceChanged,
+        previousPrices: priceChanged ? oldPrices : null,
+      });
+    } catch (e) {
+      console.error('Watchlist refresh error:', e);
+      return errorResponse('Failed to refresh item');
+    }
+  }
+
   const watchlistItemMatch = path.match(/^\/api\/watchlist\/(.+)$/);
   if (watchlistItemMatch && method === 'DELETE') {
     const auth = await requireAuth(request, env);
@@ -1282,6 +1406,70 @@ async function handleRequest(request, env) {
     }
   }
 
+  // ===== ALERTS =====
+
+  if (path === '/api/alerts' && method === 'GET') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    try {
+      const rows = await queryAll(
+        env,
+        'SELECT * FROM alerts WHERE user_id = ? ORDER BY triggered_at DESC LIMIT 50',
+        [auth.userId]
+      );
+      const unreadCount = rows.filter(r => !r.read).length;
+      return jsonResponse({
+        alerts: rows.map(r => ({
+          id: r.id,
+          user_id: r.user_id,
+          watchlist_id: r.watchlist_id,
+          type: r.type,
+          message: r.message,
+          old_price: r.old_price,
+          new_price: r.new_price,
+          triggered_at: r.triggered_at,
+          read: !!r.read,
+        })),
+        unreadCount,
+      });
+    } catch (e) {
+      console.error('Alerts GET error:', e);
+      return errorResponse('Failed to fetch alerts');
+    }
+  }
+
+  if (path.match(/^\/api\/alerts\/.+\/read$/) && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    const alertId = path.split('/')[3];
+    try {
+      const row = await queryOne(
+        env,
+        'SELECT id FROM alerts WHERE id = ? AND user_id = ?',
+        [alertId, auth.userId]
+      );
+      if (!row) return errorResponse('Alert not found', 404);
+
+      await execute(env, 'UPDATE alerts SET read = 1 WHERE id = ?', [alertId]);
+      return jsonResponse({ success: true });
+    } catch (e) {
+      console.error('Alert read error:', e);
+      return errorResponse('Failed to mark alert as read');
+    }
+  }
+
+  // ===== HEALTH =====
+
+  if (path === '/api/health' && method === 'GET') {
+    return jsonResponse({
+      status: 'ok',
+      version: '1.0.0',
+      timestamp: Date.now(),
+    });
+  }
+
   return errorResponse('Not found', 404);
 }
 
@@ -1294,4 +1482,129 @@ export default {
       return errorResponse('Internal server error', 500);
     }
   },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(handleScheduled(env));
+  },
 };
+
+async function handleScheduled(env) {
+  const MAX_ITEMS_PER_USER = 10;
+  const MAX_ITEMS_TOTAL = 100;
+  const FRESHNESS_MS = 6 * 60 * 60 * 1000;
+  const DELAY_MS = 500;
+  const MAX_CONSECUTIVE_FAILURES = 3;
+
+  const users = await queryAll(env, 'SELECT DISTINCT user_id FROM watchlist');
+  let totalRefreshed = 0;
+  let totalAlerts = 0;
+
+  for (const { user_id } of users) {
+    if (totalRefreshed >= MAX_ITEMS_TOTAL) break;
+
+    const items = await queryAll(
+      env,
+      'SELECT * FROM watchlist WHERE user_id = ? ORDER BY updated_at ASC LIMIT ?',
+      [user_id, MAX_ITEMS_PER_USER]
+    );
+
+    let consecutiveFailures = 0;
+
+    for (const item of items) {
+      if (totalRefreshed >= MAX_ITEMS_TOTAL) break;
+
+      const age = Date.now() - item.updated_at;
+      if (age < FRESHNESS_MS) continue;
+
+      try {
+        const store = TARGET_STORES.find(s => s.name === item.store);
+        if (!store || !env.SERPER_API_KEY) continue;
+
+        const [web, shopping] = await Promise.all([
+          searchSupermarket(store, item.product_name, env.SERPER_API_KEY),
+          searchSupermarketShopping(store, item.product_name, env.SERPER_API_KEY),
+        ]);
+        const allResults = [...shopping, ...web];
+
+        let matched = null;
+        if (allResults.length > 0 && env.GEMMA_API_KEY) {
+          const enriched = await enrichWithGemma(allResults, env.GEMMA_API_KEY);
+          if (enriched) matched = enriched.find(r => r.store === item.store) || enriched[0];
+        }
+
+        if (!matched) {
+          consecutiveFailures++;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) break;
+          continue;
+        }
+
+        consecutiveFailures = 0;
+
+        const oldNormal = item.normal_price;
+        const newNormal = matched.prices?.normal ?? item.normal_price;
+        const newLoyalty = matched.prices?.loyalty ?? item.loyalty_price;
+        const newUnit = matched.prices?.unit_price ?? item.unit_price;
+
+        const historyId = `ph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await execute(
+          env,
+          `INSERT INTO price_history (id, product_id, store, normal_price, loyalty_price, unit_price, recorded_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [historyId, item.product_id, item.store, item.normal_price, item.loyalty_price, item.unit_price, Date.now()]
+        );
+
+        await execute(
+          env,
+          `UPDATE watchlist SET
+            normal_price = ?, loyalty_price = ?, unit_price = ?,
+            image_url = COALESCE(NULLIF(?, ''), image_url),
+            offer_expires_at = COALESCE(?, offer_expires_at),
+            is_on_offer = ?, updated_at = ?
+           WHERE id = ?`,
+          [
+            newNormal, newLoyalty, newUnit,
+            matched.image_url || '',
+            matched.offer_expires_at || item.offer_expires_at,
+            matched.is_on_offer ? 1 : (item.is_on_offer),
+            Date.now(),
+            item.id,
+          ]
+        );
+
+        if (newNormal !== null && oldNormal !== null && newNormal < oldNormal) {
+          const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          await execute(
+            env,
+            `INSERT INTO alerts (id, user_id, watchlist_id, type, message, old_price, new_price, triggered_at, read)
+             VALUES (?, ?, ?, 'price_drop', ?, ?, ?, ?, 0)`,
+            [alertId, user_id, item.id, `Price dropped: £${oldNormal.toFixed(2)} → £${newNormal.toFixed(2)}`, oldNormal, newNormal, Date.now()]
+          );
+          totalAlerts++;
+        }
+
+        if (item.offer_expires_at) {
+          const expiresAt = new Date(item.offer_expires_at).getTime();
+          const hoursUntilExpiry = (expiresAt - Date.now()) / (1000 * 60 * 60);
+          if (hoursUntilExpiry > 0 && hoursUntilExpiry < 24) {
+            const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await execute(
+              env,
+              `INSERT INTO alerts (id, user_id, watchlist_id, type, message, old_price, new_price, triggered_at, read)
+               VALUES (?, ?, ?, 'offer_expiry', ?, NULL, NULL, ?, 0)`,
+              [alertId, user_id, item.id, `Offer ends tomorrow: ${item.product_name}`, Date.now()]
+            );
+            totalAlerts++;
+          }
+        }
+
+        totalRefreshed++;
+        await new Promise(r => setTimeout(r, DELAY_MS));
+      } catch (e) {
+        console.error(`Cron refresh failed for item ${item.id}:`, e?.message || e);
+        consecutiveFailures++;
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) break;
+      }
+    }
+  }
+
+  console.log(`Cron: refreshed ${totalRefreshed} items, created ${totalAlerts} alerts`);
+}

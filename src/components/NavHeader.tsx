@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookmarkCheck, LogOut, ArrowLeft, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
+import AlertBell from './AlertBell';
 
 interface NavHeaderProps {
   title?: string;
@@ -35,6 +36,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+          <AlertBell />
           {token && (
             <button
               onClick={() => navigate('/watchlist')}

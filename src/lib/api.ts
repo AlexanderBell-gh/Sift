@@ -1,4 +1,4 @@
-import type { SearchResult, WatchlistItem } from '../types';
+import type { SearchResult, WatchlistItem, Alert } from '../types';
 
 const API_BASE_URL = 'https://siftapi.inbox-alexbell.workers.dev';
 
@@ -50,6 +50,32 @@ export async function addToWatchlist(token: string, result: SearchResult): Promi
 export async function removeFromWatchlist(token: string, id: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/watchlist/${id}`, {
     method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function refreshWatchlistItem(
+  token: string,
+  id: string
+): Promise<{ item: WatchlistItem; priceChanged: boolean; previousPrices: { normal: number | null; loyalty: number | null } | null }> {
+  const response = await fetch(`${API_BASE_URL}/api/watchlist/${id}/refresh`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function getAlerts(token: string): Promise<{ alerts: Alert[]; unreadCount: number }> {
+  const response = await fetch(`${API_BASE_URL}/api/alerts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function markAlertRead(token: string, id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/alerts/${id}/read`, {
+    method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
