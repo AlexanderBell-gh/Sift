@@ -159,7 +159,7 @@ export default function SearchPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <p className="text-zinc-500 dark:text-gray-400">Compare prices across UK supermarkets</p>
+          <p className="text-zinc-500 dark:text-gray-400">Find the best deals across UK supermarkets</p>
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="max-w-2xl mx-auto mb-8">
