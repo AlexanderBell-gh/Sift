@@ -14,12 +14,12 @@
     "lucide-react": "^0.575.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.0",
+    "react-router-dom": "^7.18.1",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@tailwindcss/postcss": "^4.3.1",
+    "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^25.9.4",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -29,9 +29,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^16.5.0",
-    "tailwindcss": "^4.3.1",
+    "tailwindcss": "^4.3.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.62.0",
+    "typescript-eslint": "^8.62.1",
     "vite": "^7.3.6",
     "wrangler": "^4.105.0"
   }
