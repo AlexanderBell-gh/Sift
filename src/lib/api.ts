@@ -20,8 +20,8 @@ export async function getSearchSuggestions(query: string): Promise<string[]> {
   if (query.length < 2) return [];
   const params = new URLSearchParams({ q: query });
   const response = await fetch(`${API_BASE_URL}/api/search/suggest?${params}`);
-  const data = await handleResponse<{ suggestions: string[] }>(response);
-  return data.suggestions;
+  const data = await handleResponse<{ suggestions: Array<{ value: string }> | string[] }>(response);
+  return data.suggestions.map(s => typeof s === 'string' ? s : s.value);
 }
 
 export async function getPinnedIds(token: string): Promise<{ id: string; product_id: string }[]> {
