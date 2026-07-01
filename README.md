@@ -177,18 +177,22 @@ Sift/
 ```
 
 ## How Search Works
-
+ 
 1. User submits query → `GET /api/search?q=butter`
 2. Check D1 cache (24h TTL)
-3. Cache miss → parallel fetch 7 stores via Serper (web + shopping endpoints)
-4. Raw snippets → Gemma 4 enriches to structured JSON
+3. Cache miss → tiered search for 7 stores via Serper:
+   - Try `shopping` endpoint first (structured data)
+   - Fallback to `web` endpoint if shopping results are empty
+4. Results processed:
+   - Gemma 4 enriches snippets to extract loyalty/unit prices
+   - Fallback: Uses Serper's native price/image data if Gemma is disabled
 5. Returns: `{ results: SearchResult[], cached: boolean }`
-
+ 
 ## How Price Refresh Works
-
+ 
 1. User clicks refresh on watchlist item → `POST /api/watchlist/:id/refresh`
-2. Re-searches product via Serper (single store)
-3. Gemma enriches results, finds matching product
+2. Re-searches product via Serper tiered search (single store)
+3. Gemma enriches results (or uses native Serper data) to find matching product
 4. Old prices snapshot to `price_history`
 5. Watchlist updated with new prices
 6. Alert created if price dropped
