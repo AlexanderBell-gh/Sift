@@ -179,18 +179,21 @@ export default function SearchPage() {
                 }
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Search for products (e.g., Medjool dates, almond milk)"
-              className="w-full pl-12 pr-24 py-4 bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm transition-colors"
+              placeholder="Search for products..."
+              className="w-full pl-10 sm:pl-12 pr-16 sm:pr-24 py-3 sm:py-4 bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm transition-colors"
             />
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500               disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-2 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                'Search'
+                <>
+                  <span className="sm:hidden"><Search className="w-5 h-5" /></span>
+                  <span className="hidden sm:inline">Search</span>
+                </>
               )}
             </button>
 

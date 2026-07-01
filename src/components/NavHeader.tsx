@@ -27,7 +27,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           )}
           <span className="text-xl font-bold gradient-text">{title}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={toggle}
             className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
@@ -38,15 +38,15 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           {token && (
             <button
               onClick={() => navigate('/watchlist')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-sm text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
             >
               <BookmarkCheck className="w-4 h-4" />
-              Watchlist
+              <span className="hidden sm:inline">Watchlist</span>
             </button>
           )}
           {token ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">{user?.username}</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden sm:inline">{user?.username}</span>
               <button
                 onClick={() => { logout(); navigate('/'); }}
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
