@@ -100,7 +100,7 @@ export default function WatchlistPage() {
           <div className="flex flex-col items-center justify-center py-16">
             <BookmarkCheck className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
             <p className="text-zinc-600 dark:text-gray-400 text-lg">No pinned products</p>
-            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Search and pin products to track them here</p>
+            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Compare prices across 7 UK supermarkets</p>
             <button
               onClick={() => navigate('/')}
               className="mt-4 px-4 py-2 bg-accent text-black font-medium rounded-xl hover:bg-accent-light transition-colors"

@@ -16,6 +16,12 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Watchlist** — Pin products, track prices, get offer expiry dates
 - **Auth** — JWT accounts to persist watchlists across devices
 - **Autocomplete** — Search suggestions via Serper
+- **Search History** — Recent searches stored in localStorage
+- **Filters & Sort** — Filter by store, sort by price/store
+- **Dark/Light Mode** — System preference detection, toggle in nav
+- **Skeleton Loading** — Card skeletons while data loads
+- **Toast Notifications** — Success/error feedback on actions
+- **Mobile Responsive** — Optimized for 375px+ screens
 
 ## Tech Stack
 
@@ -127,6 +133,7 @@ Sift/
 │   │   ├── NavHeader.tsx         # Shared nav with theme toggle
 │   │   ├── SearchPage.tsx        # Search bar + results grid
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
+│   │   ├── FilterDropdown.tsx    # Store filter + sort dropdown
 │   │   ├── WatchlistPage.tsx     # Pinned items dashboard
 │   │   └── AuthPage.tsx          # Login/register
 │   ├── contexts/
@@ -136,6 +143,7 @@ Sift/
 │   │   └── useTheme.ts          # Theme context hook
 │   ├── lib/
 │   │   ├── api.ts                # API client
+│   │   ├── searchHistory.ts      # localStorage search history
 │   │   └── utils.ts              # cn(), formatPrice(), formatDate()
 │   ├── types/
 │   │   └── index.ts              # SearchResult, WatchlistItem

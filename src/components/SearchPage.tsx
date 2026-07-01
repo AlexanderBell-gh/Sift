@@ -294,7 +294,7 @@ export default function SearchPage() {
           <div className="flex flex-col items-center justify-center py-16">
             <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
             <p className="text-zinc-600 dark:text-gray-400 text-lg">Start comparing prices</p>
-            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Search for any product to see prices from 7 UK supermarkets</p>
+            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1 text-center">Search for any product to see prices from 7 UK supermarkets</p>
           </div>
         )}
       </div>
