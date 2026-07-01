@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { Search, Loader2, ShoppingBag } from 'lucide-react';
 import type { SearchResult } from '../types';
 import { searchProducts, addToWatchlist, removeFromWatchlist, getPinnedIds, getSearchSuggestions } from '../lib/api';
+import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 import { useAuth } from '../contexts/AuthContext';
 import SearchResultCard from './SearchResultCard';
 import NavHeader from './NavHeader';
@@ -19,8 +20,11 @@ export default function SearchPage() {
   const [pinned, setPinned] = useState<Map<string, string>>(new Map());
   const { toast, showToast, hideToast } = useToast();
 
+  const [history, setHistory] = useState<string[]>(() => getHistory());
+
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,6 +66,7 @@ export default function SearchPage() {
     function handleClickOutside(e: MouseEvent) {
       if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+        setShowHistory(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -76,10 +81,12 @@ export default function SearchPage() {
     setError(null);
     setHasSearched(true);
     setShowSuggestions(false);
+    setShowHistory(false);
 
     try {
       const data = await searchProducts(q);
       setResults(data.results || []);
+      setHistory(addSearch(q));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
       setResults([]);
@@ -92,8 +99,21 @@ export default function SearchPage() {
   function selectSuggestion(suggestion: string) {
     setQuery(suggestion);
     setShowSuggestions(false);
+    setShowHistory(false);
     setSelectedIndex(-1);
     handleSearch(suggestion);
+  }
+
+  function selectHistory(item: string) {
+    setQuery(item);
+    setShowHistory(false);
+    handleSearch(item);
+  }
+
+  function handleClearHistory() {
+    clearHistory();
+    setHistory([]);
+    setShowHistory(false);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -110,6 +130,7 @@ export default function SearchPage() {
       selectSuggestion(suggestions[selectedIndex]);
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
+      setShowHistory(false);
       setSelectedIndex(-1);
     }
   }
@@ -149,7 +170,14 @@ export default function SearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              onFocus={() => {
+                if (query.length < 2 && history.length > 0) {
+                  setShowHistory(true);
+                  setShowSuggestions(false);
+                } else if (suggestions.length > 0) {
+                  setShowSuggestions(true);
+                }
+              }}
               onKeyDown={handleKeyDown}
               placeholder="Search for products (e.g., Medjool dates, almond milk)"
               className="w-full pl-12 pr-24 py-4 bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm transition-colors"
@@ -181,6 +209,32 @@ export default function SearchPage() {
                   >
                     <Search className="inline w-4 h-4 mr-2 opacity-50" />
                     {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {showHistory && history.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl shadow-lg overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 dark:border-white/5">
+                  <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Recent searches</span>
+                  <button
+                    type="button"
+                    onClick={handleClearHistory}
+                    className="text-xs text-zinc-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+                {history.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => selectHistory(item)}
+                    className="w-full px-4 py-3 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                  >
+                    <Search className="inline w-4 h-4 mr-2 opacity-50" />
+                    {item}
                   </button>
                 ))}
               </div>
