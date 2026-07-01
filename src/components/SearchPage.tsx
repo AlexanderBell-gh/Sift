@@ -83,6 +83,7 @@ export default function SearchPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
       setResults([]);
+      showToast(err instanceof Error ? err.message : 'Search failed', 'error');
     } finally {
       setLoading(false);
     }
@@ -194,9 +195,19 @@ export default function SearchPage() {
         )}
 
         {loading && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
-            <p className="text-zinc-500 dark:text-gray-400">Searching supermarkets...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="product-card animate-pulse">
+                <div className="skeleton h-44 rounded-t-2xl" />
+                <div className="p-4 space-y-3">
+                  <div className="skeleton h-3 w-16 rounded" />
+                  <div className="skeleton h-4 w-3/4 rounded" />
+                  <div className="skeleton h-3 w-12 rounded" />
+                  <div className="skeleton h-6 w-20 rounded" />
+                  <div className="skeleton h-3 w-24 rounded" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

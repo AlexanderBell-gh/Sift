@@ -78,7 +78,7 @@ export default function SearchResultCard({ result, authenticated, pinned, onPin,
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           {store_logo && (
-            <img src={store_logo} alt={store} className="w-5 h-5 rounded-full object-contain" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src={store_logo} alt={store} className="w-5 h-5 rounded-md object-contain" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           )}
           <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{store}</span>
         </div>

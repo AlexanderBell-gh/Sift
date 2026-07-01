@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Toast } from './ui/Toast';
+import { useToast } from './ui/useToast';
 
 export default function AuthPage() {
   const { login, register } = useAuth();
@@ -14,6 +16,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -22,8 +25,10 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         await login(username, password);
+        showToast('Signed in successfully', 'success');
       } else {
         await register(username, email, password);
+        showToast('Account created', 'success');
       }
       navigate('/');
     } catch (err) {
@@ -105,6 +110,7 @@ export default function AuthPage() {
           </Button>
         </form>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }
