@@ -1,5 +1,7 @@
 # Sift
 
+> **Under construction** — features are actively being built. Some functionality may be incomplete or change.
+
 Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, AI-enriches results, pin products to a watchlist.
 
 **Live:** https://sift-a5w.pages.dev  
