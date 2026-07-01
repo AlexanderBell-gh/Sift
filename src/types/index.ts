@@ -51,3 +51,59 @@ export interface Alert {
   triggered_at: number;
   read: boolean;
 }
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  username: string;
+  role: string;
+  isTrial: boolean;
+  trialExpiresAt: number | null;
+  createdAt: string;
+  productCount: number;
+}
+
+export interface AdminUserDetail extends AdminUser {
+  preferences: { currency: string; defaultStore: string | null } | null;
+  totalPrices: number;
+  products: { id: string; name: string; store: string; priceCount: number }[];
+}
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  admin_id: string;
+  admin_username: string;
+  target_user_id: string | null;
+  target_username: string | null;
+  details: string | null;
+  timestamp: number;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  regularUsers: number;
+  trialUsers: number;
+  totalProducts: number;
+  totalPrices: number;
+}
+
+export interface AdminAnalytics {
+  storeDistribution: Record<string, number>;
+  totalProducts: number;
+  totalPriceEntries: number;
+  userCount: number;
+  regularUsers: number;
+  trialUsers: number;
+  userRegistrations: { date: string; count: number }[];
+}
+
+export interface TrialUser {
+  id: string;
+  username: string;
+  email: string;
+  createdAt: string;
+  trialExpiresAt: number | null;
+  isExpired: boolean;
+  productCount: number;
+}

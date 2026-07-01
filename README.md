@@ -1,7 +1,5 @@
 # Sift
 
-> **Under construction** — features are actively being built. Some functionality may be incomplete or change.
-
 Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, AI-enriches results, pin products to a watchlist.
 
 **Live:** https://sift-a5w.pages.dev  
@@ -14,6 +12,10 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Dual Pricing** — Normal price vs loyalty price (Clubcard/Nectar)
 - **Unit Price** — Price per 100g/litre for true comparison
 - **Watchlist** — Pin products, track prices, get offer expiry dates
+- **Price History** — Price snapshots on refresh, tracks changes over time
+- **Price Alerts** — Automatic notifications on price drops and offer expiry
+- **Cron Refresh** — Daily auto-refresh of watchlist prices (6am UTC)
+- **Admin Panel** — Dashboard, user management, audit logs, trial management
 - **Auth** — JWT accounts to persist watchlists across devices
 - **Autocomplete** — Search suggestions via Serper
 - **Search History** — Recent searches stored in localStorage
@@ -34,6 +36,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 | Database | Cloudflare D1 (SQLite) |
 | Search | Serper API (web + shopping + autocomplete) |
 | AI | Google AI Studio (Gemma 4) |
+| Auth | Custom JWT (hand-rolled) |
 | CI/CD | GitHub Actions |
 | Package Manager | pnpm 11 |
 
@@ -85,7 +88,17 @@ pnpm exec wrangler deploy --config workers/wrangler.toml
 
 ## Database
 
-Schema in `workers/schema.sql`. Four tables: `users`, `search_cache`, `watchlist`, `rate_limits`.
+Schema in `workers/schema.sql`. Seven tables:
+
+| Table | Purpose |
+|-------|---------|
+| `users` | Auth accounts with roles |
+| `rate_limits` | Per-IP rate limiting |
+| `search_cache` | Search results (24h TTL) |
+| `watchlist` | Pinned products per user |
+| `price_history` | Price snapshots on refresh |
+| `alerts` | Price drop/expiry notifications |
+| `audit_logs` | Admin action audit trail |
 
 ```bash
 # Create D1 database
@@ -130,32 +143,34 @@ Sift/
 │   │   │   ├── Select.tsx        # Dropdown select with chevron
 │   │   │   ├── Toast.tsx         # Toast notification system
 │   │   │   └── useToast.ts       # Toast hook
-│   │   ├── NavHeader.tsx         # Shared nav with theme toggle
+│   │   ├── NavHeader.tsx         # Shared nav with theme toggle, alert bell, admin
 │   │   ├── SearchPage.tsx        # Search bar + results grid
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
 │   │   ├── FilterDropdown.tsx    # Store filter + sort dropdown
-│   │   ├── WatchlistPage.tsx     # Pinned items dashboard
-│   │   └── AuthPage.tsx          # Login/register
+│   │   ├── WatchlistPage.tsx     # Pinned items with refresh, last updated
+│   │   ├── AuthPage.tsx          # Login/register
+│   │   ├── AlertBell.tsx         # Bell icon with unread count
+│   │   └── AdminPage.tsx         # Admin dashboard (stats, users, audit, trials)
 │   ├── contexts/
 │   │   ├── AuthContext.tsx       # JWT persistence + auto-verify
 │   │   └── ThemeContext.tsx      # Dark/light mode toggle + system pref
 │   ├── hooks/
 │   │   └── useTheme.ts          # Theme context hook
 │   ├── lib/
-│   │   ├── api.ts                # API client
+│   │   ├── api.ts                # API client (search, watchlist, alerts, admin)
 │   │   ├── searchHistory.ts      # localStorage search history
 │   │   └── utils.ts              # cn(), formatPrice(), formatDate()
 │   ├── types/
-│   │   └── index.ts              # SearchResult, WatchlistItem
+│   │   └── index.ts              # SearchResult, WatchlistItem, Alert, Admin types
 │   ├── App.tsx                   # Router
 │   ├── main.tsx
 │   └── index.css                 # Tailwind + custom styles
 ├── workers/
-│   ├── index.js                  # API routes (~1275 lines)
+│   ├── index.js                  # API routes (~1580 lines)
 │   ├── auth.js                   # JWT + password hashing
 │   ├── db.js                     # D1 query helpers
-│   ├── schema.sql                # Database DDL
-│   └── wrangler.toml             # Worker config
+│   ├── schema.sql                # Database DDL (7 tables)
+│   └── wrangler.toml             # Worker config + cron trigger
 ├── public/                       # Store logo SVGs
 ├── .github/workflows/deploy.yml  # CI/CD
 └── package.json
@@ -168,6 +183,24 @@ Sift/
 3. Cache miss → parallel fetch 7 stores via Serper (web + shopping endpoints)
 4. Raw snippets → Gemma 4 enriches to structured JSON
 5. Returns: `{ results: SearchResult[], cached: boolean }`
+
+## How Price Refresh Works
+
+1. User clicks refresh on watchlist item → `POST /api/watchlist/:id/refresh`
+2. Re-searches product via Serper (single store)
+3. Gemma enriches results, finds matching product
+4. Old prices snapshot to `price_history`
+5. Watchlist updated with new prices
+6. Alert created if price dropped
+
+## Cron Auto-Refresh
+
+Daily at 6am UTC via Cloudflare Workers cron trigger:
+- Max 10 items per user, 100 total per run
+- 500ms delay between refreshes
+- Skip items updated within last 6 hours
+- 3 consecutive failures → skip rest for that user
+- Creates alerts for price drops and expiring offers
 
 ## License
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { BookmarkCheck, LogOut, ArrowLeft, Sun, Moon } from 'lucide-react';
+import { BookmarkCheck, LogOut, ArrowLeft, Sun, Moon, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import AlertBell from './AlertBell';
@@ -37,6 +37,15 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           <AlertBell />
+          {token && user?.role === 'admin' && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+              title="Admin"
+            >
+              <Shield className="w-4 h-4" />
+            </button>
+          )}
           {token && (
             <button
               onClick={() => navigate('/watchlist')}
