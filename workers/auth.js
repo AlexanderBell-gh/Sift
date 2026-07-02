@@ -144,6 +144,7 @@ function rowToUser(row) {
     role: row.role,
     isTrial: !!row.is_trial,
     trialExpiresAt: row.trial_expires_at,
+    searchCount: row.search_count || 0,
     preferences: {
       currency: row.currency || 'USD',
       defaultStore: row.default_store || null,
@@ -156,6 +157,8 @@ async function createJWT(user, env) {
   const payload = {
     userId: user.id,
     role: user.role,
+    isTrial: user.isTrial || false,
+    searchCount: user.searchCount || 0,
     exp: Date.now() + JWT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
   };
   const payloadBase64 = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -230,8 +233,8 @@ async function getUserByUsername(env, username) {
 async function saveUser(env, user) {
   await execute(
     env,
-    `INSERT INTO users (id, email, username, password_hash, role, is_trial, trial_expires_at, currency, default_store, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO users (id, email, username, password_hash, role, is_trial, trial_expires_at, search_count, currency, default_store, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        email = excluded.email,
        username = excluded.username,
@@ -239,6 +242,7 @@ async function saveUser(env, user) {
        role = excluded.role,
        is_trial = excluded.is_trial,
        trial_expires_at = excluded.trial_expires_at,
+       search_count = excluded.search_count,
        currency = excluded.currency,
        default_store = excluded.default_store`,
     [
@@ -249,6 +253,7 @@ async function saveUser(env, user) {
       user.role,
       user.isTrial ? 1 : 0,
       user.trialExpiresAt || null,
+      user.searchCount || 0,
       user.preferences?.currency || 'USD',
       user.preferences?.defaultStore || null,
       user.createdAt,

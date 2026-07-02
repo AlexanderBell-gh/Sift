@@ -10,9 +10,17 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
-export async function searchProducts(query: string): Promise<{ results: SearchResult[]; cached?: boolean }> {
+export async function searchProducts(query: string, token?: string): Promise<{
+  results: SearchResult[];
+  cached?: boolean;
+  blocked?: boolean;
+  reason?: 'trial_expired' | 'search_limit';
+  remainingSearches?: number;
+}> {
   const params = new URLSearchParams({ q: query });
-  const response = await fetch(`${API_BASE_URL}/api/search?${params}`);
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`${API_BASE_URL}/api/search?${params}`, { headers });
   return handleResponse(response);
 }
 

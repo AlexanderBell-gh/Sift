@@ -1,3 +1,14 @@
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  isTrial: boolean;
+  trialExpiresAt: number | null;
+  searchCount: number;
+  remainingSearches: number | null;
+}
+
 export interface SearchResult {
   id: string;
   name: string;

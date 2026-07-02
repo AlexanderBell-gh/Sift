@@ -1,11 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-}
+import type { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -36,7 +30,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data) {
-          setUser({ id: data.id, username: data.username, email: data.email, role: data.role });
+          setUser({
+            id: data.id,
+            username: data.username,
+            email: data.email,
+            role: data.role,
+            isTrial: data.isTrial || false,
+            trialExpiresAt: data.trialExpiresAt || null,
+            searchCount: data.searchCount || 0,
+            remainingSearches: data.remainingSearches ?? null,
+          });
         } else {
           localStorage.removeItem('auth_token');
           setToken(null);
@@ -59,7 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     localStorage.setItem('auth_token', data.token);
     setToken(data.token);
-    setUser({ id: data.user.id, username: data.user.username, email: data.user.email, role: data.user.role });
+    setUser({
+      id: data.user.id,
+      username: data.user.username,
+      email: data.user.email,
+      role: data.user.role,
+      isTrial: data.user.isTrial || false,
+      trialExpiresAt: data.user.trialExpiresAt || null,
+      searchCount: data.user.searchCount || 0,
+      remainingSearches: data.user.remainingSearches ?? null,
+    });
   }, []);
 
   const register = useCallback(async (username: string, email: string, password: string) => {
@@ -75,7 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     localStorage.setItem('auth_token', data.token);
     setToken(data.token);
-    setUser({ id: data.user.id, username: data.user.username, email: data.user.email, role: data.user.role });
+    setUser({
+      id: data.user.id,
+      username: data.user.username,
+      email: data.user.email,
+      role: data.user.role,
+      isTrial: data.user.isTrial || false,
+      trialExpiresAt: data.user.trialExpiresAt || null,
+      searchCount: data.user.searchCount || 0,
+      remainingSearches: data.user.remainingSearches ?? null,
+    });
   }, []);
 
   const logout = useCallback(() => {

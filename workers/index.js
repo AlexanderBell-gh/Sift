@@ -97,6 +97,14 @@ async function ensureRateLimitTable(env) {
   await execute(env, 'CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)');
 }
 
+async function ensureSearchCountColumn(env) {
+  try {
+    await execute(env, 'ALTER TABLE users ADD COLUMN search_count INTEGER NOT NULL DEFAULT 0');
+  } catch (e) {
+    // Column already exists
+  }
+}
+
 async function checkRateLimit(env, key, max, windowMs) {
   await ensureRateLimitTable(env);
   const now = Date.now();
@@ -377,6 +385,9 @@ async function handleRequest(request, env) {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Ensure search_count column exists (migration for existing DBs)
+  await ensureSearchCountColumn(env);
+
   // ===== AUTH ROUTES =====
 
   if (path === '/api/auth/register' && method === 'POST') {
@@ -401,12 +412,17 @@ async function handleRequest(request, env) {
         return errorResponse('Username already in use');
       }
 
+      const trialExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
       const user = {
         id: createUserId(),
         email,
         username,
         passwordHash: await hashPassword(password),
         role: 'user',
+        isTrial: true,
+        trialExpiresAt,
+        searchCount: 0,
         preferences: {
           currency: body.currency || 'USD',
           defaultStore: body.defaultStore || null,
@@ -423,8 +439,11 @@ async function handleRequest(request, env) {
           email: user.email,
           username: user.username,
           role: user.role,
+          isTrial: true,
+          trialExpiresAt,
+          searchCount: 0,
+          remainingSearches: 5,
           preferences: user.preferences,
-          trialExpiresAt: null,
         },
         token,
       }, 201);
@@ -477,6 +496,8 @@ async function handleRequest(request, env) {
         username,
         passwordHash: await hashPassword(password),
         role: 'admin',
+        isTrial: false,
+        searchCount: 0,
         preferences: {
           currency: body.currency || 'USD',
           defaultStore: body.defaultStore || null,
@@ -523,14 +544,19 @@ async function handleRequest(request, env) {
 
       const token = await createJWT(user, env);
 
+      const remainingSearches = user.isTrial ? Math.max(0, 5 - user.searchCount) : null;
+
       return jsonResponse({
         user: {
           id: user.id,
           email: user.email,
           username: user.username,
           role: user.role,
+          isTrial: user.isTrial || false,
+          trialExpiresAt: user.trialExpiresAt || null,
+          searchCount: user.searchCount || 0,
+          remainingSearches,
           preferences: user.preferences,
-          trialExpiresAt: null,
         },
         token,
       });
@@ -596,6 +622,7 @@ async function handleRequest(request, env) {
     if (method === 'GET') {
       const user = await getUserById(env, auth.userId);
       if (!user) return errorResponse('User not found', 404);
+      const remainingSearches = user.isTrial ? Math.max(0, 5 - user.searchCount) : null;
       return jsonResponse({
         id: user.id,
         email: user.email,
@@ -603,6 +630,8 @@ async function handleRequest(request, env) {
         role: user.role,
         isTrial: user.isTrial || false,
         trialExpiresAt: user.trialExpiresAt || null,
+        searchCount: user.searchCount || 0,
+        remainingSearches,
         preferences: user.preferences,
         createdAt: user.createdAt,
       });
@@ -1083,9 +1112,31 @@ async function handleRequest(request, env) {
       return errorResponse('Search service not configured', 503);
     }
 
+    const auth = await authenticate(request, env);
+    if (!auth) {
+      return errorResponse('Authentication required', 401);
+    }
+
+    // Trial limit checks
+    if (auth.role !== 'admin') {
+      const user = await getUserById(env, auth.userId);
+      if (user && user.isTrial) {
+        if (user.trialExpiresAt && Date.now() > user.trialExpiresAt) {
+          return jsonResponse({ blocked: true, reason: 'trial_expired', remainingSearches: 0 });
+        }
+        if (user.searchCount >= 5) {
+          return jsonResponse({ blocked: true, reason: 'search_limit', remainingSearches: 0 });
+        }
+      }
+    }
+
     try {
       const cached = await getCachedResults(env, q);
       if (cached) {
+        // Count cached results as a search too
+        if (auth.role !== 'admin') {
+          await execute(env, 'UPDATE users SET search_count = search_count + 1 WHERE id = ?', [auth.userId]);
+        }
         return jsonResponse({ results: cached, cached: true });
       }
 
@@ -1130,7 +1181,18 @@ async function handleRequest(request, env) {
       }
 
       await setCachedResults(env, q, results);
-      return jsonResponse({ results, cached: false });
+
+      // Increment search count for trial users
+      let remainingSearches = null;
+      if (auth.role !== 'admin') {
+        await execute(env, 'UPDATE users SET search_count = search_count + 1 WHERE id = ?', [auth.userId]);
+        const updatedUser = await getUserById(env, auth.userId);
+        if (updatedUser && updatedUser.isTrial) {
+          remainingSearches = Math.max(0, 5 - updatedUser.searchCount);
+        }
+      }
+
+      return jsonResponse({ results, cached: false, remainingSearches });
     } catch (e) {
       console.error('Search error:', e);
       return errorResponse('Search failed');

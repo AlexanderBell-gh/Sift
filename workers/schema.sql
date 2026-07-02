@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL CHECK(role IN ('admin','user')) DEFAULT 'user',
   is_trial INTEGER NOT NULL DEFAULT 0,
   trial_expires_at INTEGER,
+  search_count INTEGER NOT NULL DEFAULT 0,
   currency TEXT NOT NULL DEFAULT 'GBP',
   default_store TEXT,
   created_at TEXT NOT NULL
