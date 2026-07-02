@@ -25,6 +25,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Skeleton Loading** — Card skeletons while data loads
 - **Toast Notifications** — Success/error feedback on actions
 - **Mobile Responsive** — Optimized for 375px+ screens
+- **Settings** — Change password, export watchlist CSV, delete account (trial-gated)
 
 ## Tech Stack
 
@@ -144,14 +145,15 @@ Sift/
 │   │   │   ├── Select.tsx        # Dropdown select with chevron
 │   │   │   ├── Toast.tsx         # Toast notification system
 │   │   │   └── useToast.ts       # Toast hook
-│   │   ├── NavHeader.tsx         # Shared nav with theme toggle, alert bell, admin
+│   │   ├── NavHeader.tsx         # Shared nav: logo, watchlist, user dropdown (settings/theme/admin/sign out), alert bell
 │   │   ├── SearchPage.tsx        # Search bar + results grid
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
 │   │   ├── FilterDropdown.tsx    # Store filter + sort dropdown
 │   │   ├── WatchlistPage.tsx     # Pinned items with refresh, last updated
 │   │   ├── AuthPage.tsx          # Login/register
 │   │   ├── AlertBell.tsx         # Bell icon with unread count
-│   │   └── AdminPage.tsx         # Admin dashboard (stats, users, audit, trials)
+│   │   ├── AdminPage.tsx         # Admin dashboard (stats, users, audit, trials)
+│   │   └── SettingsPage.tsx      # Settings (password, export, delete account)
 │   ├── contexts/
 │   │   ├── AuthContext.tsx       # JWT persistence + auto-verify
 │   │   └── ThemeContext.tsx      # Dark/light mode toggle + system pref
@@ -163,7 +165,7 @@ Sift/
 │   │   └── utils.ts              # cn(), formatPrice(), formatDate()
 │   ├── types/
 │   │   └── index.ts              # SearchResult, WatchlistItem, Alert, Admin types
-│   ├── App.tsx                   # Router
+│   ├── App.tsx                   # Router (/, /auth, /watchlist, /settings, /admin)
 │   ├── main.tsx
 │   └── index.css                 # Tailwind + custom styles
 ├── workers/

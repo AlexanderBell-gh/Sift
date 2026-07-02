@@ -1,6 +1,24 @@
-import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AdminUserDetail, AdminAnalytics, AuditLog, TrialUser } from '../types';
+import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AdminUserDetail, AdminAnalytics, AuditLog, TrialUser, User } from '../types';
 
 const API_BASE_URL = 'https://siftapi.inbox-alexbell.workers.dev';
+
+export async function updatePassword(token: string, currentPassword: string, newPassword: string): Promise<User> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  return handleResponse<User>(response);
+}
+
+export async function deleteAccount(token: string, password?: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: password ? JSON.stringify({ password }) : undefined,
+  });
+  await handleResponse(response);
+}
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {

@@ -5,6 +5,7 @@ import SearchPage from './components/SearchPage';
 import AuthPage from './components/AuthPage';
 import WatchlistPage from './components/WatchlistPage';
 import AdminPage from './components/AdminPage';
+import SettingsPage from './components/SettingsPage';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

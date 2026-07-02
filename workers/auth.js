@@ -262,13 +262,10 @@ async function saveUser(env, user) {
 }
 
 async function deleteUser(env, userId) {
-  const products = await queryAll(env, 'SELECT id FROM products WHERE user_id = ?', [userId]);
-  if (products.length > 0) {
-    const productIds = products.map(p => p.id);
-    const placeholders = productIds.map(() => '?').join(',');
-    await execute(env, `DELETE FROM prices WHERE product_id IN (${placeholders})`, productIds);
-  }
-  await execute(env, 'DELETE FROM products WHERE user_id = ?', [userId]);
+  await execute(env, 'DELETE FROM alerts WHERE user_id = ?', [userId]);
+  await execute(env, 'DELETE FROM price_history WHERE product_id IN (SELECT product_id FROM watchlist WHERE user_id = ?)', [userId]);
+  await execute(env, 'DELETE FROM watchlist WHERE user_id = ?', [userId]);
+  await execute(env, 'DELETE FROM rate_limits WHERE key = ?', [userId]);
   await execute(env, 'DELETE FROM users WHERE id = ?', [userId]);
 }
 
