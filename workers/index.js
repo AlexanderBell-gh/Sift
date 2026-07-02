@@ -568,8 +568,13 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/trial' && method === 'POST') {
     try {
-      const body = await request.json();
-      const { username } = body;
+      let username = null;
+      try {
+        const body = await request.json();
+        username = body?.username || null;
+      } catch {
+        // No body - fine, generate random username
+      }
 
       const trialUsername = username || `trial_${crypto.randomUUID().slice(0, 8)}`;
       const trialEmail = `${trialUsername}@trial.sift`;
@@ -589,6 +594,7 @@ async function handleRequest(request, env) {
         role: 'user',
         isTrial: true,
         trialExpiresAt,
+        searchCount: 0,
         preferences: { currency: 'USD', defaultStore: null },
         createdAt: new Date().toISOString(),
       };
@@ -604,6 +610,8 @@ async function handleRequest(request, env) {
           role: user.role,
           isTrial: true,
           trialExpiresAt,
+          searchCount: 0,
+          remainingSearches: 5,
           preferences: user.preferences,
         },
         token,

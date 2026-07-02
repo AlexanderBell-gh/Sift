@@ -16,6 +16,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Price Alerts** — Automatic notifications on price drops and offer expiry
 - **Cron Refresh** — Daily auto-refresh of watchlist prices (6am UTC)
 - **Admin Panel** — Dashboard, user management, audit logs, trial management
+- **Trial Gating** — One-click "Free trial" button (12h, 5 searches); registration creates 24h trial account; search blocked when limits hit
 - **Auth** — JWT accounts to persist watchlists across devices
 - **Autocomplete** — Search suggestions via Serper
 - **Search History** — Recent searches stored in localStorage
@@ -92,7 +93,7 @@ Schema in `workers/schema.sql`. Seven tables:
 
 | Table | Purpose |
 |-------|---------|
-| `users` | Auth accounts with roles |
+| `users` | Auth accounts with roles, trial status (24h), search count (5 max) |
 | `rate_limits` | Per-IP rate limiting |
 | `search_cache` | Search results (24h TTL) |
 | `watchlist` | Pinned products per user |
@@ -166,7 +167,7 @@ Sift/
 │   ├── main.tsx
 │   └── index.css                 # Tailwind + custom styles
 ├── workers/
-│   ├── index.js                  # API routes (~1580 lines)
+│   ├── index.js                  # API routes (~1650 lines)
 │   ├── auth.js                   # JWT + password hashing
 │   ├── db.js                     # D1 query helpers
 │   ├── schema.sql                # Database DDL (7 tables)
@@ -177,16 +178,19 @@ Sift/
 ```
 
 ## How Search Works
- 
-1. User submits query → `GET /api/search?q=butter`
-2. Check D1 cache (24h TTL)
-3. Cache miss → tiered search for 7 stores via Serper:
+  
+1. User submits query → `GET /api/search?q=butter` (auth required)
+2. Auth check: unauthenticated requests blocked (401)
+3. Trial check: expired trial or 5-search limit → return `{ blocked: true, reason }`
+4. Check D1 cache (24h TTL)
+5. Cache miss → tiered search for 7 stores via Serper:
    - Try `shopping` endpoint first (structured data)
    - Fallback to `web` endpoint if shopping results are empty
-4. Results processed:
+6. Results processed:
    - Gemma 4 enriches snippets to extract loyalty/unit prices
    - Fallback: Uses Serper's native price/image data if Gemma is disabled
-5. Returns: `{ results: SearchResult[], cached: boolean }`
+7. Trial user search count incremented
+8. Returns: `{ results: SearchResult[], cached: boolean, remainingSearches?: number }`
  
 ## How Price Refresh Works
  

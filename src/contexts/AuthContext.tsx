@@ -7,6 +7,7 @@ interface AuthContextType {
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
+  startTrial: () => Promise<void>;
   logout: () => void;
 }
 
@@ -99,6 +100,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const startTrial = useCallback(async () => {
+    const res = await fetch(`${API_BASE}/api/auth/trial`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Trial failed' }));
+      throw new Error(err.error || 'Trial failed');
+    }
+    const data = await res.json();
+    localStorage.setItem('auth_token', data.token);
+    setToken(data.token);
+    setUser({
+      id: data.user.id,
+      username: data.user.username,
+      email: data.user.email,
+      role: data.user.role,
+      isTrial: data.user.isTrial || false,
+      trialExpiresAt: data.user.trialExpiresAt || null,
+      searchCount: data.user.searchCount || 0,
+      remainingSearches: data.user.remainingSearches ?? null,
+    });
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     setToken(null);
@@ -106,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, startTrial, logout }}>
       {children}
     </AuthContext.Provider>
   );

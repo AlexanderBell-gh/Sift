@@ -14,7 +14,7 @@ import { Button } from './ui/Button';
 
 export default function SearchPage() {
   const navigate = useNavigate();
-  const { token, user } = useAuth();
+  const { token, user, startTrial } = useAuth();
   const [query, setQuery] = useState('');
   const queryRef = useRef(query);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -198,8 +198,8 @@ export default function SearchPage() {
           <div className="flex flex-col items-center justify-center py-16">
             <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
             <h2 className="text-xl font-semibold text-zinc-800 dark:text-white mb-2">Compare prices across 7 UK supermarkets</h2>
-            <p className="text-zinc-500 dark:text-gray-400 mb-6">Sign up for a free trial and start saving</p>
-            <Button onClick={() => navigate('/auth')}>Create free account</Button>
+            <p className="text-zinc-500 dark:text-gray-400 mb-6">Try free for 12 hours with 5 free searches</p>
+            <Button onClick={startTrial}>Free trial</Button>
           </div>
         ) : (
           <>
