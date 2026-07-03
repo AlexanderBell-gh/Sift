@@ -18,7 +18,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Admin Panel** — Dashboard, user management, audit logs, trial management
 - **Trial Gating** — One-click "Free trial" button (12h, 5 searches); registration creates 24h trial account; search blocked when limits hit
 - **Auth** — JWT accounts to persist watchlists across devices
-- **Autocomplete** — Search suggestions via Serper
+- **Autocomplete** — Search suggestions via SearXNG
 - **Search History** — Recent searches stored in localStorage
 - **Filters & Sort** — Filter by store, sort by price/store
 - **Dark/Light Mode** — System preference detection, toggle in nav
@@ -36,7 +36,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 | Icons | Lucide React |
 | Backend | Cloudflare Workers |
 | Database | Cloudflare D1 (SQLite) |
-| Search | Serper API (web + shopping + autocomplete) |
+| Search | SearXNG (self-hosted metasearch, w/ autocompleter) |
 | AI | Google AI Studio (Gemma 4) |
 | Auth | Custom JWT (hand-rolled) |
 | CI/CD | GitHub Actions |
@@ -118,8 +118,8 @@ Update `database_id` in `workers/wrangler.toml`.
 ## API Keys
 
 ```bash
-# Serper (web search)
-pnpm exec wrangler secret put SERPER_API_KEY
+# SearXNG (self-hosted metasearch instance URL)
+pnpm exec wrangler secret put SEARXNG_URL
 
 # Gemma 4 (AI enrichment)
 pnpm exec wrangler secret put GEMMA_API_KEY
@@ -185,20 +185,18 @@ Sift/
 2. Auth check: unauthenticated requests blocked (401)
 3. Trial check: expired trial or 5-search limit → return `{ blocked: true, reason }`
 4. Check D1 cache (24h TTL)
-5. Cache miss → tiered search for 7 stores via Serper:
-   - Try `shopping` endpoint first (structured data)
-   - Fallback to `web` endpoint if shopping results are empty
+5. Cache miss → SearXNG search per store (`SEARXNG_URL/search?q=X&format=json`)
 6. Results processed:
    - Gemma 4 enriches snippets to extract loyalty/unit prices
-   - Fallback: Uses Serper's native price/image data if Gemma is disabled
+   - Fallback: raw SearXNG results (no price enrichment)
 7. Trial user search count incremented
 8. Returns: `{ results: SearchResult[], cached: boolean, remainingSearches?: number }`
  
 ## How Price Refresh Works
  
 1. User clicks refresh on watchlist item → `POST /api/watchlist/:id/refresh`
-2. Re-searches product via Serper tiered search (single store)
-3. Gemma enriches results (or uses native Serper data) to find matching product
+2. Re-searches product via SearXNG (single store)
+3. Gemma enriches results to find matching product
 4. Old prices snapshot to `price_history`
 5. Watchlist updated with new prices
 6. Alert created if price dropped
