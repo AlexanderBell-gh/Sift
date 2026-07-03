@@ -206,52 +206,22 @@ function timeoutFetch(url, opts, ms) {
   ]);
 }
 
-async function searchSupermarket(store, query, apiKey) {
+async function searchSearXNG(store, query, searxngUrl) {
   const siteQuery = `site:${store.domain} "${query}"`;
+  const baseUrl = searxngUrl.replace(/\/$/, '');
   try {
-    const res = await timeoutFetch('https://google.serper.dev/search', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ q: siteQuery, num: 10, gl: 'uk', hl: 'en' }),
-    }, 5000);
+    const url = `${baseUrl}/search?q=${encodeURIComponent(siteQuery)}&format=json`;
+    const res = await timeoutFetch(url, {}, 5000);
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.organic || []).map(item => ({
+    return (data.results || []).map(item => ({
       title: item.title || '',
-      url: item.link || item.url || '',
-      snippet: item.snippet || '',
+      url: item.url || '',
+      snippet: item.content || '',
       store: store.name,
       store_logo: store.logo,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-async function searchSupermarketShopping(store, query, apiKey) {
-  const siteQuery = `site:${store.domain} "${query}"`;
-  try {
-    const res = await timeoutFetch('https://google.serper.dev/shopping', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ q: siteQuery, num: 10, gl: 'uk', hl: 'en' }),
-    }, 5000);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.shopping || []).map(item => ({
-      title: item.title || '',
-      url: item.link || item.url || '',
-      snippet: item.snippet || '',
-      store: store.name,
-      store_logo: store.logo,
-      price: item.price || null,
-      image: item.image || '',
+      price: null,
+      image: item.img_src || item.thumbnail || '',
     }));
   } catch {
     return [];
@@ -1092,20 +1062,18 @@ async function handleRequest(request, env) {
   if (path === '/api/search/suggest' && method === 'GET') {
     const q = url.searchParams.get('q');
     if (!q || q.length < 2) return jsonResponse({ suggestions: [] });
-    if (!env.SERPER_API_KEY) return jsonResponse({ suggestions: [] });
+    if (!env.SEARXNG_URL) return jsonResponse({ suggestions: [] });
 
     try {
-      const res = await timeoutFetch('https://google.serper.dev/autocomplete', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': env.SERPER_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ q, gl: 'uk', hl: 'en' }),
-      }, 3000);
+      const baseUrl = env.SEARXNG_URL.replace(/\/$/, '');
+      const res = await timeoutFetch(
+        `${baseUrl}/autocompleter?q=${encodeURIComponent(q)}&format=json`,
+        {}, 3000
+      );
       if (!res.ok) return jsonResponse({ suggestions: [] });
       const data = await res.json();
-      return jsonResponse({ suggestions: data.suggestions || [] });
+      const suggestions = Array.isArray(data) && data.length >= 2 ? data[1] : [];
+      return jsonResponse({ suggestions });
     } catch {
       return jsonResponse({ suggestions: [] });
     }
@@ -1116,7 +1084,7 @@ async function handleRequest(request, env) {
     if (!q || typeof q !== 'string' || q.trim().length === 0) {
       return errorResponse('Query parameter q is required');
     }
-    if (!env.SERPER_API_KEY) {
+    if (!env.SEARXNG_URL) {
       return errorResponse('Search service not configured', 503);
     }
 
@@ -1148,11 +1116,9 @@ async function handleRequest(request, env) {
         return jsonResponse({ results: cached, cached: true });
       }
 
-      const searchPromises = TARGET_STORES.map(async store => {
-        const shopping = await searchSupermarketShopping(store, q, env.SERPER_API_KEY);
-        if (shopping.length > 0) return shopping;
-        return searchSupermarket(store, q, env.SERPER_API_KEY);
-      });
+      const searchPromises = TARGET_STORES.map(async store =>
+        searchSearXNG(store, q, env.SEARXNG_URL)
+      );
       const storeResults = await Promise.all(searchPromises);
       const allResults = storeResults.flat();
 
@@ -1175,12 +1141,12 @@ async function handleRequest(request, env) {
            store_logo: r.store_logo,
            image_url: r.image || '',
            unit: null,
-           prices: { 
-             normal: r.price ? parseFloat(r.price.replace(/[^\d.]/g, '')) : null, 
-             loyalty: null, 
-             unit_price: null, 
-             currency: 'GBP' 
-           },
+            prices: { 
+              normal: null, 
+              loyalty: null, 
+              unit_price: null, 
+              currency: 'GBP' 
+            },
            loyalty_type: null,
            offer_expires_at: null,
            product_url: r.url,
@@ -1361,13 +1327,12 @@ async function handleRequest(request, env) {
       if (!item) return errorResponse('Watchlist item not found', 404);
 
       const store = TARGET_STORES.find(s => s.name === item.store);
-      if (!store || !env.SERPER_API_KEY) {
+      if (!store || !env.SEARXNG_URL) {
         return errorResponse('Search service not available', 503);
       }
 
       const searchQuery = item.product_name;
-      const shopping = await searchSupermarketShopping(store, searchQuery, env.SERPER_API_KEY);
-      const allResults = shopping.length > 0 ? shopping : await searchSupermarket(store, searchQuery, env.SERPER_API_KEY);
+      const allResults = await searchSearXNG(store, searchQuery, env.SEARXNG_URL);
 
       let matched = null;
       if (allResults.length > 0 && env.GEMMA_API_KEY) {
@@ -1566,10 +1531,9 @@ async function handleScheduled(env) {
 
       try {
         const store = TARGET_STORES.find(s => s.name === item.store);
-        if (!store || !env.SERPER_API_KEY) continue;
+        if (!store || !env.SEARXNG_URL) continue;
 
-        const shopping = await searchSupermarketShopping(store, item.product_name, env.SERPER_API_KEY);
-        const allResults = shopping.length > 0 ? shopping : await searchSupermarket(store, item.product_name, env.SERPER_API_KEY);
+        const allResults = await searchSearXNG(store, item.product_name, env.SEARXNG_URL);
 
         let matched = null;
         if (allResults.length > 0 && env.GEMMA_API_KEY) {
