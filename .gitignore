@@ -25,9 +25,3 @@ dist-ssr
 
 # Cloudflare
 .wrangler
-
-# Context
-CONTEXT.md
-CHANGES.md
-PLAN.md
-SPEC.md

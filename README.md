@@ -145,14 +145,14 @@ Sift/
 │   │   │   ├── Select.tsx        # Dropdown select with chevron
 │   │   │   ├── Toast.tsx         # Toast notification system
 │   │   │   └── useToast.ts       # Toast hook
-│   │   ├── NavHeader.tsx         # Shared nav: logo, watchlist, user dropdown (settings/theme/admin/sign out), alert bell
-│   │   ├── SearchPage.tsx        # Search bar + results grid
+│   │   ├── NavHeader.tsx         # Animated logo tag, nav links, user dropdown with avatar
+│   │   ├── SearchPage.tsx        # Hero + search bar + results grid
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
 │   │   ├── FilterDropdown.tsx    # Store filter + sort dropdown
-│   │   ├── WatchlistPage.tsx     # Pinned items with refresh, last updated
+│   │   ├── WatchlistPage.tsx     # Horizontal tiles with comparison strips
 │   │   ├── AuthPage.tsx          # Login/register
 │   │   ├── AlertBell.tsx         # Bell icon with unread count
-│   │   ├── AdminPage.tsx         # Admin dashboard (stats, users, audit, trials)
+│   │   ├── AdminPage.tsx         # Sidebar nav + dashboard/users/audit/trials
 │   │   └── SettingsPage.tsx      # Settings (password, export, delete account)
 │   ├── contexts/
 │   │   ├── AuthContext.tsx       # JWT persistence + auto-verify
@@ -167,7 +167,8 @@ Sift/
 │   │   └── index.ts              # SearchResult, WatchlistItem, Alert, Admin types
 │   ├── App.tsx                   # Router (/, /auth, /watchlist, /settings, /admin)
 │   ├── main.tsx
-│   └── index.css                 # Tailwind + custom styles
+│   ├── index.css                 # Tailwind + design system (tiles, gradients, animations)
+│   └── UI-PLAN.md                # UI redesign task tracker
 ├── workers/
 │   ├── index.js                  # API routes (~1650 lines)
 │   ├── auth.js                   # JWT + password hashing
@@ -175,9 +176,30 @@ Sift/
 │   ├── schema.sql                # Database DDL (7 tables)
 │   └── wrangler.toml             # Worker config + cron trigger
 ├── public/                       # Store logo SVGs
+├── sift-ui.html                  # Standalone UI reference (all pages + components)
+├── DESIGN.md                     # Design system tokens & guidelines
 ├── .github/workflows/deploy.yml  # CI/CD
 └── package.json
 ```
+
+## Design System
+
+Based on DESIGN.md — Themed & Unique category.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Primary | `#FF5701` | CTA buttons, accents |
+| Secondary | `#F6F6F1` | Page background |
+| Success | `#16A34A` | Price drops, positive |
+| Danger | `#DC2626` | Errors, delete |
+
+**Typography:** Playfair Display (headings), Inter (body), JetBrains Mono (prices)
+
+**Key patterns:**
+- Watchlist: horizontal tiles with comparison strips (300px/1fr/180px)
+- Nav: animated logo tag with scan line, user dropdown with avatar
+- Admin: sidebar navigation (260px) + content grid
+- Cards: rounded-2xl, border-based depth, orange hover glow
 
 ## How Search Works
   

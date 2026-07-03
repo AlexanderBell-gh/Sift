@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Users, ScrollText, Timer, Trash2, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
+import { Shield, Users, ScrollText, Timer, Trash2, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import NavHeader from './NavHeader';
@@ -134,204 +134,229 @@ export default function AdminPage() {
     return new Date(ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
 
-  const tabs: { key: Tab; label: string; icon: typeof Shield }[] = [
-    { key: 'dashboard', label: 'Dashboard', icon: Shield },
-    { key: 'users', label: 'Users', icon: Users },
-    { key: 'audit', label: 'Audit', icon: ScrollText },
+  const navItems: { key: Tab; label: string; icon: typeof Shield }[] = [
+    { key: 'dashboard', label: 'Stats Dashboard', icon: BarChart3 },
+    { key: 'users', label: 'User Management', icon: Users },
+    { key: 'audit', label: 'Audit Logs', icon: ScrollText },
     { key: 'trials', label: 'Trials', icon: Timer },
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A]">
-      <NavHeader title="Admin" showBack />
+    <div className="min-h-screen bg-[#F6F6F1] dark:bg-[#0A0C10]">
+      <NavHeader />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex gap-1 mb-6 overflow-x-auto">
-          {tabs.map(t => (
+      <div className="grid grid-cols-1 sm:grid-cols-[260px_1fr] min-h-[calc(100vh-72px)]">
+        {/* Sidebar */}
+        <aside className="bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 p-8 hidden sm:block">
+          <div className="font-[family-name:var(--font-display)] font-bold text-xl mb-8 text-zinc-900 dark:text-zinc-50">
+            Admin Panel
+          </div>
+          <nav className="flex flex-col gap-1">
+            {navItems.map(item => (
+              <button
+                key={item.key}
+                onClick={() => setTab(item.key)}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  tab === item.key
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Mobile tab bar */}
+        <div className="sm:hidden flex gap-1 p-4 overflow-x-auto border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+          {navItems.map(item => (
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
-                tab === t.key
-                  ? 'bg-accent text-black'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/5'
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                tab === item.key
+                  ? 'bg-accent text-white'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
               }`}
             >
-              <t.icon className="w-4 h-4" />
-              {t.label}
+              <item.icon className="w-4 h-4" />
+              {item.label}
             </button>
           ))}
         </div>
 
-        {loading && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-xl skeleton animate-pulse" />
-            ))}
-          </div>
-        )}
+        {/* Content */}
+        <main className="p-6 sm:p-12 bg-[#F6F6F1] dark:bg-[#0A0C10]">
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold mb-8 text-zinc-900 dark:text-zinc-50">
+            System Overview
+          </h1>
 
-        {tab === 'dashboard' && stats && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatCard label="Total Users" value={stats.totalUsers} />
-              <StatCard label="Regular Users" value={stats.regularUsers} />
-              <StatCard label="Trial Users" value={stats.trialUsers} />
-              <StatCard label="Watchlist Items" value={stats.totalProducts} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <StatCard label="Price History Entries" value={stats.totalPrices} />
-            </div>
-          </div>
-        )}
-
-        {tab === 'users' && (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={userSearch}
-                  onChange={e => setUserSearch(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && loadUsers(1, userSearch, userFilter)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-sm text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent/40"
-                />
-              </div>
-              <select
-                value={userFilter}
-                onChange={e => { setUserFilter(e.target.value); loadUsers(1, userSearch, e.target.value); }}
-                className="px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-sm text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/40"
-              >
-                <option value="users">Regular Users</option>
-                <option value="trials">Trial Users</option>
-              </select>
-            </div>
-
-            <p className="text-xs text-zinc-400">{usersTotal} users found</p>
-
-            <div className="space-y-2">
-              {users.map(u => (
-                <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-zinc-800 dark:text-white truncate">{u.username}</p>
-                    <p className="text-xs text-zinc-400 truncate">{u.email}</p>
-                    <p className="text-[10px] text-zinc-400 mt-0.5">
-                      {u.isTrial ? 'Trial' : 'Regular'} · {u.productCount} pinned · {new Date(u.createdAt).toLocaleDateString('en-GB')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <select
-                      value={u.role}
-                      onChange={e => handleRoleChange(u.id, e.target.value)}
-                      className="px-2 py-1 rounded-lg bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-xs text-zinc-600 dark:text-zinc-300"
-                    >
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                    <button
-                      onClick={() => handleDeleteUser(u.id, u.username)}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                      title="Delete user"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+          {loading && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-28 rounded-2xl skeleton animate-pulse" />
               ))}
             </div>
+          )}
 
-            {usersTotalPages > 1 && (
-              <Pagination page={usersPage} totalPages={usersTotalPages} onChange={p => loadUsers(p, userSearch, userFilter)} />
-            )}
-          </div>
-        )}
+          {tab === 'dashboard' && stats && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
+              <StatCard label="Total Users" value={stats.totalUsers} />
+              <StatCard label="Active Watchlists" value={stats.totalProducts} />
+              <StatCard label="API Requests (24h)" value={stats.totalPrices} />
+            </div>
+          )}
 
-        {tab === 'audit' && (
-          <div className="space-y-4">
-            {logs.length === 0 ? (
-              <p className="text-sm text-zinc-400 text-center py-8">No audit logs yet</p>
-            ) : (
+          {tab === 'users' && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={userSearch}
+                    onChange={e => setUserSearch(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && loadUsers(1, userSearch, userFilter)}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+                <select
+                  value={userFilter}
+                  onChange={e => { setUserFilter(e.target.value); loadUsers(1, userSearch, e.target.value); }}
+                  className="px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                >
+                  <option value="users">Regular Users</option>
+                  <option value="trials">Trial Users</option>
+                </select>
+              </div>
+
+              <p className="text-xs text-zinc-400">{usersTotal} users found</p>
+
               <div className="space-y-2">
-                {logs.map(log => (
-                  <div key={log.id} className="p-3 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono text-accent">{log.action}</span>
-                      <span className="text-[10px] text-zinc-400">{formatTime(log.timestamp)}</span>
+                {users.map(u => (
+                  <div key={u.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{u.username}</p>
+                      <p className="text-xs text-zinc-400 truncate">{u.email}</p>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">
+                        {u.isTrial ? 'Trial' : 'Regular'} · {u.productCount} pinned · {new Date(u.createdAt).toLocaleDateString('en-GB')}
+                      </p>
                     </div>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-1">
-                      {log.admin_username} {log.details || ''}
-                    </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <select
+                        value={u.role}
+                        onChange={e => handleRoleChange(u.id, e.target.value)}
+                        className="px-2 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-600 dark:text-zinc-300"
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button
+                        onClick={() => handleDeleteUser(u.id, u.username)}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                        title="Delete user"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
 
-            {logsTotalPages > 1 && (
-              <Pagination page={logsPage} totalPages={logsTotalPages} onChange={loadLogs} />
-            )}
-          </div>
-        )}
-
-        {tab === 'trials' && (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Search trials..."
-                  value={trialSearch}
-                  onChange={e => setTrialSearch(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && loadTrials(1, trialsStatus, trialSearch)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-sm text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent/40"
-                />
-              </div>
-              <select
-                value={trialsStatus}
-                onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value, trialSearch); }}
-                className="px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-sm text-zinc-800 dark:text-white"
-              >
-                <option value="all">All Trials</option>
-                <option value="active">Active</option>
-                <option value="expired">Expired</option>
-              </select>
-              <button
-                onClick={handleCleanupTrials}
-                className="px-4 py-2 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors"
-              >
-                Clean Expired
-              </button>
+              {usersTotalPages > 1 && (
+                <Pagination page={usersPage} totalPages={usersTotalPages} onChange={p => loadUsers(p, userSearch, userFilter)} />
+              )}
             </div>
+          )}
 
-            <div className="space-y-2">
-              {trials.map(t => (
-                <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
-                  <div>
-                    <p className="text-sm font-medium text-zinc-800 dark:text-white">{t.username}</p>
-                    <p className="text-xs text-zinc-400">{t.email}</p>
-                    <p className="text-[10px] text-zinc-400 mt-0.5">
-                      {t.productCount} pinned · Created {new Date(t.createdAt).toLocaleDateString('en-GB')}
-                      {t.trialExpiresAt && ` · Expires ${new Date(t.trialExpiresAt).toLocaleDateString('en-GB')}`}
-                    </p>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    t.isExpired
-                      ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
-                      : 'bg-emerald-500/10 text-emerald-500'
-                  }`}>
-                    {t.isExpired ? 'Expired' : 'Active'}
-                  </span>
+          {tab === 'audit' && (
+            <div className="space-y-4">
+              {logs.length === 0 ? (
+                <p className="text-sm text-zinc-400 text-center py-8">No audit logs yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {logs.map(log => (
+                    <div key={log.id} className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono text-accent">{log.action}</span>
+                        <span className="text-[10px] text-zinc-400">{formatTime(log.timestamp)}</span>
+                      </div>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-1">
+                        {log.admin_username} {log.details || ''}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
 
-            {trialsTotalPages > 1 && (
-              <Pagination page={trialsPage} totalPages={trialsTotalPages} onChange={p => loadTrials(p, trialsStatus, trialSearch)} />
-            )}
-          </div>
-        )}
+              {logsTotalPages > 1 && (
+                <Pagination page={logsPage} totalPages={logsTotalPages} onChange={loadLogs} />
+              )}
+            </div>
+          )}
+
+          {tab === 'trials' && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search trials..."
+                    value={trialSearch}
+                    onChange={e => setTrialSearch(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && loadTrials(1, trialsStatus, trialSearch)}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+                <select
+                  value={trialsStatus}
+                  onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value, trialSearch); }}
+                  className="px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100"
+                >
+                  <option value="all">All Trials</option>
+                  <option value="active">Active</option>
+                  <option value="expired">Expired</option>
+                </select>
+                <button
+                  onClick={handleCleanupTrials}
+                  className="px-4 py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors"
+                >
+                  Clean Expired
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {trials.map(t => (
+                  <div key={t.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                    <div>
+                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">{t.username}</p>
+                      <p className="text-xs text-zinc-400">{t.email}</p>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">
+                        {t.productCount} pinned · Created {new Date(t.createdAt).toLocaleDateString('en-GB')}
+                        {t.trialExpiresAt && ` · Expires ${new Date(t.trialExpiresAt).toLocaleDateString('en-GB')}`}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      t.isExpired
+                        ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
+                        : 'bg-emerald-500/10 text-emerald-500'
+                    }`}>
+                      {t.isExpired ? 'Expired' : 'Active'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {trialsTotalPages > 1 && (
+                <Pagination page={trialsPage} totalPages={trialsTotalPages} onChange={p => loadTrials(p, trialsStatus, trialSearch)} />
+              )}
+            </div>
+          )}
+        </main>
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
@@ -341,9 +366,13 @@ export default function AdminPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="p-4 rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
-      <p className="text-2xl font-bold text-zinc-800 dark:text-white">{value.toLocaleString()}</p>
-      <p className="text-xs text-zinc-400 mt-1">{label}</p>
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-6 rounded-2xl">
+      <span className="block font-[family-name:var(--font-mono)] text-3xl font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+        {value.toLocaleString()}
+      </span>
+      <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">
+        {label}
+      </span>
     </div>
   );
 }

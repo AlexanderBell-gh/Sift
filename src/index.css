@@ -4,12 +4,15 @@
 
 @theme {
   --font-sans: 'Inter', sans-serif;
-  --color-accent: #74da86;
-  --color-accent-light: #86efac;
-  --color-accent-dark: #22c55e;
-  --color-background-dark: #0A0A0A;
-  --color-price-up: #EF4444;
-  --color-price-down: #22C55E;
+  --font-display: 'Playfair Display', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --color-accent: #FF5701;
+  --color-accent-light: #FF7A33;
+  --color-accent-dark: #E64D00;
+  --color-background-dark: #0A0C10;
+  --color-surface-dark: #161B22;
+  --color-price-up: #DC2626;
+  --color-price-down: #16A34A;
   --color-price-neutral: #71717a;
 }
 
@@ -43,7 +46,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #74da86, #4ade16, #22c55e);
+  background: linear-gradient(135deg, #FF5701, #FF7A33);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -61,7 +64,7 @@ body {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(116, 218, 134, 0.5), rgba(74, 222, 22, 0.3), rgba(34, 197, 94, 0.1));
+  background: linear-gradient(135deg, rgba(255, 87, 1, 0.5), rgba(255, 122, 51, 0.3), rgba(230, 77, 0, 0.1));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -78,8 +81,8 @@ body {
 }
 
 .product-card:hover {
-  @apply border-green-300/60 dark:border-green-400/30;
-  @apply shadow-[0_8px_40px_-12px_rgba(116,218,134,0.12)] dark:shadow-[0_8px_40px_-12px_rgba(116,218,134,0.08)];
+  @apply border-orange-300/60 dark:border-orange-400/30;
+  @apply shadow-[0_8px_40px_-12px_rgba(255,87,1,0.12)] dark:shadow-[0_8px_40px_-12px_rgba(255,87,1,0.08)];
   transform: translateY(-2px);
 }
 
@@ -284,4 +287,95 @@ body {
   .product-image {
     @apply h-36 rounded-t-xl;
   }
+}
+
+/* Watchlist tile layout */
+.watchlist-tile {
+  @apply bg-white dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-white/10 rounded-2xl;
+  @apply grid grid-cols-[1fr_auto] sm:grid-cols-[300px_1fr_180px] items-center;
+  @apply p-4 sm:p-5 gap-4;
+  @apply transition-all duration-200;
+  transition-timing-function: var(--ease-spring);
+}
+
+.watchlist-tile:hover {
+  @apply border-orange-300/60 dark:border-orange-400/30;
+  transform: translateX(4px);
+}
+
+.tile-product-info {
+  @apply flex flex-col gap-1 min-w-0;
+}
+
+.tile-product-name {
+  font-family: var(--font-display);
+  @apply text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50 truncate;
+}
+
+.tile-last-updated {
+  font-family: var(--font-mono);
+  @apply text-xs text-zinc-400 dark:text-zinc-500;
+}
+
+.tile-comparison-strip {
+  @apply flex gap-3 overflow-x-auto py-1;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tile-comparison-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.tile-best-price {
+  @apply flex items-center gap-4 px-4 py-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 rounded-xl;
+}
+
+.best-price-label {
+  @apply text-[10px] uppercase font-bold text-zinc-400 tracking-wider;
+}
+
+.best-price-value {
+  font-family: var(--font-mono);
+  @apply text-xl sm:text-2xl font-semibold text-accent;
+}
+
+.best-price-store {
+  @apply text-xs font-semibold px-2 py-0.5 bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-white/10 rounded;
+}
+
+.comparison-chip {
+  @apply flex flex-col items-center px-3 py-2 bg-white dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-white/10 rounded-lg min-w-[72px];
+}
+
+.chip-store {
+  @apply text-[10px] uppercase text-zinc-400 font-semibold mb-0.5;
+}
+
+.chip-price {
+  font-family: var(--font-mono);
+  @apply text-sm font-medium text-zinc-700 dark:text-zinc-300;
+}
+
+.tile-meta {
+  @apply flex items-center justify-end gap-4;
+}
+
+.trend-indicator {
+  font-family: var(--font-mono);
+  @apply text-sm font-semibold flex items-center gap-1;
+}
+
+.trend-down {
+  @apply text-emerald-500;
+}
+
+.trend-up {
+  @apply text-red-500;
+}
+
+.remove-btn {
+  @apply bg-transparent border border-zinc-200/80 dark:border-white/10 text-zinc-400;
+  @apply px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer;
+  @apply hover:border-red-400 hover:text-red-500 transition-colors;
 }

@@ -190,112 +190,122 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A]">
+    <div className="min-h-screen bg-[#F6F6F1] dark:bg-[#0A0C10]">
       <NavHeader />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {!token ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
-            <h2 className="text-xl font-semibold text-zinc-800 dark:text-white mb-2">Compare prices across 7 UK supermarkets</h2>
-            <p className="text-zinc-500 dark:text-gray-400 mb-6">Try free for 12 hours with 5 free searches</p>
+      {!token ? (
+        <section className="pt-40 pb-24 text-center">
+          <div className="max-w-6xl mx-auto px-6">
+            <h1 className="font-[family-name:var(--font-display)] text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] mb-6 tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
+              Find the best price,<br />
+              <span className="text-zinc-900 dark:text-zinc-50">enriched by AI.</span>
+            </h1>
+            <p className="text-xl text-zinc-500 dark:text-zinc-400 max-w-[600px] mx-auto mb-15">
+              Simultaneously scan 7 UK supermarkets. Get real-time pricing and loyalty offers in one place.
+            </p>
             <Button onClick={startTrial}>Free trial</Button>
           </div>
-        ) : (
-          <>
-            <div className="text-center mb-8">
-              <p className="text-zinc-500 dark:text-gray-400">Find the best deals across UK supermarkets</p>
-            </div>
-
-            {user?.isTrial && remainingSearches !== null && (
-              <p className="text-center text-sm text-zinc-400 dark:text-zinc-500 mb-4">
-                {remainingSearches} free {remainingSearches === 1 ? 'search' : 'searches'} remaining
+        </section>
+      ) : (
+        <>
+          <section className="pt-16 pb-10 text-center">
+            <div className="max-w-6xl mx-auto px-6">
+              <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-extrabold leading-tight mb-4 tracking-tight text-zinc-900 dark:text-zinc-50">
+                Find the best price,<br />
+                <span className="text-zinc-900 dark:text-zinc-50">enriched by AI.</span>
+              </h1>
+              <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto mb-10">
+                Simultaneously scan 7 UK supermarkets. Get real-time pricing and loyalty offers in one place.
               </p>
-            )}
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="max-w-2xl mx-auto mb-8">
-              <div className="relative" ref={suggestionsRef}>
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onFocus={() => {
-                    if (query.length < 2 && history.length > 0) {
-                      setShowHistory(true);
-                      setShowSuggestions(false);
-                    } else if (suggestions.length > 0) {
-                      setShowSuggestions(true);
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Search for products..."
-                  className="w-full pl-10 sm:pl-12 pr-16 sm:pr-24 py-3 sm:py-4 bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent backdrop-blur-sm transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !query.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
-                >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <span className="sm:hidden"><Search className="w-5 h-5" /></span>
-                      <span className="hidden sm:inline">Search</span>
-                    </>
-                  )}
-                </button>
+              {user?.isTrial && remainingSearches !== null && (
+                <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-4">
+                  {remainingSearches} free {remainingSearches === 1 ? 'search' : 'searches'} remaining
+                </p>
+              )}
 
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl shadow-lg overflow-hidden">
-                    {suggestions.map((suggestion, index) => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => selectSuggestion(suggestion)}
-                        className={`w-full px-4 py-3 text-left text-sm transition-colors ${
-                          index === selectedIndex
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                            : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5'
-                        }`}
-                      >
-                        <Search className="inline w-4 h-4 mr-2 opacity-50" />
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="max-w-[750px] mx-auto">
+                <div className="relative flex gap-0 bg-white dark:bg-zinc-900 p-2 rounded-[20px] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.3)] border border-zinc-200 dark:border-zinc-800" ref={suggestionsRef}>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => {
+                      if (query.length < 2 && history.length > 0) {
+                        setShowHistory(true);
+                        setShowSuggestions(false);
+                      } else if (suggestions.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Search for butter, oat milk, avocados..."
+                    className="flex-1 px-6 py-4 text-xl font-sans outline-none bg-transparent text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || !query.trim()}
+                    className="px-10 py-3 bg-accent hover:bg-accent-light disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed rounded-[14px] text-white font-semibold transition-all hover:-translate-y-px"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      'Search'
+                    )}
+                  </button>
 
-                {showHistory && history.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl shadow-lg overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 dark:border-white/5">
-                      <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Recent searches</span>
-                      <button
-                        type="button"
-                        onClick={handleClearHistory}
-                        className="text-xs text-zinc-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
-                      >
-                        Clear
-                      </button>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl overflow-hidden top-full left-0">
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => selectSuggestion(suggestion)}
+                          className={`w-full px-4 py-3 text-left text-sm transition-colors ${
+                            index === selectedIndex
+                              ? 'bg-accent/10 text-accent'
+                              : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          <Search className="inline w-4 h-4 mr-2 opacity-50" />
+                          {suggestion}
+                        </button>
+                      ))}
                     </div>
-                    {history.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => selectHistory(item)}
-                        className="w-full px-4 py-3 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
-                      >
-                        <Search className="inline w-4 h-4 mr-2 opacity-50" />
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </form>
+                  )}
 
+                  {showHistory && history.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl overflow-hidden top-full left-0">
+                      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
+                        <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Recent searches</span>
+                        <button
+                          type="button"
+                          onClick={handleClearHistory}
+                          className="text-xs text-zinc-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      {history.map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => selectHistory(item)}
+                          className="w-full px-4 py-3 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <Search className="inline w-4 h-4 mr-2 opacity-50" />
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <div className="max-w-6xl mx-auto px-6 pb-24">
             {error && (
               <div className="max-w-2xl mx-auto mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
@@ -321,9 +331,9 @@ export default function SearchPage() {
 
             {!loading && hasSearched && results.length === 0 && !error && (
               <div className="flex flex-col items-center justify-center py-16">
-                <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
-                <p className="text-zinc-600 dark:text-gray-400 text-lg">No products found</p>
-                <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Try a different search term</p>
+                <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-zinc-600 mb-4" />
+                <p className="text-zinc-600 dark:text-zinc-400 text-lg">No products found</p>
+                <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">Try a different search term</p>
               </div>
             )}
 
@@ -343,19 +353,19 @@ export default function SearchPage() {
 
             {!hasSearched && !loading && (
               <div className="flex flex-col items-center justify-center py-16">
-                <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
-                <p className="text-zinc-600 dark:text-gray-400 text-lg">Start comparing prices</p>
-                <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1 text-center">Search for any product to see prices from 7 UK supermarkets</p>
+                <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-zinc-600 mb-4" />
+                <p className="text-zinc-600 dark:text-zinc-400 text-lg">Start comparing prices</p>
+                <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1 text-center">Search for any product to see prices from 7 UK supermarkets</p>
               </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
       <Modal isOpen={showLimitModal} onClose={() => setShowLimitModal(false)} title="Free search limit reached">
-        <p className="text-zinc-600 dark:text-gray-400 mb-6">
+        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
           {limitReason === 'trial_expired'
             ? 'Trial period ended, sign up to continue using.'
             : 'Sign up to have access to your watchlist and unlimited searches.'}

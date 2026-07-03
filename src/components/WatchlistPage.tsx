@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, refreshWatchlistItem } from '../lib/api';
 import type { WatchlistItem } from '../types';
-import SearchResultCard from './SearchResultCard';
 import NavHeader from './NavHeader';
 import FilterDropdown from './FilterDropdown';
 import { Toast } from './ui/Toast';
@@ -91,6 +90,15 @@ export default function WatchlistPage() {
     }
   }
 
+  async function handleRefreshAll() {
+    if (!token) return;
+    for (const item of items) {
+      if (!refreshing.has(item.id)) {
+        handleRefresh(item.id);
+      }
+    }
+  }
+
   function formatTimeAgo(ts: number) {
     const diff = Date.now() - ts;
     if (diff < 60000) return 'just now';
@@ -99,12 +107,40 @@ export default function WatchlistPage() {
     return `${Math.floor(diff / 86400000)}d ago`;
   }
 
-  return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A]">
-      <NavHeader title="Watchlist" showBack />
+  function getStoreShortName(store: string) {
+    const map: Record<string, string> = {
+      "Sainsbury's": 'Sains',
+      'Morrisons': 'Morr',
+      'M&S': 'M&S',
+    };
+    return map[store] || store;
+  }
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Filter toolbar */}
+  return (
+    <div className="min-h-screen bg-[#F6F6F1] dark:bg-[#0A0C10]">
+      <NavHeader />
+
+      <section className="pt-12 pb-8 text-center">
+        <div className="max-w-6xl mx-auto px-6">
+          <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-extrabold leading-tight mb-4 tracking-tight text-zinc-900 dark:text-zinc-50">
+            Your Watchlist
+          </h1>
+          <p className="text-lg text-zinc-500 dark:text-zinc-400 mb-6">
+            Real-time tracking for your essential products.
+          </p>
+          {items.length > 0 && (
+            <button
+              onClick={handleRefreshAll}
+              disabled={refreshing.size > 0}
+              className="px-8 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-light transition-colors disabled:opacity-50"
+            >
+              Refresh All Prices
+            </button>
+          )}
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-6 pb-24">
         {!loading && items.length > 0 && (
           <div className="mb-6">
             <FilterDropdown
@@ -117,16 +153,20 @@ export default function WatchlistPage() {
         )}
 
         {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="product-card animate-pulse">
-                <div className="skeleton h-44 rounded-t-2xl" />
-                <div className="p-4 space-y-3">
-                  <div className="skeleton h-3 w-16 rounded" />
-                  <div className="skeleton h-4 w-3/4 rounded" />
-                  <div className="skeleton h-3 w-12 rounded" />
-                  <div className="skeleton h-6 w-20 rounded" />
-                  <div className="skeleton h-3 w-24 rounded" />
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="watchlist-tile animate-pulse">
+                <div className="tile-product-info">
+                  <div className="skeleton h-6 w-48 rounded" />
+                  <div className="skeleton h-4 w-20 rounded" />
+                </div>
+                <div className="tile-comparison-strip">
+                  <div className="skeleton h-16 w-32 rounded-xl" />
+                  <div className="skeleton h-16 w-20 rounded-lg" />
+                  <div className="skeleton h-16 w-20 rounded-lg" />
+                </div>
+                <div className="tile-meta">
+                  <div className="skeleton h-5 w-16 rounded" />
                 </div>
               </div>
             ))}
@@ -135,12 +175,12 @@ export default function WatchlistPage() {
 
         {!loading && items.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
-            <BookmarkCheck className="w-16 h-16 text-zinc-300 dark:text-gray-600 mb-4" />
-            <p className="text-zinc-600 dark:text-gray-400 text-lg">No pinned products</p>
-            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Compare prices across 7 UK supermarkets</p>
+            <BookmarkCheck className="w-16 h-16 text-zinc-300 dark:text-zinc-600 mb-4" />
+            <p className="text-zinc-600 dark:text-zinc-400 text-lg">No pinned products</p>
+            <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">Compare prices across 7 UK supermarkets</p>
             <button
               onClick={() => navigate('/')}
-              className="mt-4 px-4 py-2 bg-accent text-black font-medium rounded-xl hover:bg-accent-light transition-colors"
+              className="mt-4 px-4 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-light transition-colors"
             >
               Search Products
             </button>
@@ -149,47 +189,59 @@ export default function WatchlistPage() {
 
         {!loading && items.length > 0 && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
-            <p className="text-zinc-600 dark:text-gray-400 text-lg">No items match filters</p>
-            <p className="text-zinc-400 dark:text-gray-500 text-sm mt-1">Try selecting more stores</p>
+            <p className="text-zinc-600 dark:text-zinc-400 text-lg">No items match filters</p>
+            <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">Try selecting more stores</p>
           </div>
         )}
 
         {!loading && filtered.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((item) => (
-              <div key={item.id} className="relative">
-                <SearchResultCard
-                  result={{
-                    id: item.product_id,
-                    name: item.product_name,
-                    store: item.store,
-                    store_logo: item.store_logo,
-                    image_url: item.image_url,
-                    unit: item.unit,
-                    prices: item.prices,
-                    loyalty_type: item.loyalty_type,
-                    offer_expires_at: item.offer_expires_at,
-                    product_url: item.product_url,
-                    is_on_offer: item.is_on_offer,
-                  }}
-                  showRemove
-                  onRemove={() => handleRemove(item.id)}
-                />
-                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
-                  <button
-                    onClick={() => handleRefresh(item.id)}
-                    disabled={refreshing.has(item.id)}
-                    className="p-2 rounded-lg bg-black/30 dark:bg-black/30 text-white/70 hover:text-white hover:bg-black/50 backdrop-blur-sm transition-colors disabled:opacity-50"
-                    title="Refresh price"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${refreshing.has(item.id) ? 'animate-spin' : ''}`} />
-                  </button>
+          <div className="flex flex-col gap-4">
+            {filtered.map((item) => {
+              const bestPrice = item.prices.normal ?? item.prices.loyalty ?? 0;
+              const otherStores = items
+                .filter(i => i.product_id === item.product_id && i.id !== item.id)
+                .slice(0, 3);
+
+              return (
+                <div key={item.id} className="watchlist-tile">
+                  <div className="tile-product-info">
+                    <span className="tile-product-name">{item.product_name}</span>
+                    <span className="tile-last-updated">Updated {formatTimeAgo(item.updated_at)}</span>
+                  </div>
+
+                  <div className="tile-comparison-strip">
+                    <div className="tile-best-price">
+                      <span className="best-price-label">Best</span>
+                      <span className="best-price-value">£{bestPrice.toFixed(2)}</span>
+                      <span className="best-price-store">{item.store}</span>
+                    </div>
+                    {otherStores.map(other => (
+                      <div key={other.id} className="comparison-chip">
+                        <span className="chip-store">{getStoreShortName(other.store)}</span>
+                        <span className="chip-price">£{(other.prices.normal ?? 0).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="tile-meta">
+                    <button
+                      onClick={() => handleRefresh(item.id)}
+                      disabled={refreshing.has(item.id)}
+                      className="p-2 rounded-lg text-zinc-400 hover:text-accent hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                      title="Refresh price"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${refreshing.has(item.id) ? 'animate-spin' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => handleRemove(item.id)}
+                      className="remove-btn"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
-                <div className="px-4 pb-1">
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">Updated {formatTimeAgo(item.updated_at)}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
