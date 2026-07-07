@@ -142,25 +142,19 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F6F6F1] dark:bg-[#0A0C10]">
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
       <NavHeader />
 
-      <div className="grid grid-cols-1 sm:grid-cols-[260px_1fr] min-h-[calc(100vh-72px)]">
+      <div className="admin-grid">
         {/* Sidebar */}
-        <aside className="bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 p-8 hidden sm:block">
-          <div className="font-[family-name:var(--font-display)] font-bold text-xl mb-8 text-zinc-900 dark:text-zinc-50">
-            Admin Panel
-          </div>
-          <nav className="flex flex-col gap-1">
+        <aside className="admin-sidebar hidden sm:block">
+          <div className="admin-sidebar-header">Admin Control</div>
+          <nav className="flex flex-col gap-2">
             {navItems.map(item => (
               <button
                 key={item.key}
                 onClick={() => setTab(item.key)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  tab === item.key
-                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
-                }`}
+                className={`admin-nav-item ${tab === item.key ? 'active' : ''}`}
               >
                 <item.icon className="w-5 h-5" />
                 {item.label}
@@ -170,16 +164,17 @@ export default function AdminPage() {
         </aside>
 
         {/* Mobile tab bar */}
-        <div className="sm:hidden flex gap-1 p-4 overflow-x-auto border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <div className="sm:hidden flex gap-1 p-4 overflow-x-auto border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
           {navItems.map(item => (
             <button
               key={item.key}
               onClick={() => setTab(item.key)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                 tab === item.key
-                  ? 'bg-accent text-white'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  ? 'text-white'
+                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
               }`}
+              style={tab === item.key ? { background: 'var(--primary)', color: 'white' } : { color: 'var(--muted)' }}
             >
               <item.icon className="w-4 h-4" />
               {item.label}
@@ -188,10 +183,18 @@ export default function AdminPage() {
         </div>
 
         {/* Content */}
-        <main className="p-6 sm:p-12 bg-[#F6F6F1] dark:bg-[#0A0C10]">
-          <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold mb-8 text-zinc-900 dark:text-zinc-50">
-            System Overview
-          </h1>
+        <main className="admin-content">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
+            <div>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: '700', marginBottom: '4px', color: 'var(--text)' }}>
+                Dashboard View
+              </h1>
+              <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Real-time system health, active database metrics, and subscriber counts.</p>
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', background: 'rgba(22, 163, 74, 0.1)', color: 'var(--success)', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
+              ● ENGINE ONLINE
+            </div>
+          </div>
 
           {loading && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
@@ -366,13 +369,9 @@ export default function AdminPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-6 rounded-2xl">
-      <span className="block font-[family-name:var(--font-mono)] text-3xl font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
-        {value.toLocaleString()}
-      </span>
-      <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">
-        {label}
-      </span>
+    <div className="metric-card">
+      <span className="metric-label">{label}</span>
+      <span className="metric-value">{value.toLocaleString()}</span>
     </div>
   );
 }

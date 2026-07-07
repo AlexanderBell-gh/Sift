@@ -190,31 +190,26 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F6F1] dark:bg-[#0A0C10]">
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
       <NavHeader />
 
       {!token ? (
-        <section className="pt-40 pb-24 text-center">
-          <div className="max-w-6xl mx-auto px-6">
-            <h1 className="font-[family-name:var(--font-display)] text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] mb-6 tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-              Find the best price,<br />
-              <span className="text-zinc-900 dark:text-zinc-50">enriched by AI.</span>
-            </h1>
-            <p className="text-xl text-zinc-500 dark:text-zinc-400 max-w-[600px] mx-auto mb-15">
-              Simultaneously scan 7 UK supermarkets. Get real-time pricing and loyalty offers in one place.
-            </p>
+        <section className="hero">
+          <div className="container">
+            <h1>Find the best price,<br />enriched by AI.</h1>
+            <p>Simultaneously scan 7 UK supermarkets. Get real-time pricing and loyalty offers in one place.</p>
             <Button onClick={startTrial}>Free trial</Button>
           </div>
         </section>
       ) : (
         <>
           <section className="pt-16 pb-10 text-center">
-            <div className="max-w-6xl mx-auto px-6">
-              <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-extrabold leading-tight mb-4 tracking-tight text-zinc-900 dark:text-zinc-50">
+            <div className="container">
+              <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-extrabold leading-tight mb-4 tracking-tight" style={{ color: 'var(--text)' }}>
                 Find the best price,<br />
-                <span className="text-zinc-900 dark:text-zinc-50">enriched by AI.</span>
+                <span style={{ color: 'var(--text)' }}>enriched by AI.</span>
               </h1>
-              <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto mb-10">
+              <p className="text-lg mb-10" style={{ color: 'var(--muted)' }}>
                 Simultaneously scan 7 UK supermarkets. Get real-time pricing and loyalty offers in one place.
               </p>
 
@@ -225,7 +220,7 @@ export default function SearchPage() {
               )}
 
               <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="max-w-[750px] mx-auto">
-                <div className="relative flex gap-0 bg-white dark:bg-zinc-900 p-2 rounded-[20px] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.3)] border border-zinc-200 dark:border-zinc-800" ref={suggestionsRef}>
+                <div className="search-container" ref={suggestionsRef}>
                   <input
                     ref={inputRef}
                     type="text"
@@ -241,12 +236,12 @@ export default function SearchPage() {
                     }}
                     onKeyDown={handleKeyDown}
                     placeholder="Search for butter, oat milk, avocados..."
-                    className="flex-1 px-6 py-4 text-xl font-sans outline-none bg-transparent text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-500"
+                    className="search-input"
                   />
                   <button
                     type="submit"
                     disabled={loading || !query.trim()}
-                    className="px-10 py-3 bg-accent hover:bg-accent-light disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed rounded-[14px] text-white font-semibold transition-all hover:-translate-y-px"
+                    className="search-button disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />

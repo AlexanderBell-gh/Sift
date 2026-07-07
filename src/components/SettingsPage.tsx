@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Download } from 'lucide-react';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
@@ -97,105 +95,123 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A]">
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
       <NavHeader title="Settings" showBack />
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="space-y-4">
-          <section className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl p-6">
-            <h2 className="text-sm font-semibold tracking-tight mb-4 text-zinc-900 dark:text-white">Account</h2>
-            <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
-              <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Username:</span> {user?.username}</p>
-              <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Email:</span> {user?.email}</p>
-              <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Account type:</span> {isTrial ? 'Trial' : 'Registered'}</p>
+      <div className="container" style={{ paddingTop: '48px' }}>
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '40px', fontWeight: '700' }}>Account Settings</h2>
+          <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Update Sift profiles, configurations and secure sandboxing metrics</p>
+        </div>
+
+        <div className="settings-grid">
+          <section className="settings-card">
+            <h3>Personal Details</h3>
+            <p>Modify credentials and basic system identifiers.</p>
+            <div className="form-group">
+              <label>Full Name</label>
+              <input type="text" className="form-input" value={user?.username || ''} disabled style={{ opacity: 0.75 }} />
             </div>
+            <div className="form-group">
+              <label>Email Address</label>
+              <input type="email" className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.75 }} />
+            </div>
+            <button className="auth-submit" style={{ margin: 0 }} onClick={() => showToast('Profile saving simulated.', 'success')}>Save Changes</button>
           </section>
 
           {!isTrial && (
-            <section className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl p-6">
-              <h2 className="text-sm font-semibold tracking-tight mb-4 text-zinc-900 dark:text-white">Change Password</h2>
-              <form onSubmit={handlePasswordChange} className="space-y-4">
-                <Input
-                  label="Current Password"
-                  type="password"
-                  value={passwordForm.currentPassword}
-                  onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                  required
-                />
-                <Input
-                  label="New Password"
-                  type="password"
-                  value={passwordForm.newPassword}
-                  onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Confirm New Password"
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  required
-                />
+            <section className="settings-card">
+              <h3>Change Password</h3>
+              <p>Manage standard warning protocols and live inflation metrics limits.</p>
+              <form onSubmit={handlePasswordChange} className="flex flex-col gap-4">
+                <div className="form-group">
+                  <label>Current Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={passwordForm.currentPassword}
+                    onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={passwordForm.newPassword}
+                    onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Confirm New Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={passwordForm.confirmPassword}
+                    onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    required
+                  />
+                </div>
                 {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-                <Button type="submit" disabled={isLoading}>
+                <button type="submit" className="auth-submit" style={{ background: 'var(--text)', color: 'var(--surface)' }} disabled={isLoading}>
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change Password'}
-                </Button>
+                </button>
               </form>
             </section>
           )}
 
           {!isTrial && (
-            <section className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl p-6">
-              <h2 className="text-sm font-semibold tracking-tight mb-4 text-zinc-900 dark:text-white">Data Management</h2>
-              <Button variant="secondary" onClick={handleExportDownload} disabled={exportLoading} className="flex items-center justify-center gap-1.5">
-                {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            <section className="settings-card">
+              <h3>Data Management</h3>
+              <p>Export your watchlist data in CSV format.</p>
+              <button className="auth-submit" style={{ background: 'var(--text)', color: 'var(--surface)' }} onClick={handleExportDownload} disabled={exportLoading}>
+                {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 inline mr-2" />}
                 Download Watchlist CSV
-              </Button>
+              </button>
             </section>
           )}
 
-          {!isTrial && (
-            <section className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl p-6">
-              <h2 className="text-sm font-semibold tracking-tight mb-4 text-zinc-900 dark:text-white">About</h2>
-              <div className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
-                <p><span className="font-medium text-zinc-700 dark:text-zinc-200">Version:</span> 1.0.0</p>
-              </div>
-            </section>
-          )}
-
-          <section className="bg-white dark:bg-white/5 border border-red-200/50 dark:border-red-500/20 rounded-xl p-6">
-            <h2 className="text-sm font-semibold tracking-tight mb-2 text-red-500">Delete Account</h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-              Once you delete your account, there is no going back. All your watchlist, price history, and data will be permanently deleted.
-            </p>
-            <Button variant="danger" onClick={() => setIsDeleteModalOpen(true)}>
-              Delete Account
-            </Button>
+          <section className="settings-card full-width danger-border">
+            <h3 className="danger-zone-title">
+              <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              Danger Zone
+            </h3>
+            <p>Irreversible deletion procedures on subscription records and cached watchlists.</p>
+            <div>
+              <button className="auth-submit" style={{ background: 'var(--danger)', margin: 0 }} onClick={() => setIsDeleteModalOpen(true)}>
+                Teardown Subscription & Assets
+              </button>
+            </div>
           </section>
         </div>
       </div>
 
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Account" className="max-w-sm">
         <div className="p-6 space-y-4">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm" style={{ color: 'var(--muted)' }}>
             Are you sure you want to delete your account? This action cannot be undone.
           </p>
           {!isTrial && (
-            <Input
-              label="Enter your password to confirm"
-              type="password"
-              value={deletePassword}
-              onChange={e => setDeletePassword(e.target.value)}
-              required
-            />
+            <div className="form-group">
+              <label>Enter your password to confirm</label>
+              <input
+                type="password"
+                className="form-input"
+                value={deletePassword}
+                onChange={e => setDeletePassword(e.target.value)}
+                required
+              />
+            </div>
           )}
           {deleteError && <p className="text-red-500 text-sm">{deleteError}</p>}
           <div className="flex gap-2 pt-2">
-            <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)} className="flex-1">
+            <button className="auth-submit" style={{ background: 'var(--text)', color: 'var(--surface)', flex: 1 }} onClick={() => setIsDeleteModalOpen(false)}>
               Cancel
-            </Button>
-            <Button variant="danger" onClick={handleDeleteAccount} disabled={isLoading} className="flex-1">
+            </button>
+            <button className="auth-submit" style={{ background: 'var(--danger)', flex: 1 }} onClick={handleDeleteAccount} disabled={isLoading}>
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
-            </Button>
+            </button>
           </div>
         </div>
       </Modal>

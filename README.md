@@ -167,8 +167,8 @@ Sift/
 │   │   └── index.ts              # SearchResult, WatchlistItem, Alert, Admin types
 │   ├── App.tsx                   # Router (/, /auth, /watchlist, /settings, /admin)
 │   ├── main.tsx
-│   ├── index.css                 # Tailwind + design system (tiles, gradients, animations)
-│   └── UI-PLAN.md                # UI redesign task tracker
+│   ├── index.css                 # Tailwind v4 + DESIGN.md tokens + component classes (.nav, .hero, .search-container, .watchlist-tile, .admin-grid, .auth-card, .settings-card)
+│   └── PLAN.md                   # Design system integration tracker
 ├── workers/
 │   ├── index.js                  # API routes (~1650 lines)
 │   ├── auth.js                   # JWT + password hashing
@@ -184,22 +184,32 @@ Sift/
 
 ## Design System
 
-Based on DESIGN.md — Themed & Unique category.
+Based on DESIGN.md — Themed & Unique category. Implemented via CSS custom properties in `src/index.css`.
 
 | Token | Value | Usage |
 |-------|-------|-------|
 | Primary | `#FF5701` | CTA buttons, accents |
 | Secondary | `#F6F6F1` | Page background |
+| Surface | `#FFFFFF` | Cards, dropdowns, inputs |
+| Text | `#111827` | Body copy |
 | Success | `#16A34A` | Price drops, positive |
-| Danger | `#DC2626` | Errors, delete |
+| Warning | `#D97706` | Caution states |
+| Danger | `#DC2626` | Errors, delete actions |
+| Muted | `#6B7280` | Secondary text |
+| Border | `#E5E7EB` | Dividers, card borders |
 
-**Typography:** Playfair Display (headings), Inter (body), JetBrains Mono (prices)
+**Typography:** Playfair Display (headings, 600-800), Inter (body, 400-800), JetBrains Mono (prices/timestamps, 400-600). Scale: 14/16/18/24/32/40px.
+
+**Motion:** 150-250ms transitions with spring easing (`cubic-bezier(0.16, 1, 0.3, 1)`). Hover: `translateX(4px)` on tiles, `translateY(-1px)` on buttons. Logo scan line animation (2s infinite).
 
 **Key patterns:**
-- Watchlist: horizontal tiles with comparison strips (300px/1fr/180px)
-- Nav: animated logo tag with scan line, user dropdown with avatar
-- Admin: sidebar navigation (260px) + content grid
-- Cards: rounded-2xl, border-based depth, orange hover glow
+- Nav: `.nav` class with glass blur, animated logo tag with scan line, user dropdown with avatar circle
+- Hero: `.hero` with 72px heading, `.search-container` with pill input + primary button
+- Watchlist: `.watchlist-tile` horizontal grid (280px/1fr/180px), comparison chips per store
+- Admin: `.admin-grid` layout (280px sidebar + content), `.admin-nav-item` with active state, `.metric-card` grid
+- Auth: `.auth-card` centered, `.auth-tabs` pill toggle, `.form-input` with focus ring
+- Settings: `.settings-grid` (2-column), `.settings-card` with danger zone variant
+- Dark mode: `.dark` class flips all CSS variables; nav uses `rgba(--nav-bg-rgb, 0.9)` with backdrop blur
 
 ## How Search Works
   

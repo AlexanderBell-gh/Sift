@@ -117,30 +117,29 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F6F1] dark:bg-[#0A0C10]">
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
       <NavHeader />
 
       <section className="pt-12 pb-8 text-center">
-        <div className="max-w-6xl mx-auto px-6">
-          <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-extrabold leading-tight mb-4 tracking-tight text-zinc-900 dark:text-zinc-50">
-            Your Watchlist
-          </h1>
-          <p className="text-lg text-zinc-500 dark:text-zinc-400 mb-6">
-            Real-time tracking for your essential products.
-          </p>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+          <div>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
+            <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Real-time tracking for items in your comparison rotation</p>
+          </div>
           {items.length > 0 && (
             <button
               onClick={handleRefreshAll}
               disabled={refreshing.size > 0}
-              className="px-8 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-light transition-colors disabled:opacity-50"
+              className="search-button"
+              style={{ margin: 0, padding: '12px 24px' }}
             >
-              Refresh All Prices
+              + Track Item
             </button>
           )}
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-6 pb-24">
+      <div className="container" style={{ paddingBottom: '100px' }}>
         {!loading && items.length > 0 && (
           <div className="mb-6">
             <FilterDropdown
@@ -195,7 +194,7 @@ export default function WatchlistPage() {
         )}
 
         {!loading && filtered.length > 0 && (
-          <div className="flex flex-col gap-4">
+          <div className="watchlist-container">
             {filtered.map((item) => {
               const bestPrice = item.prices.normal ?? item.prices.loyalty ?? 0;
               const otherStores = items

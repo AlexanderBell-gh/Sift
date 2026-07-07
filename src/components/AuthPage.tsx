@@ -1,9 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, UserPlus, Loader2 } from 'lucide-react';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
+import { Loader2 } from 'lucide-react';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
 
@@ -39,76 +37,95 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold gradient-text">Sift</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-sm">Smart price comparison</p>
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="logo-mark" style={{ margin: '0 auto' }}>
+            <div className="logo-tag"></div>
+            <div className="logo-scan-line"></div>
+          </div>
+          <h2>Welcome to Sift</h2>
+          <p>Real-time retail price optimization</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl p-6 space-y-4">
-          <div className="flex gap-2 mb-2">
-            <Button
-              type="button"
-              variant={isLogin ? 'primary' : 'ghost'}
-              onClick={() => setIsLogin(true)}
-              className="flex-1"
-            >
-              <LogIn className="inline w-4 h-4 mr-1" /> Sign In
-            </Button>
-            <Button
-              type="button"
-              variant={!isLogin ? 'primary' : 'ghost'}
-              onClick={() => setIsLogin(false)}
-              className="flex-1"
-            >
-              <UserPlus className="inline w-4 h-4 mr-1" /> Register
-            </Button>
+        <div className="auth-tabs">
+          <div
+            className={`auth-tab ${isLogin ? 'active' : ''}`}
+            onClick={() => setIsLogin(true)}
+          >
+            Sign In
           </div>
+          <div
+            className={`auth-tab ${!isLogin ? 'active' : ''}`}
+            onClick={() => setIsLogin(false)}
+          >
+            Register
+          </div>
+        </div>
 
+        <form onSubmit={handleSubmit} className="auth-form-container">
           {error && (
             <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2 text-red-600 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
 
-          <Input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            required
-          />
-
-          {!isLogin && (
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+          <div className="form-group">
+            <label>Username</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Enter your username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
               required
             />
+          </div>
+
+          {!isLogin && (
+            <div className="form-group">
+              <label>Email Address</label>
+              <input
+                type="email"
+                className="form-input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
+            </div>
           )}
 
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            minLength={8}
-          />
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              className="form-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              minLength={8}
+            />
+          </div>
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
+            className="auth-submit"
             disabled={loading}
-            className="w-full"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             {isLogin ? 'Sign In' : 'Create Account'}
-          </Button>
+          </button>
         </form>
+
+        <div className="auth-footer">
+          {isLogin ? (
+            <>Don't have an account? <span className="auth-link" onClick={() => setIsLogin(false)}>Register</span></>
+          ) : (
+            <>Already have an account? <span className="auth-link" onClick={() => setIsLogin(true)}>Sign In</span></>
+          )}
+        </div>
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
