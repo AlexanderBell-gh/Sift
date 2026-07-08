@@ -40,7 +40,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <a href="/" className="logo">
+          <a href="/search" className="logo">
             <div className="logo-mark">
               <div className="logo-tag"></div>
               <div className="logo-scan-line"></div>
@@ -53,7 +53,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
         <div className="nav-links">
           <div className="hidden sm:flex items-center gap-6">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/search')}
               className="nav-link"
             >
               Search
@@ -123,7 +123,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
             </div>
           ) : (
             <button
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/')}
               className="search-button"
             >
               Sign In

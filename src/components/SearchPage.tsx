@@ -367,7 +367,7 @@ export default function SearchPage() {
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setShowLimitModal(false)}>Close</Button>
-          <Button onClick={() => { setShowLimitModal(false); navigate('/auth'); }}>Sign up now</Button>
+          <Button onClick={() => { setShowLimitModal(false); navigate('/'); }}>Sign up now</Button>
         </div>
       </Modal>
     </div>

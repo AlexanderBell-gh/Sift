@@ -5,10 +5,12 @@ import { Loader2 } from 'lucide-react';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
 
+type AuthTab = 'signin' | 'register' | 'trial';
+
 export default function AuthPage() {
-  const { login, register } = useAuth();
+  const { login, register, startTrial } = useAuth();
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  const [activeTab, setActiveTab] = useState<AuthTab>('signin');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,14 +23,17 @@ export default function AuthPage() {
     setError('');
     setLoading(true);
     try {
-      if (isLogin) {
+      if (activeTab === 'signin') {
         await login(username, password);
         showToast('Signed in successfully', 'success');
-      } else {
+      } else if (activeTab === 'register') {
         await register(username, email, password);
         showToast('Account created', 'success');
+      } else {
+        await startTrial();
+        showToast('Trial started — 24h access', 'success');
       }
-      navigate('/');
+      navigate('/search');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -50,16 +55,23 @@ export default function AuthPage() {
 
         <div className="auth-tabs">
           <div
-            className={`auth-tab ${isLogin ? 'active' : ''}`}
-            onClick={() => setIsLogin(true)}
+            className={`auth-tab ${activeTab === 'signin' ? 'active' : ''}`}
+            onClick={() => setActiveTab('signin')}
           >
             Sign In
           </div>
           <div
-            className={`auth-tab ${!isLogin ? 'active' : ''}`}
-            onClick={() => setIsLogin(false)}
+            className={`auth-tab ${activeTab === 'register' ? 'active' : ''}`}
+            onClick={() => setActiveTab('register')}
           >
             Register
+          </div>
+          <div
+            className={`auth-tab ${activeTab === 'trial' ? 'active' : ''}`}
+            onClick={() => setActiveTab('trial')}
+            style={{ color: activeTab === 'trial' ? 'var(--primary)' : undefined }}
+          >
+            24h Free Trial
           </div>
         </div>
 
@@ -70,19 +82,33 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Enter your username"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              required
-            />
-          </div>
+          {activeTab === 'trial' && (
+            <div className="promo-highlight">
+              <div className="promo-title">
+                Instant Sandbox
+                <span className="promo-badge">24h Pass</span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: '1.4', margin: 0 }}>
+                Access Sift Premium immediately. Test Watchlists, store syncing and real-time metrics. No password required.
+              </p>
+            </div>
+          )}
 
-          {!isLogin && (
+          {activeTab !== 'trial' && (
+            <div className="form-group">
+              <label>Username</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Enter your username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          {activeTab === 'register' && (
             <div className="form-group">
               <label>Email Address</label>
               <input
@@ -96,34 +122,43 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
-          </div>
+          {activeTab !== 'trial' && (
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                className="form-input"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+            </div>
+          )}
 
           <button
             type="submit"
             className="auth-submit"
             disabled={loading}
+            style={activeTab === 'trial' ? { background: 'var(--text)', color: 'var(--surface)' } : undefined}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            {isLogin ? 'Sign In' : 'Create Account'}
+            {activeTab === 'signin' && 'Sign In'}
+            {activeTab === 'register' && 'Create Account'}
+            {activeTab === 'trial' && 'Launch 24h Session'}
           </button>
         </form>
 
         <div className="auth-footer">
-          {isLogin ? (
-            <>Don't have an account? <span className="auth-link" onClick={() => setIsLogin(false)}>Register</span></>
-          ) : (
-            <>Already have an account? <span className="auth-link" onClick={() => setIsLogin(true)}>Sign In</span></>
+          {activeTab === 'signin' && (
+            <>Don't have an account? <span className="auth-link" onClick={() => setActiveTab('register')}>Register</span></>
+          )}
+          {activeTab === 'register' && (
+            <>Already have an account? <span className="auth-link" onClick={() => setActiveTab('signin')}>Sign In</span></>
+          )}
+          {activeTab === 'trial' && (
+            <>Instant sandboxing without passwords or credentials.</>
           )}
         </div>
       </div>
