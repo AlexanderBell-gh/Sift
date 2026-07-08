@@ -85,11 +85,10 @@ export default function AuthPage() {
           {activeTab === 'trial' && (
             <div className="promo-highlight">
               <div className="promo-title">
-                Instant Sandbox
-                <span className="promo-badge">24h Pass</span>
+                ⚡ Instant 24-Hour Access
               </div>
               <p style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: '1.4', margin: 0 }}>
-                Access Sift Premium immediately. Test Watchlists, store syncing and real-time metrics. No password required.
+                Access Sift immediately. Test Watchlists, store syncing and real-time metrics. No password required.
               </p>
             </div>
           )}
@@ -134,7 +133,7 @@ export default function AuthPage() {
             <div className="form-group">
               <div className="label-row">
                 <label className="form-label">Password</label>
-                <a href="#" className="forgot-link" onClick={e => e.preventDefault()}>Forgot?</a>
+                {activeTab === 'signin' && <a href="#" className="forgot-link" onClick={e => e.preventDefault()}>Forgot?</a>}
               </div>
               <div className="input-wrapper">
                 <input
@@ -154,12 +153,11 @@ export default function AuthPage() {
             type="submit"
             className="btn-primary"
             disabled={loading}
-            style={activeTab === 'trial' ? { background: 'var(--text)', color: 'var(--surface)' } : undefined}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {activeTab === 'signin' && 'Sign In'}
             {activeTab === 'register' && 'Create Account'}
-            {activeTab === 'trial' && 'Launch 24h Session'}
+            {activeTab === 'trial' && 'Start'}
           </button>
         </form>
 
