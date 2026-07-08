@@ -16,7 +16,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Price Alerts** — Automatic notifications on price drops and offer expiry
 - **Cron Refresh** — Daily auto-refresh of watchlist prices (6am UTC)
 - **Admin Panel** — Dashboard, user management, audit logs, trial management
-- **Trial Gating** — One-click "Free trial" button (12h, 5 searches); registration creates 24h trial account; search blocked when limits hit
+- **Trial Gating** — "24h Free Trial" tab on login page (one-click, no password); registration creates 24h trial account; search blocked when limits hit
 - **Auth** — JWT accounts to persist watchlists across devices
 - **Autocomplete** — Search suggestions via SearXNG
 - **Search History** — Recent searches stored in localStorage
@@ -150,7 +150,7 @@ Sift/
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
 │   │   ├── FilterDropdown.tsx    # Store filter + sort dropdown
 │   │   ├── WatchlistPage.tsx     # Horizontal tiles with comparison strips
-│   │   ├── AuthPage.tsx          # Login/register
+│   │   ├── AuthPage.tsx          # Landing page — login/register/trial tabs
 │   │   ├── AlertBell.tsx         # Bell icon with unread count
 │   │   ├── AdminPage.tsx         # Sidebar nav + dashboard/users/audit/trials
 │   │   └── SettingsPage.tsx      # Settings (password, export, delete account)
@@ -165,10 +165,9 @@ Sift/
 │   │   └── utils.ts              # cn(), formatPrice(), formatDate()
 │   ├── types/
 │   │   └── index.ts              # SearchResult, WatchlistItem, Alert, Admin types
-│   ├── App.tsx                   # Router (/, /auth, /watchlist, /settings, /admin)
+│   ├── App.tsx                   # Router (/ → Auth, /search, /watchlist, /settings, /admin)
 │   ├── main.tsx
 │   ├── index.css                 # Tailwind v4 + DESIGN.md tokens + component classes (.nav, .hero, .search-container, .watchlist-tile, .admin-grid, .auth-card, .settings-card)
-│   └── PLAN.md                   # Design system integration tracker
 ├── workers/
 │   ├── index.js                  # API routes (~1650 lines)
 │   ├── auth.js                   # JWT + password hashing
