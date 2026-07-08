@@ -115,7 +115,7 @@ export default function SettingsPage() {
               <label>Email Address</label>
               <input type="email" className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.75 }} />
             </div>
-            <button className="auth-submit" style={{ margin: 0 }} onClick={() => showToast('Profile saving simulated.', 'success')}>Save Changes</button>
+            <button className="btn-primary" style={{ margin: 0 }} onClick={() => showToast('Profile saving simulated.', 'success')}>Save Changes</button>
           </section>
 
           {!isTrial && (
@@ -154,7 +154,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-                <button type="submit" className="auth-submit" style={{ background: 'var(--text)', color: 'var(--surface)' }} disabled={isLoading}>
+                <button type="submit" className="btn-primary" style={{ background: 'var(--text)', color: 'var(--surface)' }} disabled={isLoading}>
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change Password'}
                 </button>
               </form>
@@ -165,7 +165,7 @@ export default function SettingsPage() {
             <section className="settings-card">
               <h3>Data Management</h3>
               <p>Export your watchlist data in CSV format.</p>
-              <button className="auth-submit" style={{ background: 'var(--text)', color: 'var(--surface)' }} onClick={handleExportDownload} disabled={exportLoading}>
+              <button className="btn-primary" style={{ background: 'var(--text)', color: 'var(--surface)' }} onClick={handleExportDownload} disabled={exportLoading}>
                 {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 inline mr-2" />}
                 Download Watchlist CSV
               </button>
@@ -179,7 +179,7 @@ export default function SettingsPage() {
             </h3>
             <p>Irreversible deletion procedures on subscription records and cached watchlists.</p>
             <div>
-              <button className="auth-submit" style={{ background: 'var(--danger)', margin: 0 }} onClick={() => setIsDeleteModalOpen(true)}>
+              <button className="btn-primary" style={{ background: 'var(--danger)', margin: 0 }} onClick={() => setIsDeleteModalOpen(true)}>
                 Teardown Subscription & Assets
               </button>
             </div>
@@ -206,10 +206,10 @@ export default function SettingsPage() {
           )}
           {deleteError && <p className="text-red-500 text-sm">{deleteError}</p>}
           <div className="flex gap-2 pt-2">
-            <button className="auth-submit" style={{ background: 'var(--text)', color: 'var(--surface)', flex: 1 }} onClick={() => setIsDeleteModalOpen(false)}>
+            <button className="btn-primary" style={{ background: 'var(--text)', color: 'var(--surface)', flex: 1 }} onClick={() => setIsDeleteModalOpen(false)}>
               Cancel
             </button>
-            <button className="auth-submit" style={{ background: 'var(--danger)', flex: 1 }} onClick={handleDeleteAccount} disabled={isLoading}>
+            <button className="btn-primary" style={{ background: 'var(--danger)', flex: 1 }} onClick={handleDeleteAccount} disabled={isLoading}>
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
             </button>
           </div>

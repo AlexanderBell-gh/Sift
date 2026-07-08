@@ -42,15 +42,15 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="logo-mark" style={{ margin: '0 auto' }}>
+    <div className="login-wrapper">
+      <div className="login-container">
+        <div className="login-header">
+          <div className="logo-mark">
             <div className="logo-tag"></div>
             <div className="logo-scan-line"></div>
           </div>
-          <h2>Welcome to Sift</h2>
-          <p>Real-time retail price optimization</p>
+          <h2 className="login-title">Welcome to Sift</h2>
+          <p className="login-subtitle">Real-time retail price optimization</p>
         </div>
 
         <div className="auth-tabs">
@@ -77,7 +77,7 @@ export default function AuthPage() {
 
         <form onSubmit={handleSubmit} className="auth-form-container">
           {error && (
-            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2 text-red-600 dark:text-red-400 text-sm">
+            <div className="error-banner">
               {error}
             </div>
           )}
@@ -96,61 +96,74 @@ export default function AuthPage() {
 
           {activeTab !== 'trial' && (
             <div className="form-group">
-              <label>Username</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Enter your username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-              />
+              <div className="label-row">
+                <label className="form-label">Username</label>
+              </div>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                />
+              </div>
             </div>
           )}
 
           {activeTab === 'register' && (
             <div className="form-group">
-              <label>Email Address</label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
+              <div className="label-row">
+                <label className="form-label">Email Address</label>
+              </div>
+              <div className="input-wrapper">
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+              </div>
             </div>
           )}
 
           {activeTab !== 'trial' && (
             <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={8}
-              />
+              <div className="label-row">
+                <label className="form-label">Password</label>
+                <a href="#" className="forgot-link" onClick={e => e.preventDefault()}>Forgot?</a>
+              </div>
+              <div className="input-wrapper">
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                />
+              </div>
             </div>
           )}
 
           <button
             type="submit"
-            className="auth-submit"
+            className="btn-primary"
             disabled={loading}
             style={activeTab === 'trial' ? { background: 'var(--text)', color: 'var(--surface)' } : undefined}
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {activeTab === 'signin' && 'Sign In'}
             {activeTab === 'register' && 'Create Account'}
             {activeTab === 'trial' && 'Launch 24h Session'}
           </button>
         </form>
 
-        <div className="auth-footer">
+        <div className="login-footer">
           {activeTab === 'signin' && (
             <>Don't have an account? <span className="auth-link" onClick={() => setActiveTab('register')}>Register</span></>
           )}

@@ -206,7 +206,8 @@ Based on DESIGN.md — Themed & Unique category. Implemented via CSS custom prop
 - Hero: `.hero` with 72px heading, `.search-container` with pill input + primary button
 - Watchlist: `.watchlist-tile` horizontal grid (280px/1fr/180px), comparison chips per store
 - Admin: `.admin-grid` layout (280px sidebar + content), `.admin-nav-item` with active state, `.metric-card` grid
-- Auth: `.auth-card` centered, `.auth-tabs` pill toggle, `.form-input` with focus ring
+- Auth: `.login-wrapper` centered, `.login-container` card (2px radius), `.auth-tabs` pill toggle, `.login-title` / `.login-subtitle`, `.btn-primary`, `.error-banner`
+- Forms: `.label-row` with monospace uppercase `.form-label`, `.input-wrapper`, `.forgot-link`, custom `.checkbox-container` / `.checkbox-checkmark`
 - Settings: `.settings-grid` (2-column), `.settings-card` with danger zone variant
 - Dark mode: `.dark` class flips all CSS variables; nav uses `rgba(--nav-bg-rgb, 0.9)` with backdrop blur
 
