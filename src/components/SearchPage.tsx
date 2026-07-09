@@ -236,19 +236,15 @@ export default function SearchPage() {
                 </button>
 
                   {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl overflow-hidden top-full left-0">
+                    <div className="suggestions-dropdown">
                       {suggestions.map((suggestion, index) => (
                         <button
                           key={suggestion}
                           type="button"
                           onClick={() => selectSuggestion(suggestion)}
-                          className={`w-full px-4 py-3 text-left text-sm transition-colors ${
-                            index === selectedIndex
-                              ? 'bg-accent/10 text-accent'
-                              : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                          }`}
+                          className={`suggestion-item ${index === selectedIndex ? 'selected' : ''}`}
                         >
-                          <Search className="inline w-4 h-4 mr-2 opacity-50" />
+                          <Search className="w-4 h-4 opacity-50" />
                           {suggestion}
                         </button>
                       ))}
@@ -256,13 +252,13 @@ export default function SearchPage() {
                   )}
 
                   {showHistory && history.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl overflow-hidden top-full left-0">
-                      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
-                        <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">Recent searches</span>
+                    <div className="suggestions-dropdown">
+                      <div className="suggestions-header">
+                        <span>Recent searches</span>
                         <button
                           type="button"
                           onClick={handleClearHistory}
-                          className="text-xs text-zinc-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
+                          className="suggestions-clear"
                         >
                           Clear
                         </button>
@@ -272,9 +268,9 @@ export default function SearchPage() {
                           key={item}
                           type="button"
                           onClick={() => selectHistory(item)}
-                          className="w-full px-4 py-3 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="suggestion-item"
                         >
-                          <Search className="inline w-4 h-4 mr-2 opacity-50" />
+                          <Search className="w-4 h-4 opacity-50" />
                           {item}
                         </button>
                       ))}

@@ -197,7 +197,7 @@ Based on DESIGN.md — Themed & Unique category. Implemented via CSS custom prop
 | Muted | `#6B7280` | Secondary text |
 | Border | `#E5E7EB` | Dividers, card borders |
 
-**Typography:** Playfair Display (headings, 600-800), Inter (body, 400-800), JetBrains Mono (prices/timestamps, 400-600). Scale: 14/16/18/24/32/40px.
+**Typography:** Inter (body, 400-800), JetBrains Mono (prices/timestamps, 400-600). Scale: 14/16/18/24/32/40px.
 
 **Motion:** 150-250ms transitions with spring easing (`cubic-bezier(0.16, 1, 0.3, 1)`). Hover: `translateX(4px)` on tiles, `translateY(-1px)` on buttons. Logo scan line animation (2s infinite).
 
@@ -208,7 +208,9 @@ Based on DESIGN.md — Themed & Unique category. Implemented via CSS custom prop
 - Admin: `.admin-grid` layout (280px sidebar + content), `.admin-nav-item` with active state, `.metric-card` grid
 - Auth: `.auth-wrapper` centered, `.auth-card` (24px radius), `.auth-tabs` toggle with underline, `.auth-title` / `.auth-subtitle`, `.auth-submit`, `.auth-error`
 - Forms: `.form-group` with monospace uppercase labels (11px/700), `.form-input` (14px padding, 12px radius, focus ring `rgba(255, 87, 1, 0.12)`), `.auth-forgot` link below password
-- Settings: `.settings-grid` (2-column), `.settings-card` with danger zone variant
+- Settings: `.settings-grid` (2-column), `.settings-card` with danger zone variant, `.settings-card-header` / `.settings-card-header-icon` for icon cards
+- Dropdowns: `.suggestions-dropdown` / `.suggestion-item` / `.suggestion-item.selected`, `.alerts-dropdown` / `.alert-item` / `.alert-item.unread` / `.alert-dot`
+- Hero: `.text-gradient` for orange gradient text (e.g. "Supermarket")
 - Dark mode: `.dark` class flips all CSS variables; nav uses `rgba(--nav-bg-rgb, 0.9)` with backdrop blur
 
 ## How Search Works

@@ -71,29 +71,25 @@ export default function AlertBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl shadow-lg z-50">
-          <div className="p-3 border-b border-zinc-200 dark:border-white/10">
-            <span className="text-sm font-semibold text-zinc-800 dark:text-white">Alerts</span>
-          </div>
+        <div className="alerts-dropdown">
+          <div className="alerts-header">Alerts</div>
           {alerts.length === 0 ? (
-            <div className="p-4 text-center text-sm text-zinc-400">No alerts yet</div>
+            <div className="alerts-empty">No alerts yet</div>
           ) : (
-            <div className="divide-y divide-zinc-100 dark:divide-white/5">
+            <div>
               {alerts.slice(0, 20).map(alert => (
                 <button
                   key={alert.id}
                   onClick={() => handleMarkRead(alert.id)}
-                  className={`w-full text-left p-3 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors ${
-                    !alert.read ? 'bg-accent/5' : ''
-                  }`}
+                  className={`alert-item ${!alert.read ? 'unread' : ''}`}
                 >
                   <div className="flex items-start gap-2">
                     {!alert.read && (
-                      <span className="mt-1.5 w-2 h-2 rounded-full bg-accent shrink-0" />
+                      <span className="alert-dot" />
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm text-zinc-700 dark:text-zinc-200 leading-snug">{alert.message}</p>
-                      <p className="text-xs text-zinc-400 mt-1">{formatTime(alert.triggered_at)}</p>
+                      <p className="alert-message">{alert.message}</p>
+                      <p className="alert-time">{formatTime(alert.triggered_at)}</p>
                     </div>
                   </div>
                 </button>
