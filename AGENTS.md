@@ -48,3 +48,4 @@
 - `Projects/markdowns/Sift Project/CONTEXT.md` — full architecture, API ref, data model, critical flows
 - `Projects/markdowns/Sift Project/CHANGES.md` — change log convention
 - `Projects/markdowns/Sift Project/DESIGN.md` — design system spec
+- `Projects/Sift/README.md` — full readme for project
