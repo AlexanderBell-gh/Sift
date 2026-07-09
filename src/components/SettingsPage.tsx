@@ -104,19 +104,21 @@ export default function SettingsPage() {
         </div>
 
         <div className="settings-grid">
-          <section className="settings-card">
-            <h3>Personal Details</h3>
-            <p>Modify credentials and basic system identifiers.</p>
-            <div className="form-group">
-              <label>Full Name</label>
-              <input type="text" className="form-input" value={user?.username || ''} disabled style={{ opacity: 0.75 }} />
-            </div>
-            <div className="form-group">
-              <label>Email Address</label>
-              <input type="email" className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.75 }} />
-            </div>
-            <button className="btn-primary" style={{ margin: 0 }} onClick={() => showToast('Profile saving simulated.', 'success')}>Save Changes</button>
-          </section>
+          {!isTrial && (
+            <section className="settings-card">
+              <h3>Personal Details</h3>
+              <p>Modify credentials and basic system identifiers.</p>
+              <div className="form-group">
+                <label>Full Name</label>
+                <input type="text" className="form-input" value={user?.username || ''} disabled style={{ opacity: 0.75 }} />
+              </div>
+              <div className="form-group">
+                <label>Email Address</label>
+                <input type="email" className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.75 }} />
+              </div>
+              <button className="btn-primary" style={{ margin: 0 }} onClick={() => showToast('Profile saving simulated.', 'success')}>Save Changes</button>
+            </section>
+          )}
 
           {!isTrial && (
             <section className="settings-card">
@@ -180,7 +182,7 @@ export default function SettingsPage() {
             <p>Irreversible deletion procedures on subscription records and cached watchlists.</p>
             <div>
               <button className="btn-primary" style={{ background: 'var(--danger)', margin: 0 }} onClick={() => setIsDeleteModalOpen(true)}>
-                Teardown Subscription & Assets
+                Delete Account — all data, watchlists, etc. will be removed
               </button>
             </div>
           </section>

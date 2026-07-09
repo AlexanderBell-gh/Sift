@@ -1056,9 +1056,6 @@ body {
 }
 
 .auth-forgot {
-  position: absolute;
-  right: 0;
-  top: 0;
   font-size: 12px;
   color: var(--primary);
   text-decoration: none;
@@ -1067,6 +1064,7 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
+  margin-top: -4px;
 }
 
 .auth-forgot:hover {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ArrowLeft, Sun, Moon, Settings } from 'lucide-react';
+import { LogOut, ArrowLeft, Sun, Moon, Settings, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import AlertBell from './AlertBell';
@@ -48,8 +48,8 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
   }, [user?.isTrial, user?.trialExpiresAt]);
 
   const isTrial = user?.isTrial === true;
-  const displayName = isTrial ? 'Guest Operator' : (user?.username || 'U');
-  const avatarText = isTrial ? 'GO' : (user?.username?.slice(0, 2).toUpperCase() || 'U');
+  const displayName = isTrial ? 'Trial User' : (user?.username || 'U');
+  const avatarText = isTrial ? 'TU' : (user?.username?.slice(0, 2).toUpperCase() || 'U');
 
   return (
     <nav className="nav">
@@ -100,6 +100,12 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
                       <span>⏳ Trial Left:</span>
                       <span className="trial-countdown">{trialCountdown}</span>
                     </div>
+                  )}
+                  {!isTrial && user?.role === 'admin' && (
+                    <button onClick={() => { navigate('/admin'); setMenuOpen(false); }} className="dropdown-item">
+                      <Shield className="w-4 h-4" />
+                      Admin Panel
+                    </button>
                   )}
                   <button onClick={() => { navigate('/settings'); setMenuOpen(false); }} className="dropdown-item">
                     <Settings className="w-4 h-4" />

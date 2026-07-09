@@ -124,12 +124,12 @@ export default function AuthPage() {
                 required
                 minLength={8}
               />
-              {activeTab === 'signin' && (
-                <a href="#" className="auth-forgot" onClick={(e) => e.preventDefault()}>
-                  Forgot?
-                </a>
-              )}
             </div>
+          )}
+          {activeTab === 'signin' && (
+            <a href="#" className="auth-forgot" onClick={(e) => e.preventDefault()}>
+              Forgot password?
+            </a>
           )}
 
           <button type="submit" className="auth-submit" disabled={loading}>
