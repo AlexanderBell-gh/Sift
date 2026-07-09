@@ -1277,6 +1277,49 @@ body {
   color: var(--danger);
 }
 
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-card-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-card-header-icon.primary {
+  background: rgba(255, 87, 1, 0.08);
+}
+
+.settings-card-header-icon.danger {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.settings-card .form-group label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.settings-card.transition {
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.settings-card.transition:hover {
+  border-color: rgba(255, 87, 1, 0.2);
+}
+
 /* Screen management */
 .screen {
   display: none;
