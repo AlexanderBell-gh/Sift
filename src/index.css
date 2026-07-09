@@ -1012,6 +1012,14 @@ body {
   border-bottom-color: var(--primary);
 }
 
+.tab-trial {
+  color: var(--primary);
+}
+
+.tab-trial:hover {
+  color: var(--primary);
+}
+
 /* Auth Form */
 .auth-form {
   display: flex;
@@ -1099,7 +1107,7 @@ body {
 .auth-promo-title {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--primary);
   margin-bottom: 8px;
 }
 

@@ -67,7 +67,7 @@ export default function AuthPage() {
               type="button"
               role="tab"
               aria-selected={activeTab === tab.key}
-              className={`auth-tab ${activeTab === tab.key ? 'active' : ''}`}
+              className={`auth-tab ${activeTab === tab.key ? 'active' : ''} ${tab.key === 'trial' ? 'tab-trial' : ''}`}
               onClick={() => setActiveTab(tab.key)}
             >
               {tab.label}
