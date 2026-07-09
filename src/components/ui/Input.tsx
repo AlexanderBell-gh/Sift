@@ -21,15 +21,25 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             'w-full px-4 py-3 rounded-xl text-sm',
             'border',
             'placeholder:opacity-50',
-            'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]',
+            'focus:outline-none',
             'transition-all duration-200',
-            error && 'border-[var(--danger)] focus:ring-[var(--danger)]/20 focus:border-[var(--danger)]',
+            error && 'border-[var(--danger)]',
             className
           )}
           style={{
             backgroundColor: 'var(--bg)',
             borderColor: error ? 'var(--danger)' : 'var(--border)',
             color: 'var(--text)',
+          }}
+          onFocus={e => {
+            e.currentTarget.style.borderColor = error ? 'var(--danger)' : 'var(--primary)';
+            e.currentTarget.style.boxShadow = error
+              ? '0 0 0 3px rgba(220, 38, 38, 0.12)'
+              : '0 0 0 3px rgba(255, 87, 1, 0.12)';
+          }}
+          onBlur={e => {
+            e.currentTarget.style.borderColor = error ? 'var(--danger)' : 'var(--border)';
+            e.currentTarget.style.boxShadow = 'none';
           }}
           {...props}
         />
