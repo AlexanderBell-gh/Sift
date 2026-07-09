@@ -14,7 +14,7 @@ import { Button } from './ui/Button';
 
 export default function SearchPage() {
   const navigate = useNavigate();
-  const { token, user, startTrial } = useAuth();
+  const { token, user } = useAuth();
   const [query, setQuery] = useState('');
   const queryRef = useRef(query);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -30,7 +30,7 @@ export default function SearchPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -193,62 +193,47 @@ export default function SearchPage() {
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
       <NavHeader />
 
-      {!token ? (
-        <section className="hero">
-          <div className="container">
-            <h1>Find the best price,<br />enriched by AI.</h1>
-            <p>Simultaneously scan 7 UK supermarkets. Get real-time pricing and loyalty offers in one place.</p>
-            <Button onClick={startTrial}>Free trial</Button>
-          </div>
-        </section>
-      ) : (
-        <>
-          <section className="pt-16 pb-10 text-center">
+      <>
+          <section className="hero">
             <div className="container">
-              <h1 className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl font-extrabold leading-tight mb-4 tracking-tight" style={{ color: 'var(--text)' }}>
-                Find the best price,<br />
-                <span style={{ color: 'var(--text)' }}>enriched by AI.</span>
-              </h1>
-              <p className="text-lg mb-10" style={{ color: 'var(--muted)' }}>
-                Simultaneously scan 7 UK supermarkets. Get real-time pricing and loyalty offers in one place.
-              </p>
+              <h1>The Intelligent Supermarket Engine</h1>
+              <p>Compare grocery pricing across 7 UK supermarkets. Indexing Tesco, Sainsbury's, Asda, Aldi, Morrisons, Lidl, and Waitrose.</p>
 
               {user?.isTrial && remainingSearches !== null && (
-                <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-4">
-                  {remainingSearches} free {remainingSearches === 1 ? 'search' : 'searches'} remaining
+                <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
+                  {remainingSearches} {remainingSearches === 1 ? 'search' : 'searches'} remaining, sign up to get unlimited searches
                 </p>
               )}
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="max-w-[750px] mx-auto">
-                <div className="search-container" ref={suggestionsRef}>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => {
-                      if (query.length < 2 && history.length > 0) {
-                        setShowHistory(true);
-                        setShowSuggestions(false);
-                      } else if (suggestions.length > 0) {
-                        setShowSuggestions(true);
-                      }
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Search for butter, oat milk, avocados..."
-                    className="search-input"
-                  />
-                  <button
-                    type="submit"
-                    disabled={loading || !query.trim()}
-                    className="search-button disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      'Search'
-                    )}
-                  </button>
+              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef}>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => {
+                    if (query.length < 2 && history.length > 0) {
+                      setShowHistory(true);
+                      setShowSuggestions(false);
+                    } else if (suggestions.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Search for butter, oat milk, avocados..."
+                  className="search-input"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || !query.trim()}
+                  className="search-button"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    'Search'
+                  )}
+                </button>
 
                   {showSuggestions && suggestions.length > 0 && (
                     <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl overflow-hidden top-full left-0">
@@ -295,7 +280,6 @@ export default function SearchPage() {
                       ))}
                     </div>
                   )}
-                </div>
               </form>
             </div>
           </section>
@@ -347,7 +331,6 @@ export default function SearchPage() {
             )}
           </div>
         </>
-      )}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
