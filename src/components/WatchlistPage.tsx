@@ -123,7 +123,7 @@ export default function WatchlistPage() {
       <section className="pt-12 pb-8 text-center">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
+            <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
             <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Real-time tracking for items in your comparison rotation</p>
           </div>
           {items.length > 0 && (

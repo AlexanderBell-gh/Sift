@@ -186,7 +186,7 @@ export default function AdminPage() {
         <main className="admin-content">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
             <div>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: '700', marginBottom: '4px', color: 'var(--text)' }}>
+              <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '32px', fontWeight: '700', marginBottom: '4px', color: 'var(--text)' }}>
                 Dashboard View
               </h1>
               <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Real-time system health, active database metrics, and subscriber counts.</p>

@@ -99,7 +99,7 @@ export default function SettingsPage() {
       <NavHeader />
       <div className="container" style={{ paddingTop: '48px', paddingBottom: '48px' }}>
         <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '40px', fontWeight: '700', color: 'var(--text)', lineHeight: '1.2' }}>
+          <h2 style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700', color: 'var(--text)', lineHeight: '1.2' }}>
             Account Settings
           </h2>
           <p style={{ color: 'var(--muted)', fontSize: '14px', marginTop: '8px' }}>
@@ -114,7 +114,7 @@ export default function SettingsPage() {
                 <Shield size={20} style={{ color: 'var(--primary)' }} />
               </div>
               <div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Trial Account</h3>
+                <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Trial Account</h3>
                 <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
                   {user?.trialExpiresAt ? `Expires ${new Date(user.trialExpiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : '24-hour trial active'}
                 </p>
@@ -131,7 +131,7 @@ export default function SettingsPage() {
                   <Shield size={20} style={{ color: 'var(--primary)' }} />
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Personal Details</h3>
+                  <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Personal Details</h3>
                   <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Your account identifiers</p>
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                   <Key size={20} style={{ color: 'var(--primary)' }} />
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Change Password</h3>
+                  <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Change Password</h3>
                   <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Update your account password</p>
                 </div>
               </div>
@@ -205,7 +205,7 @@ export default function SettingsPage() {
                   <FileDown size={20} style={{ color: 'var(--primary)' }} />
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Data Management</h3>
+                  <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Data Management</h3>
                   <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Export your watchlist data as CSV</p>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                 <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
               </div>
               <div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: '700', color: 'var(--danger)', margin: 0 }}>Danger Zone</h3>
+                <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--danger)', margin: 0 }}>Danger Zone</h3>
                 <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Permanently delete your account and all data</p>
               </div>
             </div>

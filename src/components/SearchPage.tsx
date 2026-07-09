@@ -196,7 +196,7 @@ export default function SearchPage() {
       <>
           <section className="hero">
             <div className="container">
-              <h1>The Intelligent Supermarket Engine</h1>
+              <h1>The Intelligent <span className="text-gradient">Supermarket</span> Engine</h1>
               <p>Compare grocery pricing across 7 UK supermarkets. Indexing Tesco, Sainsbury's, Asda, Aldi, Morrisons, Lidl, and Waitrose.</p>
 
               {user?.isTrial && remainingSearches !== null && (

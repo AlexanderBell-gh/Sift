@@ -4,7 +4,6 @@
 
 @theme {
   --font-sans: 'Inter', sans-serif;
-  --font-display: 'Playfair Display', serif;
   --font-mono: 'JetBrains Mono', monospace;
   --color-accent: #FF5701;
   --color-accent-light: #FF7A33;
@@ -31,7 +30,7 @@
   --bg: #F6F6F1;
   --surface-hover: #F9FAFB;
   --nav-bg-rgb: 255, 255, 255;
-  --font-display: 'Playfair Display', serif;
+  --font-primary: 'Inter', sans-serif;
   --font-body: 'Inter', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
@@ -312,13 +311,20 @@ body {
 }
 
 .hero h1 {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 72px;
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 24px;
   letter-spacing: -0.02em;
   color: var(--text);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FF5701, #FF7A33, #FFB366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .hero p {
@@ -402,7 +408,7 @@ body {
 }
 
 .tile-product-name {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 20px;
   font-weight: 700;
   color: var(--text);
@@ -540,7 +546,7 @@ body {
 }
 
 .admin-sidebar-header {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 22px;
   font-weight: 800;
   color: var(--text);
@@ -988,7 +994,7 @@ body {
 }
 
 .auth-title {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -1251,7 +1257,7 @@ body {
 }
 
 .settings-card h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
@@ -1604,7 +1610,7 @@ body {
 }
 
 .tile-product-name {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   @apply text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50 truncate;
 }
 
