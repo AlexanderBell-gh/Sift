@@ -96,7 +96,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
-      <NavHeader title="Settings" showBack />
+      <NavHeader />
       <div className="container" style={{ paddingTop: '48px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '40px', fontWeight: '700' }}>Account Settings</h2>
