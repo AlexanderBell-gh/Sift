@@ -7,7 +7,7 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 
 ## Features
 
-- **7-Store Search** — Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl
+- **7-Store Search** — Tesco, Sainsbury's, ASDA, Morrisons, Aldi, Lidl, Waitrose
 - **AI Enrichment** — Gemma 4 extracts prices, units, offers from raw search snippets
 - **Dual Pricing** — Normal price vs loyalty price (Clubcard/Nectar)
 - **Unit Price** — Price per 100g/litre for true comparison
@@ -15,9 +15,9 @@ Real-time UK supermarket price comparison tool. Search 7 stores simultaneously, 
 - **Price History** — Price snapshots on refresh, tracks changes over time
 - **Price Alerts** — Automatic notifications on price drops and offer expiry
 - **Cron Refresh** — Daily auto-refresh of watchlist prices (6am UTC)
-- **Admin Panel** — Dashboard, user management, audit logs, trial management
-- **Trial Gating** — "24h Free Trial" tab on login page (one-click, no password); registration creates 24h trial account; search blocked when limits hit
-- **Auth** — JWT accounts to persist watchlists across devices
+- **Admin Panel** — Dashboard, user management, audit logs, trial management (nav dropdown for admins)
+- **Trial Gating** — 24h trial (5 searches); search blocked when expired or limit hit; trial users see limited settings (danger zone only)
+- **Auth** — JWT accounts to persist watchlists across devices; separate auth landing page with login/register/trial tabs
 - **Autocomplete** — Search suggestions via SearXNG
 - **Search History** — Recent searches stored in localStorage
 - **Filters & Sort** — Filter by store, sort by price/store
@@ -150,7 +150,7 @@ Sift/
 │   │   ├── SearchResultCard.tsx  # Product card with dual pricing
 │   │   ├── FilterDropdown.tsx    # Store filter + sort dropdown
 │   │   ├── WatchlistPage.tsx     # Horizontal tiles with comparison strips
-│   │   ├── AuthPage.tsx          # Landing page — login/register/trial tabs
+│   │   ├── AuthPage.tsx          # Auth landing — login/register/trial tabs
 │   │   ├── AlertBell.tsx         # Bell icon with unread count
 │   │   ├── AdminPage.tsx         # Sidebar nav + dashboard/users/audit/trials
 │   │   └── SettingsPage.tsx      # Settings (password, export, delete account)
@@ -206,8 +206,8 @@ Based on DESIGN.md — Themed & Unique category. Implemented via CSS custom prop
 - Hero: `.hero` with 72px heading, `.search-container` with pill input + primary button
 - Watchlist: `.watchlist-tile` horizontal grid (280px/1fr/180px), comparison chips per store
 - Admin: `.admin-grid` layout (280px sidebar + content), `.admin-nav-item` with active state, `.metric-card` grid
-- Auth: `.login-wrapper` centered, `.login-container` card (2px radius), `.auth-tabs` pill toggle, `.login-title` / `.login-subtitle`, `.btn-primary`, `.error-banner`
-- Forms: `.label-row` with monospace uppercase `.form-label`, `.input-wrapper`, `.forgot-link`, custom `.checkbox-container` / `.checkbox-checkmark`
+- Auth: `.auth-wrapper` centered, `.auth-card` (24px radius), `.auth-tabs` toggle with underline, `.auth-title` / `.auth-subtitle`, `.auth-submit`, `.auth-error`
+- Forms: `.form-group` with monospace uppercase labels (11px/700), `.form-input` (14px padding, 12px radius, focus ring `rgba(255, 87, 1, 0.12)`), `.auth-forgot` link below password
 - Settings: `.settings-grid` (2-column), `.settings-card` with danger zone variant
 - Dark mode: `.dark` class flips all CSS variables; nav uses `rgba(--nav-bg-rgb, 0.9)` with backdrop blur
 

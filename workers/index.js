@@ -553,7 +553,7 @@ async function handleRequest(request, env) {
         return errorResponse('Username already in use');
       }
 
-      const TRIAL_HOURS = 12;
+      const TRIAL_HOURS = 24;
       const trialExpiresAt = Date.now() + TRIAL_HOURS * 60 * 60 * 1000;
 
       const user = {
