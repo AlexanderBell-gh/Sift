@@ -33,26 +33,42 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ background: 'rgba(0, 0, 0, 0.5)' }}
+        onClick={onClose}
+      />
       <div
         className={cn(
-          'relative bg-zinc-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto',
-          'border border-white/10',
-          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.4)]',
+          'relative rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto',
           'animate-slide-up',
+          'max-w-sm',
           className
         )}
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.25)',
+        }}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-lg font-semibold tracking-tight text-white">{title}</h2>
+        <div
+          className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
+          <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text)' }}>{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: 'var(--muted)' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <X className="w-4 h-4 text-zinc-400" />
+            <X className="w-4 h-4" />
           </button>
         </div>
-        {children}
+        <div className="p-6 space-y-4">
+          {children}
+        </div>
       </div>
     </div>
   );

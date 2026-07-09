@@ -360,7 +360,7 @@ export default function SearchPage() {
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
       <Modal isOpen={showLimitModal} onClose={() => setShowLimitModal(false)} title="Free search limit reached">
-        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+        <p className="text-sm mb-6" style={{ color: 'var(--muted)' }}>
           {limitReason === 'trial_expired'
             ? 'Trial period ended, sign up to continue using.'
             : 'Sign up to have access to your watchlist and unlimited searches.'}

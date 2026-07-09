@@ -100,7 +100,7 @@ export default function SettingsPage() {
       <div className="container" style={{ paddingTop: '48px' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '40px', fontWeight: '700' }}>Account Settings</h2>
-          <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Update Sift profiles, configurations and secure sandboxing metrics</p>
+          <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Update your Sift profile, changing password, username and email</p>
         </div>
 
         <div className="settings-grid">
@@ -177,20 +177,19 @@ export default function SettingsPage() {
           <section className="settings-card full-width danger-border">
             <h3 className="danger-zone-title">
               <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-              Danger Zone
+              Account Deletion
             </h3>
             <p>Irreversible deletion procedures on subscription records and cached watchlists.</p>
             <div>
               <button className="btn-primary" style={{ background: 'var(--danger)', margin: 0 }} onClick={() => setIsDeleteModalOpen(true)}>
-                Delete Account — all data, watchlists, etc. will be removed
+                Delete Account
               </button>
             </div>
           </section>
         </div>
       </div>
 
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Account" className="max-w-sm">
-        <div className="p-6 space-y-4">
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Account">
           <p className="text-sm" style={{ color: 'var(--muted)' }}>
             Are you sure you want to delete your account? This action cannot be undone.
           </p>
@@ -215,7 +214,6 @@ export default function SettingsPage() {
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
             </button>
           </div>
-        </div>
       </Modal>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
