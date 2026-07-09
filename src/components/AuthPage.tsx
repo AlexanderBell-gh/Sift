@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
+import { Input } from './ui/Input';
 
 type AuthTab = 'signin' | 'register' | 'trial';
 
@@ -41,138 +42,125 @@ export default function AuthPage() {
     }
   }
 
+  const tabs: { key: AuthTab; label: string }[] = [
+    { key: 'signin', label: 'Sign In' },
+    { key: 'register', label: 'Register' },
+    { key: 'trial', label: '24h Free Trial' },
+  ];
+
   return (
-    <div className="login-wrapper">
-      <div className="login-container">
-        <div className="login-header">
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <div className="auth-header">
           <div className="logo-mark">
-            <div className="logo-tag"></div>
-            <div className="logo-scan-line"></div>
+            <div className="logo-tag" />
+            <div className="logo-scan-line" />
           </div>
-          <h2 className="login-title">Welcome to Sift</h2>
-          <p className="login-subtitle">Real-time retail price optimization</p>
+          <h2 className="auth-title">Welcome to Sift</h2>
+          <p className="auth-subtitle">Real-time retail price optimization</p>
         </div>
 
-        <div className="auth-tabs">
-          <div
-            className={`auth-tab ${activeTab === 'signin' ? 'active' : ''}`}
-            onClick={() => setActiveTab('signin')}
-          >
-            Sign In
-          </div>
-          <div
-            className={`auth-tab ${activeTab === 'register' ? 'active' : ''}`}
-            onClick={() => setActiveTab('register')}
-          >
-            Register
-          </div>
-          <div
-            className={`auth-tab ${activeTab === 'trial' ? 'active' : ''}`}
-            onClick={() => setActiveTab('trial')}
-            style={{ color: activeTab === 'trial' ? 'var(--primary)' : undefined }}
-          >
-            24h Free Trial
-          </div>
+        <div className="auth-tabs" role="tablist">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={`auth-tab ${activeTab === tab.key ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form-container">
+        <form onSubmit={handleSubmit} className="auth-form">
           {error && (
-            <div className="error-banner">
+            <div className="auth-error" role="alert">
               {error}
             </div>
           )}
 
           {activeTab === 'trial' && (
-            <div className="promo-highlight">
-              <div className="promo-title">
-                ⚡ Instant 24-Hour Access
-              </div>
-              <p style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: '1.4', margin: 0 }}>
-                Access Sift immediately. Test Watchlists, store syncing and real-time metrics. No password required.
+            <div className="auth-promo">
+              <div className="auth-promo-title">⚡ Instant 24-Hour Access</div>
+              <p className="auth-promo-desc">
+                Test Watchlists, store syncing and real-time metrics. No password required.
               </p>
             </div>
           )}
 
           {activeTab !== 'trial' && (
-            <div className="form-group">
-              <div className="label-row">
-                <label className="form-label">Username</label>
-              </div>
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+            <Input
+              label="Username"
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
           )}
 
           {activeTab === 'register' && (
-            <div className="form-group">
-              <div className="label-row">
-                <label className="form-label">Email Address</label>
-              </div>
-              <div className="input-wrapper">
-                <input
-                  type="email"
-                  className="form-input"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+            <Input
+              label="Email Address"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           )}
 
           {activeTab !== 'trial' && (
-            <div className="form-group">
-              <div className="label-row">
-                <label className="form-label">Password</label>
-                {activeTab === 'signin' && <a href="#" className="forgot-link" onClick={e => e.preventDefault()}>Forgot?</a>}
-              </div>
-              <div className="input-wrapper">
-                <input
-                  type="password"
-                  className="form-input"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
-              </div>
+            <div className="auth-field-row">
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+              {activeTab === 'signin' && (
+                <a href="#" className="auth-forgot" onClick={(e) => e.preventDefault()}>
+                  Forgot?
+                </a>
+              )}
             </div>
           )}
 
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {activeTab === 'signin' && 'Sign In'}
             {activeTab === 'register' && 'Create Account'}
             {activeTab === 'trial' && 'Start'}
           </button>
         </form>
 
-        <div className="login-footer">
+        <div className="auth-footer">
           {activeTab === 'signin' && (
-            <>Don't have an account? <span className="auth-link" onClick={() => setActiveTab('register')}>Register</span></>
+            <span>
+              Don't have an account?{' '}
+              <button type="button" className="auth-link" onClick={() => setActiveTab('register')}>
+                Register
+              </button>
+            </span>
           )}
           {activeTab === 'register' && (
-            <>Already have an account? <span className="auth-link" onClick={() => setActiveTab('signin')}>Sign In</span></>
+            <span>
+              Already have an account?{' '}
+              <button type="button" className="auth-link" onClick={() => setActiveTab('signin')}>
+                Sign In
+              </button>
+            </span>
           )}
-          {activeTab === 'trial' && (
-            <>Instant sandboxing without passwords or credentials.</>
-          )}
+          {activeTab === 'trial' && <span>Sandboxing without passwords or credentials.</span>}
         </div>
       </div>
+
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );

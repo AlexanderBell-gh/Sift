@@ -11,7 +11,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+          <label className="block font-mono text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text)' }}>
             {label}
           </label>
         )}
@@ -19,19 +19,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={cn(
             'w-full px-4 py-3 rounded-xl text-sm',
-            'bg-white/5',
-            'border border-white/10',
-            'text-white',
-            'placeholder:text-zinc-500',
-            'focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50',
+            'border',
+            'placeholder:opacity-50',
+            'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]',
             'transition-all duration-200',
-            error && 'border-red-400 focus:ring-red-500/40 focus:border-red-400',
+            error && 'border-[var(--danger)] focus:ring-[var(--danger)]/20 focus:border-[var(--danger)]',
             className
           )}
+          style={{
+            backgroundColor: 'var(--bg)',
+            borderColor: error ? 'var(--danger)' : 'var(--border)',
+            color: 'var(--text)',
+          }}
           {...props}
         />
         {error && (
-          <p className="text-red-500 text-xs mt-1.5">{error}</p>
+          <p className="text-xs mt-1.5" style={{ color: 'var(--danger)' }}>{error}</p>
         )}
       </div>
     );
