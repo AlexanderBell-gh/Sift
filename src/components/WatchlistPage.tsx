@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { BookmarkCheck, RefreshCw } from 'lucide-react';
+import { BookmarkCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getWatchlist, removeFromWatchlist, refreshWatchlistItem } from '../lib/api';
+import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import FilterDropdown from './FilterDropdown';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
+
 
 const ALL_STORES = ['Tesco', "Sainsbury's", 'ASDA', 'Morrisons', 'M&S', 'Aldi', 'Lidl'];
 
@@ -20,7 +21,6 @@ export default function WatchlistPage() {
 
   const [selectedStores, setSelectedStores] = useState<string[]>(ALL_STORES);
   const [sortBy, setSortBy] = useState('relevance');
-  const [refreshing, setRefreshing] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!token) {
@@ -51,52 +51,39 @@ export default function WatchlistPage() {
     return result;
   }, [items, selectedStores, sortBy]);
 
-  async function handleRemove(id: string) {
+  const products = useMemo(() => {
+    const map = new Map<string, WatchlistItem[]>();
+    for (const item of filtered) {
+      const arr = map.get(item.product_id) ?? [];
+      arr.push(item);
+      map.set(item.product_id, arr);
+    }
+    return Array.from(map.values());
+  }, [filtered]);
+
+  async function handleRemoveProduct(productId: string) {
     if (!token) return;
+    const group = items.filter(i => i.product_id === productId);
     try {
-      await removeFromWatchlist(token, id);
-      setItems(prev => prev.filter(i => i.id !== id));
+      await Promise.all(group.map(i => removeFromWatchlist(token, i.id)));
+      setItems(prev => prev.filter(i => i.product_id !== productId));
       showToast('Removed from watchlist', 'info');
     } catch {
       showToast('Failed to remove item', 'error');
     }
   }
 
-  async function handleRefresh(id: string) {
-    if (!token) return;
-    setRefreshing(prev => new Set(prev).add(id));
-    try {
-      const result = await refreshWatchlistItem(token, id);
-      setItems(prev => prev.map(i => i.id === id ? result.item : i));
-      if (result.priceChanged && result.previousPrices) {
-        const old = result.previousPrices.normal;
-        const curr = result.item.prices.normal;
-        if (old !== null && curr !== null) {
-          showToast(`Price updated: £${old.toFixed(2)} → £${curr.toFixed(2)}`, 'success');
-        } else {
-          showToast('Price updated', 'success');
-        }
-      } else {
-        showToast('Price checked — no change', 'info');
-      }
-    } catch {
-      showToast('Failed to refresh price', 'error');
-    } finally {
-      setRefreshing(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
-  }
-
-  async function handleRefreshAll() {
-    if (!token) return;
-    for (const item of items) {
-      if (!refreshing.has(item.id)) {
-        handleRefresh(item.id);
-      }
-    }
+  function getLoyaltyLabel(store: string): string {
+    const labels: Record<string, string> = {
+      Tesco: 'Clubcard price',
+      "Sainsbury's": 'Nectar price',
+      Morrisons: 'More card price',
+      'M&S': 'Sparks price',
+      Lidl: 'Lidl Plus price',
+      ASDA: 'ASDA price',
+      Aldi: 'Aldi price',
+    };
+    return labels[store] ?? 'Offer price';
   }
 
   function formatTimeAgo(ts: number) {
@@ -105,15 +92,6 @@ export default function WatchlistPage() {
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
     return `${Math.floor(diff / 86400000)}d ago`;
-  }
-
-  function getStoreShortName(store: string) {
-    const map: Record<string, string> = {
-      "Sainsbury's": 'Sains',
-      'Morrisons': 'Morr',
-      'M&S': 'M&S',
-    };
-    return map[store] || store;
   }
 
   return (
@@ -126,20 +104,10 @@ export default function WatchlistPage() {
             <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
             <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Real-time tracking for items in your comparison rotation</p>
           </div>
-          {items.length > 0 && (
-            <button
-              onClick={handleRefreshAll}
-              disabled={refreshing.size > 0}
-              className="search-button"
-              style={{ margin: 0, padding: '12px 24px' }}
-            >
-              + Track Item
-            </button>
-          )}
         </div>
       </section>
 
-      <div className="container" style={{ paddingBottom: '100px' }}>
+      <div className="container">
         {!loading && items.length > 0 && (
           <div className="mb-6">
             <FilterDropdown
@@ -152,21 +120,26 @@ export default function WatchlistPage() {
         )}
 
         {loading && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="watchlist-tile animate-pulse">
-                <div className="tile-product-info">
-                  <div className="skeleton h-6 w-48 rounded" />
-                  <div className="skeleton h-4 w-20 rounded" />
+              <div key={i} className="product-row animate-pulse">
+                <div className="product-info">
+                  <div className="skeleton h-5 w-40 rounded" />
+                  <div className="skeleton h-3 w-28 rounded mt-2" />
                 </div>
-                <div className="tile-comparison-strip">
-                  <div className="skeleton h-16 w-32 rounded-xl" />
-                  <div className="skeleton h-16 w-20 rounded-lg" />
-                  <div className="skeleton h-16 w-20 rounded-lg" />
+                <div className="lowest-core">
+                  <div className="skeleton h-3 w-20 rounded" />
+                  <div className="flex items-center gap-2">
+                    <div className="skeleton h-7 w-16 rounded" />
+                    <div className="skeleton h-5 w-12 rounded" />
+                  </div>
                 </div>
-                <div className="tile-meta">
-                  <div className="skeleton h-5 w-16 rounded" />
+                <div className="other-stores">
+                  <div className="skeleton h-12 w-16 rounded-lg" />
+                  <div className="skeleton h-12 w-16 rounded-lg" />
+                  <div className="skeleton h-12 w-16 rounded-lg" />
                 </div>
+                <div className="skeleton h-8 w-16 rounded-lg" />
               </div>
             ))}
           </div>
@@ -193,51 +166,37 @@ export default function WatchlistPage() {
           </div>
         )}
 
-        {!loading && filtered.length > 0 && (
-          <div className="watchlist-container">
-            {filtered.map((item) => {
-              const bestPrice = item.prices.normal ?? item.prices.loyalty ?? 0;
-              const otherStores = items
-                .filter(i => i.product_id === item.product_id && i.id !== item.id)
-                .slice(0, 3);
+        {!loading && products.length > 0 && (
+          <div className="products-grid">
+            {products.map(group => {
+              const product = group[0];
+              const lastUpdated = Math.max(...group.map(i => i.updated_at));
+              const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
+              const best = sorted[0];
 
               return (
-                <div key={item.id} className="watchlist-tile">
-                  <div className="tile-product-info">
-                    <span className="tile-product-name">{item.product_name}</span>
-                    <span className="tile-last-updated">Updated {formatTimeAgo(item.updated_at)}</span>
+                <div key={product.product_id} className="product-row">
+                  <div className="product-info">
+                    <h3>{product.product_name}</h3>
+                    <p>UPDATED {formatTimeAgo(lastUpdated)}</p>
                   </div>
 
-                  <div className="tile-comparison-strip">
-                    <div className="tile-best-price">
-                      <span className="best-price-label">Best</span>
-                      <span className="best-price-value">£{bestPrice.toFixed(2)}</span>
-                      <span className="best-price-store">{item.store}</span>
+                  <div className="lowest-core">
+                    <span className="lowest-core-label">{getLoyaltyLabel(best.store)}</span>
+                    <div className="lowest-core-price">
+                      <span className="lowest-core-value">
+                        £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
+                      </span>
+                      <span className="lowest-core-store">{best.store}</span>
                     </div>
-                    {otherStores.map(other => (
-                      <div key={other.id} className="comparison-chip">
-                        <span className="chip-store">{getStoreShortName(other.store)}</span>
-                        <span className="chip-price">£{(other.prices.normal ?? 0).toFixed(2)}</span>
-                      </div>
-                    ))}
                   </div>
 
-                  <div className="tile-meta">
-                    <button
-                      onClick={() => handleRefresh(item.id)}
-                      disabled={refreshing.has(item.id)}
-                      className="p-2 rounded-lg text-zinc-400 hover:text-accent hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
-                      title="Refresh price"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${refreshing.has(item.id) ? 'animate-spin' : ''}`} />
-                    </button>
-                    <button
-                      onClick={() => handleRemove(item.id)}
-                      className="remove-btn"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleRemoveProduct(product.product_id)}
+                    className="remove-link"
+                  >
+                    Remove
+                  </button>
                 </div>
               );
             })}

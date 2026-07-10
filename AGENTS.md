@@ -12,7 +12,7 @@
 
 - Single-package repo (not monorepo)
 - Browser → Cloudflare Pages (React SPA) → Cloudflare Workers (REST API) → D1 (SQLite)
-- Frontend: `src/` (React 19 + TS + Vite + Tailwind v4) - For all UI generation, follow the design system defined in `Projects/markdowns/Sift Project/DESIGN.md`
+- Frontend: `src/` (React 19 + TS + Vite + Tailwind v4) - For all UI generation, follow the design system defined in `DESIGN.md`
 - Backend: `workers/` (Cloudflare Worker, plain JS, no build step)
 - Deploy: GitHub Actions on push to `main` → Pages + Worker
 

@@ -51,20 +51,20 @@ export default function FilterDropdown({ selectedStores, onStoresChange, sortBy,
           'flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
           'bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10',
           'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/10',
-          open && 'ring-2 ring-emerald-500 border-transparent'
+          open && 'ring-2 ring-accent border-transparent'
         )}
       >
         <SlidersHorizontal className="w-4 h-4" />
         Filters
         {filteredCount < STORES.length && (
-          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded text-xs">
+          <span className="px-1.5 py-0.5 bg-accent/20 text-accent dark:text-accent-light rounded text-xs">
             {filteredCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl shadow-lg z-50 overflow-hidden">
+        <div className="absolute left-0 top-full mt-2 w-64 bg-white dark:bg-[var(--surface)] border border-zinc-200 dark:border-[var(--border)] rounded-xl shadow-lg z-50 overflow-hidden">
           {/* Store Filters */}
           <div className="p-3 border-b border-zinc-100 dark:border-white/5">
             <div className="flex items-center justify-between mb-2">
@@ -75,7 +75,7 @@ export default function FilterDropdown({ selectedStores, onStoresChange, sortBy,
                   onClick={() => onStoresChange(STORES)}
                   className={cn(
                     'text-xs transition-colors',
-                    allSelected ? 'text-zinc-400' : 'text-emerald-500 hover:text-emerald-400'
+                    allSelected ? 'text-zinc-400' : 'text-accent hover:text-accent-light'
                   )}
                 >
                   All
@@ -85,7 +85,7 @@ export default function FilterDropdown({ selectedStores, onStoresChange, sortBy,
                   onClick={() => onStoresChange([])}
                   className={cn(
                     'text-xs transition-colors',
-                    filteredCount === 0 ? 'text-zinc-400' : 'text-emerald-500 hover:text-emerald-400'
+                    filteredCount === 0 ? 'text-zinc-400' : 'text-accent hover:text-accent-light'
                   )}
                 >
                   None
@@ -102,7 +102,7 @@ export default function FilterDropdown({ selectedStores, onStoresChange, sortBy,
                     type="checkbox"
                     checked={selectedStores.includes(store)}
                     onChange={() => toggleStore(store)}
-                    className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-600 bg-white dark:bg-white/5 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
+                    className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-600 bg-white dark:bg-white/5 text-accent focus:ring-accent focus:ring-offset-0"
                   />
                   <span className="text-sm text-zinc-700 dark:text-zinc-300">{store}</span>
                 </label>
@@ -117,7 +117,7 @@ export default function FilterDropdown({ selectedStores, onStoresChange, sortBy,
               <select
                 value={sortBy}
                 onChange={(e) => onSortChange(e.target.value)}
-                className="w-full appearance-none bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 pr-8 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full appearance-none bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 pr-8 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 {SORT_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
