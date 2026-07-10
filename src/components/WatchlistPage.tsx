@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
-import FilterDropdown from './FilterDropdown';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
 
@@ -96,9 +95,14 @@ export default function WatchlistPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
-      <NavHeader />
+      <NavHeader
+        selectedStores={selectedStores}
+        onStoresChange={setSelectedStores}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
 
-      <section className="pt-12 pb-8 text-center">
+      <section className="pt-12 pb-8">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
           <div>
             <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
@@ -108,17 +112,6 @@ export default function WatchlistPage() {
       </section>
 
       <div className="container">
-        {!loading && items.length > 0 && (
-          <div className="mb-6">
-            <FilterDropdown
-              selectedStores={selectedStores}
-              onStoresChange={setSelectedStores}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-            />
-          </div>
-        )}
-
         {loading && (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 3 }).map((_, i) => (

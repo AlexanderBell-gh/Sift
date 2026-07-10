@@ -848,6 +848,17 @@ body {
   border-color: var(--primary);
 }
 
+.dark select {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.dark select option {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
 /* User Row Cards */
 .user-cards-list {
   display: flex;
