@@ -41,11 +41,11 @@
 - `cn()` utility for className merging (`clsx` + `tailwind-merge`)
 - UI components in `src/components/ui/`
 - No pre-commit hooks
-- **CHANGES.md**: log every change with file + line numbers (see `Projects/markdowns/Sift Project/CHANGES.md`)
+- **CHANGES.md**: log every change with file + line numbers (see `/home/wsl/Projects/markdowns/Sift Project/CHANGES.md`)
 
 ## Reference Files
 
-- `Projects/markdowns/Sift Project/CONTEXT.md` — full architecture, API ref, data model, critical flows
-- `Projects/markdowns/Sift Project/CHANGES.md` — change log convention
-- `Projects/markdowns/Sift Project/DESIGN.md` — design system spec
-- `Projects/Sift/README.md` — full readme for project
+- `/home/wsl/Projects/markdowns/Sift Project/CONTEXT.md` — full architecture, API ref, data model, critical flows
+- `/home/wsl/Projects/markdowns/Sift Project/CHANGES.md` — change log convention
+- `/home/wsl/Projects/markdowns/Sift Project/DESIGN.md` — design system spec
+- `README.md` — full readme for project
