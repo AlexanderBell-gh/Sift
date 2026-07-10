@@ -184,10 +184,22 @@ export default function WatchlistPage() {
                   <div className="lowest-core">
                     <span className="lowest-core-label">{getLoyaltyLabel(best.store)}</span>
                     <div className="lowest-core-price">
+                      {best.prices.normal !== null && best.prices.loyalty !== null && (
+                        <span className="lowest-core-old">£{best.prices.normal.toFixed(2)}</span>
+                      )}
                       <span className="lowest-core-value">
                         £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
                       </span>
-                      <span className="lowest-core-store">{best.store}</span>
+                      <span className="lowest-core-store">
+                        {best.store_logo && (
+                          <img
+                            src={best.store_logo}
+                            alt={best.store}
+                            className="store-logo"
+                          />
+                        )}
+                        {best.store}
+                      </span>
                     </div>
                   </div>
 
