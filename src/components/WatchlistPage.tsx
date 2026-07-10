@@ -113,26 +113,20 @@ export default function WatchlistPage() {
 
       <div className="container">
         {loading && (
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="product-row animate-pulse">
-                <div className="product-info">
-                  <div className="skeleton h-5 w-40 rounded" />
-                  <div className="skeleton h-3 w-28 rounded mt-2" />
-                </div>
-                <div className="lowest-core">
-                  <div className="skeleton h-3 w-20 rounded" />
-                  <div className="flex items-center gap-2">
-                    <div className="skeleton h-7 w-16 rounded" />
-                    <div className="skeleton h-5 w-12 rounded" />
+          <div className="products-grid">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="product-card animate-pulse">
+                <div className="product-card-top">
+                  <div className="product-card-logo">
+                    <div className="skeleton w-8 h-8 rounded-full" />
                   </div>
                 </div>
-                <div className="other-stores">
-                  <div className="skeleton h-12 w-16 rounded-lg" />
-                  <div className="skeleton h-12 w-16 rounded-lg" />
-                  <div className="skeleton h-12 w-16 rounded-lg" />
+                <div className="product-card-bottom">
+                  <div className="skeleton h-3 w-20 rounded" />
+                  <div className="skeleton h-4 w-full rounded mt-1" />
+                  <div className="skeleton h-6 w-16 rounded mt-2" />
+                  <div className="skeleton h-3 w-24 rounded mt-2" />
                 </div>
-                <div className="skeleton h-8 w-16 rounded-lg" />
               </div>
             ))}
           </div>
@@ -168,40 +162,56 @@ export default function WatchlistPage() {
               const best = sorted[0];
 
               return (
-                <div key={product.product_id} className="product-row">
-                  <div className="product-info">
-                    <h3>{product.product_name}</h3>
-                    <p>UPDATED {formatTimeAgo(lastUpdated)}</p>
+                <div key={product.product_id} className="product-card">
+                  <div className="product-card-top">
+                    <button
+                      onClick={() => handleRemoveProduct(product.product_id)}
+                      className="product-card-remove"
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                    {best.image_url ? (
+                      <img src={best.image_url} alt={product.product_name} className="product-card-image" />
+                    ) : (
+                      <div className="product-card-logo">
+                        {best.store_logo ? (
+                          <img src={best.store_logo} alt={best.store} className="product-card-logo-img" />
+                        ) : (
+                          <span className="product-card-logo-text">{best.store.slice(0, 2).toUpperCase()}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="lowest-core">
-                    <span className="lowest-core-label">{getLoyaltyLabel(best.store)}</span>
-                    <div className="lowest-core-price">
+                  <div className="product-card-bottom">
+                    <span className="lowest-core-store">
+                      {best.store_logo && (
+                        <img src={best.store_logo} alt={best.store} className="store-logo" />
+                      )}
+                      {best.store}
+                    </span>
+                    <h3>{product.product_name}</h3>
+                    <div className="product-card-price">
                       {best.prices.normal !== null && best.prices.loyalty !== null && (
                         <span className="lowest-core-old">£{best.prices.normal.toFixed(2)}</span>
                       )}
                       <span className="lowest-core-value">
                         £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
                       </span>
-                      <span className="lowest-core-store">
-                        {best.store_logo && (
-                          <img
-                            src={best.store_logo}
-                            alt={best.store}
-                            className="store-logo"
-                          />
-                        )}
-                        {best.store}
-                      </span>
                     </div>
+                    {best.prices.loyalty !== null && (
+                      <span className="product-card-loyalty">
+                        <span className="product-card-loyalty-label">{getLoyaltyLabel(best.store)}</span>
+                      </span>
+                    )}
+                    {best.offer_expires_at && (
+                      <span className="product-card-offer">
+                        Offer ends {new Date(best.offer_expires_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </span>
+                    )}
+                    <p>Updated {formatTimeAgo(lastUpdated)}</p>
                   </div>
-
-                  <button
-                    onClick={() => handleRemoveProduct(product.product_id)}
-                    className="remove-link"
-                  >
-                    Remove
-                  </button>
                 </div>
               );
             })}
