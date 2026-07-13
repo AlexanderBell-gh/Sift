@@ -224,12 +224,12 @@ export default function SettingsPage() {
                 <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
               </div>
               <div>
-                <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--danger)', margin: 0 }}>Danger Zone</h3>
+                <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--danger)', margin: 0 }}>Account Deletion</h3>
                 <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Permanently delete your account and all data</p>
               </div>
             </div>
             <div style={{ marginTop: '8px' }}>
-              <button className="btn-primary" style={{ background: 'var(--danger)' }} onClick={() => setIsDeleteModalOpen(true)}>
+              <button className="btn-danger" onClick={() => setIsDeleteModalOpen(true)}>
                 Delete Account
               </button>
             </div>
@@ -255,10 +255,10 @@ export default function SettingsPage() {
         )}
         {deleteError && <p style={{ color: 'var(--danger)', fontSize: '13px', margin: 0 }}>{deleteError}</p>}
         <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-          <button className="btn-primary" style={{ flex: 1, background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)' }} onClick={() => setIsDeleteModalOpen(false)}>
+          <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsDeleteModalOpen(false)}>
             Cancel
           </button>
-          <button className="btn-primary" style={{ flex: 1, background: 'var(--danger)' }} onClick={handleDeleteAccount} disabled={isLoading}>
+          <button className="btn-danger" style={{ flex: 1 }} onClick={handleDeleteAccount} disabled={isLoading}>
             {isLoading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : 'Delete Account'}
           </button>
         </div>

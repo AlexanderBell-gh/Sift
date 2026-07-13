@@ -233,14 +233,14 @@ export default function AdminPage() {
                     onChange={e => setUserSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && loadUsers(1, userSearch, userFilter)}
                     className="admin-input"
-                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
+                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                   />
                 </div>
                 <select
                   value={userFilter}
                   onChange={e => { setUserFilter(e.target.value); loadUsers(1, userSearch, e.target.value); }}
                   className="admin-select"
-                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
+                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                 >
                   <option value="users">Regular Users</option>
                   <option value="trials">Trial Users</option>
@@ -356,14 +356,14 @@ export default function AdminPage() {
                     onChange={e => setTrialSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && loadTrials(1, trialsStatus, trialSearch)}
                     className="admin-input"
-                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
+                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                   />
                 </div>
                 <select
                   value={trialsStatus}
                   onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value, trialSearch); }}
                   className="admin-select"
-                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
+                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                 >
                   <option value="all">All Trials</option>
                   <option value="active">Active</option>
@@ -371,7 +371,7 @@ export default function AdminPage() {
                 </select>
                 <button
                   onClick={handleCleanupTrials}
-                  style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'rgba(220, 38, 38, 0.1)', color: 'var(--danger)', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer', transition: 'background 0.2s' }}
+                  className="clean-expired-btn"
                 >
                   Clean Expired
                 </button>
