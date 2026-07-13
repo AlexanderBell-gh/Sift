@@ -7,7 +7,7 @@ Real-time UK supermarket price comparison. Search 7 stores, AI-enriches results,
 
 ## Features
 
-7-store search (Tesco, Sainsbury's, ASDA, Morrisons, Aldi, Lidl, Waitrose), AI price enrichment (Gemma 4), dual pricing (normal vs loyalty), unit price comparison, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT auth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
+7-store search (Tesco, Sainsbury's, ASDA, Morrisons, Aldi, Lidl, Waitrose), AI price enrichment (Gemma 4), dual pricing (normal vs loyalty), unit price comparison, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
 
 ## Tech Stack
 
@@ -17,7 +17,7 @@ Real-time UK supermarket price comparison. Search 7 stores, AI-enriches results,
 | Backend | Cloudflare Workers + D1 (SQLite) |
 | Search | SearXNG (self-hosted) |
 | AI | Google AI Studio (Gemma 4) |
-| Auth | Custom JWT |
+| Auth | Custom JWT + Google OAuth |
 | CI/CD | GitHub Actions + pnpm 11 |
 
 ## Getting Started
@@ -62,6 +62,7 @@ pnpm exec wrangler secret put SEARXNG_URL    # SearXNG instance URL
 pnpm exec wrangler secret put GEMMA_API_KEY   # AI enrichment
 pnpm exec wrangler secret put ADMIN_SECRET    # Admin registration
 pnpm exec wrangler secret put JWT_SECRET      # JWT signing
+pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 ```
 
 ## Search Flow
@@ -86,7 +87,7 @@ Daily 6am UTC: max 10 items/user, 100 total, 500ms delay, skip if updated <6h, 3
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql)
-public/           Store logo SVGs
+public/           Store logo PNGs + favicon.svg
 DESIGN.md         Design system
 ```
 
