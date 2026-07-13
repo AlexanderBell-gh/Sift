@@ -1576,7 +1576,7 @@ body {
 }
 
 .product-card:hover {
-  @apply border-orange-300/60 dark:border-orange-400/30;
+  border-color: var(--primary);
   @apply shadow-[0_8px_40px_-12px_rgba(255,87,1,0.12)] dark:shadow-[0_8px_40px_-12px_rgba(255,87,1,0.08)];
   transform: translateY(-2px);
 }
