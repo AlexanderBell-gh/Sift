@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Shield, Users, ScrollText, Timer, Trash2, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3 } from 'lucide-react';
+import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import NavHeader from './NavHeader';
@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [trialsTotalPages, setTrialsTotalPages] = useState(0);
   const [trialsStatus, setTrialsStatus] = useState('all');
   const [trialSearch, setTrialSearch] = useState('');
+  const [auditFilter, setAuditFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -130,10 +131,6 @@ export default function AdminPage() {
     }
   }
 
-  function formatTime(ts: number) {
-    return new Date(ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  }
-
   const navItems: { key: Tab; label: string; icon: typeof Shield }[] = [
     { key: 'dashboard', label: 'Stats Dashboard', icon: BarChart3 },
     { key: 'users', label: 'User Management', icon: Users },
@@ -187,13 +184,23 @@ export default function AdminPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
             <div>
               <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '32px', fontWeight: '700', marginBottom: '4px', color: 'var(--text)' }}>
-                Dashboard View
+                {tab === 'dashboard' && 'System Stats'}
+                {tab === 'users' && 'User Accounts'}
+                {tab === 'audit' && 'Audit Logs'}
+                {tab === 'trials' && 'Trial Management'}
               </h1>
-              <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Real-time system health, active database metrics, and subscriber counts.</p>
+              <p style={{ color: 'var(--muted)', fontSize: '14px' }}>
+                {tab === 'dashboard' && 'Real-time system health, active database metrics, and subscriber counts.'}
+                {tab === 'users' && 'Manage system privileges and active profiles.'}
+                {tab === 'audit' && 'Track admin actions and system events.'}
+                {tab === 'trials' && 'Monitor trial accounts and expiration status.'}
+              </p>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', background: 'rgba(22, 163, 74, 0.1)', color: 'var(--success)', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
-              ● ENGINE ONLINE
-            </div>
+            {tab === 'dashboard' && (
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', background: 'rgba(22, 163, 74, 0.1)', color: 'var(--success)', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
+                ● ENGINE ONLINE
+              </div>
+            )}
           </div>
 
           {loading && (
@@ -207,6 +214,8 @@ export default function AdminPage() {
           {tab === 'dashboard' && stats && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
               <StatCard label="Total Users" value={stats.totalUsers} />
+              <StatCard label="Regular Users" value={stats.regularUsers} />
+              <StatCard label="Trial Users" value={stats.trialUsers} />
               <StatCard label="Active Watchlists" value={stats.totalProducts} />
               <StatCard label="API Requests (24h)" value={stats.totalPrices} />
             </div>
@@ -216,53 +225,59 @@ export default function AdminPage() {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted)' }} />
                   <input
                     type="text"
                     placeholder="Search users..."
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && loadUsers(1, userSearch, userFilter)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                    className="admin-input"
+                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
                   />
                 </div>
                 <select
                   value={userFilter}
                   onChange={e => { setUserFilter(e.target.value); loadUsers(1, userSearch, e.target.value); }}
-                  className="px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  className="admin-select"
+                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
                 >
                   <option value="users">Regular Users</option>
                   <option value="trials">Trial Users</option>
                 </select>
               </div>
 
-              <p className="text-xs text-zinc-400">{usersTotal} users found</p>
+              <p style={{ fontSize: '12px', color: 'var(--muted)' }}>{usersTotal} users found</p>
 
               <div className="space-y-2">
                 {users.map(u => (
-                  <div key={u.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{u.username}</p>
-                      <p className="text-xs text-zinc-400 truncate">{u.email}</p>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">
-                        {u.isTrial ? 'Trial' : 'Regular'} · {u.productCount} pinned · {new Date(u.createdAt).toLocaleDateString('en-GB')}
-                      </p>
+                  <div key={u.id} className="user-row-card">
+                    <div className="user-profile-meta">
+                      <div className="user-row-avatar">{u.username.slice(0, 2).toUpperCase()}</div>
+                      <div className="user-identity">
+                        <span className="user-row-name">{u.username}</span>
+                        <span className="user-row-email">{u.email}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="user-row-date">Joined {new Date(u.createdAt).toLocaleDateString('en-GB')}</div>
+                    <div>
+                      <span className={`user-badge-role ${u.role === 'admin' ? 'user-badge-admin' : 'user-badge-user'}`}>{u.role}</span>
+                    </div>
+                    <div className="user-action-cell">
                       <select
                         value={u.role}
                         onChange={e => handleRoleChange(u.id, e.target.value)}
-                        className="px-2 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-600 dark:text-zinc-300"
+                        className="user-role-select"
                       >
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
+                        <option value="user">Standard User</option>
+                        <option value="admin">Administrator</option>
                       </select>
                       <button
                         onClick={() => handleDeleteUser(u.id, u.username)}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                        title="Delete user"
+                        className="user-row-delete-btn"
+                        title="Revoke Account"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        ✕
                       </button>
                     </div>
                   </div>
@@ -277,21 +292,49 @@ export default function AdminPage() {
 
           {tab === 'audit' && (
             <div className="space-y-4">
+              <div className="audit-filter-pills">
+                {[
+                  { key: 'all', label: 'All Events' },
+                  { key: 'system', label: 'System' },
+                  { key: 'trial', label: 'Trial' },
+                  { key: 'security', label: 'Security' },
+                  { key: 'delete', label: 'Admin Revokes' },
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setAuditFilter(f.key)}
+                    className={`audit-pill ${auditFilter === f.key ? 'active' : ''}`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
               {logs.length === 0 ? (
-                <p className="text-sm text-zinc-400 text-center py-8">No audit logs yet</p>
+                <p style={{ fontSize: '14px', color: 'var(--muted)', textAlign: 'center', padding: '32px 0' }}>No audit logs yet</p>
               ) : (
-                <div className="space-y-2">
-                  {logs.map(log => (
-                    <div key={log.id} className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono text-accent">{log.action}</span>
-                        <span className="text-[10px] text-zinc-400">{formatTime(log.timestamp)}</span>
-                      </div>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-1">
-                        {log.admin_username} {log.details || ''}
-                      </p>
-                    </div>
-                  ))}
+                <div className="audit-console">
+                  {logs
+                    .filter(log => auditFilter === 'all' || log.action?.toLowerCase().includes(auditFilter))
+                    .map(log => {
+                      const time = new Date(log.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                      const actionLower = log.action?.toLowerCase() || '';
+                      let tagClass = 'tag-system';
+                      let tagLabel = 'SYSTEM';
+                      if (actionLower.includes('trial')) { tagClass = 'tag-trial'; tagLabel = 'TRIAL'; }
+                      else if (actionLower.includes('security') || actionLower.includes('auth') || actionLower.includes('token')) { tagClass = 'tag-security'; tagLabel = 'SECURITY'; }
+                      else if (actionLower.includes('delete') || actionLower.includes('revoke')) { tagClass = 'tag-delete'; tagLabel = 'DELETE'; }
+
+                      return (
+                        <div key={log.id} className="audit-row">
+                          <span className="audit-time">[{time}]</span>
+                          <span className={`audit-tag ${tagClass}`}>{tagLabel}</span>
+                          <span className="audit-message">
+                            {log.admin_username} {log.details || log.action}
+                          </span>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
 
@@ -305,20 +348,22 @@ export default function AdminPage() {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted)' }} />
                   <input
                     type="text"
                     placeholder="Search trials..."
                     value={trialSearch}
                     onChange={e => setTrialSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && loadTrials(1, trialsStatus, trialSearch)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                    className="admin-input"
+                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
                   />
                 </div>
                 <select
                   value={trialsStatus}
                   onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value, trialSearch); }}
-                  className="px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-800 dark:text-zinc-100"
+                  className="admin-select"
+                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: '14px' }}
                 >
                   <option value="all">All Trials</option>
                   <option value="active">Active</option>
@@ -326,7 +371,7 @@ export default function AdminPage() {
                 </select>
                 <button
                   onClick={handleCleanupTrials}
-                  className="px-4 py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors"
+                  style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'rgba(220, 38, 38, 0.1)', color: 'var(--danger)', fontSize: '14px', fontWeight: '600', border: 'none', cursor: 'pointer', transition: 'background 0.2s' }}
                 >
                   Clean Expired
                 </button>
@@ -334,20 +379,16 @@ export default function AdminPage() {
 
               <div className="space-y-2">
                 {trials.map(t => (
-                  <div key={t.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
                     <div>
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">{t.username}</p>
-                      <p className="text-xs text-zinc-400">{t.email}</p>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>{t.username}</p>
+                      <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{t.email}</p>
+                      <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
                         {t.productCount} pinned · Created {new Date(t.createdAt).toLocaleDateString('en-GB')}
                         {t.trialExpiresAt && ` · Expires ${new Date(t.trialExpiresAt).toLocaleDateString('en-GB')}`}
                       </p>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      t.isExpired
-                        ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
-                        : 'bg-emerald-500/10 text-emerald-500'
-                    }`}>
+                    <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '9999px', background: t.isExpired ? 'var(--border)' : 'rgba(22, 163, 74, 0.1)', color: t.isExpired ? 'var(--muted)' : 'var(--success)' }}>
                       {t.isExpired ? 'Expired' : 'Active'}
                     </span>
                   </div>
@@ -378,21 +419,21 @@ function StatCard({ label, value }: { label: string; value: number }) {
 
 function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
       <button
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
-        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-30 transition-colors"
+        style={{ padding: '6px', borderRadius: '8px', color: 'var(--muted)', opacity: page <= 1 ? 0.3 : 1, cursor: page <= 1 ? 'not-allowed' : 'pointer', background: 'none', border: 'none', transition: 'color 0.2s' }}
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft style={{ width: '16px', height: '16px' }} />
       </button>
-      <span className="text-xs text-zinc-400">{page} / {totalPages}</span>
+      <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{page} / {totalPages}</span>
       <button
         onClick={() => onChange(page + 1)}
         disabled={page >= totalPages}
-        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-30 transition-colors"
+        style={{ padding: '6px', borderRadius: '8px', color: 'var(--muted)', opacity: page >= totalPages ? 0.3 : 1, cursor: page >= totalPages ? 'not-allowed' : 'pointer', background: 'none', border: 'none', transition: 'color 0.2s' }}
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight style={{ width: '16px', height: '16px' }} />
       </button>
     </div>
   );

@@ -1195,6 +1195,14 @@ body {
   font-weight: 600;
 }
 
+/* Admin Input Focus States */
+.admin-input:focus,
+.admin-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.1);
+}
+
 /* Auth Screen */
 .auth-wrapper {
   display: flex;
@@ -1842,6 +1850,21 @@ body {
   
   .product-image {
     @apply h-36 rounded-t-xl;
+  }
+
+  .user-row-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .user-action-cell {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .user-role-select {
+    flex: 1;
   }
 }
 
