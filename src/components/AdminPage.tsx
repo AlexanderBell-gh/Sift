@@ -144,7 +144,7 @@ export default function AdminPage() {
 
       <div className="admin-grid">
         {/* Sidebar */}
-        <aside className="admin-sidebar hidden sm:block">
+        <aside className="admin-sidebar">
           <div className="admin-sidebar-header">Admin Control</div>
           <nav className="flex flex-col gap-2">
             {navItems.map(item => (
@@ -160,30 +160,11 @@ export default function AdminPage() {
           </nav>
         </aside>
 
-        {/* Mobile tab bar */}
-        <div className="sm:hidden flex gap-1 p-4 overflow-x-auto border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-          {navItems.map(item => (
-            <button
-              key={item.key}
-              onClick={() => setTab(item.key)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                tab === item.key
-                  ? 'text-white'
-                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-              style={tab === item.key ? { background: 'var(--primary)', color: 'white' } : { color: 'var(--muted)' }}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </button>
-          ))}
-        </div>
-
         {/* Content */}
         <main className="admin-content">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
+          <div className="admin-heading-row">
             <div>
-              <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '32px', fontWeight: '700', marginBottom: '4px', color: 'var(--text)' }}>
+              <h1>
                 {tab === 'dashboard' && 'System Stats'}
                 {tab === 'users' && 'User Accounts'}
                 {tab === 'audit' && 'Audit Logs'}
@@ -379,7 +360,7 @@ export default function AdminPage() {
 
               <div className="space-y-2">
                 {trials.map(t => (
-                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                  <div key={t.id} className="trial-card">
                     <div>
                       <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>{t.username}</p>
                       <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{t.email}</p>
