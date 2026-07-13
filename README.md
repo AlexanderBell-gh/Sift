@@ -7,7 +7,7 @@ Real-time UK supermarket price comparison. Search 7 stores, AI-enriches results,
 
 ## Features
 
-7-store search (Tesco, Sainsbury's, ASDA, Morrisons, Aldi, Lidl, Waitrose), AI price enrichment (Gemma 4), dual pricing (normal vs loyalty), unit price comparison, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel, trial gating (24h/5 searches), JWT auth, dark/light mode, mobile responsive.
+7-store search (Tesco, Sainsbury's, ASDA, Morrisons, Aldi, Lidl, Waitrose), AI price enrichment (Gemma 4), dual pricing (normal vs loyalty), unit price comparison, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT auth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
 
 ## Tech Stack
 
