@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { BookmarkCheck } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
@@ -106,7 +106,7 @@ export default function WatchlistPage() {
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
           <div>
             <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
-            <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Real-time tracking for items in your comparison rotation</p>
+            <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Track all of your items here</p>
           </div>
         </div>
       </section>
@@ -133,23 +133,23 @@ export default function WatchlistPage() {
         )}
 
         {!loading && items.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <BookmarkCheck className="w-16 h-16 text-zinc-300 dark:text-zinc-600 mb-4" />
-            <p className="text-zinc-600 dark:text-zinc-400 text-lg">No pinned products</p>
-            <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">Compare prices across 7 UK supermarkets</p>
+          <div style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
+            <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>Your Watchlist is empty</p>
+            <p style={{ fontSize: '14px', marginBottom: '24px' }}>Find and pin groceries from the search tab.</p>
             <button
               onClick={() => navigate('/')}
-              className="mt-4 px-4 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-light transition-colors"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--primary)', color: '#fff', fontSize: '14px', fontWeight: '600', borderRadius: '12px', border: 'none', cursor: 'pointer', transition: 'opacity 0.2s' }}
             >
+              <Search style={{ width: '16px', height: '16px' }} />
               Search Products
             </button>
           </div>
         )}
 
         {!loading && items.length > 0 && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <p className="text-zinc-600 dark:text-zinc-400 text-lg">No items match filters</p>
-            <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">Try selecting more stores</p>
+          <div style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
+            <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>No items match filters</p>
+            <p style={{ fontSize: '14px' }}>Try selecting more stores</p>
           </div>
         )}
 
