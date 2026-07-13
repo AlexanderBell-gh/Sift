@@ -228,6 +228,12 @@ body {
   color: var(--muted);
 }
 
+@media (max-width: 640px) {
+  .trial-nav-indicator.active {
+    display: none;
+  }
+}
+
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
