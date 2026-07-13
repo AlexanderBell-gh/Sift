@@ -397,6 +397,24 @@ body {
   filter: brightness(1.1);
 }
 
+@media (max-width: 640px) {
+  .search-container {
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .search-input {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+
+  .search-button {
+    padding: 0 20px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+}
+
 /* Search Dropdown */
 .suggestions-dropdown {
   position: absolute;
