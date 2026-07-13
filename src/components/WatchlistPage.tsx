@@ -137,7 +137,7 @@ export default function WatchlistPage() {
             <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>Your Watchlist is empty</p>
             <p style={{ fontSize: '14px', marginBottom: '24px' }}>Find and pin groceries from the search tab.</p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/search')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--primary)', color: '#fff', fontSize: '14px', fontWeight: '600', borderRadius: '12px', border: 'none', cursor: 'pointer', transition: 'opacity 0.2s' }}
             >
               <Search style={{ width: '16px', height: '16px' }} />
