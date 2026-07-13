@@ -105,7 +105,7 @@ export default function WatchlistPage() {
       <section className="pt-12 pb-8">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
+            <h1 className="page-title" style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
             <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Track all of your items here</p>
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function WatchlistPage() {
         )}
 
         {!loading && items.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
+          <div className="empty-state-box" style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
             <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>Your Watchlist is empty</p>
             <p style={{ fontSize: '14px', marginBottom: '24px' }}>Find and pin groceries from the search tab.</p>
             <button
@@ -147,7 +147,7 @@ export default function WatchlistPage() {
         )}
 
         {!loading && items.length > 0 && filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
+          <div className="empty-state-box" style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
             <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>No items match filters</p>
             <p style={{ fontSize: '14px' }}>Try selecting more stores</p>
           </div>

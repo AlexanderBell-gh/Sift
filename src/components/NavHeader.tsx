@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ArrowLeft, Sun, Moon, Settings, Shield, ChevronDown } from 'lucide-react';
+import { LogOut, ArrowLeft, Sun, Moon, Settings, Shield, ChevronDown, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import AlertBell from './AlertBell';
@@ -41,6 +41,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
   const [trialCountdown, setTrialCountdown] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -56,6 +57,17 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
     function handleClick(e: MouseEvent) {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
         setFilterOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClick);
@@ -114,6 +126,23 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
             <button onClick={() => navigate('/search')} className="nav-link">Search</button>
             {token && (
               <button onClick={() => navigate('/watchlist')} className="nav-link">Watchlist</button>
+            )}
+          </div>
+
+          <div className="sm:hidden relative" ref={mobileMenuRef}>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            {mobileMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border py-1 z-50" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                <button onClick={() => { navigate('/search'); setMobileMenuOpen(false); }} className="dropdown-item">Search</button>
+                {token && (
+                  <button onClick={() => { navigate('/watchlist'); setMobileMenuOpen(false); }} className="dropdown-item">Watchlist</button>
+                )}
+              </div>
             )}
           </div>
 

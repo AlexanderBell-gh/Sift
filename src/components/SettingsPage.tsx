@@ -99,7 +99,7 @@ export default function SettingsPage() {
       <NavHeader />
       <div className="container" style={{ paddingTop: '48px', paddingBottom: '48px' }}>
         <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700', color: 'var(--text)', lineHeight: '1.2' }}>
+          <h2 className="page-title" style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700', color: 'var(--text)', lineHeight: '1.2' }}>
             Account Settings
           </h2>
           <p style={{ color: 'var(--muted)', fontSize: '14px', marginTop: '8px' }}>

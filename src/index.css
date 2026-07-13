@@ -54,6 +54,7 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 /* Spring easing for all transitions */
@@ -67,6 +68,12 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 12px;
+  }
 }
 
 /* Navigation */
@@ -332,6 +339,21 @@ body {
   color: var(--muted);
   max-width: 600px;
   margin: 0 auto 60px;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 60px 0 40px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+  }
+
+  .hero p {
+    font-size: 16px;
+    margin-bottom: 32px;
+  }
 }
 
 .search-container {
@@ -1176,6 +1198,21 @@ body {
 
 .dark .auth-card {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 640px) {
+  .auth-card {
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .page-title {
+    font-size: 28px !important;
+  }
+
+  .empty-state-box {
+    padding: 32px 16px !important;
+  }
 }
 
 .auth-header {
