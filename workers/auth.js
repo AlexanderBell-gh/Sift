@@ -138,6 +138,7 @@ function createUserId() {
 function rowToUser(row) {
   return {
     id: row.id,
+    googleId: row.google_id || null,
     email: row.email,
     username: row.username,
     passwordHash: row.password_hash,
@@ -230,12 +231,18 @@ async function getUserByUsername(env, username) {
   return row ? rowToUser(row) : null;
 }
 
+async function getUserByGoogleId(env, googleId) {
+  const row = await queryOne(env, 'SELECT * FROM users WHERE google_id = ?', [googleId]);
+  return row ? rowToUser(row) : null;
+}
+
 async function saveUser(env, user) {
   await execute(
     env,
-    `INSERT INTO users (id, email, username, password_hash, role, is_trial, trial_expires_at, search_count, currency, default_store, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO users (id, google_id, email, username, password_hash, role, is_trial, trial_expires_at, search_count, currency, default_store, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
+       google_id = COALESCE(excluded.google_id, users.google_id),
        email = excluded.email,
        username = excluded.username,
        password_hash = excluded.password_hash,
@@ -247,6 +254,7 @@ async function saveUser(env, user) {
        default_store = excluded.default_store`,
     [
       user.id,
+      user.googleId || null,
       user.email.toLowerCase(),
       user.username.toLowerCase(),
       user.passwordHash,
@@ -281,6 +289,8 @@ export {
   getUserById,
   getUserByEmail,
   getUserByUsername,
+  getUserByGoogleId,
   saveUser,
   deleteUser,
+  base64UrlToArrayBuffer,
 };

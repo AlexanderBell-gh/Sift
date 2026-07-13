@@ -19,6 +19,7 @@ database_id = "d12d4b6e-44d7-4176-b782-57afcfee84e1"
 #   pnpm exec wrangler secret put RESEND_API_KEY
 #   pnpm exec wrangler secret put SEARXNG_URL
 #   pnpm exec wrangler secret put GEMMA_API_KEY
+#   pnpm exec wrangler secret put GOOGLE_CLIENT_ID
 
 [triggers]
 crons = ["0 6 * * *"]

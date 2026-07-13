@@ -9,8 +9,10 @@ import {
   getUserById,
   getUserByEmail,
   getUserByUsername,
+  getUserByGoogleId,
   saveUser,
   deleteUser,
+  base64UrlToArrayBuffer,
 } from './auth.js';
 import { queryAll, queryOne, execute, batch } from './db.js';
 
@@ -204,6 +206,67 @@ function timeoutFetch(url, opts, ms) {
     fetch(url, opts),
     new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
   ]);
+}
+
+// Google ID token verification
+let googleCertsCache = null;
+let googleCertsExpiry = 0;
+
+async function getGooglePublicKeys() {
+  if (googleCertsCache && Date.now() < googleCertsExpiry) return googleCertsCache;
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/certs');
+  const data = await res.json();
+  googleCertsCache = data.keys;
+  googleCertsExpiry = Date.now() + 24 * 60 * 60 * 1000;
+  return googleCertsCache;
+}
+
+async function verifyGoogleIdToken(idToken, clientId) {
+  try {
+    const parts = idToken.split('.');
+    if (parts.length !== 3) return null;
+
+    const [headerB64, payloadB64, sigB64] = parts;
+
+    const header = JSON.parse(atob(headerB64));
+    const kid = header.kid;
+    if (!kid) return null;
+
+    const keys = await getGooglePublicKeys();
+    const jwk = keys.find(k => k.kid === kid);
+    if (!jwk) return null;
+
+    const key = await crypto.subtle.importKey(
+      'jwk',
+      { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: 'RS256' },
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+
+    const message = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+    const signature = base64UrlToArrayBuffer(sigB64);
+
+    const valid = await crypto.subtle.verify(
+      { name: 'RSASSA-PKCS1-v1_5' },
+      key,
+      signature,
+      message
+    );
+
+    if (!valid) return null;
+
+    const payload = JSON.parse(atob(payloadB64));
+
+    if (payload.aud !== clientId) return null;
+    if (payload.iss !== 'https://accounts.google.com' && payload.iss !== 'accounts.google.com') return null;
+    if (payload.exp * 1000 < Date.now()) return null;
+
+    return payload;
+  } catch (e) {
+    console.error('Google token verification error:', e);
+    return null;
+  }
 }
 
 async function searchSearXNG(store, query, searxngUrl) {
@@ -590,6 +653,84 @@ async function handleRequest(request, env) {
     } catch (e) {
       console.error('Trial error:', e);
       return errorResponse('Invalid request body');
+    }
+  }
+
+  if (path === '/api/auth/google' && method === 'POST') {
+    if (!env.GOOGLE_CLIENT_ID) {
+      return errorResponse('Google sign-in not configured', 501);
+    }
+    try {
+      const body = await request.json();
+      const { idToken } = body;
+      if (!idToken) return errorResponse('ID token required');
+
+      const googlePayload = await verifyGoogleIdToken(idToken, env.GOOGLE_CLIENT_ID);
+      if (!googlePayload) return errorResponse('Invalid Google token');
+
+      const existingUser = await getUserByGoogleId(env, googlePayload.sub);
+
+      if (existingUser) {
+        const token = await createJWT(existingUser, env);
+        const remainingSearches = existingUser.isTrial ? Math.max(0, 5 - existingUser.searchCount) : null;
+        return jsonResponse({
+          user: {
+            id: existingUser.id,
+            email: existingUser.email,
+            username: existingUser.username,
+            role: existingUser.role,
+            isTrial: existingUser.isTrial || false,
+            trialExpiresAt: existingUser.trialExpiresAt || null,
+            searchCount: existingUser.searchCount || 0,
+            remainingSearches,
+          },
+          token,
+        });
+      }
+
+      const displayName = googlePayload.name || `user_${googlePayload.sub.slice(0, 8)}`;
+      const baseUsername = displayName.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) || `g_${googlePayload.sub.slice(0, 8)}`;
+      let username = baseUsername;
+      let suffix = 1;
+      while (await getUserByUsername(env, username)) {
+        username = `${baseUsername}${suffix}`;
+        suffix++;
+      }
+
+      const email = googlePayload.email || `${googlePayload.sub}@google.sift`;
+
+      const user = {
+        id: createUserId(),
+        googleId: googlePayload.sub,
+        email,
+        username,
+        passwordHash: await hashPassword(generateToken()),
+        role: 'user',
+        isTrial: false,
+        searchCount: 0,
+        preferences: { currency: 'GBP', defaultStore: null },
+        createdAt: new Date().toISOString(),
+      };
+
+      await saveUser(env, user);
+      const token = await createJWT(user, env);
+
+      return jsonResponse({
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          isTrial: false,
+          trialExpiresAt: null,
+          searchCount: 0,
+          remainingSearches: null,
+        },
+        token,
+      }, 201);
+    } catch (e) {
+      console.error('Google auth error:', e);
+      return errorResponse('Google sign-in failed');
     }
   }
 

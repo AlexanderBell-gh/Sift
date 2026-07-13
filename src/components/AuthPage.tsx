@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -8,9 +8,23 @@ import { Input } from './ui/Input';
 
 type AuthTab = 'signin' | 'register' | 'trial';
 
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: { client_id: string; callback: (credential: { credential: string }) => void }) => void;
+          renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
+
 export default function AuthPage() {
-  const { login, register, startTrial } = useAuth();
+  const { login, register, loginWithGoogle, startTrial } = useAuth();
   const navigate = useNavigate();
+  const googleBtnRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<AuthTab>('signin');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -18,6 +32,45 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast, showToast, hideToast } = useToast();
+
+  useEffect(() => {
+    if (activeTab !== 'register' || !googleBtnRef.current) return;
+
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.id && googleBtnRef.current) {
+        clearInterval(interval);
+        window.google.accounts.id.initialize({
+          client_id: '343280865033-44i2lesgqpnieo23ami46pomaesqnkcm.apps.googleusercontent.com',
+          callback: handleGoogleResponse,
+        });
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline',
+          size: 'large',
+          type: 'standard',
+          shape: 'pill',
+          text: 'continue_with',
+          logo_alignment: 'left',
+          width: googleBtnRef.current.offsetWidth.toString(),
+        });
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [activeTab]);
+
+  async function handleGoogleResponse(response: { credential: string }) {
+    setLoading(true);
+    setError('');
+    try {
+      await loginWithGoogle(response.credential);
+      showToast('Signed in with Google', 'success');
+      navigate('/search');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -139,6 +192,16 @@ export default function AuthPage() {
             {activeTab === 'trial' && 'Start'}
           </button>
         </form>
+
+        {activeTab === 'register' && (
+          <div className="auth-divider">
+            <span className="auth-divider-line" />
+            <span className="auth-divider-text">or continue with</span>
+            <span className="auth-divider-line" />
+          </div>
+        )}
+
+        {activeTab === 'register' && <div ref={googleBtnRef} className="google-btn-wrapper" />}
 
         <div className="auth-footer">
           {activeTab === 'signin' && (

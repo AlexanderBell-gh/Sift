@@ -1483,6 +1483,38 @@ body {
   margin: 0;
 }
 
+/* Auth Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.auth-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-divider-text {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Google Button Wrapper */
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+  min-height: 44px;
+}
+
+.google-btn-wrapper > div {
+  width: 100% !important;
+}
+
 /* Auth Footer */
 .auth-footer {
   text-align: center;
