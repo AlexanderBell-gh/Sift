@@ -164,6 +164,51 @@ const TARGET_STORES = [
   { domain: 'lidl.co.uk', name: 'Lidl', logo: '/storeicon_lidl.png' },
 ];
 
+function parseStoreQuery(query) {
+  const lower = query.toLowerCase().trim();
+  let targetStore = null;
+  let cleanQuery = query.trim();
+
+  for (const store of TARGET_STORES) {
+    const nameLower = store.name.toLowerCase();
+    if (lower.includes(nameLower)) {
+      targetStore = store;
+      break;
+    }
+  }
+
+  if (!targetStore) {
+    if (lower.includes('sainsbury') || lower.includes('sainsburys')) {
+      targetStore = TARGET_STORES.find(s => s.name === "Sainsbury's");
+    } else if (lower.includes('m&s') || lower.includes('marks') || lower.includes('marks and spencer')) {
+      targetStore = TARGET_STORES.find(s => s.name === 'M&S');
+    }
+  }
+
+  if (targetStore) {
+    const namePattern = new RegExp(targetStore.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    cleanQuery = cleanQuery.replace(namePattern, '').trim();
+    cleanQuery = cleanQuery.replace(/^(from|at|in|for|buy)\s+/i, '').trim();
+  }
+
+  return { targetStore, cleanQuery };
+}
+
+function isProductResult(item) {
+  const url = (item.url || '').toLowerCase();
+  const title = (item.title || '').toLowerCase();
+  const snippet = (item.content || '').toLowerCase();
+  const keywords = ['recipe', 'blog', 'article', 'news', 'how to', 'guide', 'ideas', 'inspiration', 'tips', 'ways to', '5 '];
+  for (const kw of keywords) {
+    if (title.includes(kw) || snippet.includes(kw)) return false;
+  }
+  const excludePaths = ['/recipe/', '/blog/', '/article/', '/news/', '/category/'];
+  for (const p of excludePaths) {
+    if (url.includes(p)) return false;
+  }
+  return true;
+}
+
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -270,22 +315,25 @@ async function verifyGoogleIdToken(idToken, clientId) {
 }
 
 async function searchSearXNG(store, query, searxngUrl) {
-  const siteQuery = `site:${store.domain} "${query}"`;
+  const queryTerms = query.split(/\s+/).filter(Boolean);
+  const siteQuery = `site:${store.domain} ${queryTerms.map(t => `"${t}"`).join(' ')}`;
   const baseUrl = searxngUrl.replace(/\/$/, '');
   try {
     const url = `${baseUrl}/search?q=${encodeURIComponent(siteQuery)}&format=json`;
     const res = await timeoutFetch(url, {}, 5000);
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.results || []).map(item => ({
-      title: item.title || '',
-      url: item.url || '',
-      snippet: item.content || '',
-      store: store.name,
-      store_logo: store.logo,
-      price: null,
-      image: item.img_src || item.thumbnail || '',
-    }));
+    return (data.results || [])
+      .filter(isProductResult)
+      .map(item => ({
+        title: item.title || '',
+        url: item.url || '',
+        snippet: item.content || '',
+        store: store.name,
+        store_logo: store.logo,
+        price: null,
+        image: item.img_src || item.thumbnail || '',
+      }));
   } catch {
     return [];
   }
@@ -1116,14 +1164,38 @@ async function handleRequest(request, env) {
 
     try {
       const baseUrl = env.SEARXNG_URL.replace(/\/$/, '');
-      const res = await timeoutFetch(
-        `${baseUrl}/autocompleter?q=${encodeURIComponent(q)}&format=json`,
-        {}, 3000
-      );
-      if (!res.ok) return jsonResponse({ suggestions: [] });
-      const data = await res.json();
-      const suggestions = Array.isArray(data) && data.length >= 2 ? data[1] : [];
-      return jsonResponse({ suggestions });
+      const suggestionSet = new Set();
+      const suggestStores = TARGET_STORES.slice(0, 2);
+
+      const results = await Promise.all(suggestStores.map(async store => {
+        const siteQuery = `site:${store.domain} ${q}`;
+        try {
+          const res = await timeoutFetch(
+            `${baseUrl}/search?q=${encodeURIComponent(siteQuery)}&format=json&categories=general&pageno=1`,
+            {}, 3000
+          );
+          if (!res.ok) return [];
+          const data = await res.json();
+          return (data.results || []).slice(0, 5);
+        } catch { return []; }
+      }));
+
+      for (const items of results) {
+        for (const item of items) {
+          if (!isProductResult(item)) continue;
+          const title = (item.title || '')
+            .replace(/\s*\|.*$/, '')
+            .replace(/ -.*$/, '')
+            .replace(/<[^>]+>/g, '')
+            .trim();
+          const lower = title.toLowerCase();
+          if (lower.length > 2 && lower.includes(q.toLowerCase()) && lower.length < 80 && !lower.includes('loading') && !lower.includes('error')) {
+            suggestionSet.add(title);
+          }
+        }
+      }
+
+      return jsonResponse({ suggestions: [...suggestionSet].slice(0, 10) });
     } catch {
       return jsonResponse({ suggestions: [] });
     }
@@ -1166,8 +1238,10 @@ async function handleRequest(request, env) {
         return jsonResponse({ results: cached, cached: true });
       }
 
-      const searchPromises = TARGET_STORES.map(async store =>
-        searchSearXNG(store, q, env.SEARXNG_URL)
+      const { targetStore, cleanQuery } = parseStoreQuery(q);
+      const storesToSearch = targetStore ? [TARGET_STORES.find(s => s.name === targetStore.name)] : TARGET_STORES;
+      const searchPromises = storesToSearch.map(async store =>
+        searchSearXNG(store, cleanQuery || q, env.SEARXNG_URL)
       );
       const storeResults = await Promise.all(searchPromises);
       const allResults = storeResults.flat();
