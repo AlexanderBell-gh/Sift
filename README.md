@@ -7,7 +7,7 @@ Real-time UK supermarket price comparison. Search 7 stores, AI-enriches results,
 
 ## Features
 
-7-store search (Tesco, Sainsbury's, ASDA, Morrisons, Aldi, Lidl, Waitrose), AI price enrichment (Gemma 4), dual pricing (normal vs loyalty), unit price comparison, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
+7-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl), AI price enrichment (Gemma 4), dual pricing (normal vs loyalty), unit price comparison, product categories, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
 
 ## Tech Stack
 
@@ -88,7 +88,7 @@ Daily 6am UTC: max 10 items/user, 100 total, 500ms delay, skip if updated <6h, 3
 src/              React SPA (components, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql)
 public/           Store logo PNGs + favicon.svg
-DESIGN.md         Design system
+markdowns/        Design system, project context, changelog, fixes
 ```
 
 ## License
