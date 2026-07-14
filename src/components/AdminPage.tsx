@@ -292,7 +292,10 @@ export default function AdminPage() {
               </div>
 
               {logs.length === 0 ? (
-                <p style={{ fontSize: '14px', color: 'var(--muted)', textAlign: 'center', padding: '32px 0' }}>No audit logs yet</p>
+                <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)' }}>
+                  <p style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text)', marginBottom: '4px' }}>No audit logs yet</p>
+                  <p style={{ fontSize: '14px', color: 'var(--muted)' }}>Audit entries appear when admin actions are taken</p>
+                </div>
               ) : (
                 <div className="audit-console">
                   {logs
@@ -352,7 +355,8 @@ export default function AdminPage() {
                 </select>
                 <button
                   onClick={handleCleanupTrials}
-                  className="clean-expired-btn"
+                  className="btn-danger"
+                  style={{ padding: '10px 16px' }}
                 >
                   Clean Expired
                 </button>

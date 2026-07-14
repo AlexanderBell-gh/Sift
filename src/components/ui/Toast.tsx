@@ -16,15 +16,15 @@ export function Toast({ message, type = 'info', onClose, duration = 3000 }: Toas
   }, [onClose, duration]);
 
   const icons = {
-    success: <CheckCircle className="w-5 h-5 text-emerald-500" />,
-    error: <AlertCircle className="w-5 h-5 text-red-500" />,
-    info: <Info className="w-5 h-5 text-blue-500" />,
+    success: <CheckCircle className="w-5 h-5 text-[var(--success)]" />,
+    error: <AlertCircle className="w-5 h-5 text-[var(--danger)]" />,
+    info: <Info className="w-5 h-5 text-[var(--primary)]" />,
   };
 
   const styles = {
-    success: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-    error: 'bg-red-500/10 border-red-500/20 text-red-400',
-    info: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    success: 'bg-[var(--success)]/10 border-[var(--success)]/20 text-[var(--success)]',
+    error: 'bg-[var(--danger)]/10 border-[var(--danger)]/20 text-[var(--danger)]',
+    info: 'bg-[var(--primary)]/10 border-[var(--primary)]/20 text-[var(--primary)]',
   };
 
   return (

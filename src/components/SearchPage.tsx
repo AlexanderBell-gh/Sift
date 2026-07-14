@@ -282,8 +282,8 @@ export default function SearchPage() {
 
           <div className="max-w-6xl mx-auto px-6 pb-24">
             {error && (
-              <div className="max-w-2xl mx-auto mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
+              <div className="max-w-2xl mx-auto mb-6 p-4 bg-[var(--danger)]/10 border border-[var(--danger)]/20 rounded-lg">
+                <p className="text-[var(--danger)] text-sm">{error}</p>
               </div>
             )}
 
@@ -306,9 +306,9 @@ export default function SearchPage() {
 
             {!loading && hasSearched && results.length === 0 && !error && (
               <div className="flex flex-col items-center justify-center py-16">
-                <ShoppingBag className="w-16 h-16 text-zinc-300 dark:text-zinc-600 mb-4" />
-                <p className="text-zinc-600 dark:text-zinc-400 text-lg">No products found</p>
-                <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">Try a different search term</p>
+                <ShoppingBag className="w-16 h-16 text-[var(--muted)] mb-4" />
+                <p className="text-[var(--text)] text-lg font-semibold">No products found</p>
+                <p className="text-[var(--muted)] text-sm mt-1">Try a different search term</p>
               </div>
             )}
 
