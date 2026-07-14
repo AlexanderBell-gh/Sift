@@ -29,7 +29,7 @@
 ## Backend Specifics
 
 - Auth pattern: `const auth = await requireAuth(request, env); if (!auth?.userId) return auth;`
-- Timeouts: SearXNG 5s, Gemma 30s (via `timeoutFetch`)
+- Timeouts: SearXNG 5s (via `timeoutFetch`)
 - Cache: djb2 hash of query → base36, 24h TTL, upsert `ON CONFLICT DO UPDATE`
 - Product IDs: `hashString(store + "_" + title)` — deterministic for dedup
 - Trial: 24h, 5 searches. Search blocked when expired or limit hit
