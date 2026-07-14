@@ -84,7 +84,6 @@ body {
   justify-content: space-between;
   background: rgba(var(--nav-bg-rgb), 0.9);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -1764,7 +1763,6 @@ body {
 /* Glass effect */
 .glass {
   backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
   background-color: rgba(255, 255, 255, 0.7);
 }
 
