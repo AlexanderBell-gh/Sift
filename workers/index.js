@@ -196,17 +196,12 @@ function parseStoreQuery(query) {
 
 function isProductResult(item) {
   const url = (item.url || '').toLowerCase();
-  const title = (item.title || '').toLowerCase();
-  const snippet = (item.content || '').toLowerCase();
-  const keywords = ['recipe', 'blog', 'article', 'news', 'how to', 'guide', 'ideas', 'inspiration', 'tips', 'ways to', '5 '];
-  for (const kw of keywords) {
-    if (title.includes(kw) || snippet.includes(kw)) return false;
-  }
-  const excludePaths = ['/recipe/', '/blog/', '/article/', '/news/', '/category/'];
-  for (const p of excludePaths) {
-    if (url.includes(p)) return false;
-  }
-  return true;
+  
+  const excludePaths = ['/recipe/', '/blog/', '/article/', '/news/', '/category/', '/help/', '/terms/', '/careers/', '/zone/'];
+  if (excludePaths.some(p => url.includes(p))) return false;
+
+  const productPatterns = ['/groceries/', '/product/', '/p/', '/pdp/'];
+  return productPatterns.some(p => url.includes(p));
 }
 
 function hashString(str) {
@@ -315,11 +310,10 @@ async function verifyGoogleIdToken(idToken, clientId) {
 }
 
 async function searchSearXNG(store, query, searxngUrl) {
-  const queryTerms = query.split(/\s+/).filter(Boolean);
-  const siteQuery = `site:${store.domain} ${queryTerms.map(t => `"${t}"`).join(' ')}`;
+  const siteQuery = `site:${store.domain} ${query}`;
   const baseUrl = searxngUrl.replace(/\/$/, '');
   try {
-    const url = `${baseUrl}/search?q=${encodeURIComponent(siteQuery)}&format=json`;
+    const url = `${baseUrl}/search?q=${encodeURIComponent(siteQuery)}&format=json&engines=google,bing&language=en-GB`;
     const res = await timeoutFetch(url, {}, 5000);
     if (!res.ok) return [];
     const data = await res.json();
