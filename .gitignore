@@ -25,6 +25,3 @@ dist-ssr
 
 # Cloudflare
 .wrangler
-
-# Other
-DESIGN.md
