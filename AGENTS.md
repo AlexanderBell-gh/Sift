@@ -33,7 +33,7 @@
 - Cache: djb2 hash of query → base36, 24h TTL, upsert `ON CONFLICT DO UPDATE`
 - Product IDs: `hashString(store + "_" + title)` — deterministic for dedup
 - Trial: 24h, 5 searches. Search blocked when expired or limit hit
-- CORS: `sift-a5w.pages.dev`, `sift.pages.dev`, `localhost:5173`, `localhost:3000`
+- CORS: `siftsearch.pages.dev`, `sift.pages.dev`, `localhost:5173`, `localhost:3000`
 
 ## Conventions
 

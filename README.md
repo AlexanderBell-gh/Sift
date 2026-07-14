@@ -2,7 +2,7 @@
 
 Real-time UK supermarket price comparison. Search 7 stores, pin products to watchlist.
 
-**Live:** https://sift-a5w.pages.dev  
+**Live:** https://siftsearch.pages.dev  
 **API:** https://siftapi.inbox-alexbell.workers.dev
 
 ## Features
