@@ -291,100 +291,6 @@ async function searchSearXNG(store, query, searxngUrl) {
   }
 }
 
-async function enrichWithGemma(results, apiKey) {
-  const data = results.slice(0, 8).map(r => ({
-    title: r.title,
-    snippet: r.snippet?.slice(0, 200),
-    url: r.url,
-    store: r.store,
-  }));
-  const prompt = JSON.stringify(data);
-
-  const systemPrompt = `Extract grocery product data from UK supermarket search results. Respond with [JSON_START] then a JSON array, then [JSON_END].
-
-Each object must have:
-- "name": product name (cleaned, no store name)
-- "store": store name exactly as provided
-- "normal": normal price as number (e.g. 3.50) or null if not found
-- "loyalty": loyalty/clubcard/nectar price as number or null
-- "loyalty_type": "Clubcard", "Nectar", "Aldi Price Lock", "Lidl Plus", "M&S Club", or null
-- "unit": weight/volume string like "200g", "1L", "pack of 4" or null
-- "unit_price": price per base unit (e.g. per 100g) as number or null
-- "offer_expires": expiry date as YYYY-MM-DD string or null
-- "is_on_offer": true if any offer/loyalty price exists, else false
-- "product_url": the product page URL
-- "category": grocery aisle category: "Chilled", "Snacks", "Beverages", "Produce", "Frozen", "Bakery", or "Food Cupboard" (e.g. dairy/eggs/meat/fish → Chilled, pasta/rice/tins/sauces/oil → Food Cupboard) or null if uncertain
-- "image_url": product image URL or empty string
-
-Rules:
-- If you see "Clubcard price", "Nectar price", "with Smartcard" etc, extract as loyalty price
-- If only one price shown, put it in normal, loyalty stays null
-- Discard non-product results (recipes, reviews, news)
-- If unit price can be calculated from given data, do it
-- Return empty array [] if no valid products found`;
-
-  try {
-    const res = await timeoutFetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
-        }),
-      },
-      30000
-    );
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      console.error('Gemma API error:', res.status, errText.slice(0, 200));
-      return null;
-    }
-
-    const json = await res.json();
-    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      console.error('Gemma: no text in response', JSON.stringify(json).slice(0, 500));
-      return null;
-    }
-
-    const match = text.match(/\[JSON_START\](.*?)\[JSON_END\]/s);
-    if (!match) {
-      console.error('Gemma: no JSON markers in response', text.slice(0, 500));
-      return null;
-    }
-
-    const parsed = JSON.parse(match[1]);
-    if (!Array.isArray(parsed)) return null;
-
-    return parsed.map((item, i) => ({
-      id: hashString(`${item.store || results[i]?.store}_${item.name}`),
-      name: item.name || results[i]?.title || '',
-      store: item.store || results[i]?.store || '',
-      store_logo: results[i]?.store_logo || '',
-      image_url: item.image_url || '',
-      category: item.category || null,
-      unit: item.unit || null,
-      prices: {
-        normal: typeof item.normal === 'number' ? item.normal : null,
-        loyalty: typeof item.loyalty === 'number' ? item.loyalty : null,
-        unit_price: typeof item.unit_price === 'number' ? item.unit_price : null,
-        currency: 'GBP',
-      },
-      loyalty_type: item.loyalty_type || null,
-      offer_expires_at: item.offer_expires || null,
-      product_url: item.product_url || results[i]?.url || '',
-      is_on_offer: item.is_on_offer || false,
-    }));
-  } catch (e) {
-    console.error('Gemma enrichment failed:', e?.message || e);
-    return null;
-  }
-}
-
 function reassembleWatchlistItem(r) {
   return {
     id: r.id,
@@ -1270,34 +1176,25 @@ async function handleRequest(request, env) {
         return jsonResponse({ results: [], cached: false });
       }
 
-      let results;
-      const enriched = env.GEMMA_API_KEY ? await enrichWithGemma(allResults, env.GEMMA_API_KEY) : null;
-      if (enriched) {
-        results = enriched;
-      } else {
-        if (env.GEMMA_API_KEY) {
-          console.error('Gemma enrichment failed, using raw results');
-        }
-         results = allResults.map((r) => ({
-           id: hashString(`${r.store}_${r.title}`),
-           name: r.title,
-           store: r.store,
-           store_logo: r.store_logo,
-            image_url: r.image || '',
-            category: null,
-            unit: null,
-            prices: { 
-              normal: null, 
-              loyalty: null, 
-              unit_price: null, 
-              currency: 'GBP' 
-            },
-           loyalty_type: null,
-           offer_expires_at: null,
-           product_url: r.url,
-           is_on_offer: false,
-         }));
-      }
+      const results = allResults.map((r) => ({
+        id: hashString(`${r.store}_${r.title}`),
+        name: r.title,
+        store: r.store,
+        store_logo: r.store_logo,
+        image_url: r.image || '',
+        category: null,
+        unit: null,
+        prices: {
+          normal: null,
+          loyalty: null,
+          unit_price: null,
+          currency: 'GBP'
+        },
+        loyalty_type: null,
+        offer_expires_at: null,
+        product_url: r.url,
+        is_on_offer: false,
+      }));
 
       await setCachedResults(env, q, results);
 
@@ -1482,13 +1379,7 @@ async function handleRequest(request, env) {
       const searchQuery = item.product_name;
       const allResults = await searchSearXNG(store, searchQuery, env.SEARXNG_URL);
 
-      let matched = null;
-      if (allResults.length > 0 && env.GEMMA_API_KEY) {
-        const enriched = await enrichWithGemma(allResults, env.GEMMA_API_KEY);
-        if (enriched) {
-          matched = enriched.find(r => r.store === item.store) || enriched[0];
-        }
-      }
+      const matched = allResults[0] || null;
 
       if (!matched) {
         return jsonResponse({
@@ -1498,14 +1389,21 @@ async function handleRequest(request, env) {
         });
       }
 
+      const matchedResult = {
+        prices: { normal: item.normal_price, loyalty: item.loyalty_price, unit_price: item.unit_price, currency: 'GBP' },
+        image_url: matched.image || '',
+        offer_expires_at: item.offer_expires_at,
+        is_on_offer: item.is_on_offer,
+      };
+
       const oldPrices = {
         normal: item.normal_price,
         loyalty: item.loyalty_price,
       };
 
-      const newNormal = matched.prices?.normal ?? item.normal_price;
-      const newLoyalty = matched.prices?.loyalty ?? item.loyalty_price;
-      const newUnit = matched.prices?.unit_price ?? item.unit_price;
+      const newNormal = matchedResult.prices.normal;
+      const newLoyalty = matchedResult.prices.loyalty;
+      const newUnit = matchedResult.prices.unit_price;
       const priceChanged = newNormal !== item.normal_price || newLoyalty !== item.loyalty_price;
 
       const historyId = `ph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1526,9 +1424,9 @@ async function handleRequest(request, env) {
          WHERE id = ?`,
         [
           newNormal, newLoyalty, newUnit,
-          matched.image_url || '',
-          matched.offer_expires_at || item.offer_expires_at,
-          matched.is_on_offer ? 1 : (item.is_on_offer),
+          matchedResult.image_url,
+          matchedResult.offer_expires_at || item.offer_expires_at,
+          matchedResult.is_on_offer ? 1 : (item.is_on_offer),
           Date.now(),
           itemId,
         ]
@@ -1683,13 +1581,8 @@ async function handleScheduled(env) {
 
         const allResults = await searchSearXNG(store, item.product_name, env.SEARXNG_URL);
 
-        let matched = null;
-        if (allResults.length > 0 && env.GEMMA_API_KEY) {
-          const enriched = await enrichWithGemma(allResults, env.GEMMA_API_KEY);
-          if (enriched) matched = enriched.find(r => r.store === item.store) || enriched[0];
-        }
-
-        if (!matched) {
+        const rawMatch = allResults[0];
+        if (!rawMatch) {
           consecutiveFailures++;
           if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) break;
           continue;
@@ -1698,9 +1591,9 @@ async function handleScheduled(env) {
         consecutiveFailures = 0;
 
         const oldNormal = item.normal_price;
-        const newNormal = matched.prices?.normal ?? item.normal_price;
-        const newLoyalty = matched.prices?.loyalty ?? item.loyalty_price;
-        const newUnit = matched.prices?.unit_price ?? item.unit_price;
+        const newNormal = item.normal_price;
+        const newLoyalty = item.loyalty_price;
+        const newUnit = item.unit_price;
 
         const historyId = `ph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         await execute(
@@ -1720,9 +1613,9 @@ async function handleScheduled(env) {
            WHERE id = ?`,
           [
             newNormal, newLoyalty, newUnit,
-            matched.image_url || '',
-            matched.offer_expires_at || item.offer_expires_at,
-            matched.is_on_offer ? 1 : (item.is_on_offer),
+            rawMatch.image || '',
+            item.offer_expires_at,
+            item.is_on_offer,
             Date.now(),
             item.id,
           ]
