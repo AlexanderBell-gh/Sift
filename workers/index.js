@@ -20,7 +20,7 @@ import { queryAll, queryOne, execute, batch } from './db.js';
 
 const ALLOWED_ORIGINS = [
   'https://sift.pages.dev',
-  'https://sift-a5w.pages.dev',
+  'https://siftsearch.pages.dev',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
