@@ -197,6 +197,9 @@ export default function WatchlistPage() {
                         <img src={best.store_logo} alt={best.store} className="store-logo" />
                       )}
                       {best.store}
+                      {best.category && (
+                        <><span style={{ color: 'var(--muted)' }}>—</span><span className={`product-card-category category-${best.category.toLowerCase().replace(/\s+/g, '-')}`}>{best.category}</span></>
+                      )}
                     </span>
                     <h3>{product.product_name}</h3>
                     <div className="product-card-price">
