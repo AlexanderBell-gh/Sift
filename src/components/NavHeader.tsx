@@ -162,7 +162,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
               </button>
 
               {filterOpen && (
-                <div className="alerts-dropdown" style={{ width: '260px' }}>
+                <div className="alerts-dropdown">
                   <div className="alerts-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>Filters</span>
                     <div className="flex gap-2">

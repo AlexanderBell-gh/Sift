@@ -2011,6 +2011,32 @@ body {
   transition-timing-function: var(--ease-spring);
 }
 
+/* Mobile overrides for nav dropdowns */
+@media (max-width: 640px) {
+  .alerts-dropdown {
+    position: fixed;
+    top: 64px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    margin-top: 0;
+    max-height: 60vh;
+  }
+
+  .nav-links {
+    gap: 8px;
+  }
+
+  .dropdown-item {
+    padding: 12px;
+    min-height: 44px;
+  }
+
+  .alert-item {
+    padding: 14px 12px;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .product-card {
