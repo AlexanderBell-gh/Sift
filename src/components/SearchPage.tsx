@@ -63,6 +63,8 @@ export default function SearchPage() {
       return;
     }
 
+    setShowHistory(false);
+
     const timeoutId = setTimeout(async () => {
       try {
         const data = await getSearchSuggestions(query);
