@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
   offer_expires_at TEXT,
   product_url TEXT NOT NULL DEFAULT '',
   is_on_offer INTEGER NOT NULL DEFAULT 0,
+  category TEXT,
   notes TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,

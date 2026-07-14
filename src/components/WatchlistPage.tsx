@@ -10,6 +10,7 @@ import { useToast } from './ui/useToast';
 
 
 const ALL_STORES = ['Tesco', "Sainsbury's", 'ASDA', 'Morrisons', 'M&S', 'Aldi', 'Lidl'];
+const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard'];
 
 export default function WatchlistPage() {
   const { token } = useAuth();
@@ -19,6 +20,7 @@ export default function WatchlistPage() {
   const { toast, showToast, hideToast } = useToast();
 
   const [selectedStores, setSelectedStores] = useState<string[]>(ALL_STORES);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(ALL_CATEGORIES);
   const [sortBy, setSortBy] = useState('relevance');
 
   useEffect(() => {
@@ -34,6 +36,9 @@ export default function WatchlistPage() {
 
   const filtered = useMemo(() => {
     let result = items.filter(i => selectedStores.includes(i.store));
+    if (selectedCategories.length < ALL_CATEGORIES.length) {
+      result = result.filter(i => i.category && selectedCategories.includes(i.category));
+    }
 
     switch (sortBy) {
       case 'price_asc':
@@ -48,7 +53,7 @@ export default function WatchlistPage() {
     }
 
     return result;
-  }, [items, selectedStores, sortBy]);
+  }, [items, selectedStores, selectedCategories, sortBy]);
 
   const products = useMemo(() => {
     const map = new Map<string, WatchlistItem[]>();
@@ -98,6 +103,8 @@ export default function WatchlistPage() {
       <NavHeader
         selectedStores={selectedStores}
         onStoresChange={setSelectedStores}
+        selectedCategories={selectedCategories}
+        onCategoriesChange={setSelectedCategories}
         sortBy={sortBy}
         onSortChange={setSortBy}
       />

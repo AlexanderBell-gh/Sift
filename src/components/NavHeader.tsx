@@ -6,6 +6,7 @@ import { useTheme } from '../hooks/useTheme';
 import AlertBell from './AlertBell';
 
 const STORES = ['Tesco', "Sainsbury's", 'ASDA', 'Morrisons', 'M&S', 'Aldi', 'Lidl'];
+const CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard'];
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Relevance' },
@@ -19,6 +20,8 @@ interface NavHeaderProps {
   showBack?: boolean;
   selectedStores?: string[];
   onStoresChange?: (stores: string[]) => void;
+  selectedCategories?: string[];
+  onCategoriesChange?: (categories: string[]) => void;
   sortBy?: string;
   onSortChange?: (sort: string) => void;
 }
@@ -32,7 +35,7 @@ function formatTrialTime(expiresAt: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function NavHeader({ title = 'Sift', showBack = false, selectedStores, onStoresChange, sortBy, onSortChange }: NavHeaderProps) {
+export default function NavHeader({ title = 'Sift', showBack = false, selectedStores, onStoresChange, selectedCategories, onCategoriesChange, sortBy, onSortChange }: NavHeaderProps) {
   const { token, user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
   const navigate = useNavigate();
@@ -97,6 +100,15 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
       onStoresChange(selectedStores.filter(s => s !== store));
     } else {
       onStoresChange([...selectedStores, store]);
+    }
+  }
+
+  function toggleCategory(category: string) {
+    if (!onCategoriesChange || !selectedCategories) return;
+    if (selectedCategories.includes(category)) {
+      onCategoriesChange(selectedCategories.filter(c => c !== category));
+    } else {
+      onCategoriesChange([...selectedCategories, category]);
     }
   }
 
@@ -202,6 +214,26 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
                       </label>
                     ))}
                   </div>
+                  {selectedCategories && onCategoriesChange && (
+                    <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Category</div>
+                      {CATEGORIES.map(category => (
+                        <label
+                          key={category}
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: 'var(--text)' }}
+                          className="hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(category)}
+                            onChange={() => toggleCategory(category)}
+                            className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-600 bg-white dark:bg-white/5 text-accent focus:ring-accent focus:ring-offset-0"
+                          />
+                          {category}
+                        </label>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)' }}>
                     <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Sort by</div>
                     <div className="relative">

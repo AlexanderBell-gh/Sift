@@ -313,6 +313,7 @@ Each object must have:
 - "offer_expires": expiry date as YYYY-MM-DD string or null
 - "is_on_offer": true if any offer/loyalty price exists, else false
 - "product_url": the product page URL
+- "category": grocery aisle category: "Chilled", "Snacks", "Beverages", "Produce", "Frozen", "Bakery", or "Food Cupboard" (e.g. dairy/eggs/meat/fish → Chilled, pasta/rice/tins/sauces/oil → Food Cupboard) or null if uncertain
 - "image_url": product image URL or empty string
 
 Rules:
@@ -365,6 +366,7 @@ Rules:
       store: item.store || results[i]?.store || '',
       store_logo: results[i]?.store_logo || '',
       image_url: item.image_url || '',
+      category: item.category || null,
       unit: item.unit || null,
       prices: {
         normal: typeof item.normal === 'number' ? item.normal : null,
@@ -392,6 +394,7 @@ function reassembleWatchlistItem(r) {
     store_logo: r.store_logo,
     image_url: r.image_url,
     unit: r.unit,
+    category: r.category,
     prices: {
       normal: r.normal_price,
       loyalty: r.loyalty_price,
@@ -1280,8 +1283,9 @@ async function handleRequest(request, env) {
            name: r.title,
            store: r.store,
            store_logo: r.store_logo,
-           image_url: r.image || '',
-           unit: null,
+            image_url: r.image || '',
+            category: null,
+            unit: null,
             prices: { 
               normal: null, 
               loyalty: null, 
@@ -1351,6 +1355,7 @@ async function handleRequest(request, env) {
         store_logo: r.store_logo,
         image_url: r.image_url,
         unit: r.unit,
+        category: r.category,
         prices: {
           normal: r.normal_price,
           loyalty: r.loyalty_price,
@@ -1397,8 +1402,8 @@ async function handleRequest(request, env) {
 
       await execute(
         env,
-        `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, product_url, is_on_offer, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, product_url, is_on_offer, category, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           auth.userId,
@@ -1416,6 +1421,7 @@ async function handleRequest(request, env) {
           result.offer_expires_at || null,
           result.product_url || '',
           result.is_on_offer ? 1 : 0,
+          result.category || null,
           null,
           now,
           now,
@@ -1442,6 +1448,7 @@ async function handleRequest(request, env) {
           offer_expires_at: row.offer_expires_at,
           product_url: row.product_url,
           is_on_offer: !!row.is_on_offer,
+          category: row.category,
           notes: row.notes,
           created_at: row.created_at,
           updated_at: row.updated_at,
