@@ -7,7 +7,7 @@ Real-time UK supermarket price comparison. Search 7 stores, pin products to watc
 
 ## Features
 
-7-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl), dual pricing (normal vs loyalty), unit price comparison, product categories, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
+7-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl) with store-aware query parsing, product-only result filtering (no recipes/articles), autocomplete with product name suggestions, dual pricing (normal vs loyalty), unit price comparison, product categories, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
 
 ## Tech Stack
 
@@ -65,9 +65,11 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 
 ## Search Flow
 
-1. `GET /api/search?q=butter` → auth check → trial check
+1. `GET /api/search?q=butter` or `GET /api/search?q=Sainsbury's butter` → auth check → trial check
 2. D1 cache hit? Return cached. Miss? → SearXNG per store
-3. Return raw search results
+3. Store name in query ("Sainsbury's", "Tesco") detected → only that store searched
+4. Non-product results (recipes, articles) filtered out
+5. Return product-only results
 
 ## Price Refresh
 

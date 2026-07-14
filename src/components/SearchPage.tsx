@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Loader2, ShoppingBag } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import type { SearchResult } from '../types';
 import { searchProducts, addToWatchlist, removeFromWatchlist, getPinnedIds, getSearchSuggestions } from '../lib/api';
 import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
@@ -307,10 +307,9 @@ export default function SearchPage() {
             )}
 
             {!loading && hasSearched && results.length === 0 && !error && (
-              <div className="flex flex-col items-center justify-center py-16">
-                <ShoppingBag className="w-16 h-16 text-[var(--muted)] mb-4" />
-                <p className="text-[var(--text)] text-lg font-semibold">No products found</p>
-                <p className="text-[var(--muted)] text-sm mt-1">Try a different search term</p>
+              <div className="empty-state-box" style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
+                <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>No products found</p>
+                <p style={{ fontSize: '14px' }}>Try a different search term</p>
               </div>
             )}
 
