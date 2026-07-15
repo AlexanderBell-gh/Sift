@@ -19,7 +19,6 @@ import { queryAll, queryOne, execute, batch } from './db.js';
 
 
 const ALLOWED_ORIGINS = [
-  'https://sift.pages.dev',
   'https://siftsearch.pages.dev',
   'http://localhost:5173',
   'http://localhost:3000',
@@ -154,56 +153,6 @@ async function requireAuth(request, env) {
   return auth;
 }
 
-const TARGET_STORES = [
-  { domain: 'tesco.com', name: 'Tesco', logo: '/storeicon_tesco.png' },
-  { domain: 'sainsburys.co.uk', name: "Sainsbury's", logo: '/storeicon_sainsburys.png' },
-  { domain: 'asda.com', name: 'ASDA', logo: '/storeicon_asda.png' },
-  { domain: 'morrisons.co.uk', name: 'Morrisons', logo: '/storeicon_morrisons.png' },
-  { domain: 'marksandspencer.com', name: 'M&S', logo: '/storeicon_mands.png' },
-  { domain: 'aldi.co.uk', name: 'Aldi', logo: '/storeicon_aldi.png' },
-  { domain: 'lidl.co.uk', name: 'Lidl', logo: '/storeicon_lidl.png' },
-];
-
-function parseStoreQuery(query) {
-  const lower = query.toLowerCase().trim();
-  let targetStore = null;
-  let cleanQuery = query.trim();
-
-  for (const store of TARGET_STORES) {
-    const nameLower = store.name.toLowerCase();
-    if (lower.includes(nameLower)) {
-      targetStore = store;
-      break;
-    }
-  }
-
-  if (!targetStore) {
-    if (lower.includes('sainsbury') || lower.includes('sainsburys')) {
-      targetStore = TARGET_STORES.find(s => s.name === "Sainsbury's");
-    } else if (lower.includes('m&s') || lower.includes('marks') || lower.includes('marks and spencer')) {
-      targetStore = TARGET_STORES.find(s => s.name === 'M&S');
-    }
-  }
-
-  if (targetStore) {
-    const namePattern = new RegExp(targetStore.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    cleanQuery = cleanQuery.replace(namePattern, '').trim();
-    cleanQuery = cleanQuery.replace(/^(from|at|in|for|buy)\s+/i, '').trim();
-  }
-
-  return { targetStore, cleanQuery };
-}
-
-function isProductResult(item) {
-  const url = (item.url || '').toLowerCase();
-  
-  const excludePaths = ['/recipe/', '/blog/', '/article/', '/news/', '/category/', '/help/', '/terms/', '/careers/', '/zone/'];
-  if (excludePaths.some(p => url.includes(p))) return false;
-
-  const productPatterns = ['/groceries/', '/product/', '/p/', '/pdp/'];
-  return productPatterns.some(p => url.includes(p));
-}
-
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -239,13 +188,6 @@ async function setCachedResults(env, query, results) {
      ON CONFLICT(query_hash) DO UPDATE SET results = excluded.results, created_at = excluded.created_at`,
     [hash, query, JSON.stringify(results), Date.now()]
   );
-}
-
-function timeoutFetch(url, opts, ms) {
-  return Promise.race([
-    fetch(url, opts),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-  ]);
 }
 
 // Google ID token verification
@@ -306,30 +248,6 @@ async function verifyGoogleIdToken(idToken, clientId) {
   } catch (e) {
     console.error('Google token verification error:', e);
     return null;
-  }
-}
-
-async function searchSearXNG(store, query, searxngUrl) {
-  const siteQuery = `site:${store.domain} ${query}`;
-  const baseUrl = searxngUrl.replace(/\/$/, '');
-  try {
-    const url = `${baseUrl}/search?q=${encodeURIComponent(siteQuery)}&format=json&engines=google,bing&language=en-GB`;
-    const res = await timeoutFetch(url, {}, 5000);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.results || [])
-      .filter(isProductResult)
-      .map(item => ({
-        title: item.title || '',
-        url: item.url || '',
-        snippet: item.content || '',
-        store: store.name,
-        store_logo: store.logo,
-        price: null,
-        image: item.img_src || item.thumbnail || '',
-      }));
-  } catch {
-    return [];
   }
 }
 
@@ -1152,47 +1070,7 @@ async function handleRequest(request, env) {
   // ===== SEARCH =====
 
   if (path === '/api/search/suggest' && method === 'GET') {
-    const q = url.searchParams.get('q');
-    if (!q || q.length < 2) return jsonResponse({ suggestions: [] });
-    if (!env.SEARXNG_URL) return jsonResponse({ suggestions: [] });
-
-    try {
-      const baseUrl = env.SEARXNG_URL.replace(/\/$/, '');
-      const suggestionSet = new Set();
-      const suggestStores = TARGET_STORES.slice(0, 2);
-
-      const results = await Promise.all(suggestStores.map(async store => {
-        const siteQuery = `site:${store.domain} ${q}`;
-        try {
-          const res = await timeoutFetch(
-            `${baseUrl}/search?q=${encodeURIComponent(siteQuery)}&format=json&categories=general&pageno=1`,
-            {}, 3000
-          );
-          if (!res.ok) return [];
-          const data = await res.json();
-          return (data.results || []).slice(0, 5);
-        } catch { return []; }
-      }));
-
-      for (const items of results) {
-        for (const item of items) {
-          if (!isProductResult(item)) continue;
-          const title = (item.title || '')
-            .replace(/\s*\|.*$/, '')
-            .replace(/ -.*$/, '')
-            .replace(/<[^>]+>/g, '')
-            .trim();
-          const lower = title.toLowerCase();
-          if (lower.length > 2 && lower.includes(q.toLowerCase()) && lower.length < 80 && !lower.includes('loading') && !lower.includes('error')) {
-            suggestionSet.add(title);
-          }
-        }
-      }
-
-      return jsonResponse({ suggestions: [...suggestionSet].slice(0, 10) });
-    } catch {
-      return jsonResponse({ suggestions: [] });
-    }
+    return jsonResponse({ suggestions: [] });
   }
 
   if (path === '/api/search' && method === 'GET') {
@@ -1200,10 +1078,6 @@ async function handleRequest(request, env) {
     if (!q || typeof q !== 'string' || q.trim().length === 0) {
       return errorResponse('Query parameter q is required');
     }
-    if (!env.SEARXNG_URL) {
-      return errorResponse('Search service not configured', 503);
-    }
-
     const auth = await authenticate(request, env);
     if (!auth) {
       return errorResponse('Authentication required', 401);
@@ -1225,48 +1099,12 @@ async function handleRequest(request, env) {
     try {
       const cached = await getCachedResults(env, q);
       if (cached) {
-        // Count cached results as a search too
         if (auth.role !== 'admin') {
           await execute(env, 'UPDATE users SET search_count = search_count + 1 WHERE id = ?', [auth.userId]);
         }
         return jsonResponse({ results: cached, cached: true });
       }
 
-      const { targetStore, cleanQuery } = parseStoreQuery(q);
-      const storesToSearch = targetStore ? [TARGET_STORES.find(s => s.name === targetStore.name)] : TARGET_STORES;
-      const searchPromises = storesToSearch.map(async store =>
-        searchSearXNG(store, cleanQuery || q, env.SEARXNG_URL)
-      );
-      const storeResults = await Promise.all(searchPromises);
-      const allResults = storeResults.flat();
-
-      if (allResults.length === 0) {
-        return jsonResponse({ results: [], cached: false });
-      }
-
-      const results = allResults.map((r) => ({
-        id: hashString(`${r.store}_${r.title}`),
-        name: r.title,
-        store: r.store,
-        store_logo: r.store_logo,
-        image_url: r.image || '',
-        category: null,
-        unit: null,
-        prices: {
-          normal: null,
-          loyalty: null,
-          unit_price: null,
-          currency: 'GBP'
-        },
-        loyalty_type: null,
-        offer_expires_at: null,
-        product_url: r.url,
-        is_on_offer: false,
-      }));
-
-      await setCachedResults(env, q, results);
-
-      // Increment search count for trial users
       let remainingSearches = null;
       if (auth.role !== 'admin') {
         await execute(env, 'UPDATE users SET search_count = search_count + 1 WHERE id = ?', [auth.userId]);
@@ -1276,7 +1114,7 @@ async function handleRequest(request, env) {
         }
       }
 
-      return jsonResponse({ results, cached: false, remainingSearches });
+      return jsonResponse({ results: [], cached: false, remainingSearches });
     } catch (e) {
       console.error('Search error:', e);
       return errorResponse('Search failed');
@@ -1439,42 +1277,7 @@ async function handleRequest(request, env) {
       );
       if (!item) return errorResponse('Watchlist item not found', 404);
 
-      const store = TARGET_STORES.find(s => s.name === item.store);
-      if (!store || !env.SEARXNG_URL) {
-        return errorResponse('Search service not available', 503);
-      }
-
-      const searchQuery = item.product_name;
-      const allResults = await searchSearXNG(store, searchQuery, env.SEARXNG_URL);
-
-      const matched = allResults[0] || null;
-
-      if (!matched) {
-        return jsonResponse({
-          item: reassembleWatchlistItem(item),
-          priceChanged: false,
-          previousPrices: null,
-        });
-      }
-
-      const matchedResult = {
-        prices: { normal: item.normal_price, loyalty: item.loyalty_price, unit_price: item.unit_price, currency: 'GBP' },
-        image_url: matched.image || '',
-        offer_expires_at: item.offer_expires_at,
-        is_on_offer: item.is_on_offer,
-      };
-
-      const oldPrices = {
-        normal: item.normal_price,
-        loyalty: item.loyalty_price,
-      };
-
-      const newNormal = matchedResult.prices.normal;
-      const newLoyalty = matchedResult.prices.loyalty;
-      const newUnit = matchedResult.prices.unit_price;
-      const priceChanged = newNormal !== item.normal_price || newLoyalty !== item.loyalty_price;
-
-      const historyId = `ph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      return errorResponse('Search not available', 503);
       await execute(
         env,
         `INSERT INTO price_history (id, product_id, store, normal_price, loyalty_price, unit_price, recorded_at)
@@ -1643,85 +1446,8 @@ async function handleScheduled(env) {
       const age = Date.now() - item.updated_at;
       if (age < FRESHNESS_MS) continue;
 
-      try {
-        const store = TARGET_STORES.find(s => s.name === item.store);
-        if (!store || !env.SEARXNG_URL) continue;
-
-        const allResults = await searchSearXNG(store, item.product_name, env.SEARXNG_URL);
-
-        const rawMatch = allResults[0];
-        if (!rawMatch) {
-          consecutiveFailures++;
-          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) break;
-          continue;
-        }
-
-        consecutiveFailures = 0;
-
-        const oldNormal = item.normal_price;
-        const newNormal = item.normal_price;
-        const newLoyalty = item.loyalty_price;
-        const newUnit = item.unit_price;
-
-        const historyId = `ph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        await execute(
-          env,
-          `INSERT INTO price_history (id, product_id, store, normal_price, loyalty_price, unit_price, recorded_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [historyId, item.product_id, item.store, item.normal_price, item.loyalty_price, item.unit_price, Date.now()]
-        );
-
-        await execute(
-          env,
-          `UPDATE watchlist SET
-            normal_price = ?, loyalty_price = ?, unit_price = ?,
-            image_url = COALESCE(NULLIF(?, ''), image_url),
-            offer_expires_at = COALESCE(?, offer_expires_at),
-            is_on_offer = ?, updated_at = ?
-           WHERE id = ?`,
-          [
-            newNormal, newLoyalty, newUnit,
-            rawMatch.image || '',
-            item.offer_expires_at,
-            item.is_on_offer,
-            Date.now(),
-            item.id,
-          ]
-        );
-
-        if (newNormal !== null && oldNormal !== null && newNormal < oldNormal) {
-          const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          await execute(
-            env,
-            `INSERT INTO alerts (id, user_id, watchlist_id, type, message, old_price, new_price, triggered_at, read)
-             VALUES (?, ?, ?, 'price_drop', ?, ?, ?, ?, 0)`,
-            [alertId, user_id, item.id, `Price dropped: £${oldNormal.toFixed(2)} → £${newNormal.toFixed(2)}`, oldNormal, newNormal, Date.now()]
-          );
-          totalAlerts++;
-        }
-
-        if (item.offer_expires_at) {
-          const expiresAt = new Date(item.offer_expires_at).getTime();
-          const hoursUntilExpiry = (expiresAt - Date.now()) / (1000 * 60 * 60);
-          if (hoursUntilExpiry > 0 && hoursUntilExpiry < 24) {
-            const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await execute(
-              env,
-              `INSERT INTO alerts (id, user_id, watchlist_id, type, message, old_price, new_price, triggered_at, read)
-               VALUES (?, ?, ?, 'offer_expiry', ?, NULL, NULL, ?, 0)`,
-              [alertId, user_id, item.id, `Offer ends tomorrow: ${item.product_name}`, Date.now()]
-            );
-            totalAlerts++;
-          }
-        }
-
-        totalRefreshed++;
-        await new Promise(r => setTimeout(r, DELAY_MS));
-      } catch (e) {
-        console.error(`Cron refresh failed for item ${item.id}:`, e?.message || e);
-        consecutiveFailures++;
-        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) break;
-      }
+      // Search backend removed; no price refresh available
+      continue;
     }
   }
 

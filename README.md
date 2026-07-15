@@ -2,7 +2,7 @@
 
 Real-time UK supermarket price comparison. Search 7 stores, pin products to watchlist.
 
-**Live:** https://siftsearch.pages.dev  
+**Live:** https://siftsearch.pages.dev
 **API:** https://siftapi.inbox-alexbell.workers.dev
 
 ## Features
@@ -15,7 +15,7 @@ Real-time UK supermarket price comparison. Search 7 stores, pin products to watc
 |-------|------------|
 | Frontend | React 19 + TypeScript + Vite + Tailwind v4 |
 | Backend | Cloudflare Workers + D1 (SQLite) |
-| Search | SearXNG (self-hosted) |
+| Search | (removed) |
 | Auth | Custom JWT + Google OAuth |
 | CI/CD | GitHub Actions + pnpm 11 |
 
@@ -57,7 +57,6 @@ Update `database_id` in `workers/wrangler.toml`.
 ## API Keys
 
 ```bash
-pnpm exec wrangler secret put SEARXNG_URL    # SearXNG instance URL
 pnpm exec wrangler secret put ADMIN_SECRET    # Admin registration
 pnpm exec wrangler secret put JWT_SECRET      # JWT signing
 pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
@@ -65,11 +64,9 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 
 ## Search Flow
 
-1. `GET /api/search?q=butter` or `GET /api/search?q=Sainsbury's butter` → auth check → trial check
-2. D1 cache hit? Return cached. Miss? → SearXNG per store
-3. Store name in query ("Sainsbury's", "Tesco") detected → only that store searched
-4. Non-product results (recipes, articles) filtered out
-5. Return product-only results
+1. `GET /api/search?q=butter` → auth check → trial check
+2. D1 cache hit? Return cached. Miss? → empty results (search backend removed)
+3. Return results
 
 ## Price Refresh
 

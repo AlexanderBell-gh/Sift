@@ -29,11 +29,10 @@
 ## Backend Specifics
 
 - Auth pattern: `const auth = await requireAuth(request, env); if (!auth?.userId) return auth;`
-- Timeouts: SearXNG 5s (via `timeoutFetch`)
 - Cache: djb2 hash of query → base36, 24h TTL, upsert `ON CONFLICT DO UPDATE`
 - Product IDs: `hashString(store + "_" + title)` — deterministic for dedup
 - Trial: 24h, 5 searches. Search blocked when expired or limit hit
-- CORS: `siftsearch.pages.dev`, `sift.pages.dev`, `localhost:5173`, `localhost:3000`
+- CORS: `siftsearch.pages.dev`, `localhost:5173`, `localhost:3000`
 
 ## Conventions
 
@@ -48,4 +47,4 @@
 - `/home/wsl/Projects/markdowns/Sift Project/CONTEXT.md` — full architecture, API ref, data model, critical flows
 - `/home/wsl/Projects/markdowns/Sift Project/CHANGES.md` — change log convention
 - `/home/wsl/Projects/markdowns/Sift Project/DESIGN.md` — design system spec
-- `README.md` — full readme for project
+- `/home/wsl/Projects/Sift/README.md` — full readme for project
