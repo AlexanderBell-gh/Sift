@@ -14,7 +14,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const API_BASE = 'https://siftapi.inbox-alexbell.workers.dev';
+const API_BASE = 'https://siftapi.blackmesa.workers.dev';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

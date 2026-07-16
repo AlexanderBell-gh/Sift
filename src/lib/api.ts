@@ -1,6 +1,6 @@
 import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AdminUserDetail, AdminAnalytics, AuditLog, TrialUser, User } from '../types';
 
-const API_BASE_URL = 'https://siftapi.inbox-alexbell.workers.dev';
+const API_BASE_URL = 'https://siftapi.blackmesa.workers.dev';
 
 export async function updatePassword(token: string, currentPassword: string, newPassword: string): Promise<User> {
   const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
