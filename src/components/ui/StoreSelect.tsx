@@ -64,25 +64,20 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-2 px-4 h-full min-h-[56px]',
+          'relative flex items-center justify-center',
           'border-r border-[var(--border)]',
-          'hover:bg-[var(--surface-hover)] transition-colors duration-200',
+          'hover:bg-[var(--surface-hover)]',
           'focus:outline-none focus:bg-[var(--surface-hover)]',
           'text-[var(--muted)] hover:text-[var(--primary)]'
         )}
       >
         <ShopIcon className="w-5 h-5" />
-        {selected.size > 0 && selected.size < STORES.length && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--primary)] text-white text-xs font-bold rounded-full flex items-center justify-center">
-            {selected.size}
-          </span>
-        )}
       </button>
 
       {isOpen && (
         <div
           className={cn(
-            'absolute left-0 mt-2 w-64',
+            'absolute left-0 top-full mt-2 w-64',
             'bg-[var(--surface)] border border-[var(--border)]',
             'rounded-2xl shadow-lg overflow-hidden',
             'animate-in fade-in slide-in-from-top-2 duration-200'
@@ -115,7 +110,7 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
                   'flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left',
                   'transition-colors duration-150',
                   selected.has(store.id)
-                    ? 'bg-[var(--primary)]/10'
+                    ? 'store-selected'
                     : 'hover:bg-[var(--surface-hover)]'
                 )}
               >

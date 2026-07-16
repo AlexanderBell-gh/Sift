@@ -1,13 +1,13 @@
 # Sift
 
-Real-time UK supermarket price comparison. Search 7 stores, pin products to watchlist.
+Real-time UK supermarket price comparison. Select 11 stores, search opens each store's results page in a new tab.
 
 **Live:** https://siftsearch.pages.dev
 **API:** https://siftapi.blackmesa.workers.dev
 
 ## Features
 
-7-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl) with store-aware query parsing, product-only result filtering (no recipes/articles), autocomplete with product name suggestions, dual pricing (normal vs loyalty), unit price comparison, product categories, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive (hamburger nav, responsive typography, adaptive grids).
+11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Boots) with store-aware query redirect, product autocomplete via Open Food Facts API, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive.
 
 ## Tech Stack
 
@@ -15,8 +15,9 @@ Real-time UK supermarket price comparison. Search 7 stores, pin products to watc
 |-------|------------|
 | Frontend | React 19 + TypeScript + Vite + Tailwind v4 |
 | Backend | Cloudflare Workers + D1 (SQLite) |
-| Search | (removed) |
+| Search | Client-side redirect (no backend search) |
 | Auth | Custom JWT + Google OAuth |
+| Autocomplete | Open Food Facts API (client-side) |
 | CI/CD | GitHub Actions + pnpm 11 |
 
 ## Getting Started
@@ -64,19 +65,15 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 
 ## Search Flow
 
-1. `GET /api/search?q=butter` → auth check → trial check
-2. D1 cache hit? Return cached. Miss? → empty results (search backend removed)
-3. Return results
+1. Select stores via multi-select dropdown (stored in localStorage)
+2. Type query → autocomplete from Open Food Facts API (debounced 300ms)
+3. Press enter → opens each selected store's search URL in new tab
+4. No backend search involved
 
-## Price Refresh
+## Product Tracking
 
-1. `POST /api/watchlist/:id/refresh` → re-search single store
-2. Snapshot old prices to `price_history`
-3. Update watchlist image, create alert on price drop
-
-## Cron
-
-Daily 6am UTC: max 10 items/user, 100 total, 500ms delay, skip if updated <6h, 3 failures → skip user.
+- Watchlist with price tracking and refresh
+- Cron: daily 6am UTC, max 10 items/user, 100 total, 500ms delay
 
 ## Project Structure
 
