@@ -2,7 +2,7 @@
 
 Real-time UK supermarket price comparison. Search 7 stores, pin products to watchlist.
 
-**Live:** http://siftsearch.pages.dev
+**Live:** https://siftsearch.pages.dev
 **API:** https://siftapi.blackmesa.workers.dev
 
 ## Features
@@ -37,7 +37,7 @@ pnpm run build  # output → dist/
 **Automatic:** Push to `main` triggers GitHub Actions.  
 **Manual:**
 ```bash
-pnpm exec wrangler pages deploy dist --project-name=sift
+pnpm exec wrangler pages deploy dist --project-name=siftsearch
 pnpm exec wrangler deploy --config workers/wrangler.toml
 ```
 
