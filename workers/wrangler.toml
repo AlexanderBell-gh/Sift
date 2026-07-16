@@ -11,7 +11,7 @@ traces = { enabled = false, persist = true, head_sampling_rate = 1 }
 [[d1_databases]]
 binding = "DB"
 database_name = "sift"
-database_id = "d12d4b6e-44d7-4176-b782-57afcfee84e1"
+database_id = "695c35a2-4800-4730-b699-97a698e17e73"
 
 # Secrets must be set via CLI (never commit plaintext):
 #   pnpm exec wrangler secret put ADMIN_SECRET

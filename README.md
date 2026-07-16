@@ -2,8 +2,8 @@
 
 Real-time UK supermarket price comparison. Search 7 stores, pin products to watchlist.
 
-**Live:** Inactive
-**API:** Inactive
+**Live:** http://siftsearch.pages.dev
+**API:** https://siftapi.blackmesa.workers.dev
 
 ## Features
 
