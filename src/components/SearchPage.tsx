@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Loader2 } from 'lucide-react';
 import type { SearchResult } from '../types';
-import { searchProducts, addToWatchlist, removeFromWatchlist, getPinnedIds, getSearchSuggestions } from '../lib/api';
+import { searchProducts, addToWatchlist, removeFromWatchlist, getPinnedIds, getSearchSuggestions, searchAutocomplete, type AutocompleteProduct } from '../lib/api';
 import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 import { useAuth } from '../contexts/AuthContext';
 import SearchResultCard from './SearchResultCard';
@@ -11,6 +11,8 @@ import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
+import { StoreSelect } from './ui/StoreSelect';
+import { STORES } from '../lib/stores';
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -27,6 +29,7 @@ export default function SearchPage() {
   const [history, setHistory] = useState<string[]>(() => getHistory());
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [autocompleteProducts, setAutocompleteProducts] = useState<AutocompleteProduct[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -36,6 +39,23 @@ export default function SearchPage() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitReason, setLimitReason] = useState<'trial_expired' | 'search_limit' | null>(null);
   const [localSearchCount, setLocalSearchCount] = useState(user?.searchCount ?? 0);
+
+  const [selectedStores, setSelectedStores] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('sift-selected-stores');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as string[];
+        return new Set(parsed);
+      } catch {
+        return new Set(STORES.map((s) => s.id));
+      }
+    }
+    return new Set(STORES.map((s) => s.id));
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sift-selected-stores', JSON.stringify([...selectedStores]));
+  }, [selectedStores]);
 
   useEffect(() => {
     setLocalSearchCount(user?.searchCount ?? 0);
@@ -59,6 +79,7 @@ export default function SearchPage() {
   useEffect(() => {
     if (query.length < 2) {
       setSuggestions([]);
+      setAutocompleteProducts([]);
       setShowSuggestions(false);
       return;
     }
@@ -67,12 +88,17 @@ export default function SearchPage() {
 
     const timeoutId = setTimeout(async () => {
       try {
-        const data = await getSearchSuggestions(query);
-        setSuggestions(data);
-        setShowSuggestions(data.length > 0);
+        const [suggestionsData, autocompleteData] = await Promise.all([
+          getSearchSuggestions(query),
+          searchAutocomplete(query),
+        ]);
+        setSuggestions(suggestionsData);
+        setAutocompleteProducts(autocompleteData);
+        setShowSuggestions(suggestionsData.length > 0 || autocompleteData.length > 0);
         setSelectedIndex(-1);
       } catch {
         setSuggestions([]);
+        setAutocompleteProducts([]);
         setShowSuggestions(false);
       }
     }, 300);
@@ -95,7 +121,18 @@ export default function SearchPage() {
     const q = (searchQuery ?? queryRef.current).trim();
     if (!q) return;
 
-    // Check trial limits before API call
+    setShowSuggestions(false);
+    setShowHistory(false);
+    setHistory(addSearch(q));
+
+    if (selectedStores.size > 0) {
+      const storesToSearch = STORES.filter((s) => selectedStores.has(s.id));
+      storesToSearch.forEach((store) => {
+        window.open(store.searchUrl(q), '_blank');
+      });
+      return;
+    }
+
     if (user?.isTrial) {
       if (user.trialExpiresAt && Date.now() > user.trialExpiresAt) {
         setLimitReason('trial_expired');
@@ -112,8 +149,6 @@ export default function SearchPage() {
     setLoading(true);
     setError(null);
     setHasSearched(true);
-    setShowSuggestions(false);
-    setShowHistory(false);
 
     try {
       const data = await searchProducts(q, token || undefined);
@@ -123,7 +158,6 @@ export default function SearchPage() {
         return;
       }
       setResults(data.results || []);
-      setHistory(addSearch(q));
       setLocalSearchCount(prev => prev + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
@@ -132,7 +166,7 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, user, remainingSearches]);
+  }, [token, user, remainingSearches, selectedStores]);
 
   function selectSuggestion(suggestion: string) {
     setQuery(suggestion);
@@ -208,36 +242,42 @@ export default function SearchPage() {
               )}
 
               <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef}>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onFocus={() => {
-                    if (query.length < 2 && history.length > 0) {
-                      setShowHistory(true);
-                      setShowSuggestions(false);
-                    } else if (suggestions.length > 0) {
-                      setShowSuggestions(true);
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Search for butter, oat milk, avocados..."
-                  className="search-input"
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !query.trim()}
-                  className="search-button"
-                >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    'Search'
-                  )}
-                </button>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => {
+                      if (query.length < 2 && history.length > 0) {
+                        setShowHistory(true);
+                        setShowSuggestions(false);
+                      } else if (suggestions.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Search for butter, oat milk, avocados..."
+                    className="search-input"
+                  />
 
-                  {showSuggestions && suggestions.length > 0 && (
+                  <StoreSelect
+                    selected={selectedStores}
+                    onChange={setSelectedStores}
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={loading || !query.trim()}
+                    className="search-button"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      'Search'
+                    )}
+                  </button>
+
+                  {showSuggestions && (suggestions.length > 0 || autocompleteProducts.length > 0) && (
                     <div className="suggestions-dropdown">
                       {suggestions.map((suggestion, index) => (
                         <button
@@ -250,6 +290,38 @@ export default function SearchPage() {
                           {suggestion}
                         </button>
                       ))}
+
+                      {autocompleteProducts.length > 0 && (
+                        <>
+                          <div className="suggestions-header">
+                            <span>Products</span>
+                          </div>
+                          {autocompleteProducts.map((product) => (
+                            <button
+                              key={product.name}
+                              type="button"
+                              onClick={() => selectSuggestion(product.name)}
+                              className="suggestion-item"
+                            >
+                              {product.image_url ? (
+                                <img
+                                  src={product.image_url}
+                                  alt={product.name}
+                                  className="w-8 h-8 rounded object-contain"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded bg-[var(--border)]" />
+                              )}
+                              <div className="flex flex-col items-start">
+                                <span className="text-sm">{product.name}</span>
+                                {product.brand && (
+                                  <span className="text-xs text-[var(--muted)]">{product.brand}</span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </>
+                      )}
                     </div>
                   )}
 

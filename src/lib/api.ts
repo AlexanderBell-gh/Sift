@@ -50,6 +50,41 @@ export async function getSearchSuggestions(query: string): Promise<string[]> {
   return data.suggestions.map(s => typeof s === 'string' ? s : s.value);
 }
 
+export interface AutocompleteProduct {
+  name: string;
+  brand: string;
+  image_url: string | null;
+  source: 'openfoodfacts';
+}
+
+export async function searchAutocomplete(query: string): Promise<AutocompleteProduct[]> {
+  if (query.length < 2) return [];
+  try {
+    const params = new URLSearchParams({
+      search_terms: query,
+      search_simple: '1',
+      action: 'process',
+      json: '1',
+      page_size: '5',
+      fields: 'product_name,brands,image_front_small_url',
+    });
+    const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?${params}`);
+    const data = await response.json();
+    if (!data.products) return [];
+    return data.products
+      .filter((p: Record<string, unknown>) => p.product_name)
+      .slice(0, 5)
+      .map((p: Record<string, unknown>) => ({
+        name: p.product_name as string,
+        brand: (p.brands as string) || '',
+        image_url: (p.image_front_small_url as string) || null,
+        source: 'openfoodfacts' as const,
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getPinnedIds(token: string): Promise<{ id: string; product_id: string }[]> {
   const response = await fetch(`${API_BASE_URL}/api/watchlist/ids`, {
     headers: { Authorization: `Bearer ${token}` },
