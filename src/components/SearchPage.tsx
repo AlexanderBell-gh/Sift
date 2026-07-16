@@ -232,7 +232,7 @@ export default function SearchPage() {
       <>
           <section className="hero">
             <div className="container">
-              <h1>The Intelligent <span className="text-gradient">Supermarket</span> Engine</h1>
+              <h1>Explore Thousands of Offers <br /> <span className="text-gradient">In One Place</span> </h1>
               <p>Compare grocery pricing across 7 UK supermarkets. Indexing Tesco, Sainsbury's, Asda, Aldi, Morrisons, Lidl, and M&amp;S.</p>
 
               {user?.isTrial && remainingSearches !== null && (

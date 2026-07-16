@@ -113,7 +113,7 @@ export default function WatchlistPage() {
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
           <div>
             <h1 className="page-title" style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
-            <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Track all of your items here</p>
+            <p style={{ color: 'var(--muted)', fontSize: '14px' }}>All your offers in one place</p>
           </div>
         </div>
       </section>
