@@ -59,13 +59,13 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
   }
 
   return (
-    <div ref={dropdownRef} className={cn('relative', className)}>
+    <div ref={dropdownRef} className={cn('relative store-select', className)}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'flex items-center gap-2 px-4 h-full min-h-[56px]',
-          'border-l border-[var(--border)]',
+          'border-r border-[var(--border)]',
           'hover:bg-[var(--surface-hover)] transition-colors duration-200',
           'focus:outline-none focus:bg-[var(--surface-hover)]',
           'text-[var(--muted)] hover:text-[var(--primary)]'
@@ -82,7 +82,7 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
       {isOpen && (
         <div
           className={cn(
-            'absolute right-0 mt-2 w-64',
+            'absolute left-0 mt-2 w-64',
             'bg-[var(--surface)] border border-[var(--border)]',
             'rounded-2xl shadow-lg overflow-hidden',
             'animate-in fade-in slide-in-from-top-2 duration-200'

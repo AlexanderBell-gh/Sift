@@ -242,6 +242,11 @@ export default function SearchPage() {
               )}
 
               <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef}>
+                  <StoreSelect
+                    selected={selectedStores}
+                    onChange={setSelectedStores}
+                  />
+
                   <input
                     ref={inputRef}
                     type="text"
@@ -258,11 +263,6 @@ export default function SearchPage() {
                     onKeyDown={handleKeyDown}
                     placeholder="Search for butter, oat milk, avocados..."
                     className="search-input"
-                  />
-
-                  <StoreSelect
-                    selected={selectedStores}
-                    onChange={setSelectedStores}
                   />
 
                   <button
