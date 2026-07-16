@@ -314,16 +314,14 @@ async function handleRequest(request, env) {
         return errorResponse('Username already in use');
       }
 
-      const trialExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
-
       const user = {
         id: createUserId(),
         email,
         username,
         passwordHash: await hashPassword(password),
         role: 'user',
-        isTrial: true,
-        trialExpiresAt,
+        isTrial: false,
+        trialExpiresAt: null,
         searchCount: 0,
         preferences: {
           currency: body.currency || 'USD',
@@ -341,10 +339,10 @@ async function handleRequest(request, env) {
           email: user.email,
           username: user.username,
           role: user.role,
-          isTrial: true,
-          trialExpiresAt,
+          isTrial: false,
+          trialExpiresAt: null,
           searchCount: 0,
-          remainingSearches: 5,
+          remainingSearches: null,
           preferences: user.preferences,
         },
         token,
