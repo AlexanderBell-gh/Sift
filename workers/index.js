@@ -98,14 +98,6 @@ async function ensureRateLimitTable(env) {
   await execute(env, 'CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)');
 }
 
-async function ensureSearchCountColumn(env) {
-  try {
-    await execute(env, 'ALTER TABLE users ADD COLUMN search_count INTEGER NOT NULL DEFAULT 0');
-  } catch (e) {
-    // Column already exists
-  }
-}
-
 async function checkRateLimit(env, key, max, windowMs) {
   await ensureRateLimitTable(env);
   const now = Date.now();
@@ -287,9 +279,6 @@ async function handleRequest(request, env) {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Ensure search_count column exists (migration for existing DBs)
-  await ensureSearchCountColumn(env);
-
   // ===== AUTH ROUTES =====
 
   if (path === '/api/auth/register' && method === 'POST') {
@@ -444,8 +433,6 @@ async function handleRequest(request, env) {
 
       const token = await createJWT(user, env);
 
-      const remainingSearches = user.isTrial ? Math.max(0, 5 - user.searchCount) : null;
-
       return jsonResponse({
         user: {
           id: user.id,
@@ -454,8 +441,6 @@ async function handleRequest(request, env) {
           role: user.role,
           isTrial: user.isTrial || false,
           trialExpiresAt: user.trialExpiresAt || null,
-          searchCount: user.searchCount || 0,
-          remainingSearches,
           preferences: user.preferences,
         },
         token,
@@ -494,7 +479,6 @@ async function handleRequest(request, env) {
         role: 'user',
         isTrial: true,
         trialExpiresAt,
-        searchCount: 0,
         preferences: { currency: 'USD', defaultStore: null },
         createdAt: new Date().toISOString(),
       };
@@ -510,8 +494,6 @@ async function handleRequest(request, env) {
           role: user.role,
           isTrial: true,
           trialExpiresAt,
-          searchCount: 0,
-          remainingSearches: 5,
           preferences: user.preferences,
         },
         token,
@@ -539,7 +521,6 @@ async function handleRequest(request, env) {
 
       if (existingUser) {
         const token = await createJWT(existingUser, env);
-        const remainingSearches = existingUser.isTrial ? Math.max(0, 5 - existingUser.searchCount) : null;
         return jsonResponse({
           user: {
             id: existingUser.id,
@@ -548,8 +529,6 @@ async function handleRequest(request, env) {
             role: existingUser.role,
             isTrial: existingUser.isTrial || false,
             trialExpiresAt: existingUser.trialExpiresAt || null,
-            searchCount: existingUser.searchCount || 0,
-            remainingSearches,
           },
           token,
         });
@@ -574,7 +553,6 @@ async function handleRequest(request, env) {
         passwordHash: await hashPassword(generateToken()),
         role: 'user',
         isTrial: false,
-        searchCount: 0,
         preferences: { currency: 'GBP', defaultStore: null },
         createdAt: new Date().toISOString(),
       };
@@ -590,8 +568,6 @@ async function handleRequest(request, env) {
           role: user.role,
           isTrial: false,
           trialExpiresAt: null,
-          searchCount: 0,
-          remainingSearches: null,
         },
         token,
       }, 201);
@@ -608,7 +584,6 @@ async function handleRequest(request, env) {
     if (method === 'GET') {
       const user = await getUserById(env, auth.userId);
       if (!user) return errorResponse('User not found', 404);
-      const remainingSearches = user.isTrial ? Math.max(0, 5 - user.searchCount) : null;
       return jsonResponse({
         id: user.id,
         email: user.email,
@@ -616,8 +591,6 @@ async function handleRequest(request, env) {
         role: user.role,
         isTrial: user.isTrial || false,
         trialExpiresAt: user.trialExpiresAt || null,
-        searchCount: user.searchCount || 0,
-        remainingSearches,
         preferences: user.preferences,
         createdAt: user.createdAt,
       });
@@ -1081,38 +1054,13 @@ async function handleRequest(request, env) {
       return errorResponse('Authentication required', 401);
     }
 
-    // Trial limit checks
-    if (auth.role !== 'admin') {
-      const user = await getUserById(env, auth.userId);
-      if (user && user.isTrial) {
-        if (user.trialExpiresAt && Date.now() > user.trialExpiresAt) {
-          return jsonResponse({ blocked: true, reason: 'trial_expired', remainingSearches: 0 });
-        }
-        if (user.searchCount >= 5) {
-          return jsonResponse({ blocked: true, reason: 'search_limit', remainingSearches: 0 });
-        }
-      }
-    }
-
     try {
       const cached = await getCachedResults(env, q);
       if (cached) {
-        if (auth.role !== 'admin') {
-          await execute(env, 'UPDATE users SET search_count = search_count + 1 WHERE id = ?', [auth.userId]);
-        }
         return jsonResponse({ results: cached, cached: true });
       }
 
-      let remainingSearches = null;
-      if (auth.role !== 'admin') {
-        await execute(env, 'UPDATE users SET search_count = search_count + 1 WHERE id = ?', [auth.userId]);
-        const updatedUser = await getUserById(env, auth.userId);
-        if (updatedUser && updatedUser.isTrial) {
-          remainingSearches = Math.max(0, 5 - updatedUser.searchCount);
-        }
-      }
-
-      return jsonResponse({ results: [], cached: false, remainingSearches });
+      return jsonResponse({ results: [], cached: false });
     } catch (e) {
       console.error('Search error:', e);
       return errorResponse('Search failed');
@@ -1196,6 +1144,18 @@ async function handleRequest(request, env) {
       );
       if (existing) {
         return jsonResponse({ id: existing.id, already_pinned: true });
+      }
+
+      const user = await getUserById(env, auth.userId);
+      if (user && user.isTrial) {
+        const countRow = await queryOne(
+          env,
+          'SELECT COUNT(DISTINCT product_id) as cnt FROM watchlist WHERE user_id = ?',
+          [auth.userId]
+        );
+        if (countRow && countRow.cnt >= 5) {
+          return jsonResponse({ blocked: true, reason: 'watchlist_limit' }, 403);
+        }
       }
 
       const now = Date.now();

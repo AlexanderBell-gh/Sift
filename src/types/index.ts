@@ -5,8 +5,6 @@ export interface User {
   role: string;
   isTrial: boolean;
   trialExpiresAt: number | null;
-  searchCount: number;
-  remainingSearches: number | null;
 }
 
 export interface SearchResult {

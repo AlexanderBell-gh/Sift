@@ -39,8 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: data.role,
             isTrial: data.isTrial || false,
             trialExpiresAt: data.trialExpiresAt || null,
-            searchCount: data.searchCount || 0,
-            remainingSearches: data.remainingSearches ?? null,
           });
         } else {
           localStorage.removeItem('auth_token');
@@ -71,8 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
-      searchCount: data.user.searchCount || 0,
-      remainingSearches: data.user.remainingSearches ?? null,
     });
   }, []);
 
@@ -96,8 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
-      searchCount: data.user.searchCount || 0,
-      remainingSearches: data.user.remainingSearches ?? null,
     });
   }, []);
 
@@ -121,8 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
-      searchCount: data.user.searchCount || 0,
-      remainingSearches: data.user.remainingSearches ?? null,
     });
   }, []);
 
@@ -146,8 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
-      searchCount: data.user.searchCount || 0,
-      remainingSearches: data.user.remainingSearches ?? null,
     });
   }, []);
 

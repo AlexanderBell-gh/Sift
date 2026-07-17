@@ -37,8 +37,7 @@ export default function SearchPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [limitReason, setLimitReason] = useState<'trial_expired' | 'search_limit' | null>(null);
-  const [localSearchCount, setLocalSearchCount] = useState(user?.searchCount ?? 0);
+  const [limitReason, setLimitReason] = useState<'trial_expired' | 'watchlist_limit' | null>(null);
 
   const [selectedStores, setSelectedStores] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('sift-selected-stores');
@@ -56,14 +55,6 @@ export default function SearchPage() {
   useEffect(() => {
     localStorage.setItem('sift-selected-stores', JSON.stringify([...selectedStores]));
   }, [selectedStores]);
-
-  useEffect(() => {
-    setLocalSearchCount(user?.searchCount ?? 0);
-  }, [user?.searchCount]);
-
-  const remainingSearches = user?.isTrial
-    ? Math.max(0, 5 - localSearchCount)
-    : null;
 
   useEffect(() => {
     queryRef.current = query;
@@ -133,31 +124,12 @@ export default function SearchPage() {
       return;
     }
 
-    if (user?.isTrial) {
-      if (user.trialExpiresAt && Date.now() > user.trialExpiresAt) {
-        setLimitReason('trial_expired');
-        setShowLimitModal(true);
-        return;
-      }
-      if (remainingSearches !== null && remainingSearches <= 0) {
-        setLimitReason('search_limit');
-        setShowLimitModal(true);
-        return;
-      }
-    }
-
     setLoading(true);
     setError(null);
 
     try {
       const data = await searchProducts(q, token || undefined);
-      if (data.blocked) {
-        setLimitReason(data.reason || 'search_limit');
-        setShowLimitModal(true);
-        return;
-      }
       setResults(data.results || []);
-      setLocalSearchCount(prev => prev + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
       setResults([]);
@@ -165,7 +137,7 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, user, remainingSearches, selectedStores]);
+  }, [token, user, selectedStores]);
 
   function selectSuggestion(suggestion: string) {
     setQuery(suggestion);
@@ -215,6 +187,11 @@ export default function SearchPage() {
         setPinned(prev => { const next = new Map(prev); next.delete(result.id); return next; });
         showToast('Removed from watchlist', 'info');
       } else {
+        if (user?.isTrial && pinned.size >= 5) {
+          setLimitReason('watchlist_limit');
+          setShowLimitModal(true);
+          return;
+        }
         const item = await addToWatchlist(token, result);
         setPinned(prev => { const next = new Map(prev); next.set(item.product_id, item.id); return next; });
         showToast('Pinned to watchlist', 'success');
@@ -231,14 +208,8 @@ export default function SearchPage() {
       <>
           <section className="hero">
             <div className="container">
-              <h1>Explore Thousands of Offers <br /> <span className="text-gradient">In One Place</span> </h1>
-              <p>Compare grocery pricing across 7 UK supermarkets. Indexing Tesco, Sainsbury's, Asda, Aldi, Morrisons, Lidl, and M&amp;S.</p>
-
-              {user?.isTrial && remainingSearches !== null && (
-                <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
-                  {remainingSearches} {remainingSearches === 1 ? 'search' : 'searches'} remaining, sign up to get unlimited searches
-                </p>
-              )}
+              <h1>Explore Thousands of Offers <br /><span className="text-gradient">In One Place</span><br /></h1>
+              <p>Find the best grocery offers across 11 UK supermarkets.<br /> Search up to 3 stores simultaneously</p>
 
               <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef}>
                   <StoreSelect
@@ -397,11 +368,11 @@ export default function SearchPage() {
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
-      <Modal isOpen={showLimitModal} onClose={() => setShowLimitModal(false)} title="Free search limit reached">
+      <Modal isOpen={showLimitModal} onClose={() => setShowLimitModal(false)} title="Watchlist limit reached">
         <p className="text-sm mb-6" style={{ color: 'var(--muted)' }}>
           {limitReason === 'trial_expired'
             ? 'Trial period ended, sign up to continue using.'
-            : 'Sign up to have access to your watchlist and unlimited searches.'}
+            : 'Trial accounts are limited to 5 watchlist items. Sign up for unlimited.'}
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setShowLimitModal(false)}>Close</Button>

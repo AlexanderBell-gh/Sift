@@ -31,9 +31,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
 export async function searchProducts(query: string, token?: string): Promise<{
   results: SearchResult[];
   cached?: boolean;
-  blocked?: boolean;
-  reason?: 'trial_expired' | 'search_limit';
-  remainingSearches?: number;
 }> {
   const params = new URLSearchParams({ q: query });
   const headers: Record<string, string> = {};
