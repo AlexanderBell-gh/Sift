@@ -2175,4 +2175,131 @@ body {
   }
 }
 
+/* Store Offers Horizontal Scroll */
+.store-offers-section {
+  padding: 0 0 48px;
+}
+
+.store-offers-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  overflow: visible;
+}
+
+.store-offers-title {
+  font-family: var(--font-primary);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.store-offers-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 4px 2px 12px;
+  margin: 0 -2px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.store-offers-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.store-offers-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.store-offers-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.store-offers-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.store-offers-card {
+  flex: 0 0 170px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  transition-timing-function: var(--ease-spring);
+}
+
+.store-offers-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px -12px rgba(255, 87, 1, 0.12);
+}
+
+.dark .store-offers-card:hover {
+  border-color: color-mix(in oklab, var(--primary) 70%, transparent);
+  box-shadow: 0 8px 40px 6px rgba(255, 87, 1, 0.08);
+}
+
+.store-offers-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.store-offers-name {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.store-offers-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+
+.store-offers-card:hover .store-offers-icon {
+  color: var(--primary);
+}
+
+@media (max-width: 640px) {
+  .store-offers-section {
+    padding: 0 0 32px;
+  }
+
+  .store-offers-container {
+    padding: 0 12px;
+    overflow: visible;
+  }
+
+  .store-offers-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .store-offers-scroll {
+    padding: 4px 2px 12px;
+    margin: 0 -2px;
+  }
+
+  .store-offers-card {
+    flex: 0 0 150px;
+    padding: 20px 14px;
+  }
+}
+
 /* Watchlist product-row styles are defined in the Watchlist Screen section above */

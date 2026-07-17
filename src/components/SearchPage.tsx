@@ -12,6 +12,7 @@ import { useToast } from './ui/useToast';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { StoreSelect } from './ui/StoreSelect';
+import { StoreOffers } from './StoreOffers';
 import { STORES } from '../lib/stores';
 
 export default function SearchPage() {
@@ -22,7 +23,6 @@ export default function SearchPage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
   const [pinned, setPinned] = useState<Map<string, string>>(new Map());
   const { toast, showToast, hideToast } = useToast();
 
@@ -148,7 +148,6 @@ export default function SearchPage() {
 
     setLoading(true);
     setError(null);
-    setHasSearched(true);
 
     try {
       const data = await searchProducts(q, token || undefined);
@@ -360,6 +359,8 @@ export default function SearchPage() {
             </div>
           </section>
 
+          <StoreOffers />
+
           <div className="max-w-6xl mx-auto px-6 pb-24">
             {error && (
               <div className="max-w-2xl mx-auto mb-6 p-4 bg-[var(--danger)]/10 border border-[var(--danger)]/20 rounded-lg">
@@ -381,13 +382,6 @@ export default function SearchPage() {
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {!loading && hasSearched && results.length === 0 && !error && (
-              <div className="empty-state-box" style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
-                <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>No products found</p>
-                <p style={{ fontSize: '14px' }}>Try a different search term</p>
               </div>
             )}
 
