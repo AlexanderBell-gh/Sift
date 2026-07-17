@@ -1,13 +1,13 @@
 # Sift
 
-Real-time UK supermarket price comparison. Select 11 stores, search opens each store's results page in a new tab.
+Real-time UK supermarket price comparison. Select up to 3 stores, search opens each store's results page in a new tab.
 
 **Live:** https://siftsearch.pages.dev
 **API:** https://siftapi.blackmesa.workers.dev
 
 ## Features
 
-11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Boots) with store-aware query redirect, product autocomplete via Open Food Facts API, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive.
+11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, product autocomplete via Open Food Facts API, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
 
 ## Tech Stack
 
@@ -35,7 +35,7 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account.
 pnpm run build  # output → dist/
 ```
 
-**Automatic:** Push to `main` triggers GitHub Actions.  
+**Automatic:** Push to `main` triggers GitHub Actions.
 **Manual:**
 ```bash
 pnpm exec wrangler pages deploy dist --project-name=siftsearch
@@ -65,7 +65,7 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 
 ## Search Flow
 
-1. Select stores via multi-select dropdown (stored in localStorage)
+1. Select up to 3 stores via multi-select dropdown (persisted in localStorage)
 2. Type query → autocomplete from Open Food Facts API (debounced 300ms)
 3. Press enter → opens each selected store's search URL in new tab
 4. Browse Store Offers → horizontal scroll cards link to each store's offers page
@@ -74,6 +74,7 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 ## Product Tracking
 
 - Watchlist with price tracking and refresh
+- Trial users: max 5 watchlist items
 - Cron: daily 6am UTC, max 10 items/user, 100 total, 500ms delay
 
 ## Project Structure
@@ -81,7 +82,7 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql)
-public/           Store logo PNGs + favicon.svg
+public/           Store logo SVGs + favicon.svg
 markdowns/        Design system, project context, changelog, fixes
 ```
 
