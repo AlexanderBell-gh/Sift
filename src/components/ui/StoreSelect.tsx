@@ -26,6 +26,8 @@ function ShopIcon({ className }: { className?: string }) {
   );
 }
 
+const MAX_STORES = 3;
+
 export function StoreSelect({ selected, onChange, className }: StoreSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -45,13 +47,10 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
     if (next.has(id)) {
       next.delete(id);
     } else {
+      if (next.size >= MAX_STORES) return;
       next.add(id);
     }
     onChange(next);
-  }
-
-  function selectAll() {
-    onChange(new Set(STORES.map((s) => s.id)));
   }
 
   function clearAll() {
@@ -77,20 +76,16 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
       {isOpen && (
         <div
           className={cn(
-            'absolute left-0 top-full mt-2 w-64',
+            'absolute left-0 top-full mt-2 w-64 z-50',
             'bg-[var(--surface)] border border-[var(--border)]',
             'rounded-2xl shadow-lg overflow-hidden',
             'animate-in fade-in slide-in-from-top-2 duration-200'
           )}
         >
           <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]">
-            <button
-              type="button"
-              onClick={selectAll}
-              className="text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary)]/80 transition-colors"
-            >
-              Select all
-            </button>
+            {selected.size >= MAX_STORES && (
+              <span className="text-xs text-[var(--danger)]">Max 3 stores</span>
+            )}
             <button
               type="button"
               onClick={clearAll}
@@ -101,17 +96,22 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
           </div>
 
           <div className="max-h-80 overflow-y-auto p-2">
-            {STORES.map((store) => (
+            {STORES.map((store) => {
+              const atLimit = selected.size >= MAX_STORES && !selected.has(store.id);
+              return (
               <button
                 key={store.id}
                 type="button"
                 onClick={() => toggleStore(store.id)}
+                disabled={atLimit}
                 className={cn(
                   'flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left',
                   'transition-colors duration-150',
                   selected.has(store.id)
                     ? 'store-selected'
-                    : 'hover:bg-[var(--surface-hover)]'
+                    : atLimit
+                      ? 'opacity-40 cursor-not-allowed'
+                      : 'hover:bg-[var(--surface-hover)]'
                 )}
               >
                 <div
@@ -134,7 +134,8 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
                 />
                 <span className="text-sm font-medium text-[var(--text)]">{store.name}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

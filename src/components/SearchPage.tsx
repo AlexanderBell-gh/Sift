@@ -240,12 +240,6 @@ export default function SearchPage() {
                 </p>
               )}
 
-              {selectedStores.size > 0 && selectedStores.size < STORES.length && (
-                <p className="text-sm mb-2 text-[var(--muted)]">
-                  Searching {selectedStores.size} store{selectedStores.size > 1 ? 's' : ''}
-                </p>
-              )}
-
               <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef}>
                   <StoreSelect
                     selected={selectedStores}
