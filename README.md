@@ -7,7 +7,7 @@ Real-time UK supermarket price comparison. Select 11 stores, search opens each s
 
 ## Features
 
-11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Boots) with store-aware query redirect, product autocomplete via Open Food Facts API, watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive.
+11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Boots) with store-aware query redirect, product autocomplete via Open Food Facts API, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 searches), JWT + Google OAuth, dark/light mode, mobile responsive.
 
 ## Tech Stack
 
@@ -68,7 +68,8 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 1. Select stores via multi-select dropdown (stored in localStorage)
 2. Type query → autocomplete from Open Food Facts API (debounced 300ms)
 3. Press enter → opens each selected store's search URL in new tab
-4. No backend search involved
+4. Browse Store Offers → horizontal scroll cards link to each store's offers page
+5. No backend search involved
 
 ## Product Tracking
 
