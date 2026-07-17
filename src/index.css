@@ -2204,10 +2204,19 @@ body {
   margin: 0 -2px;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
+  scrollbar-width: none;
 }
 
 .store-offers-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.store-offers-scroll:hover {
+  scrollbar-width: auto;
+}
+
+.store-offers-scroll:hover::-webkit-scrollbar {
+  display: block;
   height: 6px;
 }
 
