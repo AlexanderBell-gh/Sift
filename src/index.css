@@ -780,6 +780,41 @@ body {
   border-radius: 4px;
 }
 
+.product-card-loyalty-label.loyalty-tesco {
+  background: rgba(0, 83, 159, 0.12);
+  color: #00539f;
+}
+
+.product-card-loyalty-label.loyalty-sainsburys {
+  background: rgba(108, 24, 203, 0.12);
+  color: #6c18cb;
+}
+
+.product-card-loyalty-label.loyalty-morrisons {
+  background: rgba(0, 95, 39, 0.12);
+  color: #005f27;
+}
+
+.product-card-loyalty-label.loyalty-mns {
+  background: rgba(139, 0, 56, 0.12);
+  color: #8b0038;
+}
+
+.product-card-loyalty-label.loyalty-lidl {
+  background: rgba(0, 51, 160, 0.12);
+  color: #0033a0;
+}
+
+.product-card-loyalty-label.loyalty-asda {
+  background: rgba(0, 97, 19, 0.12);
+  color: #006113;
+}
+
+.product-card-loyalty-label.loyalty-aldi {
+  background: rgba(0, 56, 164, 0.12);
+  color: #0038a4;
+}
+
 .product-card-category {
   font-family: var(--font-mono);
   font-size: 10px;

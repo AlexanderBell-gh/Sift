@@ -124,8 +124,16 @@ function renderProduct(product: ExtractedProduct) {
     ? `<span class="price-was">£${product.was_price.toFixed(2)}</span>`
     : '';
 
+  const loyaltyLabelMap: Record<string, string> = {
+    'Tesco': 'Clubcard',
+    "Sainsbury's": 'Nectar',
+    'Morrisons': 'More Card',
+    'Co-op': 'Member',
+    'Waitrose': 'My Waitrose',
+  };
+  const loyaltyLabel = loyaltyLabelMap[product.store] || 'Loyalty';
   const loyaltyHtml = product.loyalty_price != null
-    ? `<span class="price-loyalty">Clubcard £${product.loyalty_price.toFixed(2)}</span>`
+    ? `<span class="price-loyalty">${loyaltyLabel} £${product.loyalty_price.toFixed(2)}</span>`
     : '';
 
   const badgeHtml = product.offer_badge

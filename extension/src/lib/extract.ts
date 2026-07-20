@@ -50,6 +50,26 @@ function getLoyaltyPriceByPattern(): string | null {
   return null;
 }
 
+function extractOfferExpiry(): string | null {
+  const patterns = [
+    /until:\s*(\d{1,2}\s+\w+\s+\d{4})/i,
+    /expires?:\s*(\d{1,2}\s+\w+\s+\d{4})/i,
+    /valid until\s*(\d{1,2}\s+\w+\s+\d{4})/i,
+    /ends?\s*(\d{1,2}\s+\w+\s+\d{4})/i,
+  ];
+  const candidates = document.querySelectorAll<HTMLElement>(
+    '[class*="offer"], [class*="promotion"], [class*="expiry"], [class*="terms"], [data-testid*="offer"], [data-testid*="promotion"], p, span, div'
+  );
+  for (const el of candidates) {
+    const text = el.textContent || '';
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) return match[1];
+    }
+  }
+  return null;
+}
+
 function getAttr(selectors: string[], attr: string): string | null {
   for (const sel of selectors) {
     const el = document.querySelector<HTMLElement>(sel);
@@ -89,6 +109,9 @@ function extractFromDom(): Partial<ExtractedProduct> {
     '.product-price',
     '.pt__cost__retail-price',
     '[data-testid="product-tile-price"]',
+    '[data-testid="pd-retail-price"]',
+    '.pd__cost__retail-price',
+    '.online-components-product-tile-price__text',
   ]);
 
   const wasPriceText = getText([
@@ -104,6 +127,9 @@ function extractFromDom(): Partial<ExtractedProduct> {
     '.price--clubcard',
     '.clubcard-price',
     '[data-testid="clubcard-price"]',
+    '[data-testid="contextual-price-text"]',
+    '.pd__cost--price',
+    '.ddsweb-value-bar__content-text',
     '.nectar-offer',
     '[class*="nectar-price"]',
     '[data-testid*="nectar"]',
@@ -147,6 +173,7 @@ function extractFromDom(): Partial<ExtractedProduct> {
     was_price: parsePrice(wasPriceText),
     loyalty_price: parsePrice(loyaltyPriceText),
     offer_badge: offerBadge,
+    offer_expires_at: extractOfferExpiry(),
     image_url: imageUrl,
     product_url: window.location.href,
   };
@@ -199,10 +226,11 @@ export function extractProduct(): ExtractedProduct | null {
 
   return {
     name: dom.name || jsonLd?.name || null,
-    price: jsonLd?.price ?? dom.price ?? null,
+    price: dom.price ?? jsonLd?.price ?? null,
     loyalty_price: dom.loyalty_price ?? null,
     was_price: dom.was_price ?? null,
     offer_badge: dom.offer_badge ?? null,
+    offer_expires_at: dom.offer_expires_at ?? null,
     image_url: jsonLd?.image_url ?? dom.image_url ?? null,
     product_url: jsonLd?.product_url || dom.product_url || window.location.href,
     store: store.name,

@@ -9,7 +9,7 @@ Real-time UK supermarket price comparison. Select up to 3 stores, search opens e
 
 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, product autocomplete via Open Food Facts API, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
 
-**Browser Extension (Phase 3):** Chrome extension that extracts product data (name, price, loyalty price, was-price, offer badge, image, link) from store pages via JSON-LD structured data and DOM selectors. Adds products directly to Sift watchlist. Matches website design system.
+**Browser Extension (Phase 3):** Chrome extension that extracts product data (name, price, loyalty price, was-price, offer badge, offer expiry date, image, link) from store pages via DOM selectors and JSON-LD structured data. Adds products directly to Sift watchlist. Matches website design system.
 
 ## Tech Stack
 

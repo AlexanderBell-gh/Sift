@@ -3,10 +3,10 @@ import { extractProduct } from '../src/lib/extract';
 
 export default defineContentScript({
   matches: [
-    'https://www.tesco.com/groceries/en-GB/*',
+    'https://www.tesco.com/*',
     'https://www.sainsburys.co.uk/*',
     'https://groceries.asda.com/*',
-    'https://www.morrisons.com/*',
+    'https://groceries.morrisons.com/*',
     'https://www.marksandspencer.com/*',
     'https://www.aldi.co.uk/*',
     'https://www.lidl.co.uk/*',

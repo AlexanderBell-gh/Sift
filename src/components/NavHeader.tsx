@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, ArrowLeft, Sun, Moon, Settings, Shield, ChevronDown, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
+import { STORES } from '../lib/stores';
 import AlertBell from './AlertBell';
 
-const STORES = ['Tesco', "Sainsbury's", 'ASDA', 'Morrisons', 'M&S', 'Aldi', 'Lidl'];
+const STORE_NAMES = STORES.map(s => s.name);
 const CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard'];
 
 const SORT_OPTIONS = [
@@ -92,7 +93,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
   const avatarText = isTrial ? 'TU' : (user?.username?.slice(0, 2).toUpperCase() || 'U');
 
   const hasFilters = selectedStores && onStoresChange && sortBy && onSortChange;
-  const filteredCount = selectedStores?.length ?? STORES.length;
+  const filteredCount = selectedStores?.length ?? STORE_NAMES.length;
 
   function toggleStore(store: string) {
     if (!onStoresChange || !selectedStores) return;
@@ -166,7 +167,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
                 title="Filters"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true"><path d="M10 5H3"></path><path d="M12 19H3"></path><path d="M14 3v4"></path><path d="M16 17v4"></path><path d="M21 12h-9"></path><path d="M21 19h-5"></path><path d="M21 5h-7"></path><path d="M8 10v4"></path><path d="M8 12H3"></path></svg>
-                {filteredCount < STORES.length && (
+                {filteredCount < STORE_NAMES.length && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-accent text-white text-[10px] font-bold px-1">
                     {filteredCount}
                   </span>
@@ -180,9 +181,9 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => onStoresChange?.(STORES)}
+                        onClick={() => onStoresChange?.(STORE_NAMES)}
                         className="text-xs transition-colors"
-                        style={{ color: filteredCount === STORES.length ? 'var(--muted)' : 'var(--primary)' }}
+                        style={{ color: filteredCount === STORE_NAMES.length ? 'var(--muted)' : 'var(--primary)' }}
                       >
                         All
                       </button>
@@ -198,7 +199,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, selectedSt
                   </div>
                   <div style={{ padding: '8px 12px' }}>
                     <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Stores</div>
-                    {STORES.map(store => (
+                    {STORE_NAMES.map(store => (
                       <label
                         key={store}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', color: 'var(--text)' }}

@@ -8,6 +8,15 @@ export default defineConfig({
     host_permissions: [
       'https://www.tesco.com/*',
       'https://www.sainsburys.co.uk/*',
+      'https://groceries.asda.com/*',
+      'https://groceries.morrisons.com/*',
+      'https://www.marksandspencer.com/*',
+      'https://www.aldi.co.uk/*',
+      'https://www.lidl.co.uk/*',
+      'https://www.coop.co.uk/*',
+      'https://www.waitrose.com/*',
+      'https://www.iceland.co.uk/*',
+      'https://www.ocado.com/*',
       'https://siftapi.blackmesa.workers.dev/*',
     ],
     action: {

@@ -3,13 +3,14 @@ import { Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
+import { STORES } from '../lib/stores';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
 
 
-const ALL_STORES = ['Tesco', "Sainsbury's", 'ASDA', 'Morrisons', 'M&S', 'Aldi', 'Lidl'];
+const ALL_STORES = STORES.map(s => s.name);
 const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard'];
 
 export default function WatchlistPage() {
@@ -88,6 +89,19 @@ export default function WatchlistPage() {
       Aldi: 'Aldi price',
     };
     return labels[store] ?? 'Offer price';
+  }
+
+  function getLoyaltyClass(store: string): string {
+    const classes: Record<string, string> = {
+      Tesco: 'loyalty-tesco',
+      "Sainsbury's": 'loyalty-sainsburys',
+      Morrisons: 'loyalty-morrisons',
+      'M&S': 'loyalty-mns',
+      Lidl: 'loyalty-lidl',
+      ASDA: 'loyalty-asda',
+      Aldi: 'loyalty-aldi',
+    };
+    return classes[store] ?? '';
   }
 
   function formatTimeAgo(ts: number) {
@@ -212,7 +226,7 @@ export default function WatchlistPage() {
                     </div>
                     {best.prices.loyalty !== null && (
                       <span className="product-card-loyalty">
-                        <span className="product-card-loyalty-label">{getLoyaltyLabel(best.store)}</span>
+                        <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{getLoyaltyLabel(best.store)}</span>
                       </span>
                     )}
                     {best.offer_expires_at && (
