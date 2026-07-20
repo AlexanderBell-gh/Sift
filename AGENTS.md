@@ -8,6 +8,12 @@
 - No typecheck script — typecheck happens inside build
 - No test framework or test files exist
 
+### Extension
+
+- `cd extension && pnpm run dev` — WXT dev mode (hot reload)
+- `cd extension && pnpm run build` — Build to `extension/.output/chrome-mv3/`
+- Load unpacked: `chrome://extensions` → Load unpacked → select `extension/.output/chrome-mv3/`
+
 ## Architecture
 
 - Single-package repo (not monorepo)
@@ -25,6 +31,7 @@
 - Dark mode: `.dark` class on `<html>`, flash-prevention script in `index.html` `<head>`
 - No state management library — `useState`/`useEffect` + Context only
 - Hand-rolled JWT via Web Crypto API (not a library)
+- Extension: WXT entrypoints in `extension/entrypoints/`, shared code in `extension/src/`, build output in `.output/` (gitignored)
 
 ## Backend Specifics
 

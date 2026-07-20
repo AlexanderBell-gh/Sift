@@ -49,8 +49,8 @@ function renderLogin() {
     </div>
     <div class="login-form">
       <p class="subtitle">Sign in to add products to your watchlist.</p>
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="you@example.com" />
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="Username" />
       <label for="password">Password</label>
       <input id="password" type="password" placeholder="Password" />
       <div id="login-error" class="error-msg"></div>
@@ -59,7 +59,7 @@ function renderLogin() {
   `;
 
   document.getElementById('login-btn')!.addEventListener('click', async () => {
-    const email = (document.getElementById('email') as HTMLInputElement).value;
+    const username = (document.getElementById('username') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
     const errorEl = document.getElementById('login-error')!;
     const btn = document.getElementById('login-btn') as HTMLButtonElement;
@@ -68,7 +68,7 @@ function renderLogin() {
     btn.textContent = 'Signing in...';
     errorEl.textContent = '';
 
-    const result = await login(email, password);
+    const result = await login(username, password);
     if (result.error) {
       errorEl.textContent = result.error;
       btn.disabled = false;
