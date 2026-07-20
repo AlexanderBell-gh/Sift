@@ -1,6 +1,13 @@
 import type { ExtractedProduct } from '../../src/types';
 import { addToWatchlist, login } from '../../src/lib/sift-api';
 
+const SIFT_LOGO = `<svg class="header-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="rotate(-10 16 16)">
+    <rect x="6" y="2" width="20" height="28" rx="4" fill="#FF5701"/>
+    <circle cx="16" cy="9" r="3" fill="white"/>
+  </g>
+</svg>`;
+
 const app = document.getElementById('app')!;
 
 let token = '';
@@ -37,16 +44,14 @@ async function init() {
 function renderLogin() {
   app.innerHTML = `
     <div class="header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
+      ${SIFT_LOGO}
       <h1>Sift</h1>
     </div>
     <div class="login-form">
-      <p style="font-size:13px;color:#666;margin-bottom:12px">Sign in to add products to your watchlist.</p>
-      <input id="email" type="email" placeholder="Email" />
+      <p class="subtitle">Sign in to add products to your watchlist.</p>
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" />
+      <label for="password">Password</label>
       <input id="password" type="password" placeholder="Password" />
       <div id="login-error" class="error-msg"></div>
       <button class="btn btn-primary" id="login-btn">Sign In</button>
@@ -79,11 +84,7 @@ function renderLogin() {
 function renderLoading() {
   app.innerHTML = `
     <div class="header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
+      ${SIFT_LOGO}
       <h1>Sift</h1>
     </div>
     <div class="loading">Extracting product data...</div>
@@ -93,11 +94,7 @@ function renderLoading() {
 function renderError(message: string) {
   app.innerHTML = `
     <div class="header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
+      ${SIFT_LOGO}
       <h1>Sift</h1>
     </div>
     <div class="error">${message}</div>
@@ -107,11 +104,7 @@ function renderError(message: string) {
 function renderEmpty() {
   app.innerHTML = `
     <div class="header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
+      ${SIFT_LOGO}
       <h1>Sift</h1>
     </div>
     <div class="empty">No product found on this page.</div>
@@ -141,11 +134,7 @@ function renderProduct(product: ExtractedProduct) {
 
   app.innerHTML = `
     <div class="header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
+      ${SIFT_LOGO}
       <h1>Sift</h1>
     </div>
     <div class="product">
@@ -178,11 +167,7 @@ function renderProduct(product: ExtractedProduct) {
     if (result.success) {
       app.innerHTML = `
         <div class="header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
+          ${SIFT_LOGO}
           <h1>Sift</h1>
         </div>
         <div class="success">Added to watchlist!</div>
