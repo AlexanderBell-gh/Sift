@@ -155,37 +155,37 @@ function extractFromDom(): Partial<ExtractedProduct> {
 function detectStore(): { id: string; name: string; logo: string } | null {
   const hostname = window.location.hostname;
   if (hostname.includes('tesco.com')) {
-    return { id: 'tesco', name: 'Tesco', logo: '/icons/tesco.svg' };
+    return { id: 'tesco', name: 'Tesco', logo: '/Tesco_Logo.svg' };
   }
   if (hostname.includes('sainsburys.co.uk')) {
-    return { id: 'sainsburys', name: "Sainsbury's", logo: '/icons/sainsburys.svg' };
+    return { id: 'sainsburys', name: "Sainsbury's", logo: "/Sainsbury's_Logo.svg" };
   }
   if (hostname.includes('asda.com')) {
-    return { id: 'asda', name: 'ASDA', logo: '/icons/asda.svg' };
+    return { id: 'asda', name: 'ASDA', logo: '/ASDA_Logo.svg' };
   }
   if (hostname.includes('morrisons.com')) {
-    return { id: 'morrisons', name: 'Morrisons', logo: '/icons/morrisons.svg' };
+    return { id: 'morrisons', name: 'Morrisons', logo: '/Morrisons_Logo.svg' };
   }
   if (hostname.includes('marksandspencer.com')) {
-    return { id: 'marksandspencer', name: 'M&S', logo: '/icons/mns.svg' };
+    return { id: 'marksandspencer', name: 'M&S', logo: '/M&S_Logo.svg' };
   }
   if (hostname.includes('aldi.co.uk')) {
-    return { id: 'aldi', name: 'Aldi', logo: '/icons/aldi.svg' };
+    return { id: 'aldi', name: 'Aldi', logo: '/Aldi_Logo.svg' };
   }
   if (hostname.includes('lidl.co.uk')) {
-    return { id: 'lidl', name: 'Lidl', logo: '/icons/lidl.svg' };
+    return { id: 'lidl', name: 'Lidl', logo: '/Lidl_Logo.svg' };
   }
   if (hostname.includes('coop.co.uk')) {
-    return { id: 'coop', name: 'Co-op', logo: '/icons/coop.svg' };
+    return { id: 'coop', name: 'Co-op', logo: '/Co-op_Logo.svg' };
   }
   if (hostname.includes('waitrose.com')) {
-    return { id: 'waitrose', name: 'Waitrose', logo: '/icons/waitrose.svg' };
+    return { id: 'waitrose', name: 'Waitrose', logo: '/Waitrose_Logo.svg' };
   }
   if (hostname.includes('iceland.co.uk')) {
-    return { id: 'iceland', name: 'Iceland', logo: '/icons/iceland.svg' };
+    return { id: 'iceland', name: 'Iceland', logo: '/Iceland_Logo.svg' };
   }
   if (hostname.includes('ocado.com')) {
-    return { id: 'ocado', name: 'Ocado', logo: '/icons/ocado.svg' };
+    return { id: 'ocado', name: 'Ocado', logo: '/Ocado_Logo.svg' };
   }
   return null;
 }
