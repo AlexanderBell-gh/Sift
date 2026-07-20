@@ -3,7 +3,6 @@
 Real-time UK supermarket price comparison. Select up to 3 stores, search opens each store's results page in a new tab. Browser extension extracts product data directly from store pages.
 
 **Live:** https://siftsearch.pages.dev
-**API:** https://siftapi.blackmesa.workers.dev
 
 ## Features
 
