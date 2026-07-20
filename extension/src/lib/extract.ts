@@ -32,6 +32,24 @@ function getText(selectors: string[]): string | null {
   return null;
 }
 
+function getLoyaltyPriceByPattern(): string | null {
+  const patterns = [
+    /(?:nectar|clubcard|member|loyalty|more\s*card|partner)\s*(?:price|saving)?[:\s]*£?\s*(\d+\.?\d*)/i,
+    /£\s*(\d+\.?\d*)\s*(?:with|when you use|using)\s*(?:nectar|clubcard|member|loyalty)/i,
+  ];
+  const candidates = document.querySelectorAll<HTMLElement>(
+    '[class*="price"], [class*="loyalty"], [class*="member"], [class*="nectar"], [class*="clubcard"], [data-testid*="price"], [data-testid*="loyalty"]'
+  );
+  for (const el of candidates) {
+    const text = el.textContent || '';
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) return match[0];
+    }
+  }
+  return null;
+}
+
 function getAttr(selectors: string[], attr: string): string | null {
   for (const sel of selectors) {
     const el = document.querySelector<HTMLElement>(sel);
@@ -87,7 +105,20 @@ function extractFromDom(): Partial<ExtractedProduct> {
     '.clubcard-price',
     '[data-testid="clubcard-price"]',
     '.nectar-offer',
-  ]);
+    '[class*="nectar-price"]',
+    '[data-testid*="nectar"]',
+    '.product-pricing__nectar',
+    '[class*="more-card"]',
+    '[data-testid*="more-card"]',
+    '[class*="member-price"]',
+    '[data-testid*="member"]',
+    '[class*="loyalty"]',
+    '[data-testid*="loyalty"]',
+    '[class*="partner-price"]',
+    '[data-testid*="partner"]',
+    '[class*="asda-price"]',
+    '[data-testid*="reduced"]',
+  ]) || getLoyaltyPriceByPattern();
 
   const offerBadge = getText([
     '[data-auto="promotion-badge"]',
@@ -174,7 +205,7 @@ export function extractProduct(): ExtractedProduct | null {
     offer_badge: dom.offer_badge ?? null,
     image_url: jsonLd?.image_url ?? dom.image_url ?? null,
     product_url: jsonLd?.product_url || dom.product_url || window.location.href,
-    store: store.id,
+    store: store.name,
     store_logo: store.logo,
     unit: null,
     currency: 'GBP',

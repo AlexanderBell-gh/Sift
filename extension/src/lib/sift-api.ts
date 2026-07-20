@@ -18,6 +18,14 @@ export async function addToWatchlist(
 ): Promise<{ success: boolean; error?: string }> {
   const id = hashString(`${product.store}_${product.name}`);
 
+  const loyaltyTypeMap: Record<string, string> = {
+    'Tesco': 'Clubcard',
+    "Sainsbury's": 'Nectar',
+    'Morrisons': 'More Card',
+    'Co-op': 'Member',
+    'Waitrose': 'My Waitrose',
+  };
+
   const body = {
     result: {
       id,
@@ -32,7 +40,7 @@ export async function addToWatchlist(
         unit_price: null,
         currency: product.currency,
       },
-      loyalty_type: null,
+      loyalty_type: loyaltyTypeMap[product.store] || null,
       offer_expires_at: null,
       category: null,
       product_url: product.product_url,
