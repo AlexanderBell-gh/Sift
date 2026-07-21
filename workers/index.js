@@ -69,12 +69,15 @@ function normalizeDateString(dateStr) {
   if (!dateStr) return null;
   const parsed = new Date(dateStr);
   if (!isNaN(parsed.getTime())) {
-    return parsed.toISOString().split('T')[0];
+    const d = parsed.getDate();
+    const m = parsed.getMonth() + 1;
+    const y = parsed.getFullYear();
+    return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
   }
   const usMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (usMatch) {
     const [, m, d, y] = usMatch;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
   }
   return null;
 }
