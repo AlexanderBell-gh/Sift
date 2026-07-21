@@ -12,10 +12,16 @@ export function formatPrice(value: number | null): string | null {
 
 export function parseDate(dateString: string | null): Date | null {
   if (!dateString) return null;
-  const parts = dateString.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (parts) {
-    const [, d, m, y] = parts;
-    return new Date(Number(y), Number(m) - 1, Number(d));
+  const numMatch = dateString.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (numMatch) {
+    let [, a, b, y] = numMatch;
+    if (Number(a) > 12) {
+      return new Date(Number(y), Number(b) - 1, Number(a));
+    }
+    if (Number(b) > 12) {
+      return new Date(Number(y), Number(a) - 1, Number(b));
+    }
+    return new Date(Number(y), Number(b) - 1, Number(a));
   }
   const date = new Date(dateString);
   return isNaN(date.getTime()) ? null : date;

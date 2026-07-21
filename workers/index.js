@@ -74,10 +74,16 @@ function normalizeDateString(dateStr) {
     const y = parsed.getFullYear();
     return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
   }
-  const usMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (usMatch) {
-    const [, m, d, y] = usMatch;
-    return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+  const numMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (numMatch) {
+    let [, a, b, y] = numMatch;
+    if (Number(a) > 12) {
+      return `${String(a).padStart(2, '0')}-${String(b).padStart(2, '0')}-${y}`;
+    }
+    if (Number(b) > 12) {
+      return `${String(b).padStart(2, '0')}-${String(a).padStart(2, '0')}-${y}`;
+    }
+    return `${String(b).padStart(2, '0')}-${String(a).padStart(2, '0')}-${y}`;
   }
   return null;
 }
