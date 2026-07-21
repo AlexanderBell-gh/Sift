@@ -22,6 +22,7 @@
 - `verbatimModuleSyntax: true` — explicit `import type` required for type-only imports
 - Workers: plain JS with ESM imports, no TS, no bundler
 - API base URL hardcoded in `src/lib/api.ts` and `src/contexts/AuthContext.tsx`
+- Google Client ID from `VITE_GOOGLE_CLIENT_ID` env var (Vite build-time). Must be set in Cloudflare Pages dashboard (Production) or `.env` for local dev. Worker uses separate `GOOGLE_CLIENT_ID` secret — both must match.
 - Dark mode: `.dark` class on `<html>`, flash-prevention script in `index.html` `<head>`
 - No state management library — `useState`/`useEffect` + Context only
 - Hand-rolled JWT via Web Crypto API (not a library)

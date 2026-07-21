@@ -62,8 +62,17 @@ Update `database_id` in `workers/wrangler.toml`.
 ```bash
 pnpm exec wrangler secret put ADMIN_SECRET    # Admin registration
 pnpm exec wrangler secret put JWT_SECRET      # JWT signing
-pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
+pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth (Worker)
 ```
+
+### Google OAuth — frontend env var
+
+The frontend reads the Google Client ID from `VITE_GOOGLE_CLIENT_ID` (Vite build-time env). Set it in two places:
+
+- **Local dev:** create `.env` (gitignored) with `VITE_GOOGLE_CLIENT_ID=your-client-id`
+- **Production:** Cloudflare Pages → siftsearch → Settings → Environment variables → add `VITE_GOOGLE_CLIENT_ID` (Production branch), then redeploy
+
+This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the Worker.
 
 ## Search Flow
 
