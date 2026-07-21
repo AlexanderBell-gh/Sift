@@ -37,6 +37,8 @@ jobs:
 
       - name: Build frontend
         run: pnpm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
       - name: Check Cloudflare secrets
         run: |
