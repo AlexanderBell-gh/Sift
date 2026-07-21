@@ -33,14 +33,30 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  async function handleGoogleResponse(response: { credential: string }) {
+    setLoading(true);
+    setError('');
+    try {
+      await loginWithGoogle(response.credential);
+      showToast('Signed in with Google', 'success');
+      navigate('/search');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    if (activeTab !== 'register' || !googleBtnRef.current) return;
+    if (activeTab !== 'register' || !googleBtnRef.current || !googleClientId) return;
 
     const interval = setInterval(() => {
       if (window.google?.accounts?.id && googleBtnRef.current) {
         clearInterval(interval);
         window.google.accounts.id.initialize({
-          client_id: '343280865033-44i2lesgqpnieo23ami46pomaesqnkcm.apps.googleusercontent.com',
+          client_id: googleClientId,
           callback: handleGoogleResponse,
         });
         window.google.accounts.id.renderButton(googleBtnRef.current, {
@@ -56,21 +72,7 @@ export default function AuthPage() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [activeTab]);
-
-  async function handleGoogleResponse(response: { credential: string }) {
-    setLoading(true);
-    setError('');
-    try {
-      await loginWithGoogle(response.credential);
-      showToast('Signed in with Google', 'success');
-      navigate('/search');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed');
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [activeTab, googleClientId]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -201,7 +203,15 @@ export default function AuthPage() {
           </div>
         )}
 
-        {activeTab === 'register' && <div ref={googleBtnRef} className="google-btn-wrapper" />}
+        {activeTab === 'register' && (
+          googleClientId ? (
+            <div ref={googleBtnRef} className="google-btn-wrapper" />
+          ) : (
+            <div className="auth-error" role="alert">
+              Google Sign-In is not configured (VITE_GOOGLE_CLIENT_ID missing)
+            </div>
+          )
+        )}
 
         <div className="auth-footer">
           {activeTab === 'signin' && (
