@@ -1,30 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Loader2 } from 'lucide-react';
-import type { SearchResult } from '../types';
-import { searchProducts, addToWatchlist, removeFromWatchlist, getPinnedIds, getSearchSuggestions, searchAutocomplete, type AutocompleteProduct } from '../lib/api';
+import { Search } from 'lucide-react';
+import { getSearchSuggestions, searchAutocomplete, type AutocompleteProduct } from '../lib/api';
 import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
-import { useAuth } from '../contexts/AuthContext';
-import SearchResultCard from './SearchResultCard';
 import NavHeader from './NavHeader';
-import { Toast } from './ui/Toast';
-import { useToast } from './ui/useToast';
-import { Modal } from './ui/Modal';
-import { Button } from './ui/Button';
 import { StoreSelect } from './ui/StoreSelect';
 import { StoreOffers } from './StoreOffers';
 import { STORES } from '../lib/stores';
 
 export default function SearchPage() {
-  const navigate = useNavigate();
-  const { token, user } = useAuth();
   const [query, setQuery] = useState('');
   const queryRef = useRef(query);
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pinned, setPinned] = useState<Map<string, string>>(new Map());
-  const { toast, showToast, hideToast } = useToast();
 
   const [history, setHistory] = useState<string[]>(() => getHistory());
 
@@ -35,9 +20,6 @@ export default function SearchPage() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const suggestionsRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const [showLimitModal, setShowLimitModal] = useState(false);
-  const [limitReason, setLimitReason] = useState<'trial_expired' | 'watchlist_limit' | null>(null);
 
   const [selectedStores, setSelectedStores] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('sift-selected-stores');
@@ -59,16 +41,6 @@ export default function SearchPage() {
   useEffect(() => {
     queryRef.current = query;
   }, [query]);
-
-  useEffect(() => {
-    if (!token) return;
-    getPinnedIds(token).then(items => {
-      setPinned(new Map(items.map(i => [i.product_id, i.id])));
-    }).catch(err => {
-      console.error('Failed to fetch pinned items', err);
-      showToast('Could not load your watchlist. Please try again.', 'error');
-    });
-  }, [token]);
 
   useEffect(() => {
     if (query.length < 2) {
@@ -117,7 +89,7 @@ export default function SearchPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSearch = useCallback(async (searchQuery?: string) => {
+  const handleSearch = useCallback((searchQuery?: string) => {
     const q = (searchQuery ?? queryRef.current).trim();
     if (!q) return;
 
@@ -125,28 +97,11 @@ export default function SearchPage() {
     setShowHistory(false);
     setHistory(addSearch(q));
 
-    if (selectedStores.size > 0) {
-      const storesToSearch = STORES.filter((s) => selectedStores.has(s.id));
-      storesToSearch.forEach((store) => {
-        window.open(store.searchUrl(q), '_blank');
-      });
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await searchProducts(q, token || undefined);
-      setResults(data.results || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
-      setResults([]);
-      showToast(err instanceof Error ? err.message : 'Search failed', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [token, user, selectedStores]);
+    const storesToSearch = STORES.filter((s) => selectedStores.has(s.id));
+    storesToSearch.forEach((store) => {
+      window.open(store.searchUrl(q), '_blank');
+    });
+  }, [selectedStores]);
 
   function selectSuggestion(suggestion: string) {
     setQuery(suggestion);
@@ -187,29 +142,6 @@ export default function SearchPage() {
     }
   }
 
-  async function handlePin(result: SearchResult) {
-    if (!token) return;
-    try {
-      if (pinned.has(result.id)) {
-        const wlId = pinned.get(result.id)!;
-        await removeFromWatchlist(token, wlId);
-        setPinned(prev => { const next = new Map(prev); next.delete(result.id); return next; });
-        showToast('Removed from watchlist', 'info');
-      } else {
-        if (user?.isTrial && pinned.size >= 5) {
-          setLimitReason('watchlist_limit');
-          setShowLimitModal(true);
-          return;
-        }
-        const item = await addToWatchlist(token, result);
-        setPinned(prev => { const next = new Map(prev); next.set(item.product_id, item.id); return next; });
-        showToast('Pinned to watchlist', 'success');
-      }
-    } catch {
-      showToast('Failed to update watchlist', 'error');
-    }
-  }
-
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <NavHeader />
@@ -246,14 +178,10 @@ export default function SearchPage() {
 
                   <button
                     type="submit"
-                    disabled={loading || !query.trim()}
+                    disabled={!query.trim()}
                     className="search-button"
                   >
-                    {loading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      'Search'
-                    )}
+                    Search
                   </button>
 
                   {showSuggestions && (suggestions.length > 0 || autocompleteProducts.length > 0) && (
@@ -352,64 +280,7 @@ export default function SearchPage() {
           </section>
 
           <StoreOffers />
-
-          <div className="max-w-6xl mx-auto px-6 pb-24">
-            {error && (
-              <div className="max-w-2xl mx-auto mb-6 p-4 bg-[var(--danger)]/10 border border-[var(--danger)]/20 rounded-lg">
-                <p className="text-[var(--danger)] text-sm">{error}</p>
-              </div>
-            )}
-
-            {loading && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="product-card animate-pulse">
-                    <div className="skeleton h-44 rounded-t-2xl" />
-                    <div className="p-4 space-y-3">
-                      <div className="skeleton h-3 w-16 rounded" />
-                      <div className="skeleton h-4 w-3/4 rounded" />
-                      <div className="skeleton h-3 w-12 rounded" />
-                      <div className="skeleton h-6 w-20 rounded" />
-                      <div className="skeleton h-3 w-24 rounded" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!loading && (
-              <>
-                {results.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {results.map((result) => (
-                      <SearchResultCard
-                        key={result.id}
-                        result={result}
-                        authenticated={!!token}
-                        pinned={pinned.has(result.id)}
-                        onPin={() => handlePin(result)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
         </>
-
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-
-      <Modal isOpen={showLimitModal} onClose={() => setShowLimitModal(false)} title="Watchlist limit reached">
-        <p className="text-sm mb-6" style={{ color: 'var(--muted)' }}>
-          {limitReason === 'trial_expired'
-            ? 'Trial period ended, sign up to continue using.'
-            : 'Trial accounts are limited to 5 watchlist items. Sign up for unlimited.'}
-        </p>
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setShowLimitModal(false)}>Close</Button>
-          <Button onClick={() => { setShowLimitModal(false); navigate('/'); }}>Sign up now</Button>
-        </div>
-      </Modal>
     </div>
   );
 }
