@@ -65,7 +65,19 @@ function generateId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-
+function normalizeDateString(dateStr) {
+  if (!dateStr) return null;
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0];
+  }
+  const usMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (usMatch) {
+    const [, m, d, y] = usMatch;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  return null;
+}
 
 async function logAudit(env, entry) {
   const id = `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1179,7 +1191,7 @@ async function handleRequest(request, env) {
           result.prices?.unit_price ?? null,
           result.prices?.currency || 'GBP',
           result.loyalty_type || null,
-          result.offer_expires_at || null,
+          normalizeDateString(result.offer_expires_at),
           result.product_url || '',
           result.is_on_offer ? 1 : 0,
           result.category || null,
@@ -1254,7 +1266,7 @@ async function handleRequest(request, env) {
         [
           newNormal, newLoyalty, newUnit,
           matchedResult.image_url,
-          matchedResult.offer_expires_at || item.offer_expires_at,
+          normalizeDateString(matchedResult.offer_expires_at) || item.offer_expires_at,
           matchedResult.is_on_offer ? 1 : (item.is_on_offer),
           Date.now(),
           itemId,
