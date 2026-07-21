@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
-import { getSearchSuggestions, searchAutocomplete, type AutocompleteProduct } from '../lib/api';
+import { searchAutocomplete, type AutocompleteProduct } from '../lib/api';
 import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 import NavHeader from './NavHeader';
 import { StoreSelect } from './ui/StoreSelect';
@@ -13,11 +13,9 @@ export default function SearchPage() {
 
   const [history, setHistory] = useState<string[]>(() => getHistory());
 
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [autocompleteProducts, setAutocompleteProducts] = useState<AutocompleteProduct[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
   const suggestionsRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,7 +42,6 @@ export default function SearchPage() {
 
   useEffect(() => {
     if (query.length < 2) {
-      setSuggestions([]);
       setAutocompleteProducts([]);
       setShowSuggestions(false);
       return;
@@ -57,23 +54,11 @@ export default function SearchPage() {
 
     setShowHistory(false);
 
-    const timeoutId = setTimeout(async () => {
-      try {
-        const [suggestionsData, autocompleteData] = await Promise.all([
-          getSearchSuggestions(query),
-          searchAutocomplete(query),
-        ]);
-        setSuggestions(suggestionsData);
-        setAutocompleteProducts(autocompleteData);
-        setShowSuggestions(suggestionsData.length > 0 || autocompleteData.length > 0);
-        setSelectedIndex(-1);
-      } catch (err) {
-        console.error('Autocomplete failed', err);
-        setSuggestions([]);
-        setAutocompleteProducts([]);
-        setShowSuggestions(false);
-      }
-    }, 300);
+    const timeoutId = setTimeout(() => {
+      const results = searchAutocomplete(query);
+      setAutocompleteProducts(results);
+      setShowSuggestions(results.length > 0);
+    }, 150);
 
     return () => clearTimeout(timeoutId);
   }, [query]);
@@ -107,7 +92,6 @@ export default function SearchPage() {
     setQuery(suggestion);
     setShowSuggestions(false);
     setShowHistory(false);
-    setSelectedIndex(-1);
     handleSearch(suggestion);
   }
 
@@ -124,21 +108,9 @@ export default function SearchPage() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (!showSuggestions || suggestions.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : 0));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev > 0 ? prev - 1 : suggestions.length - 1));
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      e.preventDefault();
-      selectSuggestion(suggestions[selectedIndex]);
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
       setShowSuggestions(false);
       setShowHistory(false);
-      setSelectedIndex(-1);
     }
   }
 
@@ -167,7 +139,7 @@ export default function SearchPage() {
                       if (query.length < 2 && history.length > 0) {
                         setShowHistory(true);
                         setShowSuggestions(false);
-                      } else if (suggestions.length > 0) {
+                      } else if (autocompleteProducts.length > 0) {
                         setShowSuggestions(true);
                       }
                     }}
@@ -184,60 +156,25 @@ export default function SearchPage() {
                     Search
                   </button>
 
-                  {showSuggestions && (suggestions.length > 0 || autocompleteProducts.length > 0) && (
+                  {showSuggestions && autocompleteProducts.length > 0 && (
                     <div
                       className="suggestions-dropdown"
                       role="listbox"
                       aria-label="Search suggestions"
                       aria-expanded={showSuggestions}
                     >
-                      {suggestions.map((suggestion, index) => (
+                      {autocompleteProducts.map((product) => (
                         <button
-                          key={suggestion}
+                          key={product.name}
                           type="button"
-                          onClick={() => selectSuggestion(suggestion)}
-                          className={`suggestion-item ${index === selectedIndex ? 'selected' : ''}`}
+                          onClick={() => selectSuggestion(product.name)}
+                          className="suggestion-item"
                           role="option"
-                          aria-selected={index === selectedIndex}
-                          aria-label={suggestion}
                         >
                           <Search className="w-4 h-4 opacity-50" />
-                          {suggestion}
+                          <span className="text-sm">{product.name}</span>
                         </button>
                       ))}
-
-                      {autocompleteProducts.length > 0 && (
-                        <>
-                          <div className="suggestions-header">
-                            <span>Products</span>
-                          </div>
-                          {autocompleteProducts.map((product) => (
-                            <button
-                              key={product.name}
-                              type="button"
-                              onClick={() => selectSuggestion(product.name)}
-                              className="suggestion-item"
-                              role="option"
-                            >
-                              {product.image_url ? (
-                                <img
-                                  src={product.image_url}
-                                  alt={product.name}
-                                  className="w-8 h-8 rounded object-contain"
-                                />
-                              ) : (
-                                <div className="w-8 h-8 rounded bg-[var(--border)]" />
-                              )}
-                              <div className="flex flex-col items-start">
-                                <span className="text-sm">{product.name}</span>
-                                {product.brand && (
-                                  <span className="text-xs text-[var(--muted)]">{product.brand}</span>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                        </>
-                      )}
                     </div>
                   )}
 
@@ -266,7 +203,6 @@ export default function SearchPage() {
                           onClick={() => selectHistory(item)}
                           className="suggestion-item"
                           role="option"
-                          aria-selected={selectedIndex === history.indexOf(item)}
                           aria-label={item}
                         >
                           <Search className="w-4 h-4 opacity-50" />

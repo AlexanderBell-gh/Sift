@@ -1,3 +1,5 @@
+import Fuse from 'fuse.js';
+import ukProducts from '../data/uk-products.json';
 import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AdminUserDetail, AdminAnalytics, AuditLog, TrialUser, User } from '../types';
 
 const API_BASE_URL = 'https://siftapi.blackmesa.workers.dev';
@@ -39,47 +41,20 @@ export async function searchProducts(query: string, token?: string): Promise<{
   return handleResponse(response);
 }
 
-export async function getSearchSuggestions(query: string): Promise<string[]> {
-  if (query.length < 2) return [];
-  const params = new URLSearchParams({ q: query });
-  const response = await fetch(`${API_BASE_URL}/api/search/suggest?${params}`);
-  const data = await handleResponse<{ suggestions: Array<{ value: string }> | string[] }>(response);
-  return data.suggestions.map(s => typeof s === 'string' ? s : s.value);
-}
-
 export interface AutocompleteProduct {
   name: string;
-  brand: string;
-  image_url: string | null;
-  source: 'openfoodfacts';
 }
 
-export async function searchAutocomplete(query: string): Promise<AutocompleteProduct[]> {
+const fuse = new Fuse(ukProducts, {
+  keys: ['name'],
+  threshold: 0.4,
+  minMatchCharLength: 1,
+  shouldSort: true,
+});
+
+export function searchAutocomplete(query: string): AutocompleteProduct[] {
   if (query.length < 2) return [];
-  try {
-    const params = new URLSearchParams({
-      search_terms: query,
-      search_simple: '1',
-      action: 'process',
-      json: '1',
-      page_size: '5',
-      fields: 'product_name,brands,image_front_small_url',
-    });
-    const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?${params}`);
-    const data = await response.json();
-    if (!data.products) return [];
-    return data.products
-      .filter((p: Record<string, unknown>) => p.product_name)
-      .slice(0, 5)
-      .map((p: Record<string, unknown>) => ({
-        name: p.product_name as string,
-        brand: (p.brands as string) || '',
-        image_url: (p.image_front_small_url as string) || null,
-        source: 'openfoodfacts' as const,
-      }));
-  } catch {
-    return [];
-  }
+  return fuse.search(query.slice(0, 50)).slice(0, 8).map(r => ({ name: r.item.name }));
 }
 
 export async function getPinnedIds(token: string): Promise<{ id: string; product_id: string }[]> {
