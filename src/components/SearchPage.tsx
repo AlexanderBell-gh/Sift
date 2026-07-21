@@ -64,7 +64,10 @@ export default function SearchPage() {
     if (!token) return;
     getPinnedIds(token).then(items => {
       setPinned(new Map(items.map(i => [i.product_id, i.id])));
-    }).catch(() => {});
+    }).catch(err => {
+      console.error('Failed to fetch pinned items', err);
+      showToast('Could not load your watchlist. Please try again.', 'error');
+    });
   }, [token]);
 
   useEffect(() => {
@@ -72,6 +75,11 @@ export default function SearchPage() {
       setSuggestions([]);
       setAutocompleteProducts([]);
       setShowSuggestions(false);
+      return;
+    }
+
+    const input = inputRef.current;
+    if (!input || document.activeElement !== input) {
       return;
     }
 
@@ -87,7 +95,8 @@ export default function SearchPage() {
         setAutocompleteProducts(autocompleteData);
         setShowSuggestions(suggestionsData.length > 0 || autocompleteData.length > 0);
         setSelectedIndex(-1);
-      } catch {
+      } catch (err) {
+        console.error('Autocomplete failed', err);
         setSuggestions([]);
         setAutocompleteProducts([]);
         setShowSuggestions(false);
@@ -202,7 +211,7 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen bg-[var(--bg)]">
       <NavHeader />
 
       <>
@@ -211,7 +220,7 @@ export default function SearchPage() {
               <h1>Explore Thousands of Offers <br /><span className="text-gradient">In One Place</span><br /></h1>
               <p>Find the best grocery offers across 11 UK supermarkets.<br /> Search up to 3 stores simultaneously</p>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef}>
+              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef} role="search" aria-label="Search for products">
                   <StoreSelect
                     selected={selectedStores}
                     onChange={setSelectedStores}
@@ -248,13 +257,21 @@ export default function SearchPage() {
                   </button>
 
                   {showSuggestions && (suggestions.length > 0 || autocompleteProducts.length > 0) && (
-                    <div className="suggestions-dropdown">
+                    <div
+                      className="suggestions-dropdown"
+                      role="listbox"
+                      aria-label="Search suggestions"
+                      aria-expanded={showSuggestions}
+                    >
                       {suggestions.map((suggestion, index) => (
                         <button
                           key={suggestion}
                           type="button"
                           onClick={() => selectSuggestion(suggestion)}
                           className={`suggestion-item ${index === selectedIndex ? 'selected' : ''}`}
+                          role="option"
+                          aria-selected={index === selectedIndex}
+                          aria-label={suggestion}
                         >
                           <Search className="w-4 h-4 opacity-50" />
                           {suggestion}
@@ -272,6 +289,7 @@ export default function SearchPage() {
                               type="button"
                               onClick={() => selectSuggestion(product.name)}
                               className="suggestion-item"
+                              role="option"
                             >
                               {product.image_url ? (
                                 <img
@@ -296,13 +314,19 @@ export default function SearchPage() {
                   )}
 
                   {showHistory && history.length > 0 && (
-                    <div className="suggestions-dropdown">
+                    <div
+                      className="suggestions-dropdown"
+                      role="listbox"
+                      aria-label="Recent searches"
+                      aria-expanded={showHistory}
+                    >
                       <div className="suggestions-header">
                         <span>Recent searches</span>
                         <button
                           type="button"
                           onClick={handleClearHistory}
                           className="suggestions-clear"
+                          aria-label="Clear recent searches"
                         >
                           Clear
                         </button>
@@ -313,6 +337,9 @@ export default function SearchPage() {
                           type="button"
                           onClick={() => selectHistory(item)}
                           className="suggestion-item"
+                          role="option"
+                          aria-selected={selectedIndex === history.indexOf(item)}
+                          aria-label={item}
                         >
                           <Search className="w-4 h-4 opacity-50" />
                           {item}
@@ -350,18 +377,22 @@ export default function SearchPage() {
               </div>
             )}
 
-            {!loading && results.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {results.map((result) => (
-                  <SearchResultCard
-                    key={result.id}
-                    result={result}
-                    authenticated={!!token}
-                    pinned={pinned.has(result.id)}
-                    onPin={() => handlePin(result)}
-                  />
-                ))}
-              </div>
+            {!loading && (
+              <>
+                {results.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {results.map((result) => (
+                      <SearchResultCard
+                        key={result.id}
+                        result={result}
+                        authenticated={!!token}
+                        pinned={pinned.has(result.id)}
+                        onPin={() => handlePin(result)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </>
