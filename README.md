@@ -8,7 +8,7 @@ Real-time UK supermarket price comparison. Select up to 3 stores, search opens e
 
 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, product autocomplete via Open Food Facts API, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
 
-**Browser Extension (Phase 3):** Chrome extension that extracts product data (name, price, loyalty price, was-price, offer badge, offer expiry date, image, link) from store pages via DOM selectors and JSON-LD structured data. Adds products directly to Sift watchlist. Matches website design system.
+**Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Now in a separate repo: [sift-extension](https://github.com/<your-username>/sift-extension)
 
 ## Tech Stack
 
@@ -19,7 +19,7 @@ Real-time UK supermarket price comparison. Select up to 3 stores, search opens e
 | Search | Client-side redirect (no backend search) |
 | Auth | Custom JWT + Google OAuth |
 | Autocomplete | Open Food Facts API (client-side) |
-| Extension | WXT (Chrome MV3, cross-browser ready) |
+| Extension | WXT (Chrome MV3) — [sift-extension](https://github.com/Alex-Projects-Master/sift-extension) |
 | CI/CD | GitHub Actions + pnpm 11 |
 
 ## Getting Started
@@ -30,17 +30,6 @@ pnpm run dev
 ```
 
 Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account.
-
-### Browser Extension
-
-```bash
-cd extension
-pnpm install
-pnpm run dev     # Dev mode with hot reload
-pnpm run build   # Build for production
-```
-
-Load `extension/.output/chrome-mv3/` in Chrome via `chrome://extensions` → Load unpacked.
 
 ## Build & Deploy
 
@@ -95,9 +84,6 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql)
-extension/        Chrome browser extension (WXT, MV3)
-  entrypoints/    Content script + popup UI
-  src/lib/        Extract logic, API client, types
 public/           Store logo SVGs + favicon.svg
 markdowns/        Design system, project context, changelog, fixes
 ```
