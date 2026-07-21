@@ -1,6 +1,6 @@
 # Sift
 
-Real-time UK supermarket price comparison. Select up to 3 stores, search opens each store's results page in a new tab. Browser extension extracts product data directly from store pages.
+Real-time UK supermarket price comparison. Select up to 3 stores, search opens each store's results page in a new tab.
 
 **Live:** https://siftsearch.pages.dev
 
@@ -8,7 +8,7 @@ Real-time UK supermarket price comparison. Select up to 3 stores, search opens e
 
 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, product autocomplete via Open Food Facts API, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
 
-**Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Now in a separate repo: [sift-extension](https://github.com/<your-username>/sift-extension)
+**Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
 
 ## Tech Stack
 
