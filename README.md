@@ -6,7 +6,7 @@ Real-time UK supermarket price comparison. Select up to 3 stores, search opens e
 
 ## Features
 
-11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, product autocomplete via Open Food Facts API, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
+11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, local autocomplete via UK product dictionary, store offers horizontal scroll (links to each store's offers page), watchlist with price tracking, price alerts, cron auto-refresh (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
 
 **Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
 
@@ -18,7 +18,7 @@ Real-time UK supermarket price comparison. Select up to 3 stores, search opens e
 | Backend | Cloudflare Workers + D1 (SQLite) |
 | Search | Client-side redirect (no backend search) |
 | Auth | Custom JWT + Google OAuth |
-| Autocomplete | Open Food Facts API (client-side) |
+| Autocomplete | Local UK product dictionary + Fuse.js (client-side) |
 | Extension | WXT (Chrome MV3) — [sift-extension](https://github.com/Alex-Projects-Master/sift-extension) |
 | CI/CD | GitHub Actions + pnpm 11 |
 
@@ -68,7 +68,7 @@ pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth
 ## Search Flow
 
 1. Select up to 3 stores via multi-select dropdown (persisted in localStorage)
-2. Type query → autocomplete from Open Food Facts API (debounced 300ms)
+2. Type query → autocomplete from local UK product dictionary (Fuse.js, debounced 150ms)
 3. Press enter → opens each selected store's search URL in new tab
 4. Browse Store Offers → horizontal scroll cards link to each store's offers page
 5. No backend search involved
