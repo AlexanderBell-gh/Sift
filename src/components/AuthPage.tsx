@@ -44,6 +44,7 @@ export default function AuthPage() {
       navigate('/search');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
+      showToast(err instanceof Error ? err.message : 'Google sign-in failed', 'error');
     } finally {
       setLoading(false);
     }
@@ -92,6 +93,7 @@ export default function AuthPage() {
       navigate('/search');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
+      showToast(err instanceof Error ? err.message : 'Something went wrong', 'error');
     } finally {
       setLoading(false);
     }
