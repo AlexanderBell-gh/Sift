@@ -1367,7 +1367,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: var(--bg);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 5%, var(--bg)) 0%, var(--surface) 100%);
   padding: 40px 24px;
   font-family: var(--font-body);
   color: var(--text);
