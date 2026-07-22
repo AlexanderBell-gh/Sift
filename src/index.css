@@ -767,6 +767,9 @@ body {
   align-items: center;
   gap: 4px;
 }
+.product-card-loyalty.expired {
+  opacity: 0.5;
+}
 
 .product-card-loyalty-label {
   font-family: var(--font-mono);
@@ -879,6 +882,13 @@ body {
   font-size: 20px;
   font-weight: 700;
   color: var(--primary);
+}
+
+.lowest-core-was {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 /* Admin Screen Layout */

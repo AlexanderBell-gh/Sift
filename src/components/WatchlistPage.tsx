@@ -217,23 +217,44 @@ export default function WatchlistPage() {
                     {best.category && (
                       <span className={`product-card-category category-${best.category.toLowerCase().replace(/\s+/g, '-')}`}>{best.category}</span>
                     )}
-                    <div className="product-card-price">
-                      {best.prices.normal !== null && best.prices.loyalty !== null && (
-                        <span className="lowest-core-old">£{best.prices.normal.toFixed(2)}</span>
-                      )}
-                      <span className="lowest-core-value">
-                        £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
-                      </span>
-                    </div>
-                    {best.prices.loyalty !== null && (
-                      <span className="product-card-loyalty">
-                        <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{getLoyaltyLabel(best.store)}</span>
-                      </span>
-                    )}
-                    {best.offer_expires_at && (
-                      <span className={`product-card-offer${isOfferExpired(best.offer_expires_at) ? ' expired' : ''}`}>
-                        {isOfferExpired(best.offer_expires_at) ? 'Offer expired' : `Offer ends ${formatDate(best.offer_expires_at)}`}
-                      </span>
+                    {isOfferExpired(best.offer_expires_at) ? (
+                      <>
+                        <div className="product-card-price">
+                          <span className="lowest-core-value">
+                            £{(best.prices.normal ?? best.prices.loyalty ?? 0).toFixed(2)}
+                          </span>
+                          {best.prices.normal !== null && best.prices.loyalty !== null && (
+                            <span className="lowest-core-was">was £{best.prices.loyalty.toFixed(2)}</span>
+                          )}
+                        </div>
+                        {best.prices.loyalty !== null && (
+                          <span className="product-card-loyalty expired">
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{getLoyaltyLabel(best.store)}</span>
+                          </span>
+                        )}
+                        <span className="product-card-offer expired">Offer expired</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="product-card-price">
+                          {best.prices.normal !== null && best.prices.loyalty !== null && (
+                            <span className="lowest-core-old">£{best.prices.normal.toFixed(2)}</span>
+                          )}
+                          <span className="lowest-core-value">
+                            £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
+                          </span>
+                        </div>
+                        {best.prices.loyalty !== null && (
+                          <span className="product-card-loyalty">
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{getLoyaltyLabel(best.store)}</span>
+                          </span>
+                        )}
+                        {best.offer_expires_at && (
+                          <span className="product-card-offer">
+                            Offer ends {formatDate(best.offer_expires_at)}
+                          </span>
+                        )}
+                      </>
                     )}
                     <p>Updated {formatTimeAgo(lastUpdated)}</p>
                   </div>

@@ -1410,6 +1410,12 @@ async function handleScheduled(env) {
   for (const item of items) {
     if (!isOfferExpired(item.offer_expires_at, today)) continue;
 
+    await execute(
+      env,
+      `UPDATE watchlist SET is_on_offer = 0, updated_at = ? WHERE id = ?`,
+      [Date.now(), item.id]
+    );
+
     const existing = await queryOne(
       env,
       "SELECT id FROM alerts WHERE watchlist_id = ? AND type = 'offer_expiry'",
@@ -1433,7 +1439,7 @@ async function handleScheduled(env) {
     totalAlerts++;
   }
 
-  console.log(`Cron: created ${totalAlerts} offer_expiry alerts`);
+  console.log(`Cron: created ${totalAlerts} offer_expiry alerts, marked is_on_offer=0 for expired`);
 }
 
 function isOfferExpired(dateStr, today) {
@@ -1442,5 +1448,5 @@ function isOfferExpired(dateStr, today) {
   if (parts.length !== 3) return false;
   const [d, m, y] = parts.map(Number);
   const expiryDate = new Date(y, m - 1, d);
-  return expiryDate < today;
+  return expiryDate <= today;
 }

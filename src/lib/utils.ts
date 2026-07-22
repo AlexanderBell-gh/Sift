@@ -42,5 +42,5 @@ export function isOfferExpired(dateString: string | null): boolean {
   if (!date) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return date < today;
+  return date <= today;
 }
