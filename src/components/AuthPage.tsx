@@ -114,7 +114,7 @@ export default function AuthPage() {
             <div className="logo-scan-line" />
           </div>
           <h2 className="auth-title">Welcome to Sift</h2>
-          <p className="auth-subtitle">Find and keep track of your offers</p>
+          <p className="auth-subtitle">Find and keep track of those offers</p>
         </div>
 
         <div className="auth-tabs" role="tablist">
