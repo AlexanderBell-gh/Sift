@@ -50,7 +50,7 @@ export default function AuthPage() {
   }
 
   useEffect(() => {
-    if (activeTab !== 'register' || !googleBtnRef.current || !googleClientId) return;
+    if (activeTab !== 'signin' || !googleBtnRef.current || !googleClientId) return;
 
     const interval = setInterval(() => {
       if (window.google?.accounts?.id && googleBtnRef.current) {
@@ -195,7 +195,7 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {activeTab === 'register' && (
+        {activeTab === 'signin' && (
           <div className="auth-divider">
             <span className="auth-divider-line" />
             <span className="auth-divider-text">or continue with</span>
@@ -203,7 +203,7 @@ export default function AuthPage() {
           </div>
         )}
 
-        {activeTab === 'register' && (
+        {activeTab === 'signin' && (
           googleClientId ? (
             <div ref={googleBtnRef} className="google-btn-wrapper" />
           ) : (
