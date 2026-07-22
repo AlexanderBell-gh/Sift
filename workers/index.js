@@ -1398,37 +1398,49 @@ export default {
 };
 
 async function handleScheduled(env) {
-  const MAX_ITEMS_PER_USER = 10;
-  const MAX_ITEMS_TOTAL = 100;
-  const FRESHNESS_MS = 6 * 60 * 60 * 1000;
-  const DELAY_MS = 500;
-  const MAX_CONSECUTIVE_FAILURES = 3;
+  const items = await queryAll(
+    env,
+    "SELECT * FROM watchlist WHERE offer_expires_at IS NOT NULL"
+  );
 
-  const users = await queryAll(env, 'SELECT DISTINCT user_id FROM watchlist');
-  let totalRefreshed = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   let totalAlerts = 0;
 
-  for (const { user_id } of users) {
-    if (totalRefreshed >= MAX_ITEMS_TOTAL) break;
+  for (const item of items) {
+    if (!isOfferExpired(item.offer_expires_at, today)) continue;
 
-    const items = await queryAll(
+    const existing = await queryOne(
       env,
-      'SELECT * FROM watchlist WHERE user_id = ? ORDER BY updated_at ASC LIMIT ?',
-      [user_id, MAX_ITEMS_PER_USER]
+      "SELECT id FROM alerts WHERE watchlist_id = ? AND type = 'offer_expiry'",
+      [item.id]
     );
+    if (existing) continue;
 
-    let consecutiveFailures = 0;
-
-    for (const item of items) {
-      if (totalRefreshed >= MAX_ITEMS_TOTAL) break;
-
-      const age = Date.now() - item.updated_at;
-      if (age < FRESHNESS_MS) continue;
-
-      // Search backend removed; no price refresh available
-      continue;
-    }
+    const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    await execute(
+      env,
+      `INSERT INTO alerts (id, user_id, watchlist_id, type, message, triggered_at, read)
+       VALUES (?, ?, ?, 'offer_expiry', ?, ?, 0)`,
+      [
+        alertId,
+        item.user_id,
+        item.id,
+        `Offer ended: ${item.product_name} at ${item.store}`,
+        Date.now(),
+      ]
+    );
+    totalAlerts++;
   }
 
-  console.log(`Cron: refreshed ${totalRefreshed} items, created ${totalAlerts} alerts`);
+  console.log(`Cron: created ${totalAlerts} offer_expiry alerts`);
+}
+
+function isOfferExpired(dateStr, today) {
+  if (!dateStr) return false;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return false;
+  const [d, m, y] = parts.map(Number);
+  const expiryDate = new Date(y, m - 1, d);
+  return expiryDate < today;
 }

@@ -36,3 +36,11 @@ export function formatDate(dateString: string): string {
     year: 'numeric',
   });
 }
+
+export function isOfferExpired(dateString: string | null): boolean {
+  const date = parseDate(dateString);
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date < today;
+}

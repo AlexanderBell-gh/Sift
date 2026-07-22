@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import { STORES } from '../lib/stores';
-import { formatDate } from '../lib/utils';
+import { formatDate, isOfferExpired } from '../lib/utils';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import { Toast } from './ui/Toast';
@@ -231,8 +231,8 @@ export default function WatchlistPage() {
                       </span>
                     )}
                     {best.offer_expires_at && (
-                      <span className="product-card-offer">
-                        Offer ends {formatDate(best.offer_expires_at)}
+                      <span className={`product-card-offer${isOfferExpired(best.offer_expires_at) ? ' expired' : ''}`}>
+                        {isOfferExpired(best.offer_expires_at) ? 'Offer expired' : `Offer ends ${formatDate(best.offer_expires_at)}`}
                       </span>
                     )}
                     <p>Updated {formatTimeAgo(lastUpdated)}</p>

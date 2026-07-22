@@ -838,6 +838,9 @@ body {
   font-size: 11px;
   color: var(--warning);
 }
+.product-card-offer.expired {
+  color: var(--danger);
+}
 
 .store-logo {
   width: 16px;
