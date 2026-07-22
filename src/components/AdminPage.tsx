@@ -40,7 +40,18 @@ export default function AdminPage() {
   const [trialsStatus, setTrialsStatus] = useState('all');
   const [trialSearch, setTrialSearch] = useState('');
   const [auditFilter, setAuditFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const [loadingByTab, setLoadingByTab] = useState<Record<Tab, boolean>>({
+    dashboard: true,
+    users: false,
+    audit: false,
+    trials: false,
+  });
+  const [tabLoaded, setTabLoaded] = useState<Record<Tab, boolean>>({
+    dashboard: false,
+    users: false,
+    audit: false,
+    trials: false,
+  });
 
   useEffect(() => {
     if (!token || user?.role !== 'admin') {
@@ -48,45 +59,63 @@ export default function AdminPage() {
       return;
     }
     getAdminStats(token)
-      .then(setStats)
-      .catch(() => showToast('Failed to load stats', 'error'))
-      .finally(() => setLoading(false));
+      .then(data => {
+        setStats(data);
+        setTabLoaded(prev => ({ ...prev, dashboard: true }));
+      })
+      .catch(() => {
+        showToast('Failed to load stats', 'error');
+        setTabLoaded(prev => ({ ...prev, dashboard: true }));
+      })
+      .finally(() => setLoadingByTab(prev => ({ ...prev, dashboard: false })));
   }, [token, user, navigate]);
 
   const loadUsers = useCallback(async (page = 1, search = '', filter = 'users') => {
     if (!token) return;
+    setLoadingByTab(prev => ({ ...prev, users: true }));
     try {
       const data = await getAdminUsers(token, { page, limit: 20, search, filter });
       setUsers(data.users);
       setUsersPage(data.page);
       setUsersTotal(data.total);
       setUsersTotalPages(data.totalPages);
+      setTabLoaded(prev => ({ ...prev, users: true }));
     } catch {
       showToast('Failed to load users', 'error');
+    } finally {
+      setLoadingByTab(prev => ({ ...prev, users: false }));
     }
   }, [token, showToast]);
 
   const loadLogs = useCallback(async (page = 1) => {
     if (!token) return;
+    setLoadingByTab(prev => ({ ...prev, audit: true }));
     try {
       const data = await getAdminAudit(token, { page, limit: 20 });
       setLogs(data.logs);
       setLogsPage(data.page);
       setLogsTotalPages(data.totalPages);
+      setTabLoaded(prev => ({ ...prev, audit: true }));
     } catch {
       showToast('Failed to load audit logs', 'error');
+    } finally {
+      setLoadingByTab(prev => ({ ...prev, audit: false }));
     }
   }, [token, showToast]);
 
   const loadTrials = useCallback(async (page = 1, status = 'all', search = '') => {
     if (!token) return;
+    setLoadingByTab(prev => ({ ...prev, trials: true }));
     try {
       const data = await getAdminTrials(token, { page, limit: 20, status, search });
       setTrials(data.trials);
       setTrialsPage(data.page);
       setTrialsTotalPages(data.totalPages);
+      setTabLoaded(prev => ({ ...prev, trials: true }));
     } catch {
       showToast('Failed to load trials', 'error');
+    } finally {
+      setLoadingByTab(prev => ({ ...prev, trials: false }));
     }
   }, [token, showToast]);
 
@@ -94,7 +123,9 @@ export default function AdminPage() {
     if (tab === 'users') loadUsers(1, userSearch, userFilter);
     if (tab === 'audit') loadLogs(1);
     if (tab === 'trials') loadTrials(1, trialsStatus, trialSearch);
-  }, [tab]);
+  }, [tab, loadUsers, loadLogs, loadTrials, userSearch, userFilter, trialsStatus, trialSearch]);
+
+  // audit filter re-fetch handled inline in filter pill onClick
 
   async function handleDeleteUser(userId: string, username: string) {
     if (!token) return;
@@ -121,7 +152,12 @@ export default function AdminPage() {
 
   async function handleCleanupTrials() {
     if (!token) return;
-    if (!confirm('Delete all expired trial accounts?')) return;
+    const expiredCount = trials.filter(t => t.isExpired).length;
+    if (expiredCount === 0) {
+      showToast('No expired trials to clean', 'info');
+      return;
+    }
+    if (!confirm(`Delete ${expiredCount} expired trial account${expiredCount === 1 ? '' : 's'}?`)) return;
     try {
       const result = await cleanupExpiredTrials(token);
       showToast(`Deleted ${result.deletedCount} expired trials`, 'success');
@@ -152,6 +188,8 @@ export default function AdminPage() {
                 key={item.key}
                 onClick={() => setTab(item.key)}
                 className={`admin-nav-item ${tab === item.key ? 'active' : ''}`}
+                aria-label={item.label}
+                aria-current={tab === item.key ? 'page' : undefined}
               >
                 <item.icon className="w-5 h-5" />
                 {item.label}
@@ -170,7 +208,7 @@ export default function AdminPage() {
                 {tab === 'audit' && 'Audit Logs'}
                 {tab === 'trials' && 'Trial Management'}
               </h1>
-              <p style={{ color: 'var(--muted)', fontSize: '14px' }}>
+              <p className="admin-subtitle">
                 {tab === 'dashboard' && 'Real-time system health, active database metrics, and subscriber counts.'}
                 {tab === 'users' && 'Manage system privileges and active profiles.'}
                 {tab === 'audit' && 'Track admin actions and system events.'}
@@ -178,16 +216,24 @@ export default function AdminPage() {
               </p>
             </div>
             {tab === 'dashboard' && (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', background: 'rgba(22, 163, 74, 0.1)', color: 'var(--success)', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
+              <div className="engine-badge">
                 ● ENGINE ONLINE
               </div>
             )}
           </div>
 
-          {loading && (
+          {loadingByTab['dashboard'] && !tabLoaded['dashboard'] && tab === 'dashboard' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="h-28 rounded-2xl skeleton animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {loadingByTab[tab] && !tabLoaded[tab] && tab !== 'dashboard' && (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-xl skeleton animate-pulse" />
               ))}
             </div>
           )}
@@ -202,11 +248,18 @@ export default function AdminPage() {
             </div>
           )}
 
+          {tab === 'dashboard' && !loadingByTab['dashboard'] && !stats && (
+            <div className="empty-state-box">
+              <p className="empty-state-title">Stats unavailable</p>
+              <p className="empty-state-desc">Could not load dashboard statistics. Try refreshing the page.</p>
+            </div>
+          )}
+
           {tab === 'users' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted)' }} />
+                  <SearchIcon className="search-icon-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Search users..."
@@ -214,21 +267,19 @@ export default function AdminPage() {
                     onChange={e => setUserSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && loadUsers(1, userSearch, userFilter)}
                     className="admin-input"
-                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                   />
                 </div>
                 <select
                   value={userFilter}
                   onChange={e => { setUserFilter(e.target.value); loadUsers(1, userSearch, e.target.value); }}
                   className="admin-select"
-                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                 >
                   <option value="users">Regular Users</option>
                   <option value="trials">Trial Users</option>
                 </select>
               </div>
 
-              <p style={{ fontSize: '12px', color: 'var(--muted)' }}>{usersTotal} users found</p>
+              <p className="admin-meta">{usersTotal} users found</p>
 
               <div className="space-y-2">
                 {users.map(u => (
@@ -256,7 +307,7 @@ export default function AdminPage() {
                       <button
                         onClick={() => handleDeleteUser(u.id, u.username)}
                         className="user-row-delete-btn"
-                        title="Revoke Account"
+                        aria-label={`Delete user ${u.username}`}
                       >
                         ✕
                       </button>
@@ -283,7 +334,7 @@ export default function AdminPage() {
                 ].map(f => (
                   <button
                     key={f.key}
-                    onClick={() => setAuditFilter(f.key)}
+                    onClick={() => { setAuditFilter(f.key); loadLogs(1); }}
                     className={`audit-pill ${auditFilter === f.key ? 'active' : ''}`}
                   >
                     {f.label}
@@ -291,10 +342,10 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              {logs.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)' }}>
-                  <p style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text)', marginBottom: '4px' }}>No audit logs yet</p>
-                  <p style={{ fontSize: '14px', color: 'var(--muted)' }}>Audit entries appear when admin actions are taken</p>
+              {logs.length === 0 && !loadingByTab['audit'] ? (
+                <div className="audit-empty">
+                  <p className="audit-empty-title">No audit logs yet</p>
+                  <p className="audit-empty-desc">Audit entries appear when admin actions are taken</p>
                 </div>
               ) : (
                 <div className="audit-console">
@@ -332,7 +383,7 @@ export default function AdminPage() {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted)' }} />
+                  <SearchIcon className="search-icon-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Search trials..."
@@ -340,14 +391,12 @@ export default function AdminPage() {
                     onChange={e => setTrialSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && loadTrials(1, trialsStatus, trialSearch)}
                     className="admin-input"
-                    style={{ width: '100%', paddingLeft: '36px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                   />
                 </div>
                 <select
                   value={trialsStatus}
                   onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value, trialSearch); }}
                   className="admin-select"
-                  style={{ paddingLeft: '12px', paddingRight: '12px', paddingTop: '10px', paddingBottom: '10px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', fontSize: '14px' }}
                 >
                   <option value="all">All Trials</option>
                   <option value="active">Active</option>
@@ -356,7 +405,6 @@ export default function AdminPage() {
                 <button
                   onClick={handleCleanupTrials}
                   className="btn-danger"
-                  style={{ padding: '10px 16px' }}
                 >
                   Clean Expired
                 </button>
@@ -366,14 +414,14 @@ export default function AdminPage() {
                 {trials.map(t => (
                   <div key={t.id} className="trial-card">
                     <div>
-                      <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>{t.username}</p>
-                      <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{t.email}</p>
-                      <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
+                      <p className="trial-card-name">{t.username}</p>
+                      <p className="trial-card-email">{t.email}</p>
+                      <p className="trial-card-meta">
                         {t.productCount} pinned · Created {new Date(t.createdAt).toLocaleDateString('en-GB')}
                         {t.trialExpiresAt && ` · Expires ${new Date(t.trialExpiresAt).toLocaleDateString('en-GB')}`}
                       </p>
                     </div>
-                    <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '9999px', background: t.isExpired ? 'var(--border)' : 'rgba(22, 163, 74, 0.1)', color: t.isExpired ? 'var(--muted)' : 'var(--success)' }}>
+                    <span className={`trial-status ${t.isExpired ? 'trial-status-expired' : 'trial-status-active'}`}>
                       {t.isExpired ? 'Expired' : 'Active'}
                     </span>
                   </div>
@@ -404,21 +452,23 @@ function StatCard({ label, value }: { label: string; value: number }) {
 
 function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+    <div className="pagination-wrap">
       <button
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
-        style={{ padding: '6px', borderRadius: '8px', color: 'var(--muted)', opacity: page <= 1 ? 0.3 : 1, cursor: page <= 1 ? 'not-allowed' : 'pointer', background: 'none', border: 'none', transition: 'color 0.2s' }}
+        className="pagination-btn"
+        aria-label="Previous page"
       >
-        <ChevronLeft style={{ width: '16px', height: '16px' }} />
+        <ChevronLeft className="w-4 h-4" />
       </button>
-      <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{page} / {totalPages}</span>
+      <span className="pagination-label">{page} / {totalPages}</span>
       <button
         onClick={() => onChange(page + 1)}
         disabled={page >= totalPages}
-        style={{ padding: '6px', borderRadius: '8px', color: 'var(--muted)', opacity: page >= totalPages ? 0.3 : 1, cursor: page >= totalPages ? 'not-allowed' : 'pointer', background: 'none', border: 'none', transition: 'color 0.2s' }}
+        className="pagination-btn"
+        aria-label="Next page"
       >
-        <ChevronRight style={{ width: '16px', height: '16px' }} />
+        <ChevronRight className="w-4 h-4" />
       </button>
     </div>
   );
