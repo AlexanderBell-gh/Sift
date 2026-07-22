@@ -45,6 +45,7 @@ export default function AlertBell() {
   if (!token) return null;
 
   async function handleMarkRead(id: string) {
+    if (!token) return;
     await markAlertRead(token, id);
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
     setUnreadCount(prev => Math.max(0, prev - 1));
