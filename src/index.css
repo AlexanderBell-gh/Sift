@@ -2508,3 +2508,100 @@ body {
 }
 
 /* Watchlist product-row styles are defined in the Watchlist Screen section above */
+
+/* Extension Banner */
+.extension-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid rgba(255, 87, 1, 0.2);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  padding: 12px 0;
+  z-index: 99;
+  animation: slideUp 0.3s var(--ease-smooth);
+}
+
+.dark .extension-banner {
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.extension-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.extension-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.extension-banner-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.extension-banner-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.extension-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.extension-banner-btn {
+  display: inline-flex;
+  align-items: center;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter 0.2s, transform 0.2s;
+  white-space: nowrap;
+}
+
+.extension-banner-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  color: white;
+}
+
+.extension-banner-btn:active {
+  transform: translateY(0);
+}
+
+/* Body padding when banner visible */
+.has-extension-banner {
+  padding-bottom: 56px;
+}
+
+/* Hide on mobile */
+@media (max-width: 640px) {
+  .extension-banner {
+    display: none;
+  }
+
+  .has-extension-banner {
+    padding-bottom: 0;
+  }
+}
