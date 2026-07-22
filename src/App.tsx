@@ -8,29 +8,53 @@ import WatchlistPage from './components/WatchlistPage';
 import AdminPage from './components/AdminPage';
 import SettingsPage from './components/SettingsPage';
 
-function extensionInstalled(): boolean {
-  if ((window as any).__SIFT_EXTENSION_INSTALLED) return true;
-  const meta = document.querySelector('meta[name="sift-extension"]');
-  if (meta?.getAttribute('content') === 'installed') return true;
-  return false;
+function extensionSignalReceived() {
+  const checks = [
+    () => (window as any).__SIFT_EXTENSION_INSTALLED,
+    () => document.querySelector('meta[name="sift-extension"]')?.getAttribute('content') === 'installed',
+    () => document.querySelector('[data-sift-extension]'),
+    () => document.getElementById('sift-extension-root'),
+    () => document.querySelector('[class*="sift-"], [id*="sift-"]'),
+    () => {
+      try { return (window as any).chrome?.runtime?.id; } catch { return false; }
+    },
+  ];
+  return checks.some(fn => !!fn());
 }
 
 function App() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/' || location.pathname === '/auth';
 
-  const extensionOk = extensionInstalled();
-  const [showBanner, setShowBanner] = useState(!extensionOk);
+  const [showBanner, setShowBanner] = useState(true);
 
   useEffect(() => {
-    if (extensionInstalled()) {
+    if (extensionSignalReceived()) {
       setShowBanner(false);
       return;
     }
-    const id = setTimeout(() => {
-      if (extensionInstalled()) setShowBanner(false);
-    }, 2000);
-    return () => clearTimeout(id);
+
+    function onMessage(e: MessageEvent) {
+      if (e.data?.type === 'SIFT_EXTENSION_INSTALLED') setShowBanner(false);
+    }
+    window.addEventListener('message', onMessage);
+
+    const observer = new MutationObserver(() => {
+      if (extensionSignalReceived()) setShowBanner(false);
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+    const id = setInterval(() => {
+      if (extensionSignalReceived()) setShowBanner(false);
+    }, 1000);
+    const timeout = setTimeout(() => clearInterval(id), 20000);
+
+    return () => {
+      window.removeEventListener('message', onMessage);
+      observer.disconnect();
+      clearInterval(id);
+      clearTimeout(timeout);
+    };
   }, []);
 
   const bannerVisible = showBanner && !isAuthPage;
