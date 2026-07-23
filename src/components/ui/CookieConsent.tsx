@@ -25,7 +25,7 @@ export function CookieConsent() {
   return (
     <div
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-50 transition-all duration-250',
+        'fixed bottom-0 left-0 right-0 z-[100] transition-all duration-250',
         dismissing ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
       )}
     >
@@ -49,7 +49,7 @@ export function CookieConsent() {
         </div>
         <button
           onClick={accept}
-          className="shrink-0 px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 text-white"
+          className="shrink-0 px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 text-white btn-press"
           style={{ background: 'var(--primary)' }}
         >
           Got it
