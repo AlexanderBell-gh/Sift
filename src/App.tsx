@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -27,6 +27,8 @@ function App() {
   const isAuthPage = location.pathname === '/' || location.pathname === '/auth';
 
   const [showBanner, setShowBanner] = useState(true);
+  const [dismissing, setDismissing] = useState(false);
+  const dismissedRef = useRef(false);
 
   useEffect(() => {
     if (extensionSignalReceived()) {
@@ -34,28 +36,54 @@ function App() {
       return;
     }
 
+    function dismiss() {
+      if (dismissedRef.current) return;
+      dismissedRef.current = true;
+      setDismissing(true);
+    }
+
+    function check() {
+      if (extensionSignalReceived()) dismiss();
+    }
+
     function onMessage(e: MessageEvent) {
-      if (e.data?.type === 'SIFT_EXTENSION_INSTALLED') setShowBanner(false);
+      if (e.data?.type === 'SIFT_EXTENSION_INSTALLED') dismiss();
     }
     window.addEventListener('message', onMessage);
 
-    const observer = new MutationObserver(() => {
-      if (extensionSignalReceived()) setShowBanner(false);
-    });
+    function onCustomEvent() { dismiss(); }
+    document.addEventListener('sift-extension-installed', onCustomEvent);
+
+    const observer = new MutationObserver(check);
+    observer.observe(document.head, { childList: true, subtree: true, attributes: true });
     observer.observe(document.body, { childList: true, subtree: true, attributes: true });
 
-    const id = setInterval(() => {
-      if (extensionSignalReceived()) setShowBanner(false);
-    }, 1000);
+    window.addEventListener('focus', check);
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') check();
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    const id = setInterval(check, 1000);
     const timeout = setTimeout(() => clearInterval(id), 20000);
 
     return () => {
       window.removeEventListener('message', onMessage);
+      document.removeEventListener('sift-extension-installed', onCustomEvent);
       observer.disconnect();
+      window.removeEventListener('focus', check);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       clearInterval(id);
       clearTimeout(timeout);
     };
   }, []);
+
+  useEffect(() => {
+    if (dismissing) {
+      const timer = setTimeout(() => setShowBanner(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [dismissing]);
 
   const bannerVisible = showBanner && !isAuthPage;
 
@@ -80,7 +108,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         {bannerVisible && (
-          <div className="extension-banner">
+          <div className={`extension-banner${dismissing ? ' dismissing' : ''}`}>
             <div className="container extension-banner-inner">
               <div className="extension-banner-text">
                 <span className="extension-banner-title">Get the Sift browser extension</span>

@@ -2532,6 +2532,16 @@ body {
   to { transform: translateY(0); }
 }
 
+@keyframes bannerSlideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.extension-banner.dismissing {
+  animation: bannerSlideDown 0.3s var(--ease-smooth) forwards;
+  pointer-events: none;
+}
+
 .extension-banner-inner {
   display: flex;
   align-items: center;
