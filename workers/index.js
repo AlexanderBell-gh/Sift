@@ -1090,6 +1090,19 @@ async function handleRequest(request, env) {
 
   // ===== WATCHLIST =====
 
+  if (path === '/api/watchlist-names' && method === 'GET') {
+    try {
+      const rows = await queryAll(
+        env,
+        "SELECT DISTINCT product_name FROM watchlist WHERE product_name IS NOT NULL AND product_name != ''"
+      );
+      return jsonResponse(rows.map(r => r.product_name));
+    } catch (e) {
+      console.error('Watchlist names error:', e);
+      return errorResponse('Failed to fetch watchlist names');
+    }
+  }
+
   if (path === '/api/watchlist/ids' && method === 'GET') {
     const auth = await requireAuth(request, env);
     if (!auth?.userId) return auth;

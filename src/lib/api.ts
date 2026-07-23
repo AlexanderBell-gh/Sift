@@ -85,6 +85,11 @@ export function searchAutocomplete(query: string, watchlistNames?: string[]): Au
   return fuseResults.slice(0, 8);
 }
 
+export async function getAllWatchlistNames(): Promise<string[]> {
+  const response = await fetch(`${API_BASE_URL}/api/watchlist-names`);
+  return handleResponse<string[]>(response);
+}
+
 export async function getPinnedIds(token: string): Promise<{ id: string; product_id: string }[]> {
   const response = await fetch(`${API_BASE_URL}/api/watchlist/ids`, {
     headers: { Authorization: `Bearer ${token}` },
