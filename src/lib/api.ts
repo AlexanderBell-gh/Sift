@@ -1,6 +1,23 @@
 import Fuse from 'fuse.js';
-import ukProducts from '../data/uk-products.json';
+import ukDairy from '../data/uk-dairy.json';
+import ukBakery from '../data/uk-bakery.json';
+import ukMeatFish from '../data/uk-meat_fish.json';
+import ukProduce from '../data/uk-produce.json';
+import ukFrozen from '../data/uk-frozen.json';
+import ukCupboard from '../data/uk-cupboard.json';
+import ukDrinks from '../data/uk-drinks.json';
+import ukHousehold from '../data/uk-household.json';
+import ukBabyToddler from '../data/uk-baby_toddler.json';
+import ukPet from '../data/uk-pet.json';
+import ukHealthBeauty from '../data/uk-health_beauty.json';
+import ukConvenience from '../data/uk-convenience.json';
 import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AdminUserDetail, AdminAnalytics, AuditLog, TrialUser, User } from '../types';
+
+const ukProducts = [
+  ...ukDairy, ...ukBakery, ...ukMeatFish, ...ukProduce,
+  ...ukFrozen, ...ukCupboard, ...ukDrinks, ...ukHousehold,
+  ...ukBabyToddler, ...ukPet, ...ukHealthBeauty, ...ukConvenience,
+];
 
 const API_BASE_URL = 'https://siftapi.blackmesa.workers.dev';
 
@@ -52,9 +69,20 @@ const fuse = new Fuse(ukProducts, {
   shouldSort: true,
 });
 
-export function searchAutocomplete(query: string): AutocompleteProduct[] {
+export function searchAutocomplete(query: string, watchlistNames?: string[]): AutocompleteProduct[] {
   if (query.length < 2) return [];
-  return fuse.search(query.slice(0, 50)).slice(0, 8).map(r => ({ name: r.item.name }));
+  const fuseResults = fuse.search(query.slice(0, 50)).slice(0, 8).map(r => ({ name: r.item.name }));
+  if (!watchlistNames?.length) return fuseResults;
+  const q = query.toLowerCase();
+  const matched = watchlistNames.filter(n => n.toLowerCase().includes(q));
+  const seen = new Set(fuseResults.map(r => r.name));
+  for (const name of matched) {
+    if (!seen.has(name)) {
+      fuseResults.push({ name });
+      seen.add(name);
+    }
+  }
+  return fuseResults.slice(0, 8);
 }
 
 export async function getPinnedIds(token: string): Promise<{ id: string; product_id: string }[]> {

@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
-import { searchAutocomplete, type AutocompleteProduct } from '../lib/api';
+import { searchAutocomplete, getWatchlist, type AutocompleteProduct } from '../lib/api';
 import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
+import { useAuth } from '../contexts/AuthContext';
 import NavHeader from './NavHeader';
 import { StoreSelect } from './ui/StoreSelect';
 import { StoreOffers } from './StoreOffers';
@@ -18,6 +19,14 @@ export default function SearchPage() {
   const [showHistory, setShowHistory] = useState(false);
   const suggestionsRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { token } = useAuth();
+  const [watchlistNames, setWatchlistNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!token) { setWatchlistNames([]); return; }
+    getWatchlist(token).then(items => setWatchlistNames(items.map(i => i.product_name))).catch(() => {});
+  }, [token]);
 
   const [selectedStores, setSelectedStores] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('sift-selected-stores');
@@ -55,7 +64,7 @@ export default function SearchPage() {
     setShowHistory(false);
 
     const timeoutId = setTimeout(() => {
-      const results = searchAutocomplete(query);
+      const results = searchAutocomplete(query, watchlistNames);
       setAutocompleteProducts(results);
       setShowSuggestions(results.length > 0);
     }, 150);
