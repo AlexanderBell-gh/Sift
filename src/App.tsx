@@ -7,6 +7,7 @@ import AuthPage from './components/AuthPage';
 import WatchlistPage from './components/WatchlistPage';
 import AdminPage from './components/AdminPage';
 import SettingsPage from './components/SettingsPage';
+import { CookieConsent } from './components/ui/CookieConsent';
 
 function extensionSignalReceived() {
   const checks = [
@@ -123,6 +124,7 @@ function App() {
             </div>
           </div>
         )}
+        <CookieConsent />
       </AuthProvider>
     </ThemeProvider>
   );

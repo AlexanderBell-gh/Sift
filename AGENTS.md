@@ -25,6 +25,7 @@
 - Google Client ID from `VITE_GOOGLE_CLIENT_ID` env var (Vite build-time). Must be set in Cloudflare Pages dashboard (Production) or `.env` for local dev. Worker uses separate `GOOGLE_CLIENT_ID` secret — both must match.
 - Dark mode: `.dark` class on `<html>`, flash-prevention script in `index.html` `<head>`
 - No state management library — `useState`/`useEffect` + Context only
+- Product autocomplete data: 13 category JSONs in `src/data/`, merged at import; also matches user's watchlist items
 - Hand-rolled JWT via Web Crypto API (not a library)
 - Extension: **separate repo** `sift-extension` — no longer in this repo
 
