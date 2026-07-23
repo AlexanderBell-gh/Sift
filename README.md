@@ -77,7 +77,7 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 ## Search Flow
 
 1. Select up to 3 stores via multi-select dropdown (persisted in localStorage)
-2. Type query → autocomplete from local UK product dictionary (Fuse.js, debounced 150ms)
+2. Type query → autocomplete from local UK product dictionary + all users' watchlist items (Fuse.js, debounced 150ms)
 3. Press enter → opens each selected store's search URL in new tab
 4. Browse Store Offers → horizontal scroll cards link to each store's offers page
 5. No backend search involved
