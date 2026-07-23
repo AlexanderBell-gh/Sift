@@ -2567,6 +2567,12 @@ body {
   color: var(--muted);
 }
 
+.extension-banner-favicon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 .extension-banner-actions {
   display: flex;
   align-items: center;

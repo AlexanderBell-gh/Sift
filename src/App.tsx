@@ -111,12 +111,13 @@ function App() {
           <div className={`extension-banner${dismissing ? ' dismissing' : ''}`}>
             <div className="container extension-banner-inner">
               <div className="extension-banner-text">
-                <span className="extension-banner-title">Get the Sift browser extension</span>
-                <span className="extension-banner-desc">Required for adding products to your Watchlist</span>
+                <img src="/favicon.svg" alt="" className="extension-banner-favicon" />
+                <span className="extension-banner-title">Sift - Product Extractor</span>
+                <span className="extension-banner-desc">Get the official Chrome extension required for adding products to your Watchlist</span>
               </div>
               <div className="extension-banner-actions">
-                <a href="https://github.com/Alex-Projects-Master/sift-extension/releases/download/v0.1.0/sift-extension-0.1.0-chrome.zip" target="_blank" rel="noopener noreferrer" className="extension-banner-btn">
-                  Download Extension
+                <a href="https://github.com/Alex-Projects-Master/sift-extension/releases/download/v0.1.1/sift-extension-0.1.1-chrome.zip" target="_blank" rel="noopener noreferrer" className="extension-banner-btn">
+                  Download
                 </a>
               </div>
             </div>
