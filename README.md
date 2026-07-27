@@ -1,6 +1,6 @@
 # Sift
 
-Real-time UK supermarket offer tracker. Select up to 3 stores, search opens each store's results page in a new tab.
+A UK supermarket offer tracker. Select up to 3 stores, search opens each store's results page in a new tab.
 
 **Live:** https://siftsearch.pages.dev
 
