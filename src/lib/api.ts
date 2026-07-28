@@ -85,6 +85,27 @@ export function searchAutocomplete(query: string, watchlistNames?: string[]): Au
   return fuseResults.slice(0, 8);
 }
 
+export interface BannerOffer {
+  product_name: string;
+  store: string;
+  store_logo: string;
+  image_url: string;
+  prices: {
+    normal: number | null;
+    loyalty: number | null;
+    unit_price: number | null;
+    currency: string;
+  };
+  is_on_offer: boolean;
+  offer_expires_at: string | null;
+  product_url: string;
+}
+
+export async function getBannerOffers(): Promise<BannerOffer[]> {
+  const response = await fetch(`${API_BASE_URL}/api/banner-offers`);
+  return handleResponse<BannerOffer[]>(response);
+}
+
 export async function getAllWatchlistNames(): Promise<string[]> {
   const response = await fetch(`${API_BASE_URL}/api/watchlist-names`);
   return handleResponse<string[]>(response);

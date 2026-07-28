@@ -1103,6 +1103,37 @@ async function handleRequest(request, env) {
     }
   }
 
+  if (path === '/api/banner-offers' && method === 'GET') {
+    try {
+      const rows = await queryAll(
+        env,
+        `SELECT product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, is_on_offer, offer_expires_at, product_url
+         FROM watchlist
+         WHERE is_on_offer = 1
+         ORDER BY RANDOM()
+         LIMIT 20`
+      );
+      return jsonResponse(rows.map(r => ({
+        product_name: r.product_name,
+        store: r.store,
+        store_logo: r.store_logo,
+        image_url: r.image_url,
+        prices: {
+          normal: r.normal_price,
+          loyalty: r.loyalty_price,
+          unit_price: r.unit_price,
+          currency: r.currency,
+        },
+        is_on_offer: !!r.is_on_offer,
+        offer_expires_at: r.offer_expires_at,
+        product_url: r.product_url,
+      })));
+    } catch (e) {
+      console.error('Banner offers error:', e);
+      return errorResponse('Failed to fetch banner offers');
+    }
+  }
+
   if (path === '/api/watchlist/ids' && method === 'GET') {
     const auth = await requireAuth(request, env);
     if (!auth?.userId) return auth;

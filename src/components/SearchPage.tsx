@@ -6,6 +6,7 @@ import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 import NavHeader from './NavHeader';
 import { StoreSelect } from './ui/StoreSelect';
 import { StoreOffers } from './StoreOffers';
+import { OfferBanner } from './OfferBanner';
 import { STORES } from '../lib/stores';
 
 export default function SearchPage() {
@@ -124,6 +125,8 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <NavHeader />
+
+      <OfferBanner />
 
       <>
           <section className="hero">
