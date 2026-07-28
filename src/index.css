@@ -367,7 +367,7 @@ body {
   }
 
   .search-input {
-    padding: 14px 16px;
+    padding: 10px 14px;
     font-size: 16px;
     min-width: 0;
     flex: 1;
@@ -378,10 +378,24 @@ body {
   }
 
   .search-button {
-    padding: 0 16px;
+    padding: 0 14px;
     border-radius: 10px;
     font-size: 14px;
     flex-shrink: 0;
+  }
+
+  .store-chip-add {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
+  .store-chip {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+
+  .store-chips-wrapper {
+    margin-bottom: 16px;
   }
 
   .store-select .absolute {
@@ -390,6 +404,79 @@ body {
     width: calc(100vw - 32px);
     max-width: 280px;
   }
+}
+
+.store-chips-wrapper {
+  max-width: 750px;
+  margin: 0 auto 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.store-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.store-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.store-chip:hover {
+  border-color: var(--primary);
+  background: rgba(255, 87, 1, 0.05);
+}
+
+.store-chip img {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  object-fit: contain;
+}
+
+.store-chip svg:last-child {
+  margin-left: 2px;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+
+.store-chip:hover svg:last-child {
+  opacity: 0.8;
+}
+
+.store-chip-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.store-chip-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .store-select {

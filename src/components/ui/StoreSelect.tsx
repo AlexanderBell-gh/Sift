@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Plus, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { STORES } from '../../lib/stores';
 
@@ -7,6 +7,7 @@ interface StoreSelectProps {
   selected: Set<string>;
   onChange: (selected: Set<string>) => void;
   className?: string;
+  variant?: 'inline' | 'chips';
 }
 
 function ShopIcon({ className }: { className?: string }) {
@@ -28,7 +29,7 @@ function ShopIcon({ className }: { className?: string }) {
 
 const MAX_STORES = 3;
 
-export function StoreSelect({ selected, onChange, className }: StoreSelectProps) {
+export function StoreSelect({ selected, onChange, className, variant = 'inline' }: StoreSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -57,21 +58,54 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
     onChange(new Set());
   }
 
+  function toggleStoreFromChip(id: string) {
+    const next = new Set(selected);
+    next.delete(id);
+    onChange(next);
+  }
+
   return (
     <div ref={dropdownRef} className={cn('relative store-select', className)}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'relative flex items-center justify-center',
-          'border-r border-[var(--border)]',
-          'hover:bg-[var(--surface-hover)]',
-          'focus:outline-none focus:bg-[var(--surface-hover)]',
-          'text-[var(--muted)] hover:text-[var(--primary)]'
-        )}
-      >
-        <ShopIcon className="w-5 h-5" />
-      </button>
+      {variant === 'chips' ? (
+        <div className="store-chips-row">
+          {STORES.filter(s => selected.has(s.id)).map(store => (
+            <button
+              key={store.id}
+              type="button"
+              onClick={() => toggleStoreFromChip(store.id)}
+              className="store-chip"
+            >
+              <img src={store.logo} alt={store.name} className="w-4 h-4 rounded object-contain" />
+              <span>{store.name}</span>
+              <X className="w-3 h-3" />
+            </button>
+          ))}
+          {selected.size < MAX_STORES && (
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="store-chip-add"
+            >
+              <Plus className="w-4 h-4" />
+              {selected.size === 0 ? 'Select stores' : 'Add store'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            'relative flex items-center justify-center',
+            'border-r border-[var(--border)]',
+            'hover:bg-[var(--surface-hover)]',
+            'focus:outline-none focus:bg-[var(--surface-hover)]',
+            'text-[var(--muted)] hover:text-[var(--primary)]'
+          )}
+        >
+          <ShopIcon className="w-5 h-5" />
+        </button>
+      )}
 
       {isOpen && (
         <div

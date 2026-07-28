@@ -131,12 +131,15 @@ export default function SearchPage() {
               <h1>Explore and Track Offers <br /><span className="text-gradient">In One Place</span><br /></h1>
               <p>Find the best grocery offers across 11 UK supermarkets.<br /> Search up to 3 stores simultaneously</p>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef} role="search" aria-label="Search for products">
-                  <StoreSelect
-                    selected={selectedStores}
-                    onChange={setSelectedStores}
-                  />
+              <div className="store-chips-wrapper">
+                <StoreSelect
+                  variant="chips"
+                  selected={selectedStores}
+                  onChange={setSelectedStores}
+                />
+              </div>
 
+              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="search-container" ref={suggestionsRef} role="search" aria-label="Search for products">
                   <input
                     ref={inputRef}
                     type="text"
