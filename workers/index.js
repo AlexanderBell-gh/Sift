@@ -1103,7 +1103,7 @@ async function handleRequest(request, env) {
     }
   }
 
-  if (path === '/api/banner-offers' && method === 'GET') {
+  if (path === '/api/deal-offers' && method === 'GET') {
     try {
       const rows = await queryAll(
         env,
@@ -1129,8 +1129,8 @@ async function handleRequest(request, env) {
         product_url: r.product_url,
       })));
     } catch (e) {
-      console.error('Banner offers error:', e);
-      return errorResponse('Failed to fetch banner offers');
+      console.error('Deal offers error:', e);
+      return errorResponse('Failed to fetch deal offers');
     }
   }
 

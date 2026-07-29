@@ -85,7 +85,7 @@ export function searchAutocomplete(query: string, watchlistNames?: string[]): Au
   return fuseResults.slice(0, 8);
 }
 
-export interface BannerOffer {
+export interface DealOffer {
   product_name: string;
   store: string;
   store_logo: string;
@@ -101,9 +101,9 @@ export interface BannerOffer {
   product_url: string;
 }
 
-export async function getBannerOffers(): Promise<BannerOffer[]> {
-  const response = await fetch(`${API_BASE_URL}/api/banner-offers`);
-  return handleResponse<BannerOffer[]>(response);
+export async function getDealOffers(): Promise<DealOffer[]> {
+  const response = await fetch(`${API_BASE_URL}/api/deal-offers`);
+  return handleResponse<DealOffer[]>(response);
 }
 
 export async function getAllWatchlistNames(): Promise<string[]> {

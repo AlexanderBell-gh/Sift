@@ -6,7 +6,7 @@ import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 import NavHeader from './NavHeader';
 import { StoreSelect } from './ui/StoreSelect';
 import { StoreOffers } from './StoreOffers';
-import { OfferBanner } from './OfferBanner';
+import { DealSection } from './DealSection';
 import { STORES } from '../lib/stores';
 
 export default function SearchPage() {
@@ -124,9 +124,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
-      <NavHeader />
-
-      <OfferBanner />
+       <NavHeader />
 
       <>
           <section className="hero">
@@ -227,6 +225,8 @@ export default function SearchPage() {
               </form>
             </div>
           </section>
+
+          <DealSection />
 
           <StoreOffers />
         </>
