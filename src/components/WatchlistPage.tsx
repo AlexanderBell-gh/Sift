@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import { STORES } from '../lib/stores';
-import { formatDate, isOfferExpired } from '../lib/utils';
+import { formatDate, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import { Toast } from './ui/Toast';
@@ -77,32 +77,6 @@ export default function WatchlistPage() {
     } catch {
       showToast('Failed to remove item', 'error');
     }
-  }
-
-  function getLoyaltyLabel(store: string): string {
-    const labels: Record<string, string> = {
-      Tesco: 'Clubcard price',
-      "Sainsbury's": 'Nectar price',
-      Morrisons: 'More card price',
-      'M&S': 'Sparks price',
-      Lidl: 'Lidl Plus price',
-      ASDA: 'ASDA price',
-      Aldi: 'Aldi price',
-    };
-    return labels[store] ?? 'Offer price';
-  }
-
-  function getLoyaltyClass(store: string): string {
-    const classes: Record<string, string> = {
-      Tesco: 'loyalty-tesco',
-      "Sainsbury's": 'loyalty-sainsburys',
-      Morrisons: 'loyalty-morrisons',
-      'M&S': 'loyalty-mns',
-      Lidl: 'loyalty-lidl',
-      ASDA: 'loyalty-asda',
-      Aldi: 'loyalty-aldi',
-    };
-    return classes[store] ?? '';
   }
 
   function formatTimeAgo(ts: number) {

@@ -44,3 +44,29 @@ export function isOfferExpired(dateString: string | null): boolean {
   today.setHours(0, 0, 0, 0);
   return date <= today;
 }
+
+export function getLoyaltyLabel(store: string): string {
+  const labels: Record<string, string> = {
+    Tesco: 'Clubcard price',
+    "Sainsbury's": 'Nectar price',
+    Morrisons: 'More card price',
+    'M&S': 'Sparks price',
+    Lidl: 'Lidl Plus price',
+    ASDA: 'ASDA price',
+    Aldi: 'Aldi price',
+  };
+  return labels[store] ?? 'Offer price';
+}
+
+export function getLoyaltyClass(store: string): string {
+  const classes: Record<string, string> = {
+    Tesco: 'loyalty-tesco',
+    "Sainsbury's": 'loyalty-sainsburys',
+    Morrisons: 'loyalty-morrisons',
+    'M&S': 'loyalty-mns',
+    Lidl: 'loyalty-lidl',
+    ASDA: 'loyalty-asda',
+    Aldi: 'loyalty-aldi',
+  };
+  return classes[store] ?? '';
+}

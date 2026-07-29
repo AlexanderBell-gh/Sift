@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ExternalLink } from 'lucide-react';
 import { getDealOffers, type DealOffer } from '../lib/api';
+import { getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 
 function DealCard({ deal }: { deal: DealOffer }) {
   return (
@@ -27,6 +27,16 @@ function DealCard({ deal }: { deal: DealOffer }) {
       )}
       <div className="deal-info">
         <span className="deal-name">{deal.product_name}</span>
+        <div className="deal-loyalty">
+          <img
+            src={deal.store_logo}
+            alt=""
+            className="deal-loyalty-logo"
+          />
+          <span className={`deal-loyalty-label ${getLoyaltyClass(deal.store)}`}>
+            {getLoyaltyLabel(deal.store)}
+          </span>
+        </div>
         <div className="deal-prices">
           {deal.prices.normal != null && (
             <span className="lowest-core-old">
@@ -40,10 +50,6 @@ function DealCard({ deal }: { deal: DealOffer }) {
           )}
         </div>
       </div>
-      <span className="deal-link">
-        Claim
-        <ExternalLink className="deal-link-icon" />
-      </span>
     </a>
   );
 }

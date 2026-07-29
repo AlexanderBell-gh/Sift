@@ -431,8 +431,8 @@ body {
 }
 
 .deal-logo {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 
@@ -468,23 +468,66 @@ body {
   font-family: var(--font-mono);
 }
 
-.deal-link {
-  display: inline-flex;
+.deal-loyalty {
+  display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary);
-  transition: color 0.15s;
 }
 
-.deal-link:hover {
-  color: color-mix(in oklab, var(--primary) 80%, #000);
+.deal-loyalty-logo {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
-.deal-link-icon {
-  width: 14px;
-  height: 14px;
+.deal-loyalty-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 5px;
+  background: rgba(108, 24, 203, 0.12);
+  color: #6c18cb;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.deal-loyalty-label.loyalty-tesco {
+  background: rgba(0, 83, 159, 0.12);
+  color: #00539f;
+}
+
+.deal-loyalty-label.loyalty-sainsburys {
+  background: rgba(108, 24, 203, 0.12);
+  color: #6c18cb;
+}
+
+.deal-loyalty-label.loyalty-morrisons {
+  background: rgba(0, 95, 39, 0.12);
+  color: #005f27;
+}
+
+.deal-loyalty-label.loyalty-mns {
+  background: rgba(139, 0, 56, 0.12);
+  color: #8b0038;
+}
+
+.deal-loyalty-label.loyalty-lidl {
+  background: rgba(0, 51, 160, 0.12);
+  color: #0033a0;
+}
+
+.deal-loyalty-label.loyalty-asda {
+  background: rgba(0, 97, 19, 0.12);
+  color: #006113;
+}
+
+.deal-loyalty-label.loyalty-aldi {
+  background: rgba(0, 56, 164, 0.12);
+  color: #0038a4;
 }
 
 @media (max-width: 640px) {
