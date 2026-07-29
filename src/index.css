@@ -2853,7 +2853,7 @@ body {
 
 @media (max-width: 640px) {
   .store-offers-section {
-    padding: 0 0 32px;
+    padding: 1 0 32px;
   }
 
   .store-offers-container {
