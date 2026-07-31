@@ -394,6 +394,7 @@ body {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 16px;
+  overflow: hidden;
   text-decoration: none;
   color: var(--text);
   flex-shrink: 0;

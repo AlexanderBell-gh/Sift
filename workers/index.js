@@ -67,13 +67,6 @@ function generateId(prefix) {
 
 function normalizeDateString(dateStr) {
   if (!dateStr) return null;
-  const parsed = new Date(dateStr);
-  if (!isNaN(parsed.getTime())) {
-    const d = parsed.getDate();
-    const m = parsed.getMonth() + 1;
-    const y = parsed.getFullYear();
-    return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
-  }
   const numMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
   if (numMatch) {
     let [, a, b, y] = numMatch;
@@ -83,7 +76,14 @@ function normalizeDateString(dateStr) {
     if (Number(b) > 12) {
       return `${String(b).padStart(2, '0')}-${String(a).padStart(2, '0')}-${y}`;
     }
-        return `${String(a).padStart(2, '0')}-${String(b).padStart(2, '0')}-${y}`;
+    return `${String(a).padStart(2, '0')}-${String(b).padStart(2, '0')}-${y}`;
+  }
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    const d = parsed.getDate();
+    const m = parsed.getMonth() + 1;
+    const y = parsed.getFullYear();
+    return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
   }
   return null;
 }
