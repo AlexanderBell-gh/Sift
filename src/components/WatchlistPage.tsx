@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import type { MouseEvent } from 'react';
 import { Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -72,7 +73,9 @@ export default function WatchlistPage() {
   const usedCount = useMemo(() => new Set(items.map(i => i.product_id)).size, [items]);
   const trialLimitReached = isTrial && usedCount >= watchlistLimit;
 
-  async function handleRemoveProduct(productId: string) {
+  async function handleRemoveProduct(productId: string, e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
     if (!token) return;
     const group = items.filter(i => i.product_id === productId);
     try {
@@ -178,11 +181,11 @@ export default function WatchlistPage() {
               const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
               const best = sorted[0];
 
-              return (
-                <div key={product.product_id} className="product-card">
+              const cardContent = (
+                <>
                   <div className="product-card-top">
                     <button
-                      onClick={() => handleRemoveProduct(product.product_id)}
+                      onClick={(e) => handleRemoveProduct(product.product_id, e)}
                       className="product-card-remove"
                       title="Remove"
                     >
@@ -253,6 +256,22 @@ export default function WatchlistPage() {
                     )}
                     <p>Updated {formatTimeAgo(lastUpdated)}</p>
                   </div>
+                </>
+              );
+
+              return best.product_url ? (
+                <a
+                  key={product.product_id}
+                  href={best.product_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="product-card"
+                >
+                  {cardContent}
+                </a>
+              ) : (
+                <div key={product.product_id} className="product-card">
+                  {cardContent}
                 </div>
               );
             })}
