@@ -7,29 +7,11 @@ interface StoreSelectProps {
   selected: Set<string>;
   onChange: (selected: Set<string>) => void;
   className?: string;
-  variant?: 'inline' | 'chips';
-}
-
-function ShopIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
 }
 
 const MAX_STORES = 3;
 
-export function StoreSelect({ selected, onChange, className, variant = 'inline' }: StoreSelectProps) {
+export function StoreSelect({ selected, onChange, className }: StoreSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -58,118 +40,97 @@ export function StoreSelect({ selected, onChange, className, variant = 'inline' 
     onChange(new Set());
   }
 
-  function toggleStoreFromChip(id: string) {
-    const next = new Set(selected);
-    next.delete(id);
-    onChange(next);
-  }
-
   return (
     <div ref={dropdownRef} className={cn('relative store-select', className)}>
-      {variant === 'chips' ? (
-        <div className="store-chips-row">
-          {STORES.filter(s => selected.has(s.id)).map(store => (
-            <button
-              key={store.id}
-              type="button"
-              onClick={() => toggleStoreFromChip(store.id)}
-              className="store-chip"
-            >
-              <img src={store.logo} alt={store.name} className="w-4 h-4 rounded object-contain" />
-              <span>{store.name}</span>
-              <X className="w-3 h-3" />
-            </button>
-          ))}
-          {selected.size < MAX_STORES && (
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="store-chip-add"
-            >
-              <Plus className="w-4 h-4" />
-              {selected.size === 0 ? 'Select stores' : 'Add store'}
-            </button>
-          )}
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            'relative flex items-center justify-center',
-            'border-r border-[var(--border)]',
-            'hover:bg-[var(--surface-hover)]',
-            'focus:outline-none focus:bg-[var(--surface-hover)]',
-            'text-[var(--muted)] hover:text-[var(--primary)]'
-          )}
-        >
-          <ShopIcon className="w-5 h-5" />
-        </button>
-      )}
+      <div className="store-chips-row">
+        {STORES.filter(s => selected.has(s.id)).map(store => (
+          <button
+            key={store.id}
+            type="button"
+            onClick={() => {
+              const next = new Set(selected);
+              next.delete(store.id);
+              onChange(next);
+            }}
+            className="store-chip"
+            aria-label={`Remove ${store.name}`}
+          >
+            <img src={store.logo} alt={store.name} className="w-4 h-4 rounded object-contain" />
+            <span>{store.name}</span>
+            <X className="w-3 h-3" />
+          </button>
+        ))}
+        {selected.size < MAX_STORES && (
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-haspopup="listbox"
+            aria-expanded={isOpen}
+            className={cn('store-chip-add', isOpen && 'store-chip-add-active')}
+          >
+            <Plus className="w-4 h-4" />
+            {selected.size === 0 ? 'Select stores' : 'Add store'}
+          </button>
+        )}
+      </div>
 
       {isOpen && (
-        <div
-          className={cn(
-            'absolute left-0 top-full mt-2 w-64 z-50',
-            'bg-[var(--surface)] border border-[var(--border)]',
-            'rounded-2xl shadow-lg overflow-hidden',
-            'animate-in fade-in slide-in-from-top-2 duration-200'
-          )}
-        >
-          <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]">
-            {selected.size >= MAX_STORES && (
-              <span className="text-xs text-[var(--danger)]">Max 3 stores</span>
-            )}
-            <button
-              type="button"
-              onClick={clearAll}
-              className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-            >
-              Clear
-            </button>
+        <div className="store-panel" role="listbox" aria-label="Select stores">
+          <div className="store-panel-header">
+            <span className="store-panel-title">Select stores</span>
+            <div className="store-panel-actions">
+              <span className={cn('store-panel-count', selected.size >= MAX_STORES && 'store-panel-count-limit')}>
+                {selected.size}/{MAX_STORES}
+              </span>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="store-panel-clear"
+              >
+                Clear
+              </button>
+            </div>
           </div>
 
-          <div className="max-h-80 overflow-y-auto p-2">
+          <div className="store-panel-list">
             {STORES.map((store) => {
-              const atLimit = selected.size >= MAX_STORES && !selected.has(store.id);
+              const isSelected = selected.has(store.id);
+              const atLimit = selected.size >= MAX_STORES && !isSelected;
               return (
-              <button
-                key={store.id}
-                type="button"
-                onClick={() => toggleStore(store.id)}
-                disabled={atLimit}
-                className={cn(
-                  'flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left',
-                  'transition-colors duration-150',
-                  selected.has(store.id)
-                    ? 'store-selected'
-                    : atLimit
-                      ? 'opacity-40 cursor-not-allowed'
-                      : 'hover:bg-[var(--surface-hover)]'
-                )}
-              >
-                <div
+                <button
+                  key={store.id}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => toggleStore(store.id)}
+                  disabled={atLimit}
                   className={cn(
-                    'w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0',
-                    'transition-all duration-150',
-                    selected.has(store.id)
-                      ? 'bg-[var(--primary)] border-[var(--primary)]'
-                      : 'border-[var(--border)]'
+                    'store-panel-option',
+                    isSelected && 'store-panel-option-selected',
+                    atLimit && 'store-panel-option-disabled'
                   )}
                 >
-                  {selected.has(store.id) && (
-                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                  )}
-                </div>
-                <img
-                  src={store.logo}
-                  alt={store.name}
-                  className="w-6 h-6 rounded object-contain"
-                />
-                <span className="text-sm font-medium text-[var(--text)]">{store.name}</span>
-              </button>
+                  <span
+                    className={cn(
+                      'store-check',
+                      isSelected && 'store-check-selected'
+                    )}
+                  >
+                    {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                  </span>
+                  <img
+                    src={store.logo}
+                    alt={store.name}
+                    className="store-option-logo"
+                  />
+                  <span className="store-option-name">{store.name}</span>
+                </button>
               );
             })}
+          </div>
+
+          <div className="store-panel-footer">
+            Searching opens up to 3 stores in new tabs
           </div>
         </div>
       )}

@@ -134,7 +134,6 @@ export default function SearchPage() {
 
               <div className="store-chips-wrapper">
                 <StoreSelect
-                  variant="chips"
                   selected={selectedStores}
                   onChange={setSelectedStores}
                 />
