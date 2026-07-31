@@ -6,7 +6,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ## Features
 
-11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, local autocomplete via UK product dictionary, store offers horizontal scroll (links to each store's offers page), deals of the day section (random de-duplicated on-offer items from all users' watchlists, with Add to Watchlist button per tile), watchlist with price tracking, price alerts, cron offer-expiry check (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
+11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, local autocomplete via UK product dictionary, store offers horizontal scroll (links to each store's offers page), deals of the day section (random de-duplicated on-offer items from all users' watchlists, with Add to Watchlist button per tile that greys out at the trial limit), watchlist with price tracking and a live trial-usage banner (X of 5 items + progress bar), price alerts, cron offer-expiry check (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
 
 **Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
 
@@ -80,13 +80,13 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 2. Type query → autocomplete from local UK product dictionary + all users' watchlist items (Fuse.js, debounced 150ms)
 3. Press enter → opens each selected store's search URL in new tab
 4. Browse Store Offers → horizontal scroll cards link to each store's offers page
-5. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists, each tile has an Add to Watchlist button
+5. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists, each tile has an Add to Watchlist button (greyed out for trial users at the 5-item limit)
 6. No backend search involved
 
 ## Product Tracking
 
 - Watchlist with price tracking and refresh
-- Trial users: max 5 watchlist items
+- Trial users: max 5 watchlist items — watchlist page shows a live "X of 5" usage banner with progress bar; Deals of the Day Add buttons disable at the limit
 - Cron: daily 6am UTC, max 10 items/user, 100 total, 500ms delay
 
 ## Project Structure

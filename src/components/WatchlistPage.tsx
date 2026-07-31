@@ -15,7 +15,7 @@ const ALL_STORES = STORES.map(s => s.name);
 const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard'];
 
 export default function WatchlistPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +67,11 @@ export default function WatchlistPage() {
     return Array.from(map.values());
   }, [filtered]);
 
+  const isTrial = user?.isTrial === true;
+  const watchlistLimit = 5;
+  const usedCount = useMemo(() => new Set(items.map(i => i.product_id)).size, [items]);
+  const trialLimitReached = isTrial && usedCount >= watchlistLimit;
+
   async function handleRemoveProduct(productId: string) {
     if (!token) return;
     const group = items.filter(i => i.product_id === productId);
@@ -108,6 +113,22 @@ export default function WatchlistPage() {
       </section>
 
       <div className="container">
+        {!loading && isTrial && (
+          <div className="trial-limit-banner">
+            <div className="trial-limit-text">
+              <span className="trial-limit-title">Trial watchlist</span>
+              <span className="trial-limit-sub">
+                {trialLimitReached
+                  ? 'Limit reached — trial users can pin up to 5 items at a time, register to remove this limit'
+                  : `${usedCount} of ${watchlistLimit} items pinned`}
+              </span>
+            </div>
+            <div className="trial-limit-bar" title={`${usedCount} of ${watchlistLimit} used`}>
+              <div className="trial-limit-fill" style={{ width: `${Math.min(100, (usedCount / watchlistLimit) * 100)}%` }} />
+            </div>
+          </div>
+        )}
+
         {loading && (
           <div className="products-grid">
             {Array.from({ length: 6 }).map((_, i) => (

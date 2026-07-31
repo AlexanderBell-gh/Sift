@@ -505,7 +505,62 @@ body {
   cursor: not-allowed;
 }
 
+.trial-limit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  background: rgba(255, 87, 1, 0.05);
+  border: 1px solid rgba(255, 87, 1, 0.2);
+  border-radius: 12px;
+}
+
+.trial-limit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trial-limit-title {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.trial-limit-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.trial-limit-bar {
+  flex: 0 0 120px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.trial-limit-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
 @media (max-width: 640px) {
+  .trial-limit-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .trial-limit-bar {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
   .deals-section {
     padding: 8px 0;
   }
