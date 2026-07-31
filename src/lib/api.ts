@@ -86,6 +86,7 @@ export function searchAutocomplete(query: string, watchlistNames?: string[]): Au
 }
 
 export interface DealOffer {
+  product_id: string;
   product_name: string;
   store: string;
   store_logo: string;
@@ -96,6 +97,7 @@ export interface DealOffer {
     unit_price: number | null;
     currency: string;
   };
+  loyalty_type: string | null;
   is_on_offer: boolean;
   offer_expires_at: string | null;
   product_url: string;

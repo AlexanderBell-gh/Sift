@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './ui/useToast';
 import { getDealOffers, addToWatchlist, type DealOffer } from '../lib/api';
-import { hashString } from '../lib/utils';
 import type { SearchResult } from '../types';
 
 function DealCard({ deal }: { deal: DealOffer }) {
@@ -20,14 +19,14 @@ function DealCard({ deal }: { deal: DealOffer }) {
     setAdding(true);
     try {
       const result: SearchResult = {
-        id: hashString(deal.store + '_' + deal.product_name),
+        id: deal.product_id,
         name: deal.product_name,
         store: deal.store,
         store_logo: deal.store_logo,
         image_url: deal.image_url,
         unit: null,
         prices: deal.prices,
-        loyalty_type: null,
+        loyalty_type: deal.loyalty_type,
         offer_expires_at: deal.offer_expires_at,
         product_url: deal.product_url,
         category: null,

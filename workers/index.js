@@ -1105,29 +1105,32 @@ async function handleRequest(request, env) {
 
   if (path === '/api/deal-offers' && method === 'GET') {
     try {
-      const rows = await queryAll(
-        env,
-        `SELECT product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, is_on_offer, offer_expires_at, product_url
-         FROM watchlist
-         WHERE is_on_offer = 1
-         ORDER BY RANDOM()
-         LIMIT 20`
-      );
-      return jsonResponse(rows.map(r => ({
-        product_name: r.product_name,
-        store: r.store,
-        store_logo: r.store_logo,
-        image_url: r.image_url,
-        prices: {
-          normal: r.normal_price,
-          loyalty: r.loyalty_price,
-          unit_price: r.unit_price,
-          currency: r.currency,
-        },
-        is_on_offer: !!r.is_on_offer,
-        offer_expires_at: r.offer_expires_at,
-        product_url: r.product_url,
-      })));
+       const rows = await queryAll(
+         env,
+         `SELECT product_id, product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, loyalty_type, is_on_offer, offer_expires_at, product_url
+          FROM watchlist
+          WHERE is_on_offer = 1
+          GROUP BY product_id
+          ORDER BY RANDOM()
+          LIMIT 20`
+       );
+       return jsonResponse(rows.map(r => ({
+         product_id: r.product_id,
+         product_name: r.product_name,
+         store: r.store,
+         store_logo: r.store_logo,
+         image_url: r.image_url,
+         prices: {
+           normal: r.normal_price,
+           loyalty: r.loyalty_price,
+           unit_price: r.unit_price,
+           currency: r.currency,
+         },
+         loyalty_type: r.loyalty_type,
+         is_on_offer: !!r.is_on_offer,
+         offer_expires_at: r.offer_expires_at,
+         product_url: r.product_url,
+       })));
     } catch (e) {
       console.error('Deal offers error:', e);
       return errorResponse('Failed to fetch deal offers');
