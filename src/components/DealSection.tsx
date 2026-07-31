@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './ui/useToast';
-import { getDealOffers, addToWatchlist, type DealOffer } from '../lib/api';
+import { getDealOffers, addToWatchlist, getPinnedIds, type DealOffer } from '../lib/api';
 import type { SearchResult } from '../types';
 
-function DealCard({ deal }: { deal: DealOffer }) {
+const TRIAL_LIMIT = 5;
+
+function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReached: boolean; onAdded: () => void }) {
   const { token } = useAuth();
   const { showToast } = useToast();
   const [adding, setAdding] = useState(false);
@@ -34,6 +36,7 @@ function DealCard({ deal }: { deal: DealOffer }) {
       };
       await addToWatchlist(token, result);
       showToast('Added to watchlist', 'success');
+      onAdded();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '';
       if (message.includes('403') || message.includes('watchlist_limit')) {
@@ -84,7 +87,7 @@ function DealCard({ deal }: { deal: DealOffer }) {
         </div>
         <button
           onClick={handleAddToWatchlist}
-          disabled={adding}
+          disabled={adding || limitReached}
           className="deal-watchlist-btn"
         >
           {adding ? 'Adding...' : 'Add to watchlist'}
@@ -95,8 +98,12 @@ function DealCard({ deal }: { deal: DealOffer }) {
 }
 
 export function DealSection() {
+  const { user, token } = useAuth();
   const [deals, setDeals] = useState<DealOffer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pinnedCount, setPinnedCount] = useState<number | null>(null);
+
+  const isTrial = !!user?.isTrial;
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +113,30 @@ export function DealSection() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (!isTrial || !token) {
+      setPinnedCount(null);
+      return;
+    }
+    let cancelled = false;
+    getPinnedIds(token)
+      .then(ids => { if (!cancelled) setPinnedCount(new Set(ids.map(i => i.product_id)).size); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isTrial, token]);
+
+  async function handleAdded() {
+    if (!isTrial || !token) return;
+    try {
+      const ids = await getPinnedIds(token);
+      setPinnedCount(new Set(ids.map(i => i.product_id)).size);
+    } catch {
+      // keep previous count
+    }
+  }
+
+  const limitReached = isTrial && pinnedCount !== null && pinnedCount >= TRIAL_LIMIT;
 
   if (loading || deals.length === 0) return null;
 
@@ -118,7 +149,7 @@ export function DealSection() {
         <div className="deals-track-wrapper">
           <div className="deals-track">
             {scrollDeals.map((deal, i) => (
-              <DealCard key={`${deal.product_url}_${i}`} deal={deal} />
+              <DealCard key={`${deal.product_url}_${i}`} deal={deal} limitReached={limitReached} onAdded={handleAdded} />
             ))}
           </div>
         </div>
