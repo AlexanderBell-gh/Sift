@@ -29,7 +29,7 @@ function DealCard({ deal }: { deal: DealOffer }) {
         loyalty_type: deal.loyalty_type,
         offer_expires_at: deal.offer_expires_at,
         product_url: deal.product_url,
-        category: null,
+        category: deal.category,
         is_on_offer: deal.is_on_offer,
       };
       await addToWatchlist(token, result);

@@ -83,7 +83,7 @@ function normalizeDateString(dateStr) {
     if (Number(b) > 12) {
       return `${String(b).padStart(2, '0')}-${String(a).padStart(2, '0')}-${y}`;
     }
-    return `${String(b).padStart(2, '0')}-${String(a).padStart(2, '0')}-${y}`;
+        return `${String(a).padStart(2, '0')}-${String(b).padStart(2, '0')}-${y}`;
   }
   return null;
 }
@@ -1107,7 +1107,7 @@ async function handleRequest(request, env) {
     try {
        const rows = await queryAll(
          env,
-         `SELECT product_id, product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, loyalty_type, is_on_offer, offer_expires_at, product_url
+         `SELECT product_id, product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, loyalty_type, category, is_on_offer, offer_expires_at, product_url
           FROM watchlist
           WHERE is_on_offer = 1
           GROUP BY product_id
@@ -1127,6 +1127,7 @@ async function handleRequest(request, env) {
            currency: r.currency,
          },
          loyalty_type: r.loyalty_type,
+         category: r.category,
          is_on_offer: !!r.is_on_offer,
          offer_expires_at: r.offer_expires_at,
          product_url: r.product_url,

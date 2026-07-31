@@ -98,6 +98,7 @@ export interface DealOffer {
     currency: string;
   };
   loyalty_type: string | null;
+  category: string | null;
   is_on_offer: boolean;
   offer_expires_at: string | null;
   product_url: string;
