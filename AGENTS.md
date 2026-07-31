@@ -2,8 +2,8 @@
 
 ## Important
 
-- Always activate caveman full, before anything else
-- Always update `CHANGELOG.md` after a change so it can be tracked
+- Always activate caveman full before anything else
+- Always update `CHANGELOG.md` after a change so it can be tracked - see in Markdowns
 
 ## Commands
 
@@ -48,11 +48,9 @@
 - `cn()` utility for className merging (`clsx` + `tailwind-merge`)
 - UI components in `src/components/ui/`
 - No pre-commit hooks
-- **CHANGELOG.md**: log every change with file + line numbers (see `/home/wsl/Projects/markdowns/Sift Project/CHANGELOG.md`)
 
 ## Markdowns
 
 - `/home/wsl/Projects/markdowns/Sift Project/CONTEXT.md` — full architecture, API ref, data model, critical flows
-- `/home/wsl/Projects/markdowns/Sift Project/CHANGES.md` — change log convention
-- `/home/wsl/Projects/markdowns/Sift Project/DESIGN.md` — design system spec
-- `/home/wsl/Projects/Sift/README.md` — full readme for project
+- `/home/wsl/Projects/markdowns/Sift Project/CHANGELOG.md` — log every change with file + line numbers
+- `/home/wsl/Projects/markdowns/Sift Project/DESIGN.md` — Design tokens

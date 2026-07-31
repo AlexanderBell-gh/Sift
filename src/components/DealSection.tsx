@@ -1,8 +1,52 @@
 import { useState, useEffect } from 'react';
-import { getDealOffers, type DealOffer } from '../lib/api';
-import { getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from './ui/useToast';
+import { getDealOffers, addToWatchlist, type DealOffer } from '../lib/api';
+import { hashString } from '../lib/utils';
+import type { SearchResult } from '../types';
 
 function DealCard({ deal }: { deal: DealOffer }) {
+  const { token } = useAuth();
+  const { showToast } = useToast();
+  const [adding, setAdding] = useState(false);
+
+  async function handleAddToWatchlist(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!token) {
+      showToast('Sign in to add to watchlist', 'info');
+      return;
+    }
+    setAdding(true);
+    try {
+      const result: SearchResult = {
+        id: hashString(deal.store + '_' + deal.product_name),
+        name: deal.product_name,
+        store: deal.store,
+        store_logo: deal.store_logo,
+        image_url: deal.image_url,
+        unit: null,
+        prices: deal.prices,
+        loyalty_type: null,
+        offer_expires_at: deal.offer_expires_at,
+        product_url: deal.product_url,
+        category: null,
+        is_on_offer: deal.is_on_offer,
+      };
+      await addToWatchlist(token, result);
+      showToast('Added to watchlist', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '';
+      if (message.includes('403') || message.includes('watchlist_limit')) {
+        showToast('Trial limit reached — upgrade to add more', 'error');
+      } else {
+        showToast('Failed to add to watchlist', 'error');
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
   return (
     <a
       href={deal.product_url}
@@ -27,16 +71,6 @@ function DealCard({ deal }: { deal: DealOffer }) {
       )}
       <div className="deal-info">
         <span className="deal-name">{deal.product_name}</span>
-        <div className="deal-loyalty">
-          <img
-            src={deal.store_logo}
-            alt=""
-            className="deal-loyalty-logo"
-          />
-          <span className={`deal-loyalty-label ${getLoyaltyClass(deal.store)}`}>
-            {getLoyaltyLabel(deal.store)}
-          </span>
-        </div>
         <div className="deal-prices">
           {deal.prices.normal != null && (
             <span className="lowest-core-old">
@@ -49,6 +83,13 @@ function DealCard({ deal }: { deal: DealOffer }) {
             </span>
           )}
         </div>
+        <button
+          onClick={handleAddToWatchlist}
+          disabled={adding}
+          className="deal-watchlist-btn"
+        >
+          {adding ? 'Adding...' : 'Add to watchlist'}
+        </button>
       </div>
     </a>
   );
