@@ -1,8 +1,110 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell } from 'lucide-react';
+import type { TouchEvent } from 'react';
+import { Bell, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { getAlerts, markAlertRead } from '../lib/api';
+import { getAlerts, markAlertRead, deleteAlert } from '../lib/api';
 import type { Alert } from '../types';
+
+const SWIPE_THRESHOLD = 60;
+
+function formatTime(ts: number) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return `${Math.floor(diff / 86400000)}d ago`;
+}
+
+interface AlertRowProps {
+  alert: Alert;
+  onMarkRead: (id: string) => void;
+  onDismiss: (id: string) => void;
+}
+
+function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const startX = useRef<number | null>(null);
+  const offset = useRef(0);
+  const swiped = useRef(false);
+
+  function reset() {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transition = '';
+    el.style.transform = '';
+    el.style.opacity = '';
+  }
+
+  function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
+    startX.current = e.touches[0].clientX;
+    offset.current = 0;
+  }
+
+  function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
+    const el = ref.current;
+    if (el && startX.current !== null) {
+      offset.current = e.touches[0].clientX - startX.current;
+      if (offset.current < 0) {
+        el.style.transition = 'none';
+        el.style.transform = `translateX(${Math.max(offset.current, -100)}px)`;
+        el.style.opacity = `${1 + offset.current / 250}`;
+      }
+    }
+  }
+
+  function handleTouchEnd() {
+    startX.current = null;
+    if (offset.current < -SWIPE_THRESHOLD) {
+      swiped.current = true;
+      reset();
+      onDismiss(alert.id);
+    } else {
+      reset();
+    }
+    offset.current = 0;
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`alert-item ${!alert.read ? 'unread' : ''}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={reset}
+      style={{ transform: 'translateX(0)', transition: 'transform 200ms ease, opacity 200ms ease, background 150ms ease' }}
+    >
+      <button
+        className="alert-body"
+        onClick={() => {
+          if (swiped.current) {
+            swiped.current = false;
+            return;
+          }
+          onMarkRead(alert.id);
+        }}
+      >
+        {!alert.read && (
+          <span className="alert-dot" />
+        )}
+        <div className="min-w-0">
+          <p className="alert-message">{alert.message}</p>
+          <p className="alert-time">{formatTime(alert.triggered_at)}</p>
+        </div>
+      </button>
+      {alert.read && (
+        <button
+          className="alert-dismiss"
+          onClick={(e) => { e.stopPropagation(); onDismiss(alert.id); }}
+          title="Dismiss"
+          aria-label="Dismiss alert"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function AlertBell() {
   const { token } = useAuth();
@@ -51,12 +153,14 @@ export default function AlertBell() {
     setUnreadCount(prev => Math.max(0, prev - 1));
   }
 
-  function formatTime(ts: number) {
-    const diff = Date.now() - ts;
-    if (diff < 60000) return 'just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return `${Math.floor(diff / 86400000)}d ago`;
+  async function handleDismiss(id: string) {
+    if (!token) return;
+    await deleteAlert(token, id);
+    setAlerts(prev => {
+      const removed = prev.find(a => a.id === id);
+      if (removed && !removed.read) setUnreadCount(c => Math.max(0, c - 1));
+      return prev.filter(a => a.id !== id);
+    });
   }
 
   return (
@@ -82,21 +186,12 @@ export default function AlertBell() {
           ) : (
             <div>
               {alerts.slice(0, 20).map(alert => (
-                <button
+                <AlertRow
                   key={alert.id}
-                  onClick={() => handleMarkRead(alert.id)}
-                  className={`alert-item ${!alert.read ? 'unread' : ''}`}
-                >
-                  <div className="flex items-start gap-2">
-                    {!alert.read && (
-                      <span className="alert-dot" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="alert-message">{alert.message}</p>
-                      <p className="alert-time">{formatTime(alert.triggered_at)}</p>
-                    </div>
-                  </div>
-                </button>
+                  alert={alert}
+                  onMarkRead={handleMarkRead}
+                  onDismiss={handleDismiss}
+                />
               ))}
             </div>
           )}

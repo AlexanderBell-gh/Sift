@@ -954,11 +954,13 @@ body {
 
 .alert-item {
   width: 100%;
-  text-align: left;
-  padding: 12px;
   display: flex;
   align-items: flex-start;
+  padding: 12px;
   gap: 8px;
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
   transition: background 150ms ease;
 }
 
@@ -968,6 +970,40 @@ body {
 
 .alert-item.unread {
   background: rgba(255, 87, 1, 0.05);
+}
+
+.alert-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.alert-dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.alert-dismiss:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .alert-dot {
@@ -2650,6 +2686,10 @@ body {
 
   .alert-item {
     padding: 14px 12px;
+  }
+
+  .alert-dismiss {
+    display: none;
   }
 }
 

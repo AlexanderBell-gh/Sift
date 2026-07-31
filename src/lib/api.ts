@@ -171,6 +171,14 @@ export async function markAlertRead(token: string, id: string): Promise<void> {
   return handleResponse(response);
 }
 
+export async function deleteAlert(token: string, id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/alerts/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
 // ===== ADMIN =====
 
 export async function getAdminStats(token: string): Promise<AdminStats> {

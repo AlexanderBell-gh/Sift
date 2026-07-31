@@ -1428,6 +1428,27 @@ async function handleRequest(request, env) {
     }
   }
 
+  if (path.match(/^\/api\/alerts\/[^/]+\/?$/) && method === 'DELETE') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    const alertId = path.split('/')[3];
+    try {
+      const row = await queryOne(
+        env,
+        'SELECT id FROM alerts WHERE id = ? AND user_id = ?',
+        [alertId, auth.userId]
+      );
+      if (!row) return errorResponse('Alert not found', 404);
+
+      await execute(env, 'DELETE FROM alerts WHERE id = ?', [alertId]);
+      return jsonResponse({ success: true });
+    } catch (e) {
+      console.error('Alert DELETE error:', e);
+      return errorResponse('Failed to dismiss alert');
+    }
+  }
+
   return errorResponse('Not found', 404);
 }
 
