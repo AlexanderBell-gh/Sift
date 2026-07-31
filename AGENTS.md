@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Important
+
+- Always activate caveman full, before anything else
+- Always update `CHANGELOG.md` after a change so it can be tracked
+
 ## Commands
 
 - `pnpm run dev` — Vite dev server
@@ -43,9 +48,9 @@
 - `cn()` utility for className merging (`clsx` + `tailwind-merge`)
 - UI components in `src/components/ui/`
 - No pre-commit hooks
-- **CHANGES.md**: log every change with file + line numbers (see `/home/wsl/Projects/markdowns/Sift Project/CHANGES.md`)
+- **CHANGELOG.md**: log every change with file + line numbers (see `/home/wsl/Projects/markdowns/Sift Project/CHANGELOG.md`)
 
-## Reference Files
+## Markdowns
 
 - `/home/wsl/Projects/markdowns/Sift Project/CONTEXT.md` — full architecture, API ref, data model, critical flows
 - `/home/wsl/Projects/markdowns/Sift Project/CHANGES.md` — change log convention
