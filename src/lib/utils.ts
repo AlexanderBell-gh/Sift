@@ -62,7 +62,7 @@ export function getLoyaltyLabel(store: string): string {
     Morrisons: 'More card price',
     'M&S': 'Sparks price',
     Lidl: 'Lidl Plus price',
-    ASDA: 'ASDA price',
+    ASDA: 'Rollback price',
     Aldi: 'Aldi price',
   };
   return labels[store] ?? 'Offer price';
