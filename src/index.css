@@ -345,27 +345,8 @@ body {
 .deals-track-wrapper {
   position: relative;
   overflow: hidden;
-}
-
-.deals-track-wrapper::before,
-.deals-track-wrapper::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 48px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.deals-track-wrapper::before {
-  left: 0;
-  background: linear-gradient(to right, var(--surface), transparent);
-}
-
-.deals-track-wrapper::after {
-  right: 0;
-  background: linear-gradient(to left, var(--surface), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
 }
 
 .deals-track {
@@ -567,6 +548,11 @@ body {
 
   .deals-container {
     padding: 0 12px;
+  }
+
+  .deals-track-wrapper {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
   }
 
   .deals-title {
@@ -3289,27 +3275,8 @@ body {
 .store-offers-scroll-wrapper {
   position: relative;
   overflow: hidden;
-}
-
-.store-offers-scroll-wrapper::before,
-.store-offers-scroll-wrapper::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 48px;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.store-offers-scroll-wrapper::before {
-  left: 0;
-  background: linear-gradient(to right, var(--surface), transparent);
-}
-
-.store-offers-scroll-wrapper::after {
-  right: 0;
-  background: linear-gradient(to left, var(--surface), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
 }
 
 .store-offers-card {
@@ -3366,7 +3333,12 @@ body {
 
 @media (max-width: 640px) {
   .store-offers-section {
-    padding: 1 0 32px;
+    padding: 1px 0 32px;
+  }
+
+  .store-offers-scroll-wrapper {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
   }
 
   .store-offers-container {
@@ -3381,7 +3353,7 @@ body {
 
   .store-offers-scroll {
     padding: 4px 2px 12px;
-    margin: 0 -2px;
+    margin: 0;
   }
 
   .store-offers-card {
