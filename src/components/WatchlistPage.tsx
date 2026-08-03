@@ -8,6 +8,7 @@ import { STORES } from '../lib/stores';
 import { formatDate, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
+import WatchlistFilters from './WatchlistFilters';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
 
@@ -97,7 +98,9 @@ export default function WatchlistPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
-      <NavHeader
+      <NavHeader />
+
+      <WatchlistFilters
         selectedStores={selectedStores}
         onStoresChange={setSelectedStores}
         selectedCategories={selectedCategories}
