@@ -6,7 +6,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ## Features
 
-11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, local autocomplete via UK product dictionary, store offers horizontal scroll (links to each store's offers page), deals of the day section (random de-duplicated on-offer items from all users' watchlists, with Add to Watchlist button per tile that greys out at the trial limit), watchlist with price tracking and a live trial-usage banner (X of 5 items + progress bar), price alerts, cron offer-expiry check (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
+11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, local autocomplete via UK product dictionary, store offers horizontal scroll (links to each store's offers page), deals of the day section (random de-duplicated on-offer items from all users' watchlists, with Add to Watchlist button per tile that greys out at the trial limit), filterable watchlist (dedicated filter bar under the nav: store + category multi-select and sort, with a mobile "Filters" pill), price tracking, a live trial-usage banner (X of 5 items + progress bar), price alerts, cron offer-expiry check (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items), JWT + Google OAuth, dark/light mode, mobile responsive.
 
 **Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
 
@@ -87,15 +87,15 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 
 - Watchlist with price tracking and refresh
 - Trial users: max 5 watchlist items — watchlist page shows a live "X of 5" usage banner with progress bar; Deals of the Day Add buttons disable at the limit
-- Cron: daily 6am UTC, max 10 items/user, 100 total, 500ms delay
+- Cron: daily 6am UTC — for every watchlist item past its offer expiry, marks `is_on_offer = 0` and creates a deduplicated "offer ended" alert (no price refresh, no per-user/total caps)
 
 ## Project Structure
 
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
-workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql)
+workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql, seed.sql)
 public/           Store logo SVGs + favicon.svg
-markdowns/        Design system, project context, changelog, fixes
+docs/             Not in repo — DESIGN.md, CONTEXT.md, CHANGELOG.md live in ~/Projects/markdowns/Sift Project/
 ```
 
 ## License
