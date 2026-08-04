@@ -4,39 +4,33 @@
 
 @theme {
   --font-sans: 'Inter', sans-serif;
+  --font-primary: 'Inter', sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --color-accent: #FF5701;
-  --color-accent-light: #FF7A33;
-  --color-accent-dark: #E64D00;
-  --color-background-dark: #0A0C10;
-  --color-surface-dark: #161B22;
-  --color-price-up: #DC2626;
-  --color-price-down: #16A34A;
-  --color-price-neutral: #71717a;
-}
 
-/* DESIGN.md Tokens */
-:root {
+  --ease-spring: cubic-bezier(0.16, 0.3, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
   --primary: #FF5701;
   --secondary: #F6F6F1;
   --success: #16A34A;
   --warning: #D97706;
   --danger: #DC2626;
   --surface: #FFFFFF;
+  --surface-hover: #F9FAFB;
   --text: #111827;
-  --neutral: #FFFFFF;
   --muted: #6B7280;
   --border: #E5E7EB;
   --bg: #F6F6F1;
-  --surface-hover: #F9FAFB;
+  --neutral: #FFFFFF;
   --nav-bg-rgb: 255, 255, 255;
-  --font-primary: 'Inter', sans-serif;
-  --font-body: 'Inter', -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-accent: var(--primary);
+  --color-accent-light: #FF7A33;
 }
 
 .dark {
-  background-color: var(--color-background-dark);
+  background-color: var(--bg);
   --nav-bg-rgb: 13, 17, 23;
   --bg: #0A0C10;
   --surface: #161B22;
@@ -55,12 +49,6 @@ body {
   color: var(--text);
   line-height: 1.5;
   overflow-x: hidden;
-}
-
-/* Spring easing for all transitions */
-:root {
-  --ease-spring: cubic-bezier(0.16, 0.3, 0.3, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Container */
