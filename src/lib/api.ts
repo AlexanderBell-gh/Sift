@@ -145,17 +145,6 @@ export async function removeFromWatchlist(token: string, id: string): Promise<vo
   return handleResponse(response);
 }
 
-export async function refreshWatchlistItem(
-  token: string,
-  id: string
-): Promise<{ item: WatchlistItem; priceChanged: boolean; previousPrices: { normal: number | null; loyalty: number | null } | null }> {
-  const response = await fetch(`${API_BASE_URL}/api/watchlist/${id}/refresh`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleResponse(response);
-}
-
 export async function getAlerts(token: string): Promise<{ alerts: Alert[]; unreadCount: number }> {
   const response = await fetch(`${API_BASE_URL}/api/alerts`, {
     headers: { Authorization: `Bearer ${token}` },

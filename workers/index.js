@@ -1291,67 +1291,6 @@ async function handleRequest(request, env) {
     }
   }
 
-  if (path.match(/^\/api\/watchlist\/.+\/refresh$/) && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (!auth?.userId) return auth;
-
-    const itemId = path.split('/')[3];
-    try {
-      const item = await queryOne(
-        env,
-        'SELECT * FROM watchlist WHERE id = ? AND user_id = ?',
-        [itemId, auth.userId]
-      );
-      if (!item) return errorResponse('Watchlist item not found', 404);
-
-      return errorResponse('Search not available', 503);
-      await execute(
-        env,
-        `INSERT INTO price_history (id, product_id, store, normal_price, loyalty_price, unit_price, recorded_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [historyId, item.product_id, item.store, item.normal_price, item.loyalty_price, item.unit_price, Date.now()]
-      );
-
-      await execute(
-        env,
-        `UPDATE watchlist SET
-          normal_price = ?, loyalty_price = ?, unit_price = ?,
-          image_url = COALESCE(NULLIF(?, ''), image_url),
-          offer_expires_at = COALESCE(?, offer_expires_at),
-          is_on_offer = ?, updated_at = ?
-         WHERE id = ?`,
-        [
-          newNormal, newLoyalty, newUnit,
-          matchedResult.image_url,
-          normalizeDateString(matchedResult.offer_expires_at) || item.offer_expires_at,
-          matchedResult.is_on_offer ? 1 : (item.is_on_offer),
-          Date.now(),
-          itemId,
-        ]
-      );
-
-      if (priceChanged && newNormal !== null && oldPrices.normal !== null && newNormal < oldPrices.normal) {
-        const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        await execute(
-          env,
-          `INSERT INTO alerts (id, user_id, watchlist_id, type, message, old_price, new_price, triggered_at, read)
-           VALUES (?, ?, ?, 'price_drop', ?, ?, ?, ?, 0)`,
-          [alertId, auth.userId, itemId, `Price dropped: £${oldPrices.normal.toFixed(2)} → £${newNormal.toFixed(2)}`, oldPrices.normal, newNormal, Date.now()]
-        );
-      }
-
-      const updated = await queryOne(env, 'SELECT * FROM watchlist WHERE id = ?', [itemId]);
-      return jsonResponse({
-        item: reassembleWatchlistItem(updated),
-        priceChanged,
-        previousPrices: priceChanged ? oldPrices : null,
-      });
-    } catch (e) {
-      console.error('Watchlist refresh error:', e);
-      return errorResponse('Failed to refresh item');
-    }
-  }
-
   const watchlistItemMatch = path.match(/^\/api\/watchlist\/(.+)$/);
   if (watchlistItemMatch && method === 'DELETE') {
     const auth = await requireAuth(request, env);
