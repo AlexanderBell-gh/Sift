@@ -38,7 +38,7 @@ export default function AdminPage() {
   const [trialsPage, setTrialsPage] = useState(1);
   const [trialsTotalPages, setTrialsTotalPages] = useState(0);
   const [trialsStatus, setTrialsStatus] = useState('all');
-  const [trialSearch, setTrialSearch] = useState('');
+
   const [auditFilter, setAuditFilter] = useState('all');
   const [loadingByTab, setLoadingByTab] = useState<Record<Tab, boolean>>({
     dashboard: true,
@@ -103,11 +103,11 @@ export default function AdminPage() {
     }
   }, [token, showToast]);
 
-  const loadTrials = useCallback(async (page = 1, status = 'all', search = '') => {
+  const loadTrials = useCallback(async (page = 1, status = 'all') => {
     if (!token) return;
     setLoadingByTab(prev => ({ ...prev, trials: true }));
     try {
-      const data = await getAdminTrials(token, { page, limit: 20, status, search });
+      const data = await getAdminTrials(token, { page, limit: 20, status });
       setTrials(data.trials);
       setTrialsPage(data.page);
       setTrialsTotalPages(data.totalPages);
@@ -122,8 +122,8 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === 'users') loadUsers(1, userSearch, userFilter);
     if (tab === 'audit') loadLogs(1);
-    if (tab === 'trials') loadTrials(1, trialsStatus, trialSearch);
-  }, [tab, loadUsers, loadLogs, loadTrials, userSearch, userFilter, trialsStatus, trialSearch]);
+    if (tab === 'trials') loadTrials(1, trialsStatus);
+  }, [tab, loadUsers, loadLogs, loadTrials, userSearch, userFilter, trialsStatus]);
 
   // audit filter re-fetch handled inline in filter pill onClick
 
@@ -161,7 +161,7 @@ export default function AdminPage() {
     try {
       const result = await cleanupExpiredTrials(token);
       showToast(`Deleted ${result.deletedCount} expired trials`, 'success');
-      loadTrials(1, trialsStatus, trialSearch);
+      loadTrials(1, trialsStatus);
     } catch {
       showToast('Failed to cleanup trials', 'error');
     }
@@ -382,20 +382,9 @@ export default function AdminPage() {
           {tab === 'trials' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <SearchIcon className="search-icon-muted absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search trials..."
-                    value={trialSearch}
-                    onChange={e => setTrialSearch(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && loadTrials(1, trialsStatus, trialSearch)}
-                    className="admin-input"
-                  />
-                </div>
                 <select
                   value={trialsStatus}
-                  onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value, trialSearch); }}
+                  onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value); }}
                   className="admin-select"
                 >
                   <option value="all">All Trials</option>
@@ -429,7 +418,7 @@ export default function AdminPage() {
               </div>
 
               {trialsTotalPages > 1 && (
-                <Pagination page={trialsPage} totalPages={trialsTotalPages} onChange={p => loadTrials(p, trialsStatus, trialSearch)} />
+                <Pagination page={trialsPage} totalPages={trialsTotalPages} onChange={p => loadTrials(p, trialsStatus)} />
               )}
             </div>
           )}
