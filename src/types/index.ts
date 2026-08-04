@@ -97,6 +97,9 @@ export interface AdminStats {
   trialUsers: number;
   totalProducts: number;
   totalPrices: number;
+  recentSignups7d: number;
+  trackedStores: number;
+  totalSearches: number;
 }
 
 export interface AdminAnalytics {

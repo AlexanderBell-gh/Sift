@@ -224,7 +224,7 @@ export default function AdminPage() {
 
           {loadingByTab['dashboard'] && !tabLoaded['dashboard'] && tab === 'dashboard' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
-              {Array.from({ length: 3 }).map((_, i) => (
+              {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="h-28 rounded-2xl skeleton animate-pulse" />
               ))}
             </div>
@@ -243,8 +243,10 @@ export default function AdminPage() {
               <StatCard label="Total Users" value={stats.totalUsers} />
               <StatCard label="Regular Users" value={stats.regularUsers} />
               <StatCard label="Trial Users" value={stats.trialUsers} />
-              <StatCard label="Active Watchlists" value={stats.totalProducts} />
-              <StatCard label="API Requests (24h)" value={stats.totalPrices} />
+              <StatCard label="Tracked Products" value={stats.totalProducts} />
+              <StatCard label="Recent Signups (7d)" value={stats.recentSignups7d} />
+              <StatCard label="Tracked Stores" value={stats.trackedStores} />
+              <StatCard label="Searches" value={stats.totalSearches} />
             </div>
           )}
 
