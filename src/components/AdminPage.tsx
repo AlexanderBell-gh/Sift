@@ -19,7 +19,7 @@ import type { AdminStats, AdminUser, AuditLog, TrialUser } from '../types';
 type Tab = 'dashboard' | 'users' | 'audit' | 'trials';
 
 export default function AdminPage() {
-  const { token, user } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
 
@@ -54,6 +54,7 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!token || user?.role !== 'admin') {
       navigate('/');
       return;
@@ -68,7 +69,7 @@ export default function AdminPage() {
         setTabLoaded(prev => ({ ...prev, dashboard: true }));
       })
       .finally(() => setLoadingByTab(prev => ({ ...prev, dashboard: false })));
-  }, [token, user, navigate]);
+  }, [token, user, authLoading, navigate]);
 
   const loadUsers = useCallback(async (page = 1, search = '', filter = 'users') => {
     if (!token) return;
