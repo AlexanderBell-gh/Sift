@@ -371,7 +371,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 16px 14px;
+  padding: 16px 18px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -379,7 +379,7 @@ body {
   text-decoration: none;
   color: var(--text);
   flex-shrink: 0;
-  width: 200px;
+  width: 220px;
   transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
   transition-timing-function: var(--ease-spring);
 }
@@ -566,8 +566,8 @@ body {
   }
 
   .deal-card {
-    width: 160px;
-    padding: 12px 10px;
+    width: 175px;
+    padding: 12px 12px;
   }
 
   .deal-logo {
@@ -1686,7 +1686,7 @@ body {
   object-fit: contain;
 }
 
-.lowest-core-store {
+.store-card {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
@@ -1703,7 +1703,7 @@ body {
   width: fit-content;
 }
 
-.lowest-core-old {
+.full-price {
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
@@ -1711,14 +1711,15 @@ body {
   text-decoration: line-through;
 }
 
-.lowest-core-value {
+.expired-price,
+.offer-price {
   font-family: var(--font-mono);
   font-size: 20px;
   font-weight: 700;
   color: var(--primary);
 }
 
-.lowest-core-was {
+.was-price {
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 500;
@@ -3206,159 +3207,6 @@ body {
   .admin-nav-item svg {
     width: 16px;
     height: 16px;
-  }
-}
-
-/* Store Offers Horizontal Scroll */
-.store-offers-section {
-  width: 100%;
-  overflow: hidden;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 0 48px;
-  position: relative;
-}
-
-.store-offers-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-.store-offers-title {
-  font-family: var(--font-primary);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 16px;
-}
-
-.store-offers-scroll {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding: 4px 2px 12px;
-  margin: 0 -2px;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-}
-
-.store-offers-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.store-offers-scroll:hover {
-  scrollbar-width: auto;
-}
-
-.store-offers-scroll:hover::-webkit-scrollbar {
-  display: block;
-  height: 6px;
-}
-
-.store-offers-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.store-offers-scroll::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-.store-offers-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
-}
-
-.store-offers-scroll-wrapper {
-  position: relative;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
-  mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
-}
-
-.store-offers-card {
-  flex: 0 0 170px;
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 24px 16px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  text-decoration: none;
-  color: var(--text);
-  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-  transition-timing-function: var(--ease-spring);
-}
-
-.store-offers-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 40px -12px rgba(255, 87, 1, 0.12);
-}
-
-.dark .store-offers-card:hover {
-  border-color: color-mix(in oklab, var(--primary) 70%, transparent);
-  box-shadow: 0 8px 40px 6px rgba(255, 87, 1, 0.08);
-}
-
-.store-offers-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  object-fit: contain;
-}
-
-.store-offers-name {
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.store-offers-icon {
-  width: 14px;
-  height: 14px;
-  color: var(--muted);
-  transition: color 0.2s;
-}
-
-.store-offers-card:hover .store-offers-icon {
-  color: var(--primary);
-}
-
-@media (max-width: 640px) {
-  .store-offers-section {
-    padding: 1px 0 32px;
-  }
-
-  .store-offers-scroll-wrapper {
-    -webkit-mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
-    mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
-  }
-
-  .store-offers-container {
-    padding: 0 12px;
-    overflow: visible;
-  }
-
-  .store-offers-title {
-    font-size: 16px;
-    margin-bottom: 12px;
-  }
-
-  .store-offers-scroll {
-    padding: 4px 2px 12px;
-    margin: 0;
-  }
-
-  .store-offers-card {
-    flex: 0 0 150px;
-    padding: 20px 14px;
   }
 }
 

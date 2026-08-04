@@ -71,11 +71,17 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
           />
         </div>
       )}
+      <span className="store-card">
+        {deal.store_logo && (
+          <img src={deal.store_logo} alt={deal.store} className="store-logo" />
+        )}
+        {deal.store}
+      </span>
       <div className="deal-info">
         <span className="deal-name">{deal.product_name}</span>
         <div className="deal-prices">
           {deal.prices.normal != null && (
-            <span className="lowest-core-old">
+            <span className="full-price">
               £{deal.prices.normal.toFixed(2)}
             </span>
           )}

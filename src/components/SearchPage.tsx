@@ -5,7 +5,6 @@ import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 
 import NavHeader from './NavHeader';
 import { StoreSelect } from './ui/StoreSelect';
-import { StoreOffers } from './StoreOffers';
 import { DealSection } from './DealSection';
 import { STORES } from '../lib/stores';
 
@@ -226,8 +225,6 @@ export default function SearchPage() {
           </section>
 
           <DealSection />
-
-          <StoreOffers />
         </>
     </div>
   );

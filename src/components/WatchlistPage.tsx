@@ -208,7 +208,7 @@ export default function WatchlistPage() {
                   </div>
 
                   <div className="product-card-bottom">
-                    <span className="lowest-core-store">
+                    <span className="store-card">
                       {best.store_logo && (
                         <img src={best.store_logo} alt={best.store} className="store-logo" />
                       )}
@@ -221,11 +221,11 @@ export default function WatchlistPage() {
                     {isOfferExpired(best.offer_expires_at) ? (
                       <>
                         <div className="product-card-price">
-                          <span className="lowest-core-value">
+                          <span className="expired-price">
                             £{(best.prices.normal ?? best.prices.loyalty ?? 0).toFixed(2)}
                           </span>
                           {best.prices.normal !== null && best.prices.loyalty !== null && (
-                            <span className="lowest-core-was">was £{best.prices.loyalty.toFixed(2)}</span>
+                            <span className="was-price">was £{best.prices.loyalty.toFixed(2)}</span>
                           )}
                         </div>
                         {best.prices.loyalty !== null && (
@@ -239,9 +239,9 @@ export default function WatchlistPage() {
                       <>
                         <div className="product-card-price">
                           {best.prices.normal !== null && best.prices.loyalty !== null && (
-                            <span className="lowest-core-old">£{best.prices.normal.toFixed(2)}</span>
+                            <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
                           )}
-                          <span className="lowest-core-value">
+                          <span className="offer-price">
                             £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
                           </span>
                         </div>
