@@ -48,7 +48,7 @@ Required secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
 ## Database
 
-Schema: `workers/schema.sql` — 7 tables (users, rate_limits, search_cache, watchlist, price_history, alerts, audit_logs).
+Schema: `workers/schema.sql` — 5 tables (users, rate_limits, watchlist, alerts, audit_logs).
 
 ```bash
 pnpm exec wrangler d1 create sift
@@ -84,7 +84,7 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 
 ## Product Tracking
 
-- Watchlist with price tracking
+- Watchlist for pinned products
 - Trial users: max 5 watchlist items — watchlist page shows a live "X of 5" usage banner with progress bar; Deals of the Day Add buttons disable at the limit
 - Cron: daily 6am UTC — for every watchlist item past its offer expiry, marks `is_on_offer = 0` and creates a deduplicated "offer ended" alert (no price refresh, no per-user/total caps)
 
