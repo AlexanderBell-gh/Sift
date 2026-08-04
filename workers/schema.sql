@@ -23,15 +23,6 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 
 CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at);
 
-CREATE TABLE IF NOT EXISTS search_cache (
-  query_hash TEXT PRIMARY KEY,
-  query TEXT NOT NULL,
-  results TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_cache_created ON search_cache(created_at);
-
 CREATE TABLE IF NOT EXISTS watchlist (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
@@ -59,23 +50,11 @@ CREATE TABLE IF NOT EXISTS watchlist (
 CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
 CREATE INDEX IF NOT EXISTS idx_watchlist_user_product ON watchlist(user_id, product_id);
 
-CREATE TABLE IF NOT EXISTS price_history (
-  id TEXT PRIMARY KEY,
-  product_id TEXT NOT NULL,
-  store TEXT NOT NULL,
-  normal_price REAL,
-  loyalty_price REAL,
-  unit_price REAL,
-  recorded_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_price_history_product ON price_history(product_id, recorded_at);
-
 CREATE TABLE IF NOT EXISTS alerts (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   watchlist_id TEXT NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('price_drop','offer_expiry','offer_created')),
+  type TEXT NOT NULL CHECK(type IN ('offer_expiry')),
   message TEXT NOT NULL,
   old_price REAL,
   new_price REAL,

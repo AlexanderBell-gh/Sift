@@ -76,8 +76,6 @@ export interface AdminUser {
 
 export interface AdminUserDetail extends AdminUser {
   preferences: { currency: string; defaultStore: string | null } | null;
-  totalPrices: number;
-  products: { id: string; name: string; store: string; priceCount: number }[];
 }
 
 export interface AuditLog {
@@ -96,7 +94,6 @@ export interface AdminStats {
   regularUsers: number;
   trialUsers: number;
   totalProducts: number;
-  totalPrices: number;
   recentSignups7d: number;
   trackedStores: number;
   totalSearches: number;
@@ -105,7 +102,6 @@ export interface AdminStats {
 export interface AdminAnalytics {
   storeDistribution: Record<string, number>;
   totalProducts: number;
-  totalPriceEntries: number;
   userCount: number;
   regularUsers: number;
   trialUsers: number;

@@ -176,33 +176,6 @@ function hashString(str) {
   return Math.abs(hash).toString(36);
 }
 
-async function getCachedResults(env, query) {
-  const hash = hashString(query.toLowerCase().trim());
-  const row = await queryOne(
-    env,
-    'SELECT results, created_at FROM search_cache WHERE query_hash = ?',
-    [hash]
-  );
-  if (!row) return null;
-  const age = Date.now() - row.created_at;
-  if (age > 24 * 60 * 60 * 1000) return null;
-  try {
-    return JSON.parse(row.results);
-  } catch {
-    return null;
-  }
-}
-
-async function setCachedResults(env, query, results) {
-  const hash = hashString(query.toLowerCase().trim());
-  await execute(
-    env,
-    `INSERT INTO search_cache (query_hash, query, results, created_at) VALUES (?, ?, ?, ?)
-     ON CONFLICT(query_hash) DO UPDATE SET results = excluded.results, created_at = excluded.created_at`,
-    [hash, query, JSON.stringify(results), Date.now()]
-  );
-}
-
 // Google ID token verification
 let googleCertsCache = null;
 let googleCertsExpiry = 0;
@@ -715,7 +688,6 @@ async function handleRequest(request, env) {
        FROM users`
     );
     const watchlistCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist'))?.c || 0;
-    const priceHistoryCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM price_history'))?.c || 0;
     const recentSignups = (await queryOne(env, `SELECT COUNT(*) as c FROM users WHERE created_at >= datetime('now', '-7 days')`))?.c || 0;
     const trackedStores = (await queryOne(env, 'SELECT COUNT(DISTINCT store) as c FROM watchlist WHERE store IS NOT NULL'))?.c || 0;
     const totalSearches = (await queryOne(env, 'SELECT SUM(search_count) as c FROM users'))?.c || 0;
@@ -725,7 +697,6 @@ async function handleRequest(request, env) {
       regularUsers: userStats?.regular || 0,
       trialUsers: userStats?.trial || 0,
       totalProducts: watchlistCount,
-      totalPrices: priceHistoryCount,
       recentSignups7d: recentSignups,
       trackedStores,
       totalSearches,
@@ -792,8 +763,7 @@ async function handleRequest(request, env) {
 
     const productRows = await queryAll(
       env,
-      `SELECT w.id, w.product_name as name, w.store, w.product_id,
-              (SELECT COUNT(*) FROM price_history WHERE product_id = w.product_id) as price_count
+      `SELECT w.id, w.product_name as name, w.store, w.product_id
        FROM watchlist w WHERE w.user_id = ?`,
       [userId]
     );
@@ -801,9 +771,7 @@ async function handleRequest(request, env) {
       id: p.id,
       name: p.name,
       store: p.store,
-      priceCount: p.price_count,
     }));
-    const totalPrices = products.reduce((s, p) => s + p.priceCount, 0);
 
     return jsonResponse({
       id: user.id,
@@ -815,7 +783,6 @@ async function handleRequest(request, env) {
       preferences: user.preferences,
       createdAt: user.createdAt,
       productCount: products.length,
-      totalPrices,
       products,
     });
   }
@@ -972,7 +939,6 @@ async function handleRequest(request, env) {
     const storeDistribution = Object.fromEntries(storeRows.map((r) => [r.store, r.count]));
 
     const totalProducts = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist'))?.c || 0;
-    const totalPriceEntries = (await queryOne(env, 'SELECT COUNT(*) as c FROM price_history'))?.c || 0;
     const userRegRows = await queryAll(
       env,
       `SELECT date(created_at) as date, COUNT(*) as count FROM users GROUP BY date(created_at) ORDER BY date`
@@ -981,7 +947,6 @@ async function handleRequest(request, env) {
     return jsonResponse({
       storeDistribution,
       totalProducts,
-      totalPriceEntries,
       userCount: userStats?.total || 0,
       regularUsers: userStats?.regular || 0,
       trialUsers: userStats?.trial || 0,
@@ -1081,17 +1046,7 @@ async function handleRequest(request, env) {
       return errorResponse('Authentication required', 401);
     }
 
-    try {
-      const cached = await getCachedResults(env, q);
-      if (cached) {
-        return jsonResponse({ results: cached, cached: true });
-      }
-
-      return jsonResponse({ results: [], cached: false });
-    } catch (e) {
-      console.error('Search error:', e);
-      return errorResponse('Search failed');
-    }
+    return jsonResponse({ results: [], cached: false });
   }
 
   // ===== WATCHLIST =====
