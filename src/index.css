@@ -2070,24 +2070,6 @@ body {
   gap: 12px;
 }
 
-.user-role-select {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.user-role-select:focus {
-  border-color: var(--primary);
-}
-
 .user-row-delete-btn {
   background: rgba(220, 38, 38, 0.08);
   border: 1px solid rgba(220, 38, 38, 0.2);
@@ -2264,21 +2246,78 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.admin-select {
-  border: 1px solid var(--border);
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.admin-input:focus,
-.admin-select:focus {
+.admin-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
+}
+
+.admin-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.admin-dropdown-trigger:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.admin-dropdown-trigger:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
+}
+
+.admin-dropdown-trigger .chevron {
+  transition: transform 0.2s;
+}
+
+.admin-dropdown-trigger--small {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.admin-dropdown-trigger.open .chevron {
+  transform: rotate(180deg);
+}
+
+.admin-select-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: auto;
+  width: 100%;
+  min-width: 160px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dark .admin-select-menu {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.admin-select-item.active {
+  background: var(--bg);
+  color: var(--primary);
 }
 
 .admin-subtitle {
@@ -3138,10 +3177,6 @@ body {
   .user-action-cell {
     flex-direction: row;
     gap: 8px;
-  }
-
-  .user-role-select {
-    flex: 1;
   }
 
   .admin-content {

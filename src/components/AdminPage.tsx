@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import NavHeader from './NavHeader';
@@ -272,14 +272,16 @@ export default function AdminPage() {
                     className="admin-input"
                   />
                 </div>
-                <select
-                  value={userFilter}
-                  onChange={e => { setUserFilter(e.target.value); loadUsers(1, userSearch, e.target.value); }}
-                  className="admin-select"
-                >
-                  <option value="users">Regular Users</option>
-                  <option value="trials">Trial Users</option>
-                </select>
+                <div className="flex-shrink-0">
+                  <AdminSelect
+                    value={userFilter}
+                    onChange={val => { setUserFilter(val); loadUsers(1, userSearch, val); }}
+                    options={[
+                      { value: 'users', label: 'Regular Users' },
+                      { value: 'trials', label: 'Trial Users' },
+                    ]}
+                  />
+                </div>
               </div>
 
               <p className="admin-meta">{usersTotal} users found</p>
@@ -298,23 +300,26 @@ export default function AdminPage() {
                     <div>
                       <span className={`user-badge-role ${u.role === 'admin' ? 'user-badge-admin' : 'user-badge-user'}`}>{u.role}</span>
                     </div>
-                    <div className="user-action-cell">
-                      <select
-                        value={u.role}
-                        onChange={e => handleRoleChange(u.id, e.target.value)}
-                        className="user-role-select"
-                      >
-                        <option value="user">Standard User</option>
-                        <option value="admin">Administrator</option>
-                      </select>
-                      <button
-                        onClick={() => handleDeleteUser(u.id, u.username)}
-                        className="user-row-delete-btn"
-                        aria-label={`Delete user ${u.username}`}
-                      >
-                        ✕
-                      </button>
-                    </div>
+                     <div className="user-action-cell">
+                       <div className="w-40">
+                         <AdminSelect
+                           size="small"
+                           value={u.role}
+                           onChange={val => handleRoleChange(u.id, val)}
+                           options={[
+                             { value: 'user', label: 'Standard User' },
+                             { value: 'admin', label: 'Administrator' },
+                           ]}
+                         />
+                       </div>
+                       <button
+                         onClick={() => handleDeleteUser(u.id, u.username)}
+                         className="user-row-delete-btn"
+                         aria-label={`Delete user ${u.username}`}
+                       >
+                         ✕
+                       </button>
+                     </div>
                   </div>
                 ))}
               </div>
@@ -385,15 +390,17 @@ export default function AdminPage() {
           {tab === 'trials' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <select
-                  value={trialsStatus}
-                  onChange={e => { setTrialsStatus(e.target.value); loadTrials(1, e.target.value); }}
-                  className="admin-select"
-                >
-                  <option value="all">All Trials</option>
-                  <option value="active">Active</option>
-                  <option value="expired">Expired</option>
-                </select>
+                <div className="flex-shrink-0">
+                  <AdminSelect
+                    value={trialsStatus}
+                    onChange={val => { setTrialsStatus(val); loadTrials(1, val); }}
+                    options={[
+                      { value: 'all', label: 'All Trials' },
+                      { value: 'active', label: 'Active' },
+                      { value: 'expired', label: 'Expired' },
+                    ]}
+                  />
+                </div>
                 <button
                   onClick={handleCleanupTrials}
                   className="btn-danger"
@@ -462,6 +469,64 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
       >
         <ChevronRight className="w-4 h-4" />
       </button>
+    </div>
+  );
+}
+
+function AdminSelect({
+  value,
+  onChange,
+  options,
+  className,
+  size = 'default',
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  className?: string;
+  size?: 'default' | 'small';
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = options.find(o => o.value === value);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={ref} className={`relative ${className ?? ''}`}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className={`admin-dropdown-trigger ${size === 'small' ? 'admin-dropdown-trigger--small' : ''} ${open ? 'open' : ''}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span>{current?.label ?? 'Select'}</span>
+        <ChevronDown className="chevron w-4 h-4" />
+      </button>
+      {open && (
+        <div className="admin-select-menu" role="listbox">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              role="option"
+              aria-selected={opt.value === value}
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`dropdown-item ${opt.value === value ? 'active' : ''}`}
+            >
+              <span className="flex-1">{opt.label}</span>
+              {opt.value === value && <Check className="w-4 h-4 text-primary" strokeWidth={3} />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
