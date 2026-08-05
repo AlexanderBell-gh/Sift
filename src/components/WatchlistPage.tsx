@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import { STORES } from '../lib/stores';
-import { formatDate, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
+import { formatDate, isOfferExpired, getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import WatchlistFilters from './WatchlistFilters';
@@ -228,9 +228,9 @@ export default function WatchlistPage() {
                             <span className="was-price">was £{best.prices.loyalty.toFixed(2)}</span>
                           )}
                         </div>
-                        {best.prices.loyalty !== null && (
-                          <span className="product-card-loyalty expired">
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{getLoyaltyLabel(best.store)}</span>
+                        {(best.offer_deal || best.prices.loyalty !== null) && (
+                          <span className={`product-card-loyalty ${best.offer_deal ? 'expired' : ''}`}>
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
                           </span>
                         )}
                         <span className="product-card-offer expired">Offer expired</span>
@@ -238,25 +238,28 @@ export default function WatchlistPage() {
                     ) : (
                       <>
                         <div className="product-card-price">
-                          {best.prices.normal !== null && best.prices.loyalty !== null && (
-                            <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
+                          {best.offer_deal ? (
+                            <span className="offer-price">£{(best.prices.normal ?? 0).toFixed(2)}</span>
+                          ) : (
+                            <>
+                              {best.prices.normal !== null && best.prices.loyalty !== null && (
+                                <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
+                              )}
+                              <span className="offer-price">
+                                £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
+                              </span>
+                            </>
                           )}
-                          <span className="offer-price">
-                            £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
-                          </span>
                         </div>
-                        {best.prices.loyalty !== null && (
+                        {(best.offer_deal || best.prices.loyalty !== null) && (
                           <span className="product-card-loyalty">
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{getLoyaltyLabel(best.store)}</span>
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
                           </span>
                         )}
                         {best.offer_expires_at && (
                           <span className="product-card-offer">
                             Offer ends {formatDate(best.offer_expires_at)}
                           </span>
-                        )}
-                        {best.offer_deal && (
-                          <span className="deal-badge">{best.offer_deal}</span>
                         )}
                       </>
                     )}

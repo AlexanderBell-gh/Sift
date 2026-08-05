@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './ui/useToast';
 import { getDealOffers, addToWatchlist, getPinnedIds, type DealOffer } from '../lib/api';
+import { getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
 import type { SearchResult } from '../types';
 
 const TRIAL_LIMIT = 5;
@@ -81,20 +82,30 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
       <div className="deal-info">
         <span className="deal-name">{deal.product_name}</span>
         <div className="deal-prices">
-          {deal.prices.normal != null && (
-            <span className="full-price">
-              £{deal.prices.normal.toFixed(2)}
+          {deal.offer_deal ? (
+            <span className="offer-price">
+              £{(deal.prices.normal ?? 0).toFixed(2)}
             </span>
-          )}
-          {deal.prices.loyalty != null && (
-            <span className="deal-price">
-              £{deal.prices.loyalty.toFixed(2)}
-            </span>
-          )}
-          {deal.offer_deal && (
-            <span className="deal-badge">{deal.offer_deal}</span>
+          ) : (
+            <>
+              {deal.prices.normal != null && (
+                <span className="full-price">
+                  £{deal.prices.normal.toFixed(2)}
+                </span>
+              )}
+              {deal.prices.loyalty != null && (
+                <span className="deal-price">
+                  £{deal.prices.loyalty.toFixed(2)}
+                </span>
+              )}
+            </>
           )}
         </div>
+        {(deal.offer_deal || deal.prices.loyalty != null) && (
+          <span className={`product-card-loyalty-label ${getLoyaltyClass(deal.store)}`}>
+            {deal.offer_deal ? cleanDealText(deal.offer_deal) : getLoyaltyLabel(deal.store)}
+          </span>
+        )}
         <button
           onClick={handleAddToWatchlist}
           disabled={adding || limitReached}
