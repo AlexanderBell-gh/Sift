@@ -1999,6 +1999,11 @@ body {
   transform: translateX(4px);
 }
 
+.user-row-card:has(.admin-dropdown-trigger.open) {
+  position: relative;
+  z-index: 10;
+}
+
 .user-profile-meta {
   display: flex;
   align-items: center;

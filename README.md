@@ -88,7 +88,7 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 ## Product Tracking
 
 - Watchlist for pinned products
-- Multi-buy deal terms are captured (`offer_deal`, e.g. "Any 3 for £12"). A product whose only offer is a multi-buy deal (no loyalty price / no expiry) stores `is_on_offer = 1` and renders an orange deal pill next to the normal price in Deals of the Day and on the watchlist card.
+- Multi-buy deal terms are captured (`offer_deal`, e.g. "Any 3 for £12"). A product whose only offer is a multi-buy deal (no loyalty price / no expiry) stores `is_on_offer = 1` and shows its normal price with the multi-buy term in a store-coloured loyalty pill (`.product-card-loyalty-label`, tinted by store) in Deals of the Day and on the watchlist card. Non-multi-buy items show the store loyalty label ("Clubcard price" etc) in the same pill. The deal term is trimmed of a trailing `- Selected <X> Products` boilerplate suffix for display.
 - CSV export (Settings) includes an `Offer Deal` column
 - Trial users: max 5 watchlist items — watchlist page shows a live "X of 5" usage banner with progress bar; Deals of the Day Add buttons disable at the limit
 - Cron: daily 6am UTC — for every watchlist item past its offer expiry, marks `is_on_offer = 0` and creates a deduplicated "offer ended" alert (no price refresh, no per-user/total caps)
