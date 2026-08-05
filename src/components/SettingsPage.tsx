@@ -270,7 +270,7 @@ export default function SettingsPage() {
 }
 
 function generateCSV(items: WatchlistItem[]): string {
-  const headers = ['Product Name', 'Store', 'Normal Price', 'Loyalty Price', 'Unit', 'Unit Price', 'Loyalty Type', 'On Offer', 'Offer Expires', 'URL', 'Notes', 'Created', 'Updated'];
+  const headers = ['Product Name', 'Store', 'Normal Price', 'Loyalty Price', 'Unit', 'Unit Price', 'Loyalty Type', 'On Offer', 'Offer Expires', 'Offer Deal', 'URL', 'Notes', 'Created', 'Updated'];
   const rows = items.map(i => [
     escapeCSV(i.product_name),
     escapeCSV(i.store),
@@ -281,6 +281,7 @@ function generateCSV(items: WatchlistItem[]): string {
     escapeCSV(i.loyalty_type ?? ''),
     i.is_on_offer ? 'Yes' : 'No',
     escapeCSV(i.offer_expires_at ?? ''),
+    escapeCSV(i.offer_deal ?? ''),
     escapeCSV(i.product_url),
     escapeCSV(i.notes ?? ''),
     new Date(i.created_at).toISOString(),

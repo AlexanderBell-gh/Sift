@@ -22,6 +22,7 @@ export interface SearchResult {
   };
   loyalty_type: string | null;
   offer_expires_at: string | null;
+  offer_deal: string | null;
   category: string | null;
   product_url: string;
   is_on_offer: boolean;
@@ -43,6 +44,7 @@ export interface WatchlistItem {
   };
   loyalty_type: string | null;
   offer_expires_at: string | null;
+  offer_deal: string | null;
   product_url: string;
   is_on_offer: boolean;
   category: string | null;

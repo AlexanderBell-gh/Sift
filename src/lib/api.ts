@@ -101,6 +101,7 @@ export interface DealOffer {
   category: string | null;
   is_on_offer: boolean;
   offer_expires_at: string | null;
+  offer_deal: string | null;
   product_url: string;
 }
 

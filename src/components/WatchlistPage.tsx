@@ -255,6 +255,9 @@ export default function WatchlistPage() {
                             Offer ends {formatDate(best.offer_expires_at)}
                           </span>
                         )}
+                        {best.offer_deal && (
+                          <span className="deal-badge">{best.offer_deal}</span>
+                        )}
                       </>
                     )}
                     <p>Updated {formatTimeAgo(lastUpdated)}</p>

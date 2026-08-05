@@ -30,6 +30,7 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
         prices: deal.prices,
         loyalty_type: deal.loyalty_type,
         offer_expires_at: deal.offer_expires_at,
+        offer_deal: deal.offer_deal,
         product_url: deal.product_url,
         category: deal.category,
         is_on_offer: deal.is_on_offer,
@@ -89,6 +90,9 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
             <span className="deal-price">
               £{deal.prices.loyalty.toFixed(2)}
             </span>
+          )}
+          {deal.offer_deal && (
+            <span className="deal-badge">{deal.offer_deal}</span>
           )}
         </div>
         <button

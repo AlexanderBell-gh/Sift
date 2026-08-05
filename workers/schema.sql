@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
   currency TEXT NOT NULL DEFAULT 'GBP',
   loyalty_type TEXT,
   offer_expires_at TEXT,
+  offer_deal TEXT,
   product_url TEXT NOT NULL DEFAULT '',
   is_on_offer INTEGER NOT NULL DEFAULT 0,
   category TEXT,

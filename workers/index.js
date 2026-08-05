@@ -255,6 +255,7 @@ function reassembleWatchlistItem(r) {
     },
     loyalty_type: r.loyalty_type,
     offer_expires_at: r.offer_expires_at,
+    offer_deal: r.offer_deal,
     product_url: r.product_url,
     is_on_offer: !!r.is_on_offer,
     notes: r.notes,
@@ -1068,7 +1069,7 @@ async function handleRequest(request, env) {
     try {
        const rows = await queryAll(
          env,
-         `SELECT product_id, product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, loyalty_type, category, is_on_offer, offer_expires_at, product_url
+         `SELECT product_id, product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, loyalty_type, category, is_on_offer, offer_expires_at, offer_deal, product_url
           FROM watchlist
           WHERE is_on_offer = 1
           GROUP BY product_id
@@ -1091,6 +1092,7 @@ async function handleRequest(request, env) {
          category: r.category,
          is_on_offer: !!r.is_on_offer,
          offer_expires_at: r.offer_expires_at,
+         offer_deal: r.offer_deal,
          product_url: r.product_url,
        })));
     } catch (e) {
@@ -1143,6 +1145,7 @@ async function handleRequest(request, env) {
         },
         loyalty_type: r.loyalty_type,
         offer_expires_at: r.offer_expires_at,
+        offer_deal: r.offer_deal,
         product_url: r.product_url,
         is_on_offer: !!r.is_on_offer,
         notes: r.notes,
@@ -1193,8 +1196,8 @@ async function handleRequest(request, env) {
 
       await execute(
         env,
-         `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, product_url, is_on_offer, category, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, offer_deal, product_url, is_on_offer, category, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           auth.userId,
@@ -1210,6 +1213,7 @@ async function handleRequest(request, env) {
           result.prices?.currency || 'GBP',
           result.loyalty_type || null,
           normalizeDateString(result.offer_expires_at),
+          result.offer_deal || null,
           result.product_url || '',
           result.is_on_offer ? 1 : 0,
           result.category || null,
@@ -1237,6 +1241,7 @@ async function handleRequest(request, env) {
           },
           loyalty_type: row.loyalty_type,
           offer_expires_at: row.offer_expires_at,
+          offer_deal: row.offer_deal,
           product_url: row.product_url,
           is_on_offer: !!row.is_on_offer,
           category: row.category,
