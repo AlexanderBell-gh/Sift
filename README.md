@@ -50,9 +50,12 @@ Required secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
 Schema: `workers/schema.sql` — 5 tables (users, rate_limits, watchlist, alerts, audit_logs).
 
+Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrangler.toml`) and auto-apply on push via the "Apply D1 migrations" CI step.
+
 ```bash
 pnpm exec wrangler d1 create sift
 pnpm exec wrangler d1 execute sift --remote --file=workers/schema.sql
+pnpm exec wrangler d1 migrations apply sift --remote  # apply pending migrations
 ```
 
 Update `database_id` in `workers/wrangler.toml`.
@@ -85,6 +88,8 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 ## Product Tracking
 
 - Watchlist for pinned products
+- Multi-buy deal terms are captured (`offer_deal`, e.g. "Any 3 for £12"). A product whose only offer is a multi-buy deal (no loyalty price / no expiry) stores `is_on_offer = 1` and renders an orange deal pill next to the normal price in Deals of the Day and on the watchlist card.
+- CSV export (Settings) includes an `Offer Deal` column
 - Trial users: max 5 watchlist items — watchlist page shows a live "X of 5" usage banner with progress bar; Deals of the Day Add buttons disable at the limit
 - Cron: daily 6am UTC — for every watchlist item past its offer expiry, marks `is_on_offer = 0` and creates a deduplicated "offer ended" alert (no price refresh, no per-user/total caps)
 
@@ -92,7 +97,7 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
-workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql, seed.sql)
+workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql, seed.sql, migrations/)
 public/           Store logo SVGs + favicon.svg
 docs/             Not in repo — DESIGN.md, CONTEXT.md, CHANGELOG.md live in ~/Projects/markdowns/Sift Project/
 ```
