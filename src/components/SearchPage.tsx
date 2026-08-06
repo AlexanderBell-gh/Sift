@@ -128,8 +128,8 @@ export default function SearchPage() {
       <>
           <section className="hero">
             <div className="container">
-              <h1>Explore and Track Offers <br /><span className="text-gradient">In One Place</span><br /></h1>
-              <p>Find the best grocery offers across 11 UK supermarkets.</p>
+              <h1>Find and Track Offers <br /><span className="text-gradient">In One Place</span><br /></h1>
+              <p>Find the best grocery offers across 11 UK supermarkets</p>
 
               <div className="store-chips-wrapper">
                 <StoreSelect
