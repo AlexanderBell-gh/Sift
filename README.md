@@ -99,7 +99,6 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 src/              React SPA (components, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql, seed.sql, migrations/)
 public/           Store logo SVGs + favicon.svg
-docs/             Not in repo — DESIGN.md, CONTEXT.md, CHANGELOG.md live in ~/Projects/markdowns/Sift Project/
 ```
 
 ## License
