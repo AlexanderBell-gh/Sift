@@ -4,7 +4,7 @@ import { cn } from '../lib/utils';
 import { STORES } from '../lib/stores';
 
 const STORE_NAMES = STORES.map(s => s.name);
-const CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard'];
+const CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard', 'Other'];
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Relevance' },

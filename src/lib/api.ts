@@ -11,12 +11,13 @@ import ukBabyToddler from '../data/uk-baby_toddler.json';
 import ukPet from '../data/uk-pet.json';
 import ukHealthBeauty from '../data/uk-health_beauty.json';
 import ukConvenience from '../data/uk-convenience.json';
+import ukOther from '../data/uk-other.json';
 import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AdminUserDetail, AdminAnalytics, AuditLog, TrialUser, User } from '../types';
 
 const ukProducts = [
   ...ukDairy, ...ukBakery, ...ukMeatFish, ...ukProduce,
   ...ukFrozen, ...ukCupboard, ...ukDrinks, ...ukHousehold,
-  ...ukBabyToddler, ...ukPet, ...ukHealthBeauty, ...ukConvenience,
+  ...ukBabyToddler, ...ukPet, ...ukHealthBeauty, ...ukConvenience, ...ukOther,
 ];
 
 const API_BASE_URL = 'https://siftapi.blackmesa.workers.dev';

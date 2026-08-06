@@ -14,7 +14,7 @@ import { useToast } from './ui/useToast';
 
 
 const ALL_STORES = STORES.map(s => s.name);
-const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard'];
+const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard', 'Other'];
 
 export default function WatchlistPage() {
   const { token, user } = useAuth();
