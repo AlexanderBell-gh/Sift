@@ -141,9 +141,9 @@ export default function AuthPage() {
 
           {activeTab === 'trial' && (
             <div className="auth-promo">
-              <div className="auth-promo-title">⚡ Instant 24-Hour Access</div>
+              <div className="auth-promo-title">⚡ 24-Hour Trial Access</div>
               <p className="auth-promo-desc">
-                Test Watchlists, store syncing and real-time metrics. No password required.
+                Try Sift for 24 hours. No account or password required.
               </p>
             </div>
           )}
@@ -232,7 +232,7 @@ export default function AuthPage() {
               </button>
             </span>
           )}
-          {activeTab === 'trial' && <span>Sandboxing without passwords or credentials.</span>}
+          {activeTab === 'trial' && <span>This is a temporary account with no login credentials</span>}
         </div>
       </div>
 
