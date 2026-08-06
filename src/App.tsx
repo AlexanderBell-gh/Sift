@@ -114,10 +114,10 @@ function App() {
               <div className="extension-banner-text">
                 <img src="/favicon.svg" alt="" className="extension-banner-favicon" />
                 <span className="extension-banner-title">Sift - Product Extractor</span>
-                <span className="extension-banner-desc">Get the official Chrome extension required for adding products to your Watchlist</span>
+                <span className="extension-banner-desc">Get the official extension required for adding products to your Watchlist</span>
               </div>
               <div className="extension-banner-actions">
-                <a href="https://github.com/Alex-Projects-Master/sift-extension/releases/download/v0.2.0/sift-extension-0.2.0-chrome.zip" target="_blank" rel="noopener noreferrer" className="extension-banner-btn">
+                <a href="https://github.com/Alex-Projects-Master/sift-extension/releases/download/v0.2.3/sift-extension-0.2.3-chrome.zip" target="_blank" rel="noopener noreferrer" className="extension-banner-btn">
                   Download
                 </a>
               </div>
