@@ -52,6 +52,6 @@
 
 ## Markdowns
 
-- `/home/wsl/Projects/markdowns/Sift Project/CONTEXT.md` — Full architecture, API ref, data model, critical flows
-- `/home/wsl/Projects/markdowns/Sift Project/CHANGELOG.md` — Log for every change with file + line numbers
-- `/home/wsl/Projects/markdowns/Sift Project/DESIGN.md` — Design tokens
+- `/home/wsl/Projects/markdowns/Sift-Markdowns/CONTEXT.md` — Full architecture, API ref, data model, critical flows
+- `/home/wsl/Projects/markdowns/Sift-Markdowns/CHANGELOG.md` — Log for every change with file + line numbers
+- `/home/wsl/Projects/markdowns/Sift-Markdowns/DESIGN.md` — Design tokens
