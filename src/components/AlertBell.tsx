@@ -81,6 +81,7 @@ function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
             swiped.current = false;
             return;
           }
+          if (alert.read) return;
           onMarkRead(alert.id);
         }}
       >
@@ -148,6 +149,8 @@ export default function AlertBell() {
 
   async function handleMarkRead(id: string) {
     if (!token) return;
+    const alert = alerts.find(a => a.id === id);
+    if (!alert || alert.read) return;
     await markAlertRead(token, id);
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
     setUnreadCount(prev => Math.max(0, prev - 1));
