@@ -500,6 +500,75 @@ async function handleRequest(request, env) {
     }
   }
 
+  if (path === '/api/auth/forgot-password' && method === 'POST') {
+    try {
+      const rl = await checkRateLimit(env, `forgot:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429);
+
+      const body = await request.json();
+      const { email } = body;
+      if (!email || !isValidEmail(email)) return errorResponse('Valid email required');
+
+      const user = await getUserByEmail(env, email);
+      if (!user || user.isTrial || user.email.endsWith('@trial.sift') || user.email.endsWith('@google.sift')) {
+        return jsonResponse({ token: null, message: 'No reset available for this account' });
+      }
+
+      const token = generateToken();
+      await execute(
+        env,
+        `INSERT INTO password_resets (id, user_id, token_hash, expires_at, used, created_at)
+         VALUES (?, ?, ?, ?, 0, ?)`,
+        [generateId('pr'), user.id, await hashPassword(token), Date.now() + 30 * 60 * 1000, Date.now()]
+      );
+
+      console.log(`Password reset token for ${user.email}: ${token}`);
+      return jsonResponse({ token, expiresInMinutes: 30 });
+    } catch (e) {
+      console.error('Forgot password error:', e);
+      return errorResponse('Invalid request body');
+    }
+  }
+
+  if (path === '/api/auth/reset-password' && method === 'POST') {
+    try {
+      const rl = await checkRateLimit(env, `reset:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429);
+
+      const body = await request.json();
+      const { token, newPassword } = body;
+      if (!token) return errorResponse('Reset token required');
+      if (!isValidPassword(newPassword)) {
+        return errorResponse('New password must be at least 8 characters with at least one letter and one number');
+      }
+
+      const rows = await queryAll(
+        env,
+        'SELECT * FROM password_resets WHERE used = 0 AND expires_at > ?',
+        [Date.now()]
+      );
+      let match = null;
+      for (const row of rows) {
+        if (await verifyPassword(token, row.token_hash)) {
+          match = row;
+          break;
+        }
+      }
+      if (!match) return errorResponse('Invalid or expired reset token');
+
+      await execute(env, 'UPDATE users SET password_hash = ? WHERE id = ?', [
+        await hashPassword(newPassword),
+        match.user_id,
+      ]);
+      await execute(env, 'UPDATE password_resets SET used = 1 WHERE id = ?', [match.id]);
+
+      return jsonResponse({ success: true });
+    } catch (e) {
+      console.error('Reset password error:', e);
+      return errorResponse('Invalid request body');
+    }
+  }
+
   if (path === '/api/auth/google' && method === 'POST') {
     if (!env.GOOGLE_CLIENT_ID) {
       return errorResponse('Google sign-in not configured', 501);

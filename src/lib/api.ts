@@ -31,6 +31,24 @@ export async function updatePassword(token: string, currentPassword: string, new
   return handleResponse<User>(response);
 }
 
+export async function forgotPassword(email: string): Promise<{ token: string | null; expiresInMinutes: number; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return handleResponse(response);
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  return handleResponse(response);
+}
+
 export async function deleteAccount(token: string, password?: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
     method: 'DELETE',

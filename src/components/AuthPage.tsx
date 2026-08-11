@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { Toast } from './ui/Toast';
 import { useToast } from './ui/useToast';
 import { Input } from './ui/Input';
+import { forgotPassword, resetPassword } from '../lib/api';
 
 type AuthTab = 'signin' | 'register' | 'trial';
 
@@ -32,6 +33,11 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast, showToast, hideToast } = useToast();
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -80,6 +86,25 @@ export default function AuthPage() {
     setError('');
     setLoading(true);
     try {
+      if (forgotMode) {
+        if (!resetToken) {
+          const res = await forgotPassword(forgotEmail);
+          if (res.token) {
+            setResetToken(res.token);
+            showToast('Reset token generated — valid for 30 minutes', 'success');
+          } else {
+            setError(res.message || 'No account found for that email');
+          }
+        } else {
+          await resetPassword(resetToken, resetNewPassword);
+          showToast('Password reset — sign in with your new password', 'success');
+          setForgotMode(false);
+          setResetToken(null);
+          setForgotEmail('');
+          setResetNewPassword('');
+        }
+        return;
+      }
       if (activeTab === 'signin') {
         await login(username, password);
         showToast('Signed in successfully', 'success');
@@ -97,6 +122,26 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleCopyToken() {
+    if (!resetToken) return;
+    try {
+      await navigator.clipboard.writeText(resetToken);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable
+    }
+  }
+
+  function handleBackToSignIn() {
+    setForgotMode(false);
+    setResetToken(null);
+    setForgotEmail('');
+    setResetNewPassword('');
+    setCopied(false);
+    setError('');
   }
 
   const tabs: { key: AuthTab; label: string }[] = [
@@ -148,7 +193,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          {activeTab !== 'trial' && (
+          {activeTab !== 'trial' && !forgotMode && (
             <Input
               label="Username"
               type="text"
@@ -170,7 +215,7 @@ export default function AuthPage() {
             />
           )}
 
-          {activeTab !== 'trial' && (
+          {activeTab !== 'trial' && !forgotMode && (
             <div className="auth-field-row">
               <Input
                 label="Password"
@@ -183,15 +228,65 @@ export default function AuthPage() {
               />
             </div>
           )}
-          {activeTab === 'signin' && (
-            <a href="#" className="auth-forgot" onClick={(e) => e.preventDefault()}>
+          {activeTab === 'signin' && !forgotMode && (
+            <button type="button" className="auth-forgot" onClick={() => setForgotMode(true)}>
               Forgot password?
-            </a>
+            </button>
+          )}
+
+          {activeTab === 'signin' && forgotMode && (
+            <>
+              <div className="auth-promo">
+                <div className="auth-promo-title">Recover your password</div>
+                {!resetToken ? (
+                  <p className="auth-promo-desc">
+                    Enter your account email to get a one-time reset token. No email is sent — the token appears right here.
+                  </p>
+                ) : (
+                  <p className="auth-promo-desc">
+                    Use this token once within 30 minutes to set a new password.
+                  </p>
+                )}
+              </div>
+
+              {!resetToken ? (
+                <Input
+                  label="Account Email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                />
+              ) : (
+                <>
+                  <div className="auth-token-box">
+                    <div className="auth-token-label">Reset token</div>
+                    <div className="auth-token-value">
+                      <code className="auth-token-code">{resetToken}</code>
+                      <button type="button" className="auth-token-copy" onClick={handleCopyToken}>
+                        {copied ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+                  <Input
+                    label="New Password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </>
+              )}
+            </>
           )}
 
           <button type="submit" className="auth-submit" disabled={loading}>
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {activeTab === 'signin' && 'Sign In'}
+            {activeTab === 'signin' && !forgotMode && 'Sign In'}
+            {activeTab === 'signin' && forgotMode && (resetToken ? 'Reset Password' : 'Get Reset Token')}
             {activeTab === 'register' && 'Create Account'}
             {activeTab === 'trial' && 'Start'}
           </button>
@@ -216,7 +311,15 @@ export default function AuthPage() {
         )}
 
         <div className="auth-footer">
-          {activeTab === 'signin' && (
+          {activeTab === 'signin' && forgotMode && (
+            <span>
+              Remembered it?{' '}
+              <button type="button" className="auth-link" onClick={handleBackToSignIn}>
+                Back to Sign In
+              </button>
+            </span>
+          )}
+          {activeTab === 'signin' && !forgotMode && (
             <span>
               Don't have an account?{' '}
               <button type="button" className="auth-link" onClick={() => setActiveTab('register')}>
