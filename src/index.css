@@ -2529,6 +2529,7 @@ body {
   cursor: pointer;
   padding: 0;
   margin-top: -4px;
+  align-self: flex-start;
 }
 
 .auth-forgot:hover {
