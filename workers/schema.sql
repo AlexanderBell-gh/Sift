@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
 );
 
 CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
-CREATE INDEX IF NOT EXISTS idx_watchlist_user_product ON watchlist(user_id, product_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product ON watchlist(user_id, product_id);
 
 CREATE TABLE IF NOT EXISTS alerts (
   id TEXT PRIMARY KEY,

@@ -58,10 +58,25 @@ export async function deleteAccount(token: string, password?: string): Promise<v
   await handleResponse(response);
 }
 
+export class ApiError extends Error {
+  status: number;
+  reason?: string;
+  body?: Record<string, unknown>;
+
+  constructor(message: string, status: number, body?: Record<string, unknown>) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
+    if (body && typeof body.reason === 'string') this.reason = body.reason;
+  }
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || 'Request failed');
+    const body = await response.json().catch(() => ({ error: 'Request failed' }));
+    const message = (body && typeof body.error === 'string' && body.error) || 'Request failed';
+    throw new ApiError(message, response.status, body);
   }
   return response.json();
 }

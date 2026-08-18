@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './ui/useToast';
-import { getDealOffers, addToWatchlist, getPinnedIds, type DealOffer } from '../lib/api';
+import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../lib/api';
 import { getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
 import type { SearchResult } from '../types';
 
@@ -40,9 +40,10 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
       showToast('Added to watchlist', 'success');
       onAdded();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : '';
-      if (message.includes('403') || message.includes('watchlist_limit')) {
+      if (err instanceof ApiError && (err.status === 403 || err.reason === 'watchlist_limit')) {
         showToast('Trial limit reached — upgrade to add more', 'error');
+      } else if (err instanceof ApiError && err.reason === 'trial_expired') {
+        showToast('Your trial has expired', 'error');
       } else {
         showToast('Failed to add to watchlist', 'error');
       }

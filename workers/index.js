@@ -65,6 +65,15 @@ function generateId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
+function safeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a[i] ^ b[i];
+  }
+  return diff === 0;
+}
+
 function normalizeDateString(dateStr) {
   if (!dateStr) return null;
   const numMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
@@ -174,6 +183,12 @@ function hashString(str) {
     hash |= 0;
   }
   return Math.abs(hash).toString(36);
+}
+
+function trialLimitReason(user, now = Date.now()) {
+  if (!user.isTrial) return null;
+  if (user.trialExpiresAt && user.trialExpiresAt <= now) return 'trial_expired';
+  return 'watchlist_limit';
 }
 
 // Google ID token verification
@@ -350,7 +365,7 @@ async function handleRequest(request, env) {
       if (!adminSecret || !env.ADMIN_SECRET) {
         return errorResponse('Invalid admin secret', 403);
       }
-      const secretMatch = crypto.timingSafeEqual(
+      const secretMatch = safeEqual(
         new TextEncoder().encode(adminSecret),
         new TextEncoder().encode(env.ADMIN_SECRET)
       );
@@ -410,6 +425,9 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/login' && method === 'POST') {
     try {
+      const rl = await checkRateLimit(env, `login:${getClientIp(request)}`, 10, 15 * 60 * 1000);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429);
+
       const body = await request.json();
       const { username, password } = body;
 
@@ -448,6 +466,9 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/trial' && method === 'POST') {
     try {
+      const rl = await checkRateLimit(env, `trial:${getClientIp(request)}`, 5, 60 * 60 * 1000);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429);
+
       let username = null;
       try {
         const body = await request.json();
@@ -741,7 +762,8 @@ async function handleRequest(request, env) {
   async function requireAdmin(request, env) {
     const auth = await authenticate(request, env);
     if (!auth) return errorResponse('Authentication required', 401);
-    if (auth.role !== 'admin') return errorResponse('Admin access denied', 403);
+    const user = await getUserById(env, auth.userId);
+    if (!user || user.role !== 'admin') return errorResponse('Admin access denied', 403);
     return auth;
   }
 
@@ -1250,6 +1272,9 @@ async function handleRequest(request, env) {
 
       const user = await getUserById(env, auth.userId);
       if (user && user.isTrial) {
+        if (trialLimitReason(user) === 'trial_expired') {
+          return jsonResponse({ blocked: true, reason: 'trial_expired' }, 403);
+        }
         const countRow = await queryOne(
           env,
           'SELECT COUNT(DISTINCT product_id) as cnt FROM watchlist WHERE user_id = ?',
