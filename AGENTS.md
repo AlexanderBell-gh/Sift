@@ -38,9 +38,13 @@
 ## Backend Specifics
 
 - Auth pattern: `const auth = await requireAuth(request, env); if (!auth?.userId) return auth;`
-- Cache: djb2 hash of query → base36, 24h TTL, upsert `ON CONFLICT DO UPDATE`
+- `requireAdmin` re-checks role from D1 — JWT role claim is NOT trusted (demotions take effect immediately)
+- No search/cache backend (removed). Autocomplete is client-side only.
 - Product IDs: `hashString(store + "_" + title)` — deterministic for dedup
-- Trial: 24h, 5 watchlist items. Search blocked when expired or limit hit
+- Trial: 24h, 5 watchlist items, enforced server-side on `POST /api/watchlist` (403 `trial_expired` / `watchlist_limit`). Watchlist pins backed by `UNIQUE(user_id, product_id)` index (migration `0003`)
+- Rate limits: login 10/15min, trial 5/hour, register-admin 5/15min, forgot/reset-password 5/15min (per IP, `rate_limits` table)
+- Constant-time secret compare: `safeEqual()` in `workers/index.js` (not `crypto.timingSafeEqual` — unavailable on WebCrypto global under `nodejs_compat`)
+- API errors: `handleResponse` throws `ApiError` with `status` + `reason` — branch on those, not message strings
 - CORS: `siftsearch.pages.dev`, `localhost:5173`, `localhost:3000`
 
 ## Conventions
