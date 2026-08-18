@@ -780,9 +780,9 @@ async function handleRequest(request, env) {
        FROM users`
     );
     const watchlistCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist'))?.c || 0;
-    const recentSignups = (await queryOne(env, `SELECT COUNT(*) as c FROM users WHERE created_at >= datetime('now', '-7 days')`))?.c || 0;
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const recentSignups = (await queryOne(env, 'SELECT COUNT(*) as c FROM users WHERE created_at >= ?', [weekAgo]))?.c || 0;
     const trackedStores = (await queryOne(env, 'SELECT COUNT(DISTINCT store) as c FROM watchlist WHERE store IS NOT NULL'))?.c || 0;
-    const totalSearches = (await queryOne(env, 'SELECT SUM(search_count) as c FROM users'))?.c || 0;
 
     return jsonResponse({
       totalUsers: userStats?.total || 0,
@@ -791,7 +791,6 @@ async function handleRequest(request, env) {
       totalProducts: watchlistCount,
       recentSignups7d: recentSignups,
       trackedStores,
-      totalSearches,
     });
   }
 

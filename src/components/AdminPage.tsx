@@ -247,7 +247,6 @@ export default function AdminPage() {
               <StatCard label="Tracked Products" value={stats.totalProducts} />
               <StatCard label="Recent Signups (7d)" value={stats.recentSignups7d} />
               <StatCard label="Tracked Stores" value={stats.trackedStores} />
-              <StatCard label="Searches" value={stats.totalSearches} />
             </div>
           )}
 

@@ -98,7 +98,6 @@ export interface AdminStats {
   totalProducts: number;
   recentSignups7d: number;
   trackedStores: number;
-  totalSearches: number;
 }
 
 export interface AdminAnalytics {
