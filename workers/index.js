@@ -14,7 +14,7 @@ import {
   deleteUser,
   base64UrlToArrayBuffer,
 } from './auth.js';
-import { queryAll, queryOne, execute, batch } from './db.js';
+import { queryAll, queryOne, execute } from './db.js';
 
 
 
@@ -250,33 +250,6 @@ async function verifyGoogleIdToken(idToken, clientId) {
     console.error('Google token verification error:', e);
     return null;
   }
-}
-
-function reassembleWatchlistItem(r) {
-  return {
-    id: r.id,
-    product_id: r.product_id,
-    product_name: r.product_name,
-    store: r.store,
-    store_logo: r.store_logo,
-    image_url: r.image_url,
-    unit: r.unit,
-    category: r.category,
-    prices: {
-      normal: r.normal_price,
-      loyalty: r.loyalty_price,
-      unit_price: r.unit_price,
-      currency: r.currency,
-    },
-    loyalty_type: r.loyalty_type,
-    offer_expires_at: r.offer_expires_at,
-    offer_deal: r.offer_deal,
-    product_url: r.product_url,
-    is_on_offer: !!r.is_on_offer,
-    notes: r.notes,
-    created_at: r.created_at,
-    updated_at: r.updated_at,
-  };
 }
 
 async function handleRequest(request, env) {
@@ -701,20 +674,6 @@ async function handleRequest(request, env) {
           user.passwordHash = await hashPassword(body.newPassword);
         }
 
-        if (body.newEmail && body.currentPassword) {
-          if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
-            return errorResponse('Password is incorrect');
-          }
-          if (!isValidEmail(body.newEmail)) {
-            return errorResponse('Invalid email format');
-          }
-          const existing = await getUserByEmail(env, body.newEmail);
-          if (existing && existing.id !== user.id) {
-            return errorResponse('Email already in use');
-          }
-          user.email = body.newEmail;
-        }
-
         await saveUser(env, user);
 
         return jsonResponse({
@@ -844,40 +803,6 @@ async function handleRequest(request, env) {
   }
 
   const adminUserMatch = path.match(/^\/api\/admin\/users\/(.+)$/);
-  if (adminUserMatch && method === 'GET') {
-    const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
-
-    const userId = adminUserMatch[1];
-    const user = await getUserById(env, userId);
-    if (!user) return errorResponse('User not found', 404);
-
-    const productRows = await queryAll(
-      env,
-      `SELECT w.id, w.product_name as name, w.store, w.product_id
-       FROM watchlist w WHERE w.user_id = ?`,
-      [userId]
-    );
-    const products = productRows.map((p) => ({
-      id: p.id,
-      name: p.name,
-      store: p.store,
-    }));
-
-    return jsonResponse({
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role,
-      isTrial: user.isTrial || false,
-      trialExpiresAt: user.trialExpiresAt || null,
-      preferences: user.preferences,
-      createdAt: user.createdAt,
-      productCount: products.length,
-      products,
-    });
-  }
-
   if (adminUserMatch && method === 'DELETE') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
@@ -1010,41 +935,6 @@ async function handleRequest(request, env) {
     });
   }
 
-  if (path === '/api/admin/analytics') {
-    const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
-
-    const userStats = await queryOne(
-      env,
-      `SELECT
-         COUNT(*) as total,
-         SUM(CASE WHEN is_trial = 1 THEN 1 ELSE 0 END) as trial,
-         SUM(CASE WHEN is_trial = 0 THEN 1 ELSE 0 END) as regular
-       FROM users`
-    );
-
-    const storeRows = await queryAll(
-      env,
-      'SELECT store, COUNT(*) as count FROM watchlist WHERE store IS NOT NULL GROUP BY store'
-    );
-    const storeDistribution = Object.fromEntries(storeRows.map((r) => [r.store, r.count]));
-
-    const totalProducts = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist'))?.c || 0;
-    const userRegRows = await queryAll(
-      env,
-      `SELECT date(created_at) as date, COUNT(*) as count FROM users GROUP BY date(created_at) ORDER BY date`
-    );
-
-    return jsonResponse({
-      storeDistribution,
-      totalProducts,
-      userCount: userStats?.total || 0,
-      regularUsers: userStats?.regular || 0,
-      trialUsers: userStats?.trial || 0,
-      userRegistrations: userRegRows,
-    });
-  }
-
   if (path === '/api/admin/trials') {
     const admin = await requireAdmin(request, env);
     if (admin && admin.error) return admin;
@@ -1119,25 +1009,6 @@ async function handleRequest(request, env) {
     });
 
     return jsonResponse({ deletedCount });
-  }
-
-  // ===== SEARCH =====
-
-  if (path === '/api/search/suggest' && method === 'GET') {
-    return jsonResponse({ suggestions: [] });
-  }
-
-  if (path === '/api/search' && method === 'GET') {
-    const q = url.searchParams.get('q');
-    if (!q || typeof q !== 'string' || q.trim().length === 0) {
-      return errorResponse('Query parameter q is required');
-    }
-    const auth = await authenticate(request, env);
-    if (!auth) {
-      return errorResponse('Authentication required', 401);
-    }
-
-    return jsonResponse({ results: [], cached: false });
   }
 
   // ===== WATCHLIST =====

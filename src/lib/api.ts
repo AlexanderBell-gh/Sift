@@ -12,7 +12,7 @@ import ukPet from '../data/uk-pet.json';
 import ukHealthBeauty from '../data/uk-health_beauty.json';
 import ukConvenience from '../data/uk-convenience.json';
 import ukOther from '../data/uk-other.json';
-import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AdminUserDetail, AdminAnalytics, AuditLog, TrialUser, User } from '../types';
+import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AuditLog, TrialUser, User } from '../types';
 
 const ukProducts = [
   ...ukDairy, ...ukBakery, ...ukMeatFish, ...ukProduce,
@@ -79,17 +79,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
     throw new ApiError(message, response.status, body);
   }
   return response.json();
-}
-
-export async function searchProducts(query: string, token?: string): Promise<{
-  results: SearchResult[];
-  cached?: boolean;
-}> {
-  const params = new URLSearchParams({ q: query });
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const response = await fetch(`${API_BASE_URL}/api/search?${params}`, { headers });
-  return handleResponse(response);
 }
 
 export interface AutocompleteProduct {
@@ -227,13 +216,6 @@ export async function getAdminUsers(
   return handleResponse(response);
 }
 
-export async function getAdminUserDetail(token: string, userId: string): Promise<AdminUserDetail> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleResponse(response);
-}
-
 export async function deleteAdminUser(token: string, userId: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
     method: 'DELETE',
@@ -261,13 +243,6 @@ export async function getAdminAudit(
   if (params.action) searchParams.set('action', params.action);
   if (params.search) searchParams.set('search', params.search);
   const response = await fetch(`${API_BASE_URL}/api/admin/audit?${searchParams}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleResponse(response);
-}
-
-export async function getAdminAnalytics(token: string): Promise<AdminAnalytics> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/analytics`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);

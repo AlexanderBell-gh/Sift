@@ -17,7 +17,6 @@ migrations_dir = "migrations"
 # Secrets must be set via CLI (never commit plaintext):
 #   pnpm exec wrangler secret put ADMIN_SECRET
 #   pnpm exec wrangler secret put JWT_SECRET
-#   pnpm exec wrangler secret put RESEND_API_KEY
 #   pnpm exec wrangler secret put GOOGLE_CLIENT_ID
 
 [triggers]

@@ -25,16 +25,6 @@ function isValidUser(user) {
   );
 }
 
-function isValidMagicLink(magicLink) {
-  return (
-    magicLink &&
-    typeof magicLink.token === 'string' &&
-    typeof magicLink.userId === 'string' &&
-    typeof magicLink.expiresAt === 'number' &&
-    magicLink.expiresAt > Date.now()
-  );
-}
-
 function arrayBufferToBase64(buffer) {
   const bytes = new Uint8Array(buffer);
   let binary = '';
@@ -278,7 +268,6 @@ async function deleteUser(env, userId) {
 
 export {
   isValidUser,
-  isValidMagicLink,
   hashPassword,
   verifyPassword,
   generateToken,
