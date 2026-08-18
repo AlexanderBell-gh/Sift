@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import { STORES } from '../lib/stores';
-import { formatDate, isOfferExpired, getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
+import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import WatchlistFilters from './WatchlistFilters';
@@ -88,16 +88,8 @@ export default function WatchlistPage() {
     }
   }
 
-  function formatTimeAgo(ts: number) {
-    const diff = Date.now() - ts;
-    if (diff < 60000) return 'just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return `${Math.floor(diff / 86400000)}d ago`;
-  }
-
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen bg-bg">
       <NavHeader />
 
       <WatchlistFilters
@@ -110,10 +102,10 @@ export default function WatchlistPage() {
       />
 
       <section className="pt-12 pb-8">
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+        <div className="container flex justify-between items-end mb-8">
           <div>
-            <h1 className="page-title" style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700' }}>Your Watchlist</h1>
-            <p style={{ color: 'var(--muted)', fontSize: '14px' }}>All your offers in one place</p>
+            <h1 className="page-title">Your Watchlist</h1>
+            <p className="text-sm text-muted">All your offers in one place</p>
           </div>
         </div>
       </section>
@@ -156,23 +148,23 @@ export default function WatchlistPage() {
         )}
 
         {!loading && items.length === 0 && (
-          <div className="empty-state-box" style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
-            <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>Your Watchlist is empty</p>
-            <p style={{ fontSize: '14px', marginBottom: '24px' }}>Find and pin groceries from the search tab.</p>
+          <div className="empty-state-box">
+            <p className="empty-state-title">Your Watchlist is empty</p>
+            <p className="empty-state-desc mb-6">Find and pin groceries from the search tab.</p>
             <button
               onClick={() => navigate('/search')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--primary)', color: '#fff', fontSize: '14px', fontWeight: '600', borderRadius: '12px', border: 'none', cursor: 'pointer', transition: 'opacity 0.2s' }}
+              className="btn-primary px-5 py-2.5"
             >
-              <Search style={{ width: '16px', height: '16px' }} />
+              <Search size={16} />
               Search Products
             </button>
           </div>
         )}
 
         {!loading && items.length > 0 && filtered.length === 0 && (
-          <div className="empty-state-box" style={{ textAlign: 'center', padding: '60px', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--muted)' }}>
-            <p style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '8px' }}>No items match filters</p>
-            <p style={{ fontSize: '14px' }}>Try selecting more stores</p>
+          <div className="empty-state-box">
+            <p className="empty-state-title">No items match filters</p>
+            <p className="empty-state-desc">Try selecting more stores</p>
           </div>
         )}
 

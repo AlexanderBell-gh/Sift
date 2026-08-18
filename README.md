@@ -46,11 +46,17 @@ pnpm exec wrangler deploy --config workers/wrangler.toml
 
 Required secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
+**CSP:** production builds get a strict Content-Security-Policy meta injected by `vite.config.ts` (`cspMeta()`); the dev server omits it so HMR keeps working.
+
 ## Database
 
 Schema: `workers/schema.sql` — 6 tables (users, rate_limits, watchlist, alerts, audit_logs, password_resets).
 
-Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrangler.toml`) and auto-apply on push via the "Apply D1 migrations" CI step.
+Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrangler.toml`) and auto-apply on push via the "Apply D1 migrations" CI step:
+- `0001_offer_deal` — `offer_deal` column
+- `0002_password_resets` — password reset tokens
+- `0003_watchlist_unique` — `UNIQUE(user_id, product_id)` index
+- `0004_password_reset_lookup` — `token_sha256` column + index (O(1) reset lookup)
 
 ```bash
 pnpm exec wrangler d1 create sift
@@ -98,7 +104,7 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql, seed.sql, migrations/)
-public/           Store logo SVGs + favicon.svg
+public/           Store logo SVGs + favicon.svg + theme-init.js (dark-mode flash prevention)
 ```
 
 ## License

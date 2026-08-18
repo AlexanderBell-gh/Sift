@@ -95,27 +95,27 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div className="min-h-screen bg-bg">
       <NavHeader />
-      <div className="container" style={{ paddingTop: '48px', paddingBottom: '48px' }}>
-        <div style={{ marginBottom: '32px' }}>
-          <h2 className="page-title" style={{ fontFamily: 'var(--font-primary)', fontSize: '40px', fontWeight: '700', color: 'var(--text)', lineHeight: '1.2' }}>
+      <div className="container py-12">
+        <div className="mb-8">
+          <h2 className="page-title">
             Account Settings
           </h2>
-          <p style={{ color: 'var(--muted)', fontSize: '14px', marginTop: '8px' }}>
+          <p className="text-sm text-muted mt-2">
             Manage your credentials, watchlist data, and account preferences
           </p>
         </div>
 
         {isTrial && (
-          <section className="settings-card" style={{ marginBottom: '20px', background: 'rgba(255, 87, 1, 0.05)', borderColor: 'rgba(255, 87, 1, 0.2)' }}>
+          <section className="settings-card trial-card mb-5">
             <div className="settings-card-header">
               <div className="settings-card-header-icon primary">
-                <Shield size={20} style={{ color: 'var(--primary)' }} />
+                <Shield size={20} className="text-accent" />
               </div>
               <div>
-                <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Trial Account</h3>
-                <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
+                <h3>Trial Account</h3>
+                <p>
                   {user?.trialExpiresAt ? `Expires ${new Date(user.trialExpiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : '24-hour trial active'}
                 </p>
               </div>
@@ -128,20 +128,20 @@ export default function SettingsPage() {
             <section className="settings-card">
               <div className="settings-card-header">
                 <div className="settings-card-header-icon primary">
-                  <Shield size={20} style={{ color: 'var(--primary)' }} />
+                  <Shield size={20} className="text-accent" />
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Personal Details</h3>
-                  <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Your account identifiers</p>
+                  <h3>Personal Details</h3>
+                  <p>Your account identifiers</p>
                 </div>
               </div>
-              <div className="form-group" style={{ marginTop: '8px' }}>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '6px', display: 'block' }}>Full Name</label>
-                <input type="text" className="form-input" value={user?.username || ''} disabled style={{ opacity: 0.75 }} />
+              <div className="form-group mt-2">
+                <label className="field-label">Full Name</label>
+                <input type="text" className="form-input opacity-75" value={user?.username || ''} disabled />
               </div>
               <div className="form-group">
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '6px', display: 'block' }}>Email Address</label>
-                <input type="email" className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.75 }} />
+                <label className="field-label">Email Address</label>
+                <input type="email" className="form-input opacity-75" value={user?.email || ''} disabled />
               </div>
             </section>
           )}
@@ -150,16 +150,16 @@ export default function SettingsPage() {
             <section className="settings-card">
               <div className="settings-card-header">
                 <div className="settings-card-header-icon primary">
-                  <Key size={20} style={{ color: 'var(--primary)' }} />
+                  <Key size={20} className="text-accent" />
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Change Password</h3>
-                  <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Update your account password</p>
+                  <h3>Change Password</h3>
+                  <p>Update your account password</p>
                 </div>
               </div>
-              <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '8px' }}>
+              <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 mt-2">
                 <div className="form-group">
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '6px', display: 'block' }}>Current Password</label>
+                  <label className="field-label">Current Password</label>
                   <input
                     type="password"
                     className="form-input"
@@ -169,7 +169,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '6px', display: 'block' }}>New Password</label>
+                  <label className="field-label">New Password</label>
                   <input
                     type="password"
                     className="form-input"
@@ -179,7 +179,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '6px', display: 'block' }}>Confirm New Password</label>
+                  <label className="field-label">Confirm New Password</label>
                   <input
                     type="password"
                     className="form-input"
@@ -189,10 +189,10 @@ export default function SettingsPage() {
                   />
                 </div>
                 {passwordError && (
-                  <p style={{ color: 'var(--danger)', fontSize: '13px', margin: 0 }}>{passwordError}</p>
+                  <p className="danger-text text-sm">{passwordError}</p>
                 )}
-                <button type="submit" className="btn-primary" disabled={isLoading} style={{ alignSelf: 'flex-start' }}>
-                  {isLoading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : 'Update Password'}
+                <button type="submit" className="btn-primary self-start" disabled={isLoading}>
+                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
                 </button>
               </form>
             </section>
@@ -202,16 +202,16 @@ export default function SettingsPage() {
             <section className="settings-card full-width">
               <div className="settings-card-header">
                 <div className="settings-card-header-icon primary">
-                  <FileDown size={20} style={{ color: 'var(--primary)' }} />
+                  <FileDown size={20} className="text-accent" />
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--text)', margin: 0 }}>Data Management</h3>
-                  <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Export your watchlist data as CSV</p>
+                  <h3>Data Management</h3>
+                  <p>Export your watchlist data as CSV</p>
                 </div>
               </div>
-              <div style={{ marginTop: '8px' }}>
+              <div className="mt-2">
                 <button className="btn-primary" onClick={handleExportDownload} disabled={exportLoading}>
-                  {exportLoading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Download size={16} />}
+                  {exportLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                   Download Watchlist CSV
                 </button>
               </div>
@@ -221,14 +221,14 @@ export default function SettingsPage() {
           <section className="settings-card full-width danger-border">
             <div className="settings-card-header">
               <div className="settings-card-header-icon danger">
-                <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
+                <AlertTriangle size={20} className="text-danger" />
               </div>
               <div>
-                <h3 style={{ fontFamily: 'var(--font-primary)', fontSize: '18px', fontWeight: '700', color: 'var(--danger)', margin: 0 }}>Account Deletion</h3>
-                <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Permanently delete your account and all data</p>
+                <h3 className="danger-text">Account Deletion</h3>
+                <p>Permanently delete your account and all data</p>
               </div>
             </div>
-            <div style={{ marginTop: '8px' }}>
+            <div className="mt-2">
               <button className="btn-danger" onClick={() => setIsDeleteModalOpen(true)}>
                 Delete Account
               </button>
@@ -238,12 +238,12 @@ export default function SettingsPage() {
       </div>
 
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Account">
-        <p style={{ fontSize: '14px', color: 'var(--muted)', margin: 0 }}>
+        <p className="text-sm text-muted">
           This will permanently delete your account, watchlist, and all associated data. This action cannot be undone.
         </p>
         {!isTrial && (
-          <div className="form-group" style={{ marginTop: '8px' }}>
-            <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '6px', display: 'block' }}>Password</label>
+          <div className="form-group mt-2">
+            <label className="field-label">Password</label>
             <input
               type="password"
               className="form-input"
@@ -253,13 +253,13 @@ export default function SettingsPage() {
             />
           </div>
         )}
-        {deleteError && <p style={{ color: 'var(--danger)', fontSize: '13px', margin: 0 }}>{deleteError}</p>}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-          <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsDeleteModalOpen(false)}>
+        {deleteError && <p className="danger-text text-sm">{deleteError}</p>}
+        <div className="flex gap-3 mt-2">
+          <button className="btn-secondary flex-1" onClick={() => setIsDeleteModalOpen(false)}>
             Cancel
           </button>
-          <button className="btn-danger" style={{ flex: 1 }} onClick={handleDeleteAccount} disabled={isLoading}>
-            {isLoading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : 'Delete Account'}
+          <button className="btn-danger flex-1" onClick={handleDeleteAccount} disabled={isLoading}>
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Delete Account'}
           </button>
         </div>
       </Modal>

@@ -5,16 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function hashString(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(36);
-}
-
 export function formatPrice(value: number | null): string | null {
   if (value === null) return null;
   return `£${value.toFixed(2)}`;
@@ -24,7 +14,7 @@ export function parseDate(dateString: string | null): Date | null {
   if (!dateString) return null;
   const numMatch = dateString.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
   if (numMatch) {
-    let [, a, b, y] = numMatch;
+    const [, a, b, y] = numMatch;
     if (Number(a) > 12) {
       return new Date(Number(y), Number(b) - 1, Number(a));
     }
@@ -47,6 +37,14 @@ export function formatDate(dateString: string): string {
   });
 }
 
+export function formatTimeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return `${Math.floor(diff / 86400000)}d ago`;
+}
+
 export function isOfferExpired(dateString: string | null): boolean {
   const date = parseDate(dateString);
   if (!date) return false;
@@ -54,6 +52,8 @@ export function isOfferExpired(dateString: string | null): boolean {
   today.setHours(0, 0, 0, 0);
   return date <= today;
 }
+// Duplicated intentionally with workers/index.js isOfferExpired (no shared build across layers).
+// Keep both identical: offers expire end-of-day, so `<=` (not `<`) is correct in both.
 
 export function getLoyaltyLabel(store: string): string {
   const labels: Record<string, string> = {
@@ -83,6 +83,6 @@ export function getLoyaltyClass(store: string): string {
 
 export function cleanDealText(deal: string | null): string | null {
   if (!deal) return deal;
-  const cleaned = deal.replace(/\s*-\s*Selected\s+[^\-]+Products\s*$/i, '').trim();
+  const cleaned = deal.replace(/\s*-\s*Selected\s+[^-]+Products\s*$/i, '').trim();
   return cleaned || deal;
 }

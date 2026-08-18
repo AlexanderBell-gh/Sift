@@ -3,17 +3,10 @@ import type { TouchEvent } from 'react';
 import { Bell, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getAlerts, markAlertRead, deleteAlert } from '../lib/api';
+import { formatTimeAgo } from '../lib/utils';
 import type { Alert } from '../types';
 
 const SWIPE_THRESHOLD = 60;
-
-function formatTime(ts: number) {
-  const diff = Date.now() - ts;
-  if (diff < 60000) return 'just now';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-  return `${Math.floor(diff / 86400000)}d ago`;
-}
 
 interface AlertRowProps {
   alert: Alert;
@@ -90,7 +83,7 @@ function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
         )}
         <div className="min-w-0">
           <p className="alert-message">{alert.message}</p>
-          <p className="alert-time">{formatTime(alert.triggered_at)}</p>
+          <p className="alert-time">{formatTimeAgo(alert.triggered_at)}</p>
         </div>
       </button>
       {alert.read && (

@@ -27,6 +27,17 @@
 
   --color-accent: var(--primary);
   --color-accent-light: #FF7A33;
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-bg: var(--bg);
 }
 
 .dark {
@@ -2428,6 +2439,14 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
+.page-title {
+  font-family: var(--font-primary);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
 @media (max-width: 640px) {
   .auth-card {
     padding: 24px;
@@ -2925,6 +2944,30 @@ body {
   color: var(--muted);
   margin-bottom: 6px;
   display: block;
+}
+
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.settings-card.trial-card {
+  background: rgba(255, 87, 1, 0.05);
+  border-color: rgba(255, 87, 1, 0.2);
+}
+
+.danger-text {
+  color: var(--danger);
+}
+
+.settings-card .danger-text {
+  color: var(--danger);
 }
 
 .settings-card.transition {

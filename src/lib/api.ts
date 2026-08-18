@@ -20,10 +20,10 @@ const ukProducts = [
   ...ukBabyToddler, ...ukPet, ...ukHealthBeauty, ...ukConvenience, ...ukOther,
 ];
 
-const API_BASE_URL = 'https://siftapi.blackmesa.workers.dev';
+export const API_BASE = 'https://siftapi.blackmesa.workers.dev';
 
 export async function updatePassword(token: string, currentPassword: string, newPassword: string): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+  const response = await fetch(`${API_BASE}/api/auth/me`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ currentPassword, newPassword }),
@@ -32,7 +32,7 @@ export async function updatePassword(token: string, currentPassword: string, new
 }
 
 export async function forgotPassword(email: string): Promise<{ token: string | null; expiresInMinutes: number; message?: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+  const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -41,7 +41,7 @@ export async function forgotPassword(email: string): Promise<{ token: string | n
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<{ success: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+  const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, newPassword }),
@@ -50,7 +50,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
 }
 
 export async function deleteAccount(token: string, password?: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+  const response = await fetch(`${API_BASE}/api/auth/me`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: password ? JSON.stringify({ password }) : undefined,
@@ -129,31 +129,31 @@ export interface DealOffer {
 }
 
 export async function getDealOffers(): Promise<DealOffer[]> {
-  const response = await fetch(`${API_BASE_URL}/api/deal-offers`);
+  const response = await fetch(`${API_BASE}/api/deal-offers`);
   return handleResponse<DealOffer[]>(response);
 }
 
 export async function getAllWatchlistNames(): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/api/watchlist-names`);
+  const response = await fetch(`${API_BASE}/api/watchlist-names`);
   return handleResponse<string[]>(response);
 }
 
 export async function getPinnedIds(token: string): Promise<{ id: string; product_id: string }[]> {
-  const response = await fetch(`${API_BASE_URL}/api/watchlist/ids`, {
+  const response = await fetch(`${API_BASE}/api/watchlist/ids`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function getWatchlist(token: string): Promise<WatchlistItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/watchlist`, {
+  const response = await fetch(`${API_BASE}/api/watchlist`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function addToWatchlist(token: string, result: SearchResult): Promise<WatchlistItem> {
-  const response = await fetch(`${API_BASE_URL}/api/watchlist`, {
+  const response = await fetch(`${API_BASE}/api/watchlist`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ result }),
@@ -162,7 +162,7 @@ export async function addToWatchlist(token: string, result: SearchResult): Promi
 }
 
 export async function removeFromWatchlist(token: string, id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/watchlist/${id}`, {
+  const response = await fetch(`${API_BASE}/api/watchlist/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -170,14 +170,14 @@ export async function removeFromWatchlist(token: string, id: string): Promise<vo
 }
 
 export async function getAlerts(token: string): Promise<{ alerts: Alert[]; unreadCount: number }> {
-  const response = await fetch(`${API_BASE_URL}/api/alerts`, {
+  const response = await fetch(`${API_BASE}/api/alerts`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function markAlertRead(token: string, id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/alerts/${id}/read`, {
+  const response = await fetch(`${API_BASE}/api/alerts/${id}/read`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -185,7 +185,7 @@ export async function markAlertRead(token: string, id: string): Promise<void> {
 }
 
 export async function deleteAlert(token: string, id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/alerts/${id}`, {
+  const response = await fetch(`${API_BASE}/api/alerts/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -195,7 +195,7 @@ export async function deleteAlert(token: string, id: string): Promise<void> {
 // ===== ADMIN =====
 
 export async function getAdminStats(token: string): Promise<AdminStats> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+  const response = await fetch(`${API_BASE}/api/admin/stats`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
@@ -210,14 +210,14 @@ export async function getAdminUsers(
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.search) searchParams.set('search', params.search);
   if (params.filter) searchParams.set('filter', params.filter);
-  const response = await fetch(`${API_BASE_URL}/api/admin/users?${searchParams}`, {
+  const response = await fetch(`${API_BASE}/api/admin/users?${searchParams}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function deleteAdminUser(token: string, userId: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+  const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -225,7 +225,7 @@ export async function deleteAdminUser(token: string, userId: string): Promise<vo
 }
 
 export async function setAdminUserRole(token: string, userId: string, role: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
+  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/role`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ role }),
@@ -242,7 +242,7 @@ export async function getAdminAudit(
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.action) searchParams.set('action', params.action);
   if (params.search) searchParams.set('search', params.search);
-  const response = await fetch(`${API_BASE_URL}/api/admin/audit?${searchParams}`, {
+  const response = await fetch(`${API_BASE}/api/admin/audit?${searchParams}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
@@ -257,14 +257,14 @@ export async function getAdminTrials(
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.status) searchParams.set('status', params.status);
   if (params.search) searchParams.set('search', params.search);
-  const response = await fetch(`${API_BASE_URL}/api/admin/trials?${searchParams}`, {
+  const response = await fetch(`${API_BASE}/api/admin/trials?${searchParams}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function cleanupExpiredTrials(token: string): Promise<{ deletedCount: number }> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/trials/cleanup`, {
+  const response = await fetch(`${API_BASE}/api/admin/trials/cleanup`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
