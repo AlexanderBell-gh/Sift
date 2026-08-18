@@ -35,7 +35,7 @@ function buildCorsHeaders(request) {
   };
 }
 
-function jsonResponse(data, status = 200, request = null) {
+function jsonResponse(data, request = null, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -45,8 +45,8 @@ function jsonResponse(data, status = 200, request = null) {
   });
 }
 
-function errorResponse(message, status = 400, request = null) {
-  return jsonResponse({ error: message }, status, request);
+function errorResponse(message, request = null, status = 400) {
+  return jsonResponse({ error: message }, request, status);
 }
 
 
@@ -174,16 +174,16 @@ async function authenticate(request, env) {
 async function requireAuth(request, env) {
   const auth = await authenticate(request, env);
   if (!auth) {
-    return errorResponse('Authentication required', 401, request);
+    return errorResponse('Authentication required', request, 401);
   }
   return auth;
 }
 
 async function requireAdmin(request, env) {
   const auth = await authenticate(request, env);
-  if (!auth) return errorResponse('Authentication required', 401, request);
+  if (!auth) return errorResponse('Authentication required', request, 401);
   const user = await getUserById(env, auth.userId);
-  if (!user || user.role !== 'admin') return errorResponse('Admin access denied', 403, request);
+  if (!user || user.role !== 'admin') return errorResponse('Admin access denied', request, 403);
   return auth;
 }
 
@@ -329,7 +329,7 @@ async function handleRequest(request, env) {
           preferences: user.preferences,
         },
         token,
-      }, 201, request);
+      }, request, 201);
     } catch (e) {
       console.error('Register error:', e);
       return errorResponse('Invalid request body', request);
@@ -340,21 +340,21 @@ async function handleRequest(request, env) {
     try {
       const rl = await checkRateLimit(env, `register_admin:${getClientIp(request)}`, 5, 15 * 60 * 1000);
       if (!rl.ok) {
-        return errorResponse(`Too many attempts. Try again in ${Math.ceil(rl.retryAfter / 1000)}s`, 429, request);
+        return errorResponse(`Too many attempts. Try again in ${Math.ceil(rl.retryAfter / 1000)}s`, request, 429);
       }
 
       const body = await request.json();
       const { email, username, password, adminSecret } = body;
 
       if (!adminSecret || !env.ADMIN_SECRET) {
-        return errorResponse('Invalid admin secret', 403, request);
+        return errorResponse('Invalid admin secret', request, 403);
       }
       const secretMatch = safeEqual(
         new TextEncoder().encode(adminSecret),
         new TextEncoder().encode(env.ADMIN_SECRET)
       );
       if (!secretMatch) {
-        return errorResponse('Invalid admin secret', 403, request);
+        return errorResponse('Invalid admin secret', request, 403);
       }
       if (!email || !username || !password) {
         return errorResponse('Email, username, and password are required', request);
@@ -400,7 +400,7 @@ async function handleRequest(request, env) {
           preferences: user.preferences,
         },
         token,
-      }, 201, request);
+      }, request, 201);
     } catch (e) {
       console.error('Register admin error:', e);
       return errorResponse('Invalid request body', request);
@@ -410,7 +410,7 @@ async function handleRequest(request, env) {
   if (path === '/api/auth/login' && method === 'POST') {
     try {
       const rl = await checkRateLimit(env, `login:${getClientIp(request)}`, 10, 15 * 60 * 1000);
-      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429, request);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
 
       const body = await request.json();
       const { username, password } = body;
@@ -451,7 +451,7 @@ async function handleRequest(request, env) {
   if (path === '/api/auth/trial' && method === 'POST') {
     try {
       const rl = await checkRateLimit(env, `trial:${getClientIp(request)}`, 5, 60 * 60 * 1000);
-      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429, request);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
 
       let username = null;
       try {
@@ -498,7 +498,7 @@ async function handleRequest(request, env) {
         },
         token,
         trialHoursRemaining: TRIAL_HOURS,
-      }, 201, request);
+      }, request, 201);
     } catch (e) {
       console.error('Trial error:', e);
       return errorResponse('Invalid request body', request);
@@ -508,7 +508,7 @@ async function handleRequest(request, env) {
   if (path === '/api/auth/forgot-password' && method === 'POST') {
     try {
       const rl = await checkRateLimit(env, `forgot:${getClientIp(request)}`, 5, 15 * 60 * 1000);
-      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429, request);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
 
       const body = await request.json();
       const { email } = body;
@@ -538,7 +538,7 @@ async function handleRequest(request, env) {
   if (path === '/api/auth/reset-password' && method === 'POST') {
     try {
       const rl = await checkRateLimit(env, `reset:${getClientIp(request)}`, 5, 15 * 60 * 1000);
-      if (!rl.ok) return errorResponse('Too many attempts, try again later', 429, request);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
 
       const body = await request.json();
       const { token, newPassword } = body;
@@ -572,7 +572,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/google' && method === 'POST') {
     if (!env.GOOGLE_CLIENT_ID) {
-      return errorResponse('Google sign-in not configured', 501, request);
+      return errorResponse('Google sign-in not configured', request, 501);
     }
     try {
       const body = await request.json();
@@ -635,7 +635,7 @@ async function handleRequest(request, env) {
           trialExpiresAt: null,
         },
         token,
-      }, 201, request);
+      }, request, 201);
     } catch (e) {
       console.error('Google auth error:', e);
       return errorResponse('Google sign-in failed', request);
@@ -648,7 +648,7 @@ async function handleRequest(request, env) {
 
     if (method === 'GET') {
       const user = await getUserById(env, auth.userId);
-      if (!user) return errorResponse('User not found', 404, request);
+      if (!user) return errorResponse('User not found', request, 404);
       return jsonResponse({
         id: user.id,
         email: user.email,
@@ -665,7 +665,7 @@ async function handleRequest(request, env) {
       try {
         const body = await request.json();
         const user = await getUserById(env, auth.userId);
-        if (!user) return errorResponse('User not found', 404, request);
+        if (!user) return errorResponse('User not found', request, 404);
 
         if (body.preferences) {
           user.preferences = { ...user.preferences, ...body.preferences };
@@ -702,7 +702,7 @@ async function handleRequest(request, env) {
     if (method === 'DELETE') {
       try {
         const user = await getUserById(env, auth.userId);
-        if (!user) return errorResponse('User not found', 404, request);
+        if (!user) return errorResponse('User not found', request, 404);
 
         if (!user.isTrial) {
           const body = await request.json();
@@ -812,7 +812,7 @@ async function handleRequest(request, env) {
     }
 
     const user = await getUserById(env, userId);
-    if (!user) return errorResponse('User not found', 404, request);
+    if (!user) return errorResponse('User not found', request, 404);
 
     if (user.role === 'admin') {
       const adminCount = (await queryOne(
@@ -847,7 +847,7 @@ async function handleRequest(request, env) {
 
     const targetUserId = roleMatch[1];
     const targetUser = await getUserById(env, targetUserId);
-    if (!targetUser) return errorResponse('User not found', 404, request);
+    if (!targetUser) return errorResponse('User not found', request, 404);
 
     try {
       const body = await request.json();
@@ -1142,7 +1142,7 @@ async function handleRequest(request, env) {
       const user = await getUserById(env, auth.userId);
       if (user && user.isTrial) {
         if (trialLimitReason(user) === 'trial_expired') {
-          return jsonResponse({ blocked: true, reason: 'trial_expired' }, 403, request);
+          return jsonResponse({ blocked: true, reason: 'trial_expired' }, request, 403);
         }
         const countRow = await queryOne(
           env,
@@ -1150,7 +1150,7 @@ async function handleRequest(request, env) {
           [auth.userId]
         );
         if (countRow && countRow.cnt >= 5) {
-          return jsonResponse({ blocked: true, reason: 'watchlist_limit' }, 403, request);
+          return jsonResponse({ blocked: true, reason: 'watchlist_limit' }, request, 403);
         }
       }
 
@@ -1211,9 +1211,9 @@ async function handleRequest(request, env) {
           notes: row.notes,
           created_at: row.created_at,
           updated_at: row.updated_at,
-        }, 201, request);
+        }, request, 201);
       }
-      return jsonResponse({ id }, 201, request);
+      return jsonResponse({ id }, request, 201);
     } catch (e) {
       console.error('Watchlist POST error:', e);
       return errorResponse('Failed to add to watchlist', request);
@@ -1232,7 +1232,7 @@ async function handleRequest(request, env) {
         'SELECT id FROM watchlist WHERE id = ? AND user_id = ?',
         [itemId, auth.userId]
       );
-      if (!row) return errorResponse('Watchlist item not found', 404, request);
+      if (!row) return errorResponse('Watchlist item not found', request, 404);
 
       await execute(env, 'DELETE FROM watchlist WHERE id = ?', [itemId]);
       return jsonResponse({ success: true }, request);
@@ -1286,7 +1286,7 @@ async function handleRequest(request, env) {
         'SELECT id FROM alerts WHERE id = ? AND user_id = ?',
         [alertId, auth.userId]
       );
-      if (!row) return errorResponse('Alert not found', 404, request);
+      if (!row) return errorResponse('Alert not found', request, 404);
 
       await execute(env, 'UPDATE alerts SET read = 1 WHERE id = ?', [alertId]);
       return jsonResponse({ success: true }, request);
@@ -1307,7 +1307,7 @@ async function handleRequest(request, env) {
         'SELECT id FROM alerts WHERE id = ? AND user_id = ?',
         [alertId, auth.userId]
       );
-      if (!row) return errorResponse('Alert not found', 404, request);
+      if (!row) return errorResponse('Alert not found', request, 404);
 
       await execute(env, 'DELETE FROM alerts WHERE id = ?', [alertId]);
       return jsonResponse({ success: true }, request);
@@ -1317,7 +1317,7 @@ async function handleRequest(request, env) {
     }
   }
 
-  return errorResponse('Not found', 404, request);
+  return errorResponse('Not found', request, 404);
 }
 
 export default {
@@ -1326,7 +1326,7 @@ export default {
       return await handleRequest(request, env);
     } catch (e) {
       console.error('Unhandled error:', e);
-      return errorResponse('Internal server error', 500, request);
+      return errorResponse('Internal server error', request, 500);
     }
   },
   async scheduled(event, env, ctx) {

@@ -28,7 +28,7 @@
 - `verbatimModuleSyntax: true` — explicit `import type` required for type-only imports
 - Workers: plain JS with ESM imports, no TS, no bundler
 - API base URL: exported once as `API_BASE` from `src/lib/api.ts` (AuthContext imports it — change the URL in one place)
-- CORS headers built per request (`buildCorsHeaders(request)` in `workers/index.js`) — `jsonResponse`/`errorResponse` take a `request` param; no module-level mutable header state
+- CORS headers built per request (`buildCorsHeaders(request)` in `workers/index.js`). Response helpers keep the `request` as the **2nd** arg so every response can carry CORS: `jsonResponse(data, request = null, status = 200)` / `errorResponse(message, request = null, status = 400)` — status 3rd, no module-level mutable header state. (A past refactor briefly made status 2nd and silently 500'd every API call.)
 - CSP: strict Content-Security-Policy meta injected at **build only** via `cspMeta()` in `vite.config.ts` (dev HMR needs inline scripts, so no CSP in dev)
 - Google Client ID from `VITE_GOOGLE_CLIENT_ID` env var (Vite build-time). Must be set in Cloudflare Pages dashboard (Production) or `.env` for local dev. Worker uses separate `GOOGLE_CLIENT_ID` secret — both must match.
 - Dark mode: `.dark` class on `<html>`; flash-prevention script lives in `public/theme-init.js` (external, loaded from `index.html` `<head>`) so prod CSP needs no `unsafe-inline`
