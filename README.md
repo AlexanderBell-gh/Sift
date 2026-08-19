@@ -37,7 +37,7 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account.
 pnpm run build  # output → dist/
 ```
 
-**Automatic:** Push to `main` triggers GitHub Actions.
+**Automatic:** Push to `main` triggers GitHub Actions (lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
 **Manual:**
 ```bash
 pnpm exec wrangler pages deploy dist --project-name=siftsearch
@@ -57,6 +57,7 @@ Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrang
 - `0002_password_resets` — password reset tokens
 - `0003_watchlist_unique` — `UNIQUE(user_id, product_id)` index
 - `0004_password_reset_lookup` — `token_sha256` column + index (O(1) reset lookup)
+- `0005_alert_types` — widen `alerts.type` CHECK to `('price_drop','offer_expiry','offer_created')` (matches `src/types/index.ts`; table rebuild)
 
 ```bash
 pnpm exec wrangler d1 create sift

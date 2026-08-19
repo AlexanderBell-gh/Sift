@@ -20,7 +20,7 @@
 - Browser → Cloudflare Pages (React SPA) → Cloudflare Workers (REST API) → D1 (SQLite)
 - Frontend: `src/` (React 19 + TS + Vite + Tailwind v4) - For all UI generation, follow the design system defined in `DESIGN.md`
 - Backend: `workers/` (Cloudflare Worker, plain JS, no build step)
-- Deploy: GitHub Actions on push to `main` → Pages + Worker
+- Deploy: GitHub Actions on push to `main` → lint + build + deploy (Worker + D1 migrations + Pages). PRs do **not** deploy
 
 ## Key Quirks
 
@@ -47,6 +47,7 @@
 - Trial: 24h, 5 watchlist items, enforced server-side on `POST /api/watchlist` (403 `trial_expired` / `watchlist_limit`). Watchlist pins backed by `UNIQUE(user_id, product_id)` index (migration `0003`)
 - Rate limits: login 10/15min, trial 5/hour, register-admin 5/15min, forgot/reset-password 5/15min (per IP, `rate_limits` table)
 - Password reset: `password_resets.token_sha256` (SHA-256 of plaintext) column + index (migration `0004`) — reset-password does an indexed lookup then a single PBKDF2 verify (was an O(n) scan over all active tokens per guess)
+- Alerts: `alerts.type` CHECK = `('price_drop','offer_expiry','offer_created')` (migration `0005` — table rebuild) matching `src/types/index.ts` `Alert.type`; cron currently inserts `offer_expiry` only
 - Constant-time secret compare: `safeEqual()` in `workers/index.js` (not `crypto.timingSafeEqual` — unavailable on WebCrypto global under `nodejs_compat`)
 - API errors: `handleResponse` throws `ApiError` with `status` + `reason` — branch on those, not message strings
 - CORS: `siftsearch.pages.dev`, `localhost:5173`, `localhost:3000`
