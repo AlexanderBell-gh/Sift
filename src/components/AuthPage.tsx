@@ -2,8 +2,6 @@ import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react'
 import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { Toast } from './ui/Toast';
-import { useToast } from './ui/useToast';
 import { Input } from './ui/Input';
 import { forgotPassword, resetPassword } from '../lib/api';
 
@@ -31,8 +29,8 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const { toast, showToast, hideToast } = useToast();
   const [forgotMode, setForgotMode] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [resetToken, setResetToken] = useState<string | null>(null);
@@ -46,15 +44,13 @@ export default function AuthPage() {
     setError('');
     try {
       await loginWithGoogle(response.credential);
-      showToast('Signed in with Google', 'success');
       navigate('/search');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
-      showToast(err instanceof Error ? err.message : 'Google sign-in failed', 'error');
     } finally {
       setLoading(false);
     }
-  }, [loginWithGoogle, navigate, showToast]);
+  }, [loginWithGoogle, navigate]);
 
   useEffect(() => {
     if (activeTab !== 'signin' || forgotMode || !googleBtnRef.current || !googleClientId) return;
@@ -84,6 +80,49 @@ export default function AuthPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
+
+    if (forgotMode) {
+      if (!resetToken) {
+        const errors: Record<string, string> = {};
+        if (!forgotEmail.trim()) {
+          errors.forgotEmail = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+          errors.forgotEmail = 'Enter a valid email address';
+        }
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+          setError('Please fix the fields below');
+          return;
+        }
+      } else {
+        if (!resetNewPassword) {
+          setFieldErrors({ resetNewPassword: 'Password is required' });
+          setError('Please fix the fields below');
+          return;
+        }
+        if (resetNewPassword.length < 8) {
+          setFieldErrors({ resetNewPassword: 'Password must be at least 8 characters' });
+          setError('Please fix the fields below');
+          return;
+        }
+      }
+    } else if (activeTab === 'signin' || activeTab === 'register') {
+      const errors: Record<string, string> = {};
+      if (!username.trim()) errors.username = 'Username is required';
+      if (!password) errors.password = 'Password is required';
+      else if (password.length < 8) errors.password = 'Password must be at least 8 characters';
+      if (activeTab === 'register') {
+        if (!email.trim()) errors.email = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Enter a valid email address';
+      }
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setError('Please fix the fields below');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       if (forgotMode) {
@@ -91,13 +130,11 @@ export default function AuthPage() {
           const res = await forgotPassword(forgotEmail);
           if (res.token) {
             setResetToken(res.token);
-            showToast('Reset token generated — valid for 30 minutes', 'success');
           } else {
             setError(res.message || 'No account found for that email');
           }
         } else {
           await resetPassword(resetToken, resetNewPassword);
-          showToast('Password reset — sign in with your new password', 'success');
           setForgotMode(false);
           setResetToken(null);
           setForgotEmail('');
@@ -107,18 +144,14 @@ export default function AuthPage() {
       }
       if (activeTab === 'signin') {
         await login(username, password);
-        showToast('Signed in successfully', 'success');
       } else if (activeTab === 'register') {
         await register(username, email, password);
-        showToast('Account created', 'success');
       } else {
         await startTrial();
-        showToast('Trial started — 24h access', 'success');
       }
       navigate('/search');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
-      showToast(err instanceof Error ? err.message : 'Something went wrong', 'error');
     } finally {
       setLoading(false);
     }
@@ -142,6 +175,7 @@ export default function AuthPage() {
     setResetNewPassword('');
     setCopied(false);
     setError('');
+    setFieldErrors({});
   }
 
   const tabs: { key: AuthTab; label: string }[] = [
@@ -177,6 +211,7 @@ export default function AuthPage() {
                 setForgotEmail('');
                 setResetNewPassword('');
                 setCopied(false);
+                setFieldErrors({});
               }}
             >
               {tab.label}
@@ -184,7 +219,7 @@ export default function AuthPage() {
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           {error && (
             <div className="auth-error" role="alert">
               {error}
@@ -208,6 +243,7 @@ export default function AuthPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              error={fieldErrors.username}
             />
           )}
 
@@ -219,6 +255,7 @@ export default function AuthPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              error={fieldErrors.email}
             />
           )}
 
@@ -232,6 +269,7 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
+                error={fieldErrors.password}
               />
             </div>
           )}
@@ -264,6 +302,7 @@ export default function AuthPage() {
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   required
+                  error={fieldErrors.forgotEmail}
                 />
               ) : (
                 <>
@@ -284,6 +323,7 @@ export default function AuthPage() {
                     onChange={(e) => setResetNewPassword(e.target.value)}
                     required
                     minLength={8}
+                    error={fieldErrors.resetNewPassword}
                   />
                 </>
               )}
@@ -345,8 +385,6 @@ export default function AuthPage() {
           {activeTab === 'trial' && <span>This is a temporary account with no login credentials</span>}
         </div>
       </div>
-
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }

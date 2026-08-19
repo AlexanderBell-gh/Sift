@@ -3,8 +3,6 @@ import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as 
 import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import NavHeader from './NavHeader';
-import { Toast } from './ui/Toast';
-import { useToast } from './ui/useToast';
 import {
   getAdminStats,
   getAdminUsers,
@@ -21,7 +19,7 @@ type Tab = 'dashboard' | 'users' | 'audit' | 'trials';
 export default function AdminPage() {
   const { token, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { toast, showToast, hideToast } = useToast();
+  const [error, setError] = useState('');
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -65,11 +63,11 @@ export default function AdminPage() {
         setTabLoaded(prev => ({ ...prev, dashboard: true }));
       })
       .catch(() => {
-        showToast('Failed to load stats', 'error');
+        setError('Failed to load stats');
         setTabLoaded(prev => ({ ...prev, dashboard: true }));
       })
       .finally(() => setLoadingByTab(prev => ({ ...prev, dashboard: false })));
-  }, [token, user, authLoading, navigate, showToast]);
+  }, [token, user, authLoading, navigate]);
 
   const loadUsers = useCallback(async (page = 1, search = '', filter = 'users') => {
     if (!token) return;
@@ -82,11 +80,11 @@ export default function AdminPage() {
       setUsersTotalPages(data.totalPages);
       setTabLoaded(prev => ({ ...prev, users: true }));
     } catch {
-      showToast('Failed to load users', 'error');
+      setError('Failed to load users');
     } finally {
       setLoadingByTab(prev => ({ ...prev, users: false }));
     }
-  }, [token, showToast]);
+  }, [token]);
 
   const loadLogs = useCallback(async (page = 1) => {
     if (!token) return;
@@ -98,11 +96,11 @@ export default function AdminPage() {
       setLogsTotalPages(data.totalPages);
       setTabLoaded(prev => ({ ...prev, audit: true }));
     } catch {
-      showToast('Failed to load audit logs', 'error');
+      setError('Failed to load audit logs');
     } finally {
       setLoadingByTab(prev => ({ ...prev, audit: false }));
     }
-  }, [token, showToast]);
+  }, [token]);
 
   const loadTrials = useCallback(async (page = 1, status = 'all') => {
     if (!token) return;
@@ -114,11 +112,11 @@ export default function AdminPage() {
       setTrialsTotalPages(data.totalPages);
       setTabLoaded(prev => ({ ...prev, trials: true }));
     } catch {
-      showToast('Failed to load trials', 'error');
+      setError('Failed to load trials');
     } finally {
       setLoadingByTab(prev => ({ ...prev, trials: false }));
     }
-  }, [token, showToast]);
+  }, [token]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- idiomatic fetch-on-tab-change; loaders set their loading flag synchronously
@@ -135,9 +133,9 @@ export default function AdminPage() {
     try {
       await deleteAdminUser(token, userId);
       setUsers(prev => prev.filter(u => u.id !== userId));
-      showToast(`Deleted user ${username}`, 'success');
+      setError('');
     } catch {
-      showToast('Failed to delete user', 'error');
+      setError('Failed to delete user');
     }
   }
 
@@ -146,9 +144,9 @@ export default function AdminPage() {
     try {
       await setAdminUserRole(token, userId, newRole);
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      showToast(`Role changed to ${newRole}`, 'success');
+      setError('');
     } catch {
-      showToast('Failed to change role', 'error');
+      setError('Failed to change role');
     }
   }
 
@@ -156,16 +154,16 @@ export default function AdminPage() {
     if (!token) return;
     const expiredCount = trials.filter(t => t.isExpired).length;
     if (expiredCount === 0) {
-      showToast('No expired trials to clean', 'info');
+      setError('No expired trials to clean');
       return;
     }
     if (!confirm(`Delete ${expiredCount} expired trial account${expiredCount === 1 ? '' : 's'}?`)) return;
     try {
-      const result = await cleanupExpiredTrials(token);
-      showToast(`Deleted ${result.deletedCount} expired trials`, 'success');
+      await cleanupExpiredTrials(token);
+      setError('');
       loadTrials(1, trialsStatus);
     } catch {
-      showToast('Failed to cleanup trials', 'error');
+      setError('Failed to cleanup trials');
     }
   }
 
@@ -223,6 +221,12 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+
+          {error && (
+            <div className="auth-error mb-6" role="alert">
+              {error}
+            </div>
+          )}
 
           {loadingByTab['dashboard'] && !tabLoaded['dashboard'] && tab === 'dashboard' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
@@ -434,8 +438,6 @@ export default function AdminPage() {
           )}
         </main>
       </div>
-
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }

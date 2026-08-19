@@ -9,8 +9,6 @@ import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyC
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import WatchlistFilters from './WatchlistFilters';
-import { Toast } from './ui/Toast';
-import { useToast } from './ui/useToast';
 
 
 const ALL_STORES = STORES.map(s => s.name);
@@ -21,7 +19,7 @@ export default function WatchlistPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast, showToast, hideToast } = useToast();
+  const [error, setError] = useState('');
 
   const [selectedStores, setSelectedStores] = useState<string[]>(ALL_STORES);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(ALL_CATEGORIES);
@@ -34,9 +32,9 @@ export default function WatchlistPage() {
     }
     getWatchlist(token)
       .then(setItems)
-      .catch(() => showToast('Failed to load watchlist', 'error'))
+      .catch(() => setError('Failed to load watchlist'))
       .finally(() => setLoading(false));
-  }, [token, navigate, showToast]);
+  }, [token, navigate]);
 
   const filtered = useMemo(() => {
     let result = items.filter(i => selectedStores.includes(i.store));
@@ -82,9 +80,9 @@ export default function WatchlistPage() {
     try {
       await Promise.all(group.map(i => removeFromWatchlist(token, i.id)));
       setItems(prev => prev.filter(i => i.product_id !== productId));
-      showToast('Removed from watchlist', 'info');
+      setError('');
     } catch {
-      showToast('Failed to remove item', 'error');
+      setError('Failed to remove item');
     }
   }
 
@@ -111,6 +109,12 @@ export default function WatchlistPage() {
       </section>
 
       <div className="container">
+        {error && (
+          <div className="auth-error mb-4" role="alert">
+            {error}
+          </div>
+        )}
+
         {!loading && isTrial && (
           <div className="trial-limit-banner">
             <div className="trial-limit-text">
@@ -151,13 +155,15 @@ export default function WatchlistPage() {
           <div className="empty-state-box">
             <p className="empty-state-title">Your Watchlist is empty</p>
             <p className="empty-state-desc mb-6">Find and pin groceries from the search tab.</p>
-            <button
-              onClick={() => navigate('/search')}
-              className="btn-primary px-5 py-2.5"
-            >
-              <Search size={16} />
-              Search Products
-            </button>
+            <div className="flex justify-center">
+              <button
+                onClick={() => navigate('/search')}
+                className="btn-primary px-5 py-2.5"
+              >
+                <Search size={16} />
+                Search Products
+              </button>
+            </div>
           </div>
         )}
 
@@ -279,8 +285,6 @@ export default function WatchlistPage() {
           </div>
         )}
       </div>
-
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }

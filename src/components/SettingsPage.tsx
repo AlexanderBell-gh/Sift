@@ -3,8 +3,6 @@ import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Download, Shield, Key, FileDown, AlertTriangle } from 'lucide-react';
 import { Modal } from './ui/Modal';
-import { Toast } from './ui/Toast';
-import { useToast } from './ui/useToast';
 import NavHeader from './NavHeader';
 import { updatePassword, deleteAccount, getWatchlist } from '../lib/api';
 import type { WatchlistItem } from '../types';
@@ -12,7 +10,6 @@ import type { WatchlistItem } from '../types';
 export default function SettingsPage() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  const { toast, showToast, hideToast } = useToast();
 
   const isTrial = user?.isTrial === true;
 
@@ -21,6 +18,7 @@ export default function SettingsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [exportError, setExportError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
 
@@ -33,6 +31,10 @@ export default function SettingsPage() {
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault();
     setPasswordError('');
+    if (!passwordForm.currentPassword.trim() || !passwordForm.newPassword.trim() || !passwordForm.confirmPassword.trim()) {
+      setPasswordError('Please fill in all fields');
+      return;
+    }
     if (passwordForm.newPassword.length < 8) {
       setPasswordError('New password must be at least 8 characters');
       return;
@@ -45,7 +47,6 @@ export default function SettingsPage() {
     try {
       await updatePassword(t, passwordForm.currentPassword, passwordForm.newPassword);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      showToast('Password changed successfully', 'success');
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
@@ -62,7 +63,6 @@ export default function SettingsPage() {
     setIsLoading(true);
     try {
       await deleteAccount(t, isTrial ? undefined : deletePassword);
-      showToast('Account deleted', 'success');
       logout();
       navigate('/', { replace: true });
     } catch (err) {
@@ -74,6 +74,7 @@ export default function SettingsPage() {
 
   async function handleExportDownload() {
     setExportLoading(true);
+    setExportError('');
     try {
       const items = await getWatchlist(t);
       const csv = generateCSV(items);
@@ -86,9 +87,8 @@ export default function SettingsPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast(`Exported ${items.length} watchlist items`, 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Export failed', 'error');
+      setExportError(err instanceof Error ? err.message : 'Export failed');
     } finally {
       setExportLoading(false);
     }
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                   <p>Update your account password</p>
                 </div>
               </div>
-              <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 mt-2">
+              <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 mt-2" noValidate>
                 <div className="form-group">
                   <label className="field-label">Current Password</label>
                   <input
@@ -214,6 +214,7 @@ export default function SettingsPage() {
                   {exportLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                   Download Watchlist CSV
                 </button>
+                {exportError && <p className="danger-text text-sm mt-2">{exportError}</p>}
               </div>
             </section>
           )}
@@ -263,8 +264,6 @@ export default function SettingsPage() {
           </button>
         </div>
       </Modal>
-
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/auth-context';
-import { useToast } from './ui/useToast';
 import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../lib/api';
 import { getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
 import type { SearchResult } from '../types';
@@ -9,47 +8,51 @@ const TRIAL_LIMIT = 5;
 
 function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReached: boolean; onAdded: () => void }) {
   const { token } = useAuth();
-  const { showToast } = useToast();
   const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<{ text: string; type: 'error' | 'info' } | null>(null);
 
-  async function handleAddToWatchlist(e: React.MouseEvent) {
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 3000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  function handleAddToWatchlist(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     if (!token) {
-      showToast('Sign in to add to watchlist', 'info');
+      setNotice({ text: 'Sign in to add to watchlist', type: 'info' });
       return;
     }
     setAdding(true);
-    try {
-      const result: SearchResult = {
-        id: deal.product_id,
-        name: deal.product_name,
-        store: deal.store,
-        store_logo: deal.store_logo,
-        image_url: deal.image_url,
-        unit: null,
-        prices: deal.prices,
-        loyalty_type: deal.loyalty_type,
-        offer_expires_at: deal.offer_expires_at,
-        offer_deal: deal.offer_deal,
-        product_url: deal.product_url,
-        category: deal.category,
-        is_on_offer: deal.is_on_offer,
-      };
-      await addToWatchlist(token, result);
-      showToast('Added to watchlist', 'success');
-      onAdded();
-    } catch (err: unknown) {
-      if (err instanceof ApiError && (err.status === 403 || err.reason === 'watchlist_limit')) {
-        showToast('Trial limit reached — upgrade to add more', 'error');
-      } else if (err instanceof ApiError && err.reason === 'trial_expired') {
-        showToast('Your trial has expired', 'error');
-      } else {
-        showToast('Failed to add to watchlist', 'error');
-      }
-    } finally {
-      setAdding(false);
-    }
+    setNotice(null);
+    const result: SearchResult = {
+      id: deal.product_id,
+      name: deal.product_name,
+      store: deal.store,
+      store_logo: deal.store_logo,
+      image_url: deal.image_url,
+      unit: null,
+      prices: deal.prices,
+      loyalty_type: deal.loyalty_type,
+      offer_expires_at: deal.offer_expires_at,
+      offer_deal: deal.offer_deal,
+      product_url: deal.product_url,
+      category: deal.category,
+      is_on_offer: deal.is_on_offer,
+    };
+    addToWatchlist(token, result)
+      .then(onAdded)
+      .catch((err: unknown) => {
+        if (err instanceof ApiError && (err.status === 403 || err.reason === 'watchlist_limit')) {
+          setNotice({ text: 'Trial limit reached — upgrade to add more', type: 'error' });
+        } else if (err instanceof ApiError && err.reason === 'trial_expired') {
+          setNotice({ text: 'Your trial has expired', type: 'error' });
+        } else {
+          setNotice({ text: 'Failed to add to watchlist', type: 'error' });
+        }
+      })
+      .finally(() => setAdding(false));
   }
 
   return (
@@ -114,6 +117,11 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
         >
           {adding ? 'Adding...' : 'Add to watchlist'}
         </button>
+        {notice && (
+          <span className={`deal-watchlist-notice ${notice.type === 'error' ? 'danger-text' : 'text-muted'} text-xs`}>
+            {notice.text}
+          </span>
+        )}
       </div>
     </a>
   );
