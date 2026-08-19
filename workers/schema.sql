@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS alerts (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   watchlist_id TEXT NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('offer_expiry')),
+  type TEXT NOT NULL CHECK(type IN ('price_drop','offer_expiry','offer_created')),
   message TEXT NOT NULL,
   old_price REAL,
   new_price REAL,
