@@ -3,7 +3,7 @@
 ## Important
 
 - Before anything else make sure to activate the skill caveman full
-- Always update `CHANGELOG.md` after a change so it can be tracked - location in Markdowns
+- Always update `RECENT.md` after a change so it can be tracked - location in Markdowns
 - Refer to `CONTEXT.md` if you need further project context - location in Markdowns
 
 ## Commands
@@ -61,5 +61,5 @@
 ## Markdowns
 
 - `/home/wsl/Projects/markdowns/Sift-Markdowns/CONTEXT.md` — Full architecture, API ref, data model, critical flows
-- `/home/wsl/Projects/markdowns/Sift-Markdowns/CHANGELOG.md` — Log for every change with file + line numbers
+- `/home/wsl/Projects/markdowns/Sift-Markdowns/RECENT.md` — Log for every change with file + line numbers
 - `/home/wsl/Projects/markdowns/Sift-Markdowns/DESIGN.md` — Design tokens
