@@ -1,50 +1,40 @@
-import { type InputHTMLAttributes, forwardRef } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode, forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  suffix?: ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
+  ({ className, label, error, suffix, ...props }, ref) => {
+    const inputId = useId();
+    const errorId = `${inputId}-error`;
     return (
       <div className="w-full">
         {label && (
-          <label className="block mb-1.5 uppercase" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.05em' }}>
+          <label className="field-label" htmlFor={inputId}>
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          className={cn(
-            'w-full px-4 py-3 rounded-xl text-sm',
-            'border',
-            'placeholder:opacity-50',
-            'focus:outline-none',
-            'transition-all duration-200',
-            error && 'border-[var(--danger)]',
-            className
+        <div className="relative">
+          <input
+            ref={ref}
+            id={inputId}
+            className={cn('form-input', suffix && 'pr-11', error && 'form-input-error', className)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+            {...props}
+          />
+          {suffix && (
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+              {suffix}
+            </div>
           )}
-          style={{
-            backgroundColor: 'var(--bg)',
-            borderColor: error ? 'var(--danger)' : 'var(--border)',
-            color: 'var(--text)',
-          }}
-          onFocus={e => {
-            e.currentTarget.style.borderColor = error ? 'var(--danger)' : 'var(--primary)';
-            e.currentTarget.style.boxShadow = error
-              ? '0 0 0 3px rgba(220, 38, 38, 0.12)'
-              : '0 0 0 3px rgba(255, 87, 1, 0.12)';
-          }}
-          onBlur={e => {
-            e.currentTarget.style.borderColor = error ? 'var(--danger)' : 'var(--border)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-          {...props}
-        />
+        </div>
         {error && (
-          <p className="text-xs mt-1.5" style={{ color: 'var(--danger)' }}>{error}</p>
+          <p id={errorId} className="danger-text text-xs mt-1.5">{error}</p>
         )}
       </div>
     );

@@ -87,8 +87,8 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 ## Search Flow
 
 1. Select up to 3 stores via multi-select dropdown (persisted in localStorage)
-2. Type query → autocomplete from local UK product dictionary + all users' watchlist items (Fuse.js, debounced 150ms)
-3. Press enter → opens each selected store's search URL in new tab
+2. Type query → autocomplete from local UK product dictionary + all users' watchlist items (Fuse.js, debounced 150ms). Combobox with full keyboard support (ArrowUp/Down to highlight, Enter to pick, Escape to close); zero-hit queries show a "press Enter to search anyway" hint
+3. Press enter → opens each selected store's search URL in new tab (Search disabled until a query is entered **and** at least one store is selected)
 4. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists, each tile has an Add to Watchlist button (greyed out for trial users at the 5-item limit)
 5. No backend search involved
 

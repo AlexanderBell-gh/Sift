@@ -24,7 +24,7 @@
 
 ## Key Quirks
 
-- Tailwind v4 — CSS-first config in `src/index.css` via `@import "tailwindcss"` and `@theme {}` (no tailwind.config.js). `@theme` also aliases `--color-*` to the DESIGN tokens, so utilities like `text-text`, `bg-surface`, `border-border`, `text-danger` work alongside shared classes (`.page-title`, `.field-label`, `.danger-text`, `.trial-card`)
+- Tailwind v4 — CSS-first config in `src/index.css` via `@import "tailwindcss"` and `@theme {}` (no tailwind.config.js). `@theme` also aliases `--color-*` to the DESIGN tokens, so utilities like `text-text`, `bg-surface`, `border-border`, `text-danger` work alongside shared classes (`.page-title`, `.field-label`, `.danger-text`, `.trial-card`, `.form-input`, `.form-input-error`, `.suggestions-empty`, `.deal-card-link`, `.auth-password-toggle`)
 - `verbatimModuleSyntax: true` — explicit `import type` required for type-only imports
 - Workers: plain JS with ESM imports, no TS, no bundler
 - API base URL: exported once as `API_BASE` from `src/lib/api.ts` (AuthContext imports it — change the URL in one place)
@@ -57,6 +57,8 @@
 - ESLint flat config (`eslint.config.js`)
 - `cn()` utility for className merging (`clsx` + `tailwind-merge`)
 - UI components in `src/components/ui/`
+- `Input` (`src/components/ui/Input.tsx`) is the only text-input abstraction — token classes only (no inline styles), `useId`-linked `<label htmlFor>`, `aria-invalid` + `aria-describedby` for errors, optional `suffix` slot for end-adornments (AuthPage password eye toggle)
+- ARIA conventions: real tab pattern on AuthPage (`role=tablist`/`tab`/`tabpanel`, roving `tabIndex`, ArrowLeft/Right), combobox pattern on SearchPage autocomplete (`aria-activedescendant`, arrow-key `activeIndex` highlight). Every interactive element needs a `:focus-visible` ring (`2px solid var(--primary)`, offset 2px)
 - No pre-commit hooks
 
 ## Markdowns

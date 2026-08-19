@@ -17,9 +17,7 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
     return () => clearTimeout(timer);
   }, [notice]);
 
-  function handleAddToWatchlist(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  function handleAddToWatchlist() {
     if (!token) {
       setNotice({ text: 'Sign in to add to watchlist', type: 'info' });
       return;
@@ -56,74 +54,77 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
   }
 
   return (
-    <a
-      href={deal.product_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="deal-card"
-    >
-      {deal.image_url ? (
-        <img
-          src={deal.image_url}
-          alt=""
-          className="deal-image"
-        />
-      ) : (
-        <div className="deal-image-placeholder">
+    <div className="deal-card">
+      <a
+        href={deal.product_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="deal-card-link"
+      >
+        {deal.image_url ? (
           <img
-            src={deal.store_logo}
+            src={deal.image_url}
             alt=""
-            className="deal-logo"
+            className="deal-image"
           />
-        </div>
-      )}
-      <span className="store-card">
-        {deal.store_logo && (
-          <img src={deal.store_logo} alt={deal.store} className="store-logo" />
+        ) : (
+          <div className="deal-image-placeholder">
+            <img
+              src={deal.store_logo}
+              alt=""
+              className="deal-logo"
+            />
+          </div>
         )}
-        {deal.store}
-      </span>
-      <div className="deal-info">
-        <span className="deal-name">{deal.product_name}</span>
-        <div className="deal-prices">
-          {deal.offer_deal ? (
-            <span className="offer-price">
-              £{(deal.prices.normal ?? 0).toFixed(2)}
+        <span className="store-card">
+          {deal.store_logo && (
+            <img src={deal.store_logo} alt={deal.store} className="store-logo" />
+          )}
+          {deal.store}
+        </span>
+        <div className="deal-info">
+          <span className="deal-name">{deal.product_name}</span>
+          <div className="deal-prices">
+            {deal.offer_deal ? (
+              <span className="offer-price">
+                £{(deal.prices.normal ?? 0).toFixed(2)}
+              </span>
+            ) : (
+              <>
+                {deal.prices.normal != null && (
+                  <span className="full-price">
+                    £{deal.prices.normal.toFixed(2)}
+                  </span>
+                )}
+                {deal.prices.loyalty != null && (
+                  <span className="deal-price">
+                    £{deal.prices.loyalty.toFixed(2)}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+          {(deal.offer_deal || deal.prices.loyalty != null) && (
+            <span className={`product-card-loyalty-label ${getLoyaltyClass(deal.store)}`}>
+              {deal.offer_deal ? cleanDealText(deal.offer_deal) : getLoyaltyLabel(deal.store)}
             </span>
-          ) : (
-            <>
-              {deal.prices.normal != null && (
-                <span className="full-price">
-                  £{deal.prices.normal.toFixed(2)}
-                </span>
-              )}
-              {deal.prices.loyalty != null && (
-                <span className="deal-price">
-                  £{deal.prices.loyalty.toFixed(2)}
-                </span>
-              )}
-            </>
           )}
         </div>
-        {(deal.offer_deal || deal.prices.loyalty != null) && (
-          <span className={`product-card-loyalty-label ${getLoyaltyClass(deal.store)}`}>
-            {deal.offer_deal ? cleanDealText(deal.offer_deal) : getLoyaltyLabel(deal.store)}
-          </span>
-        )}
-        <button
-          onClick={handleAddToWatchlist}
-          disabled={adding || limitReached}
-          className="deal-watchlist-btn"
-        >
-          {adding ? 'Adding...' : 'Add to watchlist'}
-        </button>
-        {notice && (
-          <span className={`deal-watchlist-notice ${notice.type === 'error' ? 'danger-text' : 'text-muted'} text-xs`}>
-            {notice.text}
-          </span>
-        )}
-      </div>
-    </a>
+      </a>
+      <button
+        onClick={handleAddToWatchlist}
+        disabled={adding || limitReached}
+        className="deal-watchlist-btn"
+        aria-label={`Add ${deal.product_name} to watchlist`}
+      >
+        {adding ? 'Adding...' : 'Add to watchlist'}
+      </button>
+      {notice && (
+        <span className={`deal-watchlist-notice ${notice.type === 'error' ? 'danger-text' : 'text-muted'} text-xs`}>
+          {notice.text}
+        </span>
+      )}
+    </div>
   );
 }
 
