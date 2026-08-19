@@ -57,7 +57,7 @@ export default function AuthPage() {
   }
 
   useEffect(() => {
-    if (activeTab !== 'signin' || !googleBtnRef.current || !googleClientId) return;
+    if (activeTab !== 'signin' || forgotMode || !googleBtnRef.current || !googleClientId) return;
 
     const interval = setInterval(() => {
       if (window.google?.accounts?.id && googleBtnRef.current) {
@@ -79,7 +79,7 @@ export default function AuthPage() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [activeTab, googleClientId]);
+  }, [activeTab, forgotMode, googleClientId]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -170,7 +170,14 @@ export default function AuthPage() {
               role="tab"
               aria-selected={activeTab === tab.key}
               className={`auth-tab ${activeTab === tab.key ? 'active' : ''} ${tab.key === 'trial' ? 'tab-trial' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => {
+                setActiveTab(tab.key);
+                setForgotMode(false);
+                setResetToken(null);
+                setForgotEmail('');
+                setResetNewPassword('');
+                setCopied(false);
+              }}
             >
               {tab.label}
             </button>
@@ -292,7 +299,7 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {activeTab === 'signin' && (
+        {activeTab === 'signin' && !forgotMode && (
           <div className="auth-divider">
             <span className="auth-divider-line" />
             <span className="auth-divider-text">or continue with</span>
@@ -300,7 +307,7 @@ export default function AuthPage() {
           </div>
         )}
 
-        {activeTab === 'signin' && (
+        {activeTab === 'signin' && !forgotMode && (
           googleClientId ? (
             <div ref={googleBtnRef} className="google-btn-wrapper" />
           ) : (
