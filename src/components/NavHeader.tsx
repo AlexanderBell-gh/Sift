@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ArrowLeft, Sun, Moon, Settings, Shield, Menu, X } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { useTheme } from '../hooks/useTheme';
 import AlertBell from './AlertBell';
 
@@ -56,7 +56,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [user?.isTrial, user?.trialExpiresAt]);
+  }, [user?.isTrial, user?.trialExpiresAt, user]);
 
   const isTrial = user?.isTrial === true;
   const displayName = isTrial ? 'Trial User' : (user?.username || 'U');

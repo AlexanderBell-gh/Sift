@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { MouseEvent } from 'react';
 import { Search } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import { STORES } from '../lib/stores';
@@ -36,7 +36,7 @@ export default function WatchlistPage() {
       .then(setItems)
       .catch(() => showToast('Failed to load watchlist', 'error'))
       .finally(() => setLoading(false));
-  }, [token, navigate]);
+  }, [token, navigate, showToast]);
 
   const filtered = useMemo(() => {
     let result = items.filter(i => selectedStores.includes(i.store));

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3, ChevronDown, Check } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import NavHeader from './NavHeader';
 import { Toast } from './ui/Toast';
@@ -69,7 +69,7 @@ export default function AdminPage() {
         setTabLoaded(prev => ({ ...prev, dashboard: true }));
       })
       .finally(() => setLoadingByTab(prev => ({ ...prev, dashboard: false })));
-  }, [token, user, authLoading, navigate]);
+  }, [token, user, authLoading, navigate, showToast]);
 
   const loadUsers = useCallback(async (page = 1, search = '', filter = 'users') => {
     if (!token) return;
@@ -121,6 +121,7 @@ export default function AdminPage() {
   }, [token, showToast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- idiomatic fetch-on-tab-change; loaders set their loading flag synchronously
     if (tab === 'users') loadUsers(1, userSearch, userFilter);
     if (tab === 'audit') loadLogs(1);
     if (tab === 'trials') loadTrials(1, trialsStatus);

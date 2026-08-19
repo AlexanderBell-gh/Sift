@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react';
+import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Toast } from './ui/Toast';
@@ -41,7 +41,7 @@ export default function AuthPage() {
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  async function handleGoogleResponse(response: { credential: string }) {
+  const handleGoogleResponse = useCallback(async (response: { credential: string }) => {
     setLoading(true);
     setError('');
     try {
@@ -54,7 +54,7 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [loginWithGoogle, navigate, showToast]);
 
   useEffect(() => {
     if (activeTab !== 'signin' || forgotMode || !googleBtnRef.current || !googleClientId) return;
@@ -79,7 +79,7 @@ export default function AuthPage() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [activeTab, forgotMode, googleClientId]);
+  }, [activeTab, forgotMode, googleClientId, handleGoogleResponse]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

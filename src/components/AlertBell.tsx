@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { TouchEvent } from 'react';
 import { Bell, X } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { getAlerts, markAlertRead, deleteAlert } from '../lib/api';
 import { formatTimeAgo } from '../lib/utils';
 import type { Alert } from '../types';

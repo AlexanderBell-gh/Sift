@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { useToast } from './ui/useToast';
 import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../lib/api';
 import { getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
@@ -137,10 +137,7 @@ export function DealSection() {
   }, []);
 
   useEffect(() => {
-    if (!isTrial || !token) {
-      setPinnedCount(null);
-      return;
-    }
+    if (!isTrial || !token) return;
     let cancelled = false;
     getPinnedIds(token)
       .then(ids => { if (!cancelled) setPinnedCount(new Set(ids.map(i => i.product_id)).size); })

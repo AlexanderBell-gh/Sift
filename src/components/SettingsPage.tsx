@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Download, Shield, Key, FileDown, AlertTriangle } from 'lucide-react';
 import { Modal } from './ui/Modal';

@@ -1,11 +1,5 @@
-import { createContext, useState, useEffect, type ReactNode } from 'react';
-
-export interface ThemeContextType {
-  isDark: boolean;
-  toggle: () => void;
-}
-
-export const ThemeContext = createContext<ThemeContextType>({ isDark: true, toggle: () => {} });
+import { useState, useEffect, type ReactNode } from 'react';
+import { ThemeContext } from './theme-context';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [isDark, setIsDark] = useState(() => {

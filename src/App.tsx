@@ -9,15 +9,22 @@ import AdminPage from './components/AdminPage';
 import SettingsPage from './components/SettingsPage';
 import { CookieConsent } from './components/ui/CookieConsent';
 
+declare global {
+  interface Window {
+    __SIFT_EXTENSION_INSTALLED?: boolean;
+    chrome?: { runtime?: { id?: string } };
+  }
+}
+
 function extensionSignalReceived() {
   const checks = [
-    () => (window as any).__SIFT_EXTENSION_INSTALLED,
+    () => window.__SIFT_EXTENSION_INSTALLED,
     () => document.querySelector('meta[name="sift-extension"]')?.getAttribute('content') === 'installed',
     () => document.querySelector('[data-sift-extension]'),
     () => document.getElementById('sift-extension-root'),
     () => document.querySelector('[class*="sift-"], [id*="sift-"]'),
     () => {
-      try { return (window as any).chrome?.runtime?.id; } catch { return false; }
+      try { return window.chrome?.runtime?.id; } catch { return false; }
     },
   ];
   return checks.some(fn => !!fn());
@@ -27,16 +34,11 @@ function App() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/' || location.pathname === '/auth';
 
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner, setShowBanner] = useState(() => !extensionSignalReceived());
   const [dismissing, setDismissing] = useState(false);
   const dismissedRef = useRef(false);
 
   useEffect(() => {
-    if (extensionSignalReceived()) {
-      setShowBanner(false);
-      return;
-    }
-
     function dismiss() {
       if (dismissedRef.current) return;
       dismissedRef.current = true;

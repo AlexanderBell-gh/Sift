@@ -48,11 +48,7 @@ export default function SearchPage() {
   }, [query]);
 
   useEffect(() => {
-    if (query.length < 2) {
-      setAutocompleteProducts([]);
-      setShowSuggestions(false);
-      return;
-    }
+    if (query.length < 2) return;
 
     const input = inputRef.current;
     if (!input || document.activeElement !== input) {
@@ -68,7 +64,7 @@ export default function SearchPage() {
     }, 150);
 
     return () => clearTimeout(timeoutId);
-  }, [query]);
+  }, [query, watchlistNames]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -165,7 +161,7 @@ export default function SearchPage() {
                     Search
                   </button>
 
-                  {showSuggestions && autocompleteProducts.length > 0 && (
+                  {showSuggestions && query.length >= 2 && autocompleteProducts.length > 0 && (
                     <div
                       className="suggestions-dropdown"
                       role="listbox"
