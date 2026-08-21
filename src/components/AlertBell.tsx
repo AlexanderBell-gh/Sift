@@ -163,7 +163,7 @@ export default function AlertBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
+        className="relative p-2 rounded-lg cursor-pointer text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
         title="Alerts"
       >
         <Bell className="w-4 h-4" />
