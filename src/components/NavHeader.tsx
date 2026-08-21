@@ -69,7 +69,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           {showBack && (
             <button
               onClick={() => navigate('/')}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -94,7 +94,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           <div className="sm:hidden relative" ref={mobileMenuRef}>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
