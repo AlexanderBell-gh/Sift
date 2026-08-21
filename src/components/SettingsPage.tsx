@@ -178,7 +178,15 @@ export default function SettingsPage() {
                 </div>
               </div>
               {user?.googleId ? (
-                <div className="mt-2">
+                <div className="flex flex-col gap-4 mt-2">
+                  <div className="form-group">
+                    <label className="field-label">Full Name</label>
+                    <input type="text" className="form-input" value={user.username} disabled />
+                  </div>
+                  <div className="form-group">
+                    <label className="field-label">Email Address</label>
+                    <input type="email" className="form-input" value={user.email} disabled />
+                  </div>
                   <p className="text-sm text-muted">Signed in via Google. Email and username cannot be changed.</p>
                 </div>
               ) : (
