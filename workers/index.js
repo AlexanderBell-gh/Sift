@@ -693,7 +693,8 @@ async function handleRequest(request, env) {
           }
 
           if (body.username !== undefined) {
-            const newUsername = body.username.trim();
+            const rawUsername = body.username.trim();
+            const newUsername = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1).toLowerCase();
             if (!newUsername || newUsername.length < 4) {
               return errorResponse('Username must be at least 4 characters', request);
             }

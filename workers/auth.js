@@ -217,7 +217,7 @@ async function getUserByEmail(env, email) {
 }
 
 async function getUserByUsername(env, username) {
-  const row = await queryOne(env, 'SELECT * FROM users WHERE username = ?', [username.toLowerCase()]);
+  const row = await queryOne(env, 'SELECT * FROM users WHERE LOWER(username) = LOWER(?)', [username]);
   return row ? rowToUser(row) : null;
 }
 
@@ -246,7 +246,7 @@ async function saveUser(env, user) {
       user.id,
       user.googleId || null,
       user.email.toLowerCase(),
-      user.username.toLowerCase(),
+      user.username.charAt(0).toUpperCase() + user.username.slice(1).toLowerCase(),
       user.passwordHash,
       user.role,
       user.isTrial ? 1 : 0,
