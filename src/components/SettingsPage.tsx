@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Download, Shield, Key, FileDown, AlertTriangle } from 'lucide-react';
 import { Modal } from './ui/Modal';
+import { Input } from './ui/Input';
 import NavHeader from './NavHeader';
 import { updatePassword, deleteAccount, getWatchlist } from '../lib/api';
 import type { WatchlistItem } from '../types';
@@ -16,6 +17,7 @@ export default function SettingsPage() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
   const [passwordError, setPasswordError] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [exportError, setExportError] = useState('');
@@ -31,22 +33,22 @@ export default function SettingsPage() {
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault();
     setPasswordError('');
-    if (!passwordForm.currentPassword.trim() || !passwordForm.newPassword.trim() || !passwordForm.confirmPassword.trim()) {
-      setPasswordError('Please fill in all fields');
+    const errors: Record<string, string> = {};
+    if (!passwordForm.currentPassword) errors.currentPassword = 'Password is required';
+    if (!passwordForm.newPassword) errors.newPassword = 'Password is required';
+    else if (passwordForm.newPassword.length < 8) errors.newPassword = 'Must be at least 8 characters';
+    if (!passwordForm.confirmPassword) errors.confirmPassword = 'Please confirm your password';
+    else if (passwordForm.newPassword !== passwordForm.confirmPassword) errors.confirmPassword = 'Passwords do not match';
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
       return;
     }
-    if (passwordForm.newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters');
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('Passwords do not match');
-      return;
-    }
+    setPasswordErrors({});
     setIsLoading(true);
     try {
       await updatePassword(t, passwordForm.currentPassword, passwordForm.newPassword);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordErrors({});
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
@@ -57,7 +59,7 @@ export default function SettingsPage() {
   async function handleDeleteAccount() {
     setDeleteError('');
     if (!isTrial && !deletePassword) {
-      setDeleteError('Please enter your password');
+      setDeleteError('Password is required');
       return;
     }
     setIsLoading(true);
@@ -97,7 +99,8 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-bg">
       <NavHeader />
-      <div className="container py-12">
+      <div className="h-20" />
+      <div className="container pb-12">
         <div className="mb-8">
           <h2 className="page-title">
             Account Settings
@@ -158,36 +161,30 @@ export default function SettingsPage() {
                 </div>
               </div>
               <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 mt-2" noValidate>
-                <div className="form-group">
-                  <label className="field-label">Current Password</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    value={passwordForm.currentPassword}
-                    onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="field-label">New Password</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    value={passwordForm.newPassword}
-                    onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="field-label">Confirm New Password</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    value={passwordForm.confirmPassword}
-                    onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                    required
-                  />
-                </div>
+                <Input
+                  label="Current Password"
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={e => { setPasswordForm({ ...passwordForm, currentPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, currentPassword: '' })); }}
+                  required
+                  error={passwordErrors.currentPassword}
+                />
+                <Input
+                  label="New Password"
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={e => { setPasswordForm({ ...passwordForm, newPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, newPassword: '' })); }}
+                  required
+                  error={passwordErrors.newPassword}
+                />
+                <Input
+                  label="Confirm New Password"
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={e => { setPasswordForm({ ...passwordForm, confirmPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, confirmPassword: '' })); }}
+                  required
+                  error={passwordErrors.confirmPassword}
+                />
                 {passwordError && (
                   <p className="danger-text text-sm">{passwordError}</p>
                 )}
@@ -199,7 +196,7 @@ export default function SettingsPage() {
           )}
 
           {!isTrial && (
-            <section className="settings-card full-width">
+            <section className="settings-card">
               <div className="settings-card-header">
                 <div className="settings-card-header-icon primary">
                   <FileDown size={20} className="text-accent" />
@@ -219,7 +216,7 @@ export default function SettingsPage() {
             </section>
           )}
 
-          <section className="settings-card full-width danger-border">
+          <section className="settings-card danger-border">
             <div className="settings-card-header">
               <div className="settings-card-header-icon danger">
                 <AlertTriangle size={20} className="text-danger" />
@@ -243,18 +240,17 @@ export default function SettingsPage() {
           This will permanently delete your account, watchlist, and all associated data. This action cannot be undone.
         </p>
         {!isTrial && (
-          <div className="form-group mt-2">
-            <label className="field-label">Password</label>
-            <input
+          <div className="mt-2">
+            <Input
+              label="Password"
               type="password"
-              className="form-input"
               value={deletePassword}
-              onChange={e => setDeletePassword(e.target.value)}
+              onChange={e => { setDeletePassword(e.target.value); setDeleteError(''); }}
               required
+              error={deleteError}
             />
           </div>
         )}
-        {deleteError && <p className="danger-text text-sm">{deleteError}</p>}
         <div className="flex gap-3 mt-2">
           <button className="btn-secondary flex-1" onClick={() => setIsDeleteModalOpen(false)}>
             Cancel

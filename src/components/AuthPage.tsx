@@ -139,18 +139,15 @@ export default function AuthPage() {
         }
         if (Object.keys(errors).length > 0) {
           setFieldErrors(errors);
-          setError('Please fix the fields below');
           return;
         }
       } else {
         if (!resetNewPassword) {
           setFieldErrors({ resetNewPassword: 'Password is required' });
-          setError('Please fix the fields below');
           return;
         }
         if (resetNewPassword.length < 8) {
           setFieldErrors({ resetNewPassword: 'Password must be at least 8 characters' });
-          setError('Please fix the fields below');
           return;
         }
       }
@@ -165,7 +162,6 @@ export default function AuthPage() {
       }
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
-        setError('Please fix the fields below');
         return;
       }
     }
