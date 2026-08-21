@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: data.role,
             isTrial: data.isTrial || false,
             trialExpiresAt: data.trialExpiresAt || null,
+            googleId: data.googleId || null,
           });
         } else {
           localStorage.removeItem('auth_token');
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
+      googleId: data.user.googleId || null,
     });
   }, []);
 
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
+      googleId: data.user.googleId || null,
     });
   }, []);
 
@@ -99,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
+      googleId: data.user.googleId || null,
     });
   }, []);
 
@@ -122,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.user.role,
       isTrial: data.user.isTrial || false,
       trialExpiresAt: data.user.trialExpiresAt || null,
+      googleId: data.user.googleId || null,
     });
   }, []);
 
@@ -131,8 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((updatedUser: User) => {
+    setUser(updatedUser);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, loginWithGoogle, startTrial, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, loginWithGoogle, startTrial, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

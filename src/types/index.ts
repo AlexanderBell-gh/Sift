@@ -5,6 +5,7 @@ export interface User {
   role: string;
   isTrial: boolean;
   trialExpiresAt: number | null;
+  googleId: string | null;
 }
 
 export interface SearchResult {

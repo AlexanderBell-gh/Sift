@@ -5,11 +5,11 @@ import { Loader2, Download, Shield, Key, FileDown, AlertTriangle } from 'lucide-
 import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import NavHeader from './NavHeader';
-import { updatePassword, deleteAccount, getWatchlist } from '../lib/api';
+import { updatePassword, updateProfile, deleteAccount, getWatchlist } from '../lib/api';
 import type { WatchlistItem } from '../types';
 
 export default function SettingsPage() {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const isTrial = user?.isTrial === true;
@@ -23,6 +23,16 @@ export default function SettingsPage() {
   const [exportError, setExportError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+
+  const [profileEdits, setProfileEdits] = useState<{ username?: string; email?: string }>({});
+  const [profilePassword, setProfilePassword] = useState('');
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  const profileUsername = profileEdits.username ?? user?.username ?? '';
+  const profileEmail = profileEdits.email ?? user?.email ?? '';
 
   if (!token) {
     navigate('/auth', { replace: true });
@@ -53,6 +63,35 @@ export default function SettingsPage() {
       setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleProfileSave() {
+    setProfileError('');
+    setProfileSuccess('');
+    const errors: Record<string, string> = {};
+    const username = profileUsername.trim();
+    const email = profileEmail.trim();
+    if (!username || username.length < 4) errors.username = 'Must be at least 4 characters';
+    else if (/\s/.test(username)) errors.username = 'Cannot contain spaces';
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.email = 'Invalid email format';
+    if (!profilePassword) errors.profilePassword = 'Current password is required';
+    if (Object.keys(errors).length > 0) {
+      setProfileErrors(errors);
+      return;
+    }
+    setProfileErrors({});
+    setProfileLoading(true);
+    try {
+      const updated = await updateProfile(t, { username, email, currentPassword: profilePassword });
+      updateUser(updated);
+      setProfileSuccess('Profile updated successfully');
+      setProfileEdits({});
+      setProfilePassword('');
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      setProfileLoading(false);
     }
   }
 
@@ -138,14 +177,43 @@ export default function SettingsPage() {
                   <p>Your account identifiers</p>
                 </div>
               </div>
-              <div className="form-group mt-2">
-                <label className="field-label">Full Name</label>
-                <input type="text" className="form-input opacity-75" value={user?.username || ''} disabled />
-              </div>
-              <div className="form-group">
-                <label className="field-label">Email Address</label>
-                <input type="email" className="form-input opacity-75" value={user?.email || ''} disabled />
-              </div>
+              {user?.googleId ? (
+                <div className="mt-2">
+                  <p className="text-sm text-muted">Signed in via Google. Email and username cannot be changed.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 mt-2">
+                  <Input
+                    label="Username"
+                    type="text"
+                    value={profileUsername}
+                    onChange={e => { setProfileEdits({ ...profileEdits, username: e.target.value }); setProfileErrors(pe => ({ ...pe, username: '' })); }}
+                    required
+                    error={profileErrors.username}
+                  />
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    value={profileEmail}
+                    onChange={e => { setProfileEdits({ ...profileEdits, email: e.target.value }); setProfileErrors(pe => ({ ...pe, email: '' })); }}
+                    required
+                    error={profileErrors.email}
+                  />
+                  <Input
+                    label="Current Password"
+                    type="password"
+                    value={profilePassword}
+                    onChange={e => { setProfilePassword(e.target.value); setProfileErrors(pe => ({ ...pe, profilePassword: '' })); }}
+                    required
+                    error={profileErrors.profilePassword}
+                  />
+                  {profileError && <p className="danger-text text-sm">{profileError}</p>}
+                  {profileSuccess && <p className="text-sm" style={{ color: 'var(--success)' }}>{profileSuccess}</p>}
+                  <button className="btn-primary self-start" onClick={handleProfileSave} disabled={profileLoading}>
+                    {profileLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Details'}
+                  </button>
+                </div>
+              )}
             </section>
           )}
 

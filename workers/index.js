@@ -594,6 +594,7 @@ async function handleRequest(request, env) {
             role: existingUser.role,
             isTrial: existingUser.isTrial || false,
             trialExpiresAt: existingUser.trialExpiresAt || null,
+            googleId: existingUser.googleId || null,
           },
           token,
         }, request);
@@ -633,6 +634,7 @@ async function handleRequest(request, env) {
           role: user.role,
           isTrial: false,
           trialExpiresAt: null,
+          googleId: user.googleId || null,
         },
         token,
       }, request, 201);
@@ -658,6 +660,7 @@ async function handleRequest(request, env) {
         trialExpiresAt: user.trialExpiresAt || null,
         preferences: user.preferences,
         createdAt: user.createdAt,
+        googleId: user.googleId || null,
       }, request);
     }
 
@@ -681,6 +684,46 @@ async function handleRequest(request, env) {
           user.passwordHash = await hashPassword(body.newPassword);
         }
 
+        if (body.username !== undefined || body.email !== undefined) {
+          if (!body.currentPassword) {
+            return errorResponse('Current password is required to update profile', request);
+          }
+          if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
+            return errorResponse('Current password is incorrect', request);
+          }
+
+          if (body.username !== undefined) {
+            const newUsername = body.username.trim();
+            if (!newUsername || newUsername.length < 4) {
+              return errorResponse('Username must be at least 4 characters', request);
+            }
+            if (/\s/.test(newUsername)) {
+              return errorResponse('Username cannot contain spaces', request);
+            }
+            if (newUsername !== user.username) {
+              const existing = await getUserByUsername(env, newUsername);
+              if (existing && existing.id !== user.id) {
+                return errorResponse('Username already in use', request);
+              }
+              user.username = newUsername;
+            }
+          }
+
+          if (body.email !== undefined) {
+            const newEmail = body.email.trim();
+            if (!newEmail || !isValidEmail(newEmail)) {
+              return errorResponse('Invalid email format', request);
+            }
+            if (newEmail !== user.email) {
+              const existing = await getUserByEmail(env, newEmail);
+              if (existing && existing.id !== user.id) {
+                return errorResponse('Email already in use', request);
+              }
+              user.email = newEmail;
+            }
+          }
+        }
+
         await saveUser(env, user);
 
         return jsonResponse({
@@ -692,6 +735,7 @@ async function handleRequest(request, env) {
           trialExpiresAt: user.trialExpiresAt || null,
           preferences: user.preferences,
           createdAt: user.createdAt,
+          googleId: user.googleId || null,
         }, request);
       } catch (e) {
         console.error('Update me error:', e);

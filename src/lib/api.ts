@@ -31,6 +31,15 @@ export async function updatePassword(token: string, currentPassword: string, new
   return handleResponse<User>(response);
 }
 
+export async function updateProfile(token: string, data: { username?: string; email?: string; currentPassword: string }): Promise<User> {
+  const response = await fetch(`${API_BASE}/api/auth/me`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<User>(response);
+}
+
 export async function forgotPassword(email: string): Promise<{ token: string | null; expiresInMinutes: number; message?: string }> {
   const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
     method: 'POST',
