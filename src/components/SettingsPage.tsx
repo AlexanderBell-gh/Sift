@@ -97,13 +97,13 @@ export default function SettingsPage() {
 
   async function handleDeleteAccount() {
     setDeleteError('');
-    if (!isTrial && !deletePassword) {
+    if (!isTrial && !user?.googleId && !deletePassword) {
       setDeleteError('Password is required');
       return;
     }
     setIsLoading(true);
     try {
-      await deleteAccount(t, isTrial ? undefined : deletePassword);
+      await deleteAccount(t, isTrial || user?.googleId ? undefined : deletePassword);
       logout();
       navigate('/', { replace: true });
     } catch (err) {
@@ -307,7 +307,7 @@ export default function SettingsPage() {
         <p className="text-sm text-muted">
           This will permanently delete your account, watchlist, and all associated data. This action cannot be undone.
         </p>
-        {!isTrial && (
+        {!isTrial && !user?.googleId && (
           <div className="mt-2">
             <Input
               label="Password"

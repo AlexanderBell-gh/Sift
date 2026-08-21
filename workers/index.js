@@ -748,7 +748,7 @@ async function handleRequest(request, env) {
         const user = await getUserById(env, auth.userId);
         if (!user) return errorResponse('User not found', request, 404);
 
-        if (!user.isTrial) {
+        if (!user.isTrial && !user.googleId) {
           const body = await request.json();
           if (!body.password) {
             return errorResponse('Password is required to delete account', request);
