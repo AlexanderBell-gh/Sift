@@ -49,7 +49,7 @@ export function CookieConsent() {
         </div>
         <button
           onClick={accept}
-          className="shrink-0 px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 text-white btn-press"
+          className="shrink-0 px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 text-white"
           style={{ background: 'var(--primary)' }}
         >
           Got it
