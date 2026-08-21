@@ -19,7 +19,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 ### Auth & Accounts
 - JWT + Google OAuth + username/password auth
 - Self-service password recovery (no-email reset-token flow)
-- Profile editing (username + email, gated by current password; Google OAuth users read-only)
+- Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized)
 - Trial gating — 24h / 5 watchlist items, enforced server-side
 - Rate-limited auth endpoints (login, trial, register-admin, forgot/reset)
 

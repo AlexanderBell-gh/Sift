@@ -24,11 +24,11 @@
 
 ## Key Quirks
 
-- Tailwind v4 — CSS-first config in `src/index.css` via `@import "tailwindcss"` and `@theme {}` (no tailwind.config.js). `@theme` also aliases `--color-*` to the DESIGN tokens, so utilities like `text-text`, `bg-surface`, `border-border`, `text-danger` work alongside shared classes (`.page-title`, `.field-label`, `.danger-text`, `.trial-card`, `.form-input`, `.form-input-error`, `.suggestions-empty`, `.deal-card-link`, `.auth-password-toggle`)
+- Tailwind v4 — CSS-first config in `src/index.css` via `@import "tailwindcss"` and `@theme {}` (no tailwind.config.js). `@theme` aliases `--color-*` to DESIGN tokens — `text-text`, `bg-surface`, `border-border`, `text-danger` work alongside shared classes (`.page-title`, `.field-label`, `.danger-text`, `.trial-card`, `.form-input`, `.form-input-error`, `.suggestions-empty`, `.deal-card-link`, `.auth-password-toggle`)
 - `verbatimModuleSyntax: true` — explicit `import type` required for type-only imports
 - Workers: plain JS with ESM imports, no TS, no bundler
 - API base URL: exported once as `API_BASE` from `src/lib/api.ts` (AuthContext imports it — change the URL in one place)
-- CORS headers built per request (`buildCorsHeaders(request)` in `workers/index.js`). Response helpers keep the `request` as the **2nd** arg so every response can carry CORS: `jsonResponse(data, request = null, status = 200)` / `errorResponse(message, request = null, status = 400)` — status 3rd, no module-level mutable header state. (A past refactor briefly made status 2nd and silently 500'd every API call.)
+- CORS headers built per request (`buildCorsHeaders(request)` in `workers/index.js`). Response helpers keep the `request` as the **2nd** arg so every response can carry CORS: `jsonResponse(data, request = null, status = 200)` / `errorResponse(message, request = null, status = 400)` — status 3rd, no module-level mutable header state.
 - CSP: strict Content-Security-Policy meta injected at **build only** via `cspMeta()` in `vite.config.ts` (dev HMR needs inline scripts, so no CSP in dev)
 - Google Client ID from `VITE_GOOGLE_CLIENT_ID` env var (Vite build-time). Must be set in Cloudflare Pages dashboard (Production) or `.env` for local dev. Worker uses separate `GOOGLE_CLIENT_ID` secret — both must match.
 - Dark mode: `.dark` class on `<html>`; flash-prevention script lives in `public/theme-init.js` (external, loaded from `index.html` `<head>`) so prod CSP needs no `unsafe-inline`
@@ -46,9 +46,9 @@
 - Product IDs: `hashString(store + "_" + title)` in `workers/index.js` — deterministic for dedup. Backend-only (the frontend copy was dead code and removed)
 - Trial: 24h, 5 watchlist items, enforced server-side on `POST /api/watchlist` (403 `trial_expired` / `watchlist_limit`). Watchlist pins backed by `UNIQUE(user_id, product_id)` index (migration `0003`)
 - Rate limits: login 10/15min, trial 5/hour, register-admin 5/15min, forgot/reset-password 5/15min (per IP, `rate_limits` table)
-- Password reset: `password_resets.token_sha256` (SHA-256 of plaintext) column + index (migration `0004`) — reset-password does an indexed lookup then a single PBKDF2 verify (was an O(n) scan over all active tokens per guess)
-- Profile update: `PUT /api/auth/me` accepts `username`/`email` changes (requires `currentPassword`); validates email format, username min 4 chars + no spaces, uniqueness checks excluding self
-- Account deletion: Google OAuth users skip password verification (they have no password). `googleId` returned in `GET /api/auth/me`, `PUT /api/auth/me`, and `POST /api/auth/google` responses for frontend detection
+- Password reset: `password_resets.token_sha256` (SHA-256 of plaintext) column + index (migration `0004`) — reset-password does an indexed lookup then a single PBKDF2 verify
+- Profile update: `PUT /api/auth/me` accepts `username`/`email` changes (requires `currentPassword`); validates email format, username min 4 chars + no spaces, uniqueness checks excluding self; usernames normalized (first-letter-capitalized, rest lowercase) via `saveUser()`
+- Account deletion: Google OAuth users skip password verification (they have no password). `googleId` returned in auth responses for frontend detection
 - Alerts: `alerts.type` CHECK = `('price_drop','offer_expiry','offer_created')` (migration `0005` — table rebuild) matching `src/types/index.ts` `Alert.type`; cron currently inserts `offer_expiry` only
 - Constant-time secret compare: `safeEqual()` in `workers/index.js` (not `crypto.timingSafeEqual` — unavailable on WebCrypto global under `nodejs_compat`)
 - API errors: `handleResponse` throws `ApiError` with `status` + `reason` — branch on those, not message strings
@@ -59,8 +59,8 @@
 - ESLint flat config (`eslint.config.js`)
 - `cn()` utility for className merging (`clsx` + `tailwind-merge`)
 - UI components in `src/components/ui/`
-- `Input` (`src/components/ui/Input.tsx`) is the only text-input abstraction — token classes only (no inline styles), `useId`-linked `<label htmlFor>`, `aria-invalid` + `aria-describedby` for errors, optional `suffix` slot for end-adornments (AuthPage password eye toggle)
-- ARIA conventions: real tab pattern on AuthPage (`role=tablist`/`tab`/`tabpanel`, roving `tabIndex`, ArrowLeft/Right), combobox pattern on SearchPage autocomplete (`aria-activedescendant`, arrow-key `activeIndex` highlight). Every interactive element needs a `:focus-visible` ring (`2px solid var(--primary)`, offset 2px)
+- `Input` (`src/components/ui/Input.tsx`) — only text-input abstraction; token classes, `useId`-linked `<label>`, `aria-invalid` + `aria-describedby`, optional `suffix` slot
+- ARIA: real tab pattern on AuthPage, combobox pattern on SearchPage autocomplete. Every interactive element needs `:focus-visible` ring (`2px solid var(--primary)`, offset 2px)
 - No pre-commit hooks
 
 ## Markdowns
