@@ -6,7 +6,31 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ## Features
 
-11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect, local autocomplete via UK product dictionary, deals of the day section (random de-duplicated on-offer items from all users' watchlists, with an Add to Watchlist button per tile that greys out at the trial limit), filterable watchlist (dedicated filter bar under the nav: store + category multi-select and sort, with a mobile "Filters" pill), price tracking, a live trial-usage banner (X of 5 items + progress bar), price alerts, cron offer-expiry check (6am UTC), admin panel (dashboard, user management, audit console, trials), trial gating (24h/5 watchlist items, enforced server-side), rate-limited auth endpoints (login/trial/register-admin/forgot/reset), JWT + Google OAuth + username/password auth with self-service password recovery (no-email reset-token flow), dark/light mode, mobile responsive.
+### Search & Discovery
+- 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect
+- Local autocomplete via UK product dictionary + Fuse.js fuzzy search
+- Deals of the Day — random de-duplicated on-offer items from all users' watchlists, each with an Add to Watchlist button
+
+### Watchlist
+- Pin products to a personal watchlist with price tracking
+- Dedicated filter bar: store + category multi-select and sort (mobile "Filters" pill)
+- Live trial-usage banner (X of 5 items + progress bar)
+
+### Auth & Accounts
+- JWT + Google OAuth + username/password auth
+- Self-service password recovery (no-email reset-token flow)
+- Trial gating — 24h / 5 watchlist items, enforced server-side
+- Rate-limited auth endpoints (login, trial, register-admin, forgot/reset)
+
+### Alerts & Cron
+- Price alerts and offer-expiry notifications via bell icon
+- Cron offer-expiry check (6am UTC)
+
+### Admin
+- Dashboard, user management, audit console, trials
+
+### UI
+- Dark/light mode, mobile responsive
 
 **Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
 
