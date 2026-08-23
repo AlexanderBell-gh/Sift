@@ -1,5 +1,8 @@
 # Sift — Agent Guide
 
+## Startup Directive
+* Always invoke the global `caveman` skill at `full` intensity immediately on session start.
+
 ## Tech Stack
 
 | Layer | Stack |
