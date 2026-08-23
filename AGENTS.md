@@ -74,5 +74,6 @@ git diff --cached             # staged changes
 Allowed origins are hardcoded in `workers/index.js`: `https://siftsearch.pages.dev`, `http://localhost:5173`, `http://localhost:3000`. If adding a new dev port or staging domain, update `ALLOWED_ORIGINS` there.
 
 ## External Documentation
-For full project architecture: `/home/wsl/Projects/markdowns/Sift-Markdowns/CONTEXT.md`
-Design tokens: `/home/wsl/Projects/markdowns/Sift-Markdowns/DESIGN.md`
+
+ - Full project architecture: `/home/wsl/Projects/markdowns/Sift-Markdowns/CONTEXT.md`
+ - Design tokens: `/home/wsl/Projects/markdowns/Sift-Markdowns/DESIGN.md`
