@@ -6,7 +6,7 @@ import { AuthContext } from './auth-context';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
-  const [loading, setLoading] = useState(() => !localStorage.getItem('auth_token'));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
