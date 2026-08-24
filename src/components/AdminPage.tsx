@@ -86,11 +86,12 @@ export default function AdminPage() {
     }
   }, [token]);
 
-  const loadLogs = useCallback(async (page = 1) => {
+  const loadLogs = useCallback(async (page = 1, filter = auditFilter) => {
     if (!token) return;
     setLoadingByTab(prev => ({ ...prev, audit: true }));
     try {
-      const data = await getAdminAudit(token, { page, limit: 20 });
+      const actionParam = filter === 'all' ? undefined : filter;
+      const data = await getAdminAudit(token, { page, limit: 20, action: actionParam });
       setLogs(data.logs);
       setLogsPage(data.page);
       setLogsTotalPages(data.totalPages);
@@ -100,7 +101,7 @@ export default function AdminPage() {
     } finally {
       setLoadingByTab(prev => ({ ...prev, audit: false }));
     }
-  }, [token]);
+  }, [token, auditFilter]);
 
   const loadTrials = useCallback(async (page = 1, status = 'all') => {
     if (!token) return;
@@ -338,12 +339,12 @@ export default function AdminPage() {
                   { key: 'all', label: 'All Events' },
                   { key: 'system', label: 'System' },
                   { key: 'trial', label: 'Trial' },
-                  { key: 'security', label: 'Security' },
+                  { key: 'role', label: 'Role Changes' },
                   { key: 'delete', label: 'Admin Revokes' },
                 ].map(f => (
                   <button
                     key={f.key}
-                    onClick={() => { setAuditFilter(f.key); loadLogs(1); }}
+                    onClick={() => { setAuditFilter(f.key); loadLogs(1, f.key); }}
                     className={`audit-pill ${auditFilter === f.key ? 'active' : ''}`}
                   >
                     {f.label}
@@ -357,25 +358,31 @@ export default function AdminPage() {
                   <p className="audit-empty-desc">Audit entries appear when admin actions are taken</p>
                 </div>
               ) : (
-                <div className="audit-console">
+                <div className="space-y-2">
                   {logs
-                    .filter(log => auditFilter === 'all' || log.action?.toLowerCase().includes(auditFilter))
                     .map(log => {
                       const time = new Date(log.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                       const actionLower = log.action?.toLowerCase() || '';
                       let tagClass = 'tag-system';
                       let tagLabel = 'SYSTEM';
                       if (actionLower.includes('trial')) { tagClass = 'tag-trial'; tagLabel = 'TRIAL'; }
-                      else if (actionLower.includes('security') || actionLower.includes('auth') || actionLower.includes('token')) { tagClass = 'tag-security'; tagLabel = 'SECURITY'; }
+                      else if (actionLower.includes('role') || actionLower.includes('security') || actionLower.includes('auth') || actionLower.includes('token')) { tagClass = 'tag-security'; tagLabel = 'SECURITY'; }
                       else if (actionLower.includes('delete') || actionLower.includes('revoke')) { tagClass = 'tag-delete'; tagLabel = 'DELETE'; }
 
                       return (
-                        <div key={log.id} className="audit-row">
-                          <span className="audit-time">[{time}]</span>
+                        <div key={log.id} className="audit-log-card">
                           <span className={`audit-tag ${tagClass}`}>{tagLabel}</span>
-                          <span className="audit-message">
-                            {log.admin_username} {log.details || log.action}
-                          </span>
+                          <div className="audit-log-actors">
+                            <span className="audit-log-admin">{log.admin_username}</span>
+                            {log.target_username && (
+                              <>
+                                <span className="audit-log-arrow">→</span>
+                                <span className="audit-log-target">{log.target_username}</span>
+                              </>
+                            )}
+                          </div>
+                          <span className="audit-log-details">{log.details || log.action}</span>
+                          <span className="audit-log-time">{time}</span>
                         </div>
                       );
                     })}

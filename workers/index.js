@@ -946,8 +946,8 @@ async function handleRequest(request, env) {
     const where = [];
     const params = [];
     if (actionFilter) {
-      where.push('action = ?');
-      params.push(actionFilter);
+      where.push('action LIKE ?');
+      params.push(`%${actionFilter}%`);
     }
     if (search) {
       where.push('(LOWER(admin_username) LIKE ? OR LOWER(target_username) LIKE ?)');
