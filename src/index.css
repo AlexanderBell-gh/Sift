@@ -1901,12 +1901,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color 0.2s;
 }
 
 .metric-card:hover {
   border-color: var(--primary);
-  transform: translateY(-2px);
 }
 
 .metric-label {
@@ -2055,7 +2054,6 @@ body {
 
 .user-row-card:hover {
   border-color: var(--primary);
-  transform: translateX(4px);
 }
 
 .user-row-card:has(.admin-dropdown-trigger.open) {

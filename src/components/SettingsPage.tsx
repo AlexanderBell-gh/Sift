@@ -180,7 +180,7 @@ export default function SettingsPage() {
               {user?.googleId ? (
                 <div className="flex flex-col gap-4 mt-2">
                   <div className="form-group">
-                    <label className="field-label">Full Name</label>
+                    <label className="field-label">Username</label>
                     <input type="text" className="form-input" value={user.username} disabled />
                   </div>
                   <div className="form-group">
