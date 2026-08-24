@@ -475,13 +475,12 @@ body {
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s;
   font-family: var(--font-primary);
 }
 
 .deal-watchlist-btn:hover {
   background-color: color-mix(in oklab, var(--primary) 85%, black);
-  box-shadow: 0 2px 8px rgba(255, 87, 1, 0.3);
 }
 
 .dark .deal-watchlist-btn:hover {
@@ -884,7 +883,7 @@ body {
 }
 
 .store-panel-option:hover {
-  background: var(--surface-hover);
+  background: var(--bg);
 }
 
 .store-panel-option-selected {
@@ -1134,7 +1133,7 @@ body {
 }
 
 .filter-option:hover {
-  background: var(--surface-hover);
+  background: var(--bg);
 }
 
 .filter-option-selected {
@@ -1295,12 +1294,11 @@ body {
   font-weight: 600;
   cursor: pointer;
   font-size: 16px;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s;
 }
 
 .search-button:hover {
   background-color: color-mix(in oklab, var(--primary) 88%, black);
-  box-shadow: 0 4px 16px rgba(255, 87, 1, 0.4);
 }
 
 .search-button:focus-visible {
@@ -1393,7 +1391,7 @@ body {
 }
 
 .suggestion-item:hover {
-  background: var(--surface-hover);
+  background: var(--bg);
 }
 
 .suggestion-item.selected {
@@ -1445,7 +1443,7 @@ body {
 }
 
 .alert-item:hover {
-  background: var(--surface-hover);
+  background: var(--bg);
 }
 
 .alert-item.unread {
@@ -2422,7 +2420,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  transition: color 0.15s, box-shadow 0.15s;
+  transition: color 0.15s;
 }
 
 .pagination-btn:disabled {
@@ -2432,7 +2430,6 @@ body {
 
 .pagination-btn:not(:disabled):hover {
   color: var(--text);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .pagination-label {
@@ -2657,12 +2654,11 @@ body {
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s;
 }
 
 .auth-submit:hover {
   background-color: color-mix(in oklab, var(--primary) 88%, black);
-  box-shadow: 0 4px 16px rgba(255, 87, 1, 0.4);
 }
 
 .auth-submit:active {
@@ -2887,12 +2883,11 @@ body {
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s;
 }
 
 .btn-primary:hover {
   background-color: color-mix(in oklab, var(--primary) 88%, black);
-  box-shadow: 0 4px 12px rgba(255, 87, 1, 0.35);
 }
 
 .btn-primary:active {
@@ -2918,12 +2913,11 @@ body {
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s;
 }
 
 .btn-danger:hover {
   background-color: color-mix(in oklab, var(--danger) 88%, black);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
 }
 
 .btn-danger:active {
@@ -2949,13 +2943,12 @@ body {
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
 .btn-secondary:hover {
   background-color: color-mix(in oklab, var(--surface) 92%, var(--text));
   border-color: var(--muted);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .btn-secondary:active {
@@ -3521,13 +3514,12 @@ body {
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s;
   white-space: nowrap;
 }
 
 .extension-banner-btn:hover {
   background-color: color-mix(in oklab, var(--primary) 88%, black);
-  box-shadow: 0 4px 12px rgba(255, 87, 1, 0.35);
   color: white;
 }
 
