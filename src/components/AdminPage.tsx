@@ -153,10 +153,7 @@ export default function AdminPage() {
   async function handleCleanupTrials() {
     if (!token) return;
     const expiredCount = trials.filter(t => t.isExpired).length;
-    if (expiredCount === 0) {
-      setError('No expired trials to clean');
-      return;
-    }
+    if (expiredCount === 0) return;
     if (!confirm(`Delete ${expiredCount} expired trial account${expiredCount === 1 ? '' : 's'}?`)) return;
     try {
       await cleanupExpiredTrials(token);
@@ -186,7 +183,7 @@ export default function AdminPage() {
             {navItems.map(item => (
               <button
                 key={item.key}
-                onClick={() => setTab(item.key)}
+                onClick={() => { setError(''); setTab(item.key); }}
                 className={`admin-nav-item ${tab === item.key ? 'active' : ''}`}
                 aria-label={item.label}
                 aria-current={tab === item.key ? 'page' : undefined}
@@ -223,7 +220,7 @@ export default function AdminPage() {
           </div>
 
           {error && (
-            <div className="auth-error mb-6" role="alert">
+            <div className="alert-error mb-6" role="alert">
               {error}
             </div>
           )}
@@ -408,6 +405,7 @@ export default function AdminPage() {
                 <button
                   onClick={handleCleanupTrials}
                   className="btn-danger"
+                  disabled={trials.filter(t => t.isExpired).length === 0}
                 >
                   Clean Expired
                 </button>

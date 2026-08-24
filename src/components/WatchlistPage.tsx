@@ -110,7 +110,7 @@ export default function WatchlistPage() {
 
       <div className="container">
         {error && (
-          <div className="auth-error mb-4" role="alert">
+          <div className="alert-error mb-4" role="alert">
             {error}
           </div>
         )}

@@ -260,7 +260,7 @@ export default function AuthPage() {
         >
           <form onSubmit={handleSubmit} className="auth-form" noValidate aria-busy={loading}>
             {error && (
-              <div className="auth-error" role="alert">
+              <div className="alert-error" role="alert">
                 {error}
               </div>
             )}
@@ -408,7 +408,7 @@ export default function AuthPage() {
           googleClientId ? (
             <div ref={googleBtnRef} className="google-btn-wrapper" />
           ) : (
-            <div className="auth-error" role="alert">
+            <div className="alert-error" role="alert">
               Google Sign-In is not configured (VITE_GOOGLE_CLIENT_ID missing)
             </div>
           )
