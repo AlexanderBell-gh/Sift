@@ -2158,10 +2158,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 16px 24px;
+  border-radius: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+
+.trial-card:hover {
+  border-color: var(--primary);
 }
 
 .trial-card-name {
