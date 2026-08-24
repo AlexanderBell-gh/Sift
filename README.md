@@ -28,7 +28,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 - Cron offer-expiry check (6am UTC)
 
 ### Admin
-- Dashboard, user management, audit console, trials
+- Dashboard, user management, audit logs (card-based, filterable by action type), trials
 
 ### UI
 - Dark/light mode, mobile responsive
