@@ -6,6 +6,7 @@ import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 import NavHeader from './NavHeader';
 import { StoreSelect } from './ui/StoreSelect';
 import { DealSection } from './DealSection';
+import ExtensionPopout from './ExtensionPopout';
 import { STORES } from '../lib/stores';
 
 export default function SearchPage() {
@@ -298,6 +299,7 @@ export default function SearchPage() {
               </div>
             )}
           </form>
+          <ExtensionPopout />
         </div>
       </section>
 

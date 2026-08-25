@@ -3451,114 +3451,329 @@ body {
 
 /* Watchlist product-row styles are defined in the Watchlist Screen section above */
 
-/* Extension Banner */
-.extension-banner {
+/* Extension FAB */
+.extension-fab-container {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--surface);
-  border-top: 1px solid rgba(255, 87, 1, 0.2);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
-  padding: 12px 0;
-  z-index: 99;
-  animation: slideUp 0.3s var(--ease-smooth);
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  animation: fabFadeIn 0.4s var(--ease-smooth);
 }
 
-.dark .extension-banner {
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+@keyframes fabFadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+.extension-fab-container.extension-fab-dismissing {
+  animation: fabFadeOut 0.25s var(--ease-smooth) forwards;
 }
 
-@keyframes bannerSlideDown {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
+@keyframes fabFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.8); }
 }
 
-.extension-banner.dismissing {
-  animation: bannerSlideDown 0.3s var(--ease-smooth) forwards;
-  pointer-events: none;
-}
-
-.extension-banner-inner {
+.extension-fab-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(255, 87, 1, 0.25);
+  transition: transform 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);
 }
 
-.extension-banner-text {
+.extension-fab-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(255, 87, 1, 0.35);
+}
+
+.extension-fab-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12), 0 4px 12px rgba(255, 87, 1, 0.25);
+}
+
+.extension-fab-btn:active {
+  transform: scale(0.95);
+}
+
+.extension-fab-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.dark .extension-fab-btn {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.dark .extension-fab-btn:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+.extension-fab-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  width: 300px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  position: relative;
+  animation: panelSlideUp 0.25s var(--ease-smooth);
+}
+
+@keyframes panelSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dark .extension-fab-panel {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.extension-fab-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.extension-fab-close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.extension-fab-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.extension-fab-panel-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.extension-fab-panel-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.extension-fab-panel-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.extension-fab-panel-desc {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.extension-fab-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.extension-fab-download:hover {
+  background-color: color-mix(in oklab, var(--primary) 85%, black);
+  color: #fff;
+}
+
+.extension-fab-download:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
+}
+
+.extension-fab-download:active {
+  opacity: 0.7;
+}
+
+@media (max-width: 640px) {
+  .extension-fab-container {
+    display: none;
+  }
+}
+
+/* Extension Popout (hero area) */
+.extension-popout {
+  max-width: 860px;
+  width: 100%;
+  margin: 24px auto 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  animation: popoutFadeIn 0.3s var(--ease-smooth);
+}
+
+@keyframes popoutFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.extension-popout.extension-popout-dismissing {
+  animation: popoutFadeOut 0.25s var(--ease-smooth) forwards;
+}
+
+@keyframes popoutFadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+.dark .extension-popout {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.extension-popout-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.extension-popout-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.extension-popout-text {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.extension-banner-title {
+.extension-popout-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
 }
 
-.extension-banner-desc {
+.extension-popout-desc {
   font-size: 13px;
   color: var(--muted);
 }
 
-.extension-banner-favicon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.extension-banner-actions {
+.extension-popout-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.extension-banner-btn {
+.extension-popout-download {
   display: inline-flex;
   align-items: center;
+  padding: 6px 14px;
   background: var(--primary);
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 10px;
-  font-size: 13px;
+  color: #fff;
+  font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
+  border-radius: 8px;
   text-decoration: none;
   transition: background-color 0.15s;
   white-space: nowrap;
 }
 
-.extension-banner-btn:hover {
-  background-color: color-mix(in oklab, var(--primary) 88%, black);
-  color: white;
+.extension-popout-download:hover {
+  background-color: color-mix(in oklab, var(--primary) 85%, black);
+  color: #fff;
 }
 
-.extension-banner-btn:active {
-  transform: translateY(0);
+.extension-popout-download:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
 }
 
-/* Body padding when banner visible */
-.has-extension-banner {
-  padding-bottom: 56px;
+.extension-popout-download:active {
+  opacity: 0.7;
 }
 
-/* Hide on mobile */
+.extension-popout-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.extension-popout-close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.extension-popout-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
 @media (max-width: 640px) {
-  .extension-banner {
+  .extension-popout {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .extension-popout-desc {
     display: none;
   }
 
-  .has-extension-banner {
-    padding-bottom: 0;
+  .extension-popout-content {
+    flex-wrap: wrap;
+  }
+
+  .extension-popout-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
