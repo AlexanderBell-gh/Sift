@@ -54,7 +54,7 @@ pnpm install
 pnpm run dev
 ```
 
-Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account.
+Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account
 
 ## Build & Deploy
 
