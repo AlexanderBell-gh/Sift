@@ -19,6 +19,8 @@ const EXTENSION_URLS = {
   other: '#',
 } as const;
 
+const TOOLTIP_KEY = 'extension_tooltip_dismissed';
+
 type FabState = 'hidden' | 'visible' | 'dismissing';
 
 export default function ExtensionFAB() {
@@ -27,6 +29,7 @@ export default function ExtensionFAB() {
   const { browser } = useBrowser();
   const [fabState, setFabState] = useState<FabState>('hidden');
   const [expanded, setExpanded] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevInstalled = useRef(installed);
 
@@ -40,6 +43,13 @@ export default function ExtensionFAB() {
       return () => clearTimeout(timer);
     }
   }, [installed, fabState, isAuthPage]);
+
+  useEffect(() => {
+    if (fabState === 'visible' && !localStorage.getItem(TOOLTIP_KEY)) {
+      const timer = setTimeout(() => setTooltipVisible(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [fabState]);
 
   useEffect(() => {
     if (installed && !prevInstalled.current && fabState === 'visible') {
@@ -61,7 +71,12 @@ export default function ExtensionFAB() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expanded]);
 
-  if (fabState === 'hidden') return null;
+  function dismissTooltip() {
+    localStorage.setItem(TOOLTIP_KEY, '1');
+    setTooltipVisible(false);
+  }
+
+  if (fabState === 'hidden' || isAuthPage) return null;
 
   return (
     <div
@@ -71,6 +86,18 @@ export default function ExtensionFAB() {
         fabState === 'dismissing' && 'extension-fab-dismissing'
       )}
     >
+      {tooltipVisible && !expanded && (
+        <div className="extension-fab-tooltip">
+          <span className="extension-fab-tooltip-text">Click to Download the Sift extension</span>
+          <button
+            onClick={dismissTooltip}
+            className="extension-fab-tooltip-close"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       {expanded && (
         <div className="extension-fab-panel">
           <button
@@ -98,7 +125,7 @@ export default function ExtensionFAB() {
         </div>
       )}
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => { setExpanded(!expanded); setTooltipVisible(false); }}
         className="extension-fab-btn"
         aria-label="Get the Sift browser extension"
       >

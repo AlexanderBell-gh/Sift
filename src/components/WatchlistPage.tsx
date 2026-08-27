@@ -9,7 +9,7 @@ import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyC
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import WatchlistFilters from './WatchlistFilters';
-
+import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 
 const ALL_STORES = STORES.map(s => s.name);
 const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard', 'Other'];
@@ -17,6 +17,7 @@ const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', '
 export default function WatchlistPage() {
   const { token, user } = useAuth();
   const navigate = useNavigate();
+  const { installed } = useExtensionInstalled();
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -152,19 +153,32 @@ export default function WatchlistPage() {
         )}
 
         {!loading && items.length === 0 && (
-          <div className="empty-state-box">
-            <p className="empty-state-title">Your Watchlist is empty</p>
-            <p className="empty-state-desc mb-6">Find and pin groceries from the search tab.</p>
-            <div className="flex justify-center">
-              <button
-                onClick={() => navigate('/search')}
-                className="btn-primary px-5 py-2.5"
-              >
-                <Search size={16} />
-                Search Products
-              </button>
+          <>
+            <div className="empty-state-box">
+              <p className="empty-state-title">Your Watchlist is empty</p>
+              <p className="empty-state-desc mb-6">Find and pin groceries from the search tab.</p>
+              <div className="flex justify-center">
+                <button
+                  onClick={() => navigate('/search')}
+                  className="btn-primary px-5 py-2.5"
+                >
+                  <Search size={16} />
+                  Search Products
+                </button>
+              </div>
             </div>
-          </div>
+            {!installed && (
+              <div className="extension-cta">
+                <div className="extension-cta-header">
+                  <img src="/favicon.svg" alt="" className="extension-cta-icon" />
+                  <span className="extension-cta-title">Sift - Product Extractor</span>
+                </div>
+                <span className="extension-cta-text">
+                  Click the browser icon bottom right to download the extension, it is required to add products directly from store pages.
+                </span>
+              </div>
+            )}
+          </>
         )}
 
         {!loading && items.length > 0 && filtered.length === 0 && (
