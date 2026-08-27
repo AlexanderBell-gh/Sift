@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, LayoutGrid, Store, ArrowUpDown, SlidersHorizontal } from 'lucide-react';
+import { Store, LayoutGrid, ArrowUpDown } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { STORES } from '../lib/stores';
+import FilterTrigger from './filters/FilterTrigger';
+import FilterPanel from './filters/FilterPanel';
+import FilterOption from './filters/FilterOption';
 
 const STORE_NAMES = STORES.map(s => s.name);
 const CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard', 'Other'];
@@ -23,10 +26,6 @@ interface WatchlistFiltersProps {
 }
 
 type PanelKey = 'stores' | 'categories' | 'sort' | null;
-
-function categoryDotClass(category: string): string {
-  return `category-${category.toLowerCase().replace(/\s+/g, '-')}`;
-}
 
 export default function WatchlistFilters({
   selectedStores,
@@ -59,9 +58,6 @@ export default function WatchlistFilters({
   const allStores = selectedStores.length === STORE_NAMES.length;
   const allCategories = selectedCategories.length === CATEGORIES.length;
 
-  const activeCount =
-    (allStores ? 0 : 1) + (allCategories ? 0 : 1) + (sortBy === 'relevance' ? 0 : 1);
-
   const sortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? 'Relevance';
 
   function togglePanel(key: Exclude<PanelKey, null>) {
@@ -84,241 +80,124 @@ export default function WatchlistFilters({
     );
   }
 
-  function renderStoreOptions() {
-    return STORES.map(store => {
-      const selected = selectedStores.includes(store.name);
-      return (
-        <button
-          key={store.name}
-          type="button"
-          role="option"
-          aria-selected={selected}
-          onClick={() => toggleStore(store.name)}
-          className={cn('filter-option', selected && 'filter-option-selected')}
-        >
-          <span className={cn('filter-check', selected && 'filter-check-selected')}>
-            {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-          </span>
-          <img src={store.logo} alt="" className="filter-option-logo" />
-          <span className="filter-option-name">{store.name}</span>
-        </button>
-      );
-    });
-  }
+  const storeActions = (
+    <>
+      <button
+        type="button"
+        onClick={() => onStoresChange(STORE_NAMES)}
+        className={cn('filter-panel-action', allStores && 'filter-panel-action-muted')}
+      >
+        All
+      </button>
+      <button
+        type="button"
+        onClick={() => onStoresChange([])}
+        className={cn('filter-panel-action', selectedStores.length === 0 && 'filter-panel-action-muted')}
+      >
+        None
+      </button>
+    </>
+  );
 
-  function renderCategoryOptions() {
-    return CATEGORIES.map(category => {
-      const selected = selectedCategories.includes(category);
-      return (
-        <button
-          key={category}
-          type="button"
-          role="option"
-          aria-selected={selected}
-          onClick={() => toggleCategory(category)}
-          className={cn('filter-option', selected && 'filter-option-selected')}
-        >
-          <span className={cn('filter-check', selected && 'filter-check-selected')}>
-            {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-          </span>
-          <span className={cn('filter-cat-dot', categoryDotClass(category))} />
-          <span className="filter-option-name">{category}</span>
-        </button>
-      );
-    });
-  }
-
-  function renderSortOptions() {
-    return SORT_OPTIONS.map(opt => {
-      const selected = sortBy === opt.value;
-      return (
-        <button
-          key={opt.value}
-          type="button"
-          role="option"
-          aria-selected={selected}
-          onClick={() => onSortChange(opt.value)}
-          className={cn('filter-option', selected && 'filter-option-selected')}
-        >
-          <span className={cn('filter-check', selected && 'filter-check-selected')}>
-            {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-          </span>
-          <span className="filter-option-name">{opt.label}</span>
-        </button>
-      );
-    });
-  }
+  const categoryActions = (
+    <>
+      <button
+        type="button"
+        onClick={() => onCategoriesChange(CATEGORIES)}
+        className={cn('filter-panel-action', allCategories && 'filter-panel-action-muted')}
+      >
+        All
+      </button>
+      <button
+        type="button"
+        onClick={() => onCategoriesChange([])}
+        className={cn('filter-panel-action', selectedCategories.length === 0 && 'filter-panel-action-muted')}
+      >
+        None
+      </button>
+    </>
+  );
 
   return (
     <div ref={barRef} className="filter-nav">
+      {openPanel && <div className="filter-panel-backdrop" onClick={() => setOpenPanel(null)} />}
       <div className="filter-nav-inner">
         <div className="filter-bar">
           <div className="filter-group">
-            <button
-              type="button"
+            <FilterTrigger
+              icon={Store}
+              label={allStores ? 'All stores' : `${selectedStores.length} stores`}
+              active={!allStores}
+              expanded={openPanel === 'stores'}
               onClick={() => togglePanel('stores')}
-              aria-haspopup="listbox"
-              aria-expanded={openPanel === 'stores'}
-              className={cn('filter-trigger', !allStores && 'filter-trigger-active')}
-            >
-              <Store className="filter-trigger-icon" />
-              <span>{allStores ? 'All stores' : `${selectedStores.length} stores`}</span>
-              <ChevronDown className="filter-chevron" />
-            </button>
+            />
             {openPanel === 'stores' && (
-              <div className="filter-panel" role="listbox" aria-label="Stores">
-                <div className="filter-panel-header">
-                  <span className="filter-panel-title">Stores</span>
-                  <div className="filter-panel-actions">
-                    <button
-                      type="button"
-                      onClick={() => onStoresChange(STORE_NAMES)}
-                      className={cn('filter-panel-action', allStores && 'filter-panel-action-muted')}
+              <FilterPanel title="Stores" actions={storeActions}>
+                {STORES.map(store => {
+                  const selected = selectedStores.includes(store.name);
+                  return (
+                    <FilterOption
+                      key={store.name}
+                      selected={selected}
+                      onClick={() => toggleStore(store.name)}
+                      label={store.name}
                     >
-                      All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onStoresChange([])}
-                      className={cn('filter-panel-action', selectedStores.length === 0 && 'filter-panel-action-muted')}
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="filter-panel-list">{renderStoreOptions()}</div>
-              </div>
+                      <img src={store.logo} alt="" className="filter-option-logo" />
+                    </FilterOption>
+                  );
+                })}
+              </FilterPanel>
             )}
           </div>
 
           <div className="filter-group">
-            <button
-              type="button"
+            <FilterTrigger
+              icon={LayoutGrid}
+              label={allCategories ? 'All categories' : `${selectedCategories.length} categories`}
+              active={!allCategories}
+              expanded={openPanel === 'categories'}
               onClick={() => togglePanel('categories')}
-              aria-haspopup="listbox"
-              aria-expanded={openPanel === 'categories'}
-              className={cn('filter-trigger', !allCategories && 'filter-trigger-active')}
-            >
-              <LayoutGrid className="filter-trigger-icon" />
-              <span>{allCategories ? 'All categories' : `${selectedCategories.length} categories`}</span>
-              <ChevronDown className="filter-chevron" />
-            </button>
+            />
             {openPanel === 'categories' && (
-              <div className="filter-panel" role="listbox" aria-label="Category">
-                <div className="filter-panel-header">
-                  <span className="filter-panel-title">Category</span>
-                  <div className="filter-panel-actions">
-                    <button
-                      type="button"
-                      onClick={() => onCategoriesChange(CATEGORIES)}
-                      className={cn('filter-panel-action', allCategories && 'filter-panel-action-muted')}
+              <FilterPanel title="Category" actions={categoryActions}>
+                {CATEGORIES.map(category => {
+                  const selected = selectedCategories.includes(category);
+                  return (
+                    <FilterOption
+                      key={category}
+                      selected={selected}
+                      onClick={() => toggleCategory(category)}
+                      label={category}
                     >
-                      All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onCategoriesChange([])}
-                      className={cn('filter-panel-action', selectedCategories.length === 0 && 'filter-panel-action-muted')}
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="filter-panel-list">{renderCategoryOptions()}</div>
-              </div>
+                      <span className={cn('filter-cat-dot', `category-${category.toLowerCase().replace(/\s+/g, '-')}`)} />
+                    </FilterOption>
+                  );
+                })}
+              </FilterPanel>
             )}
           </div>
 
-          <div className="filter-group filter-group-sort">
-            <button
-              type="button"
+          <div className="filter-group">
+            <FilterTrigger
+              icon={ArrowUpDown}
+              label={sortLabel}
+              active={sortBy !== 'relevance'}
+              expanded={openPanel === 'sort'}
               onClick={() => togglePanel('sort')}
-              aria-haspopup="listbox"
-              aria-expanded={openPanel === 'sort'}
-              className={cn('filter-trigger', sortBy !== 'relevance' && 'filter-trigger-active')}
-            >
-              <ArrowUpDown className="filter-trigger-icon" />
-              <span>{sortLabel}</span>
-              <ChevronDown className="filter-chevron" />
-            </button>
+            />
             {openPanel === 'sort' && (
-              <div className="filter-panel filter-panel-right" role="listbox" aria-label="Sort by">
-                <div className="filter-panel-header">
-                  <span className="filter-panel-title">Sort by</span>
-                </div>
-                <div className="filter-panel-list">{renderSortOptions()}</div>
-              </div>
+              <FilterPanel title="Sort by" align="right">
+                {SORT_OPTIONS.map(opt => (
+                  <FilterOption
+                    key={opt.value}
+                    selected={sortBy === opt.value}
+                    onClick={() => onSortChange(opt.value)}
+                    label={opt.label}
+                  />
+                ))}
+              </FilterPanel>
             )}
           </div>
-        </div>
-
-        <div className="filter-bar-mobile">
-          <button
-            type="button"
-            onClick={() => setOpenPanel(prev => (prev ? null : 'stores'))}
-            aria-haspopup="listbox"
-            aria-expanded={openPanel !== null}
-            className={cn('filter-trigger filter-trigger-mobile', activeCount > 0 && 'filter-trigger-active')}
-          >
-            <SlidersHorizontal className="filter-trigger-icon" />
-            <span>Filters</span>
-            {activeCount > 0 && <span className="filter-count-badge">{activeCount}</span>}
-            <ChevronDown className="filter-chevron" />
-          </button>
-          {openPanel && (
-            <div className="filter-panel-mobile" role="listbox" aria-label="Filters">
-              <div className="filter-section">
-                <div className="filter-panel-header">
-                  <span className="filter-panel-title">Stores</span>
-                  <div className="filter-panel-actions">
-                    <button
-                      type="button"
-                      onClick={() => onStoresChange(STORE_NAMES)}
-                      className={cn('filter-panel-action', allStores && 'filter-panel-action-muted')}
-                    >
-                      All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onStoresChange([])}
-                      className={cn('filter-panel-action', selectedStores.length === 0 && 'filter-panel-action-muted')}
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="filter-panel-list">{renderStoreOptions()}</div>
-              </div>
-              <div className="filter-section">
-                <div className="filter-panel-header">
-                  <span className="filter-panel-title">Category</span>
-                  <div className="filter-panel-actions">
-                    <button
-                      type="button"
-                      onClick={() => onCategoriesChange(CATEGORIES)}
-                      className={cn('filter-panel-action', allCategories && 'filter-panel-action-muted')}
-                    >
-                      All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onCategoriesChange([])}
-                      className={cn('filter-panel-action', selectedCategories.length === 0 && 'filter-panel-action-muted')}
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="filter-panel-list">{renderCategoryOptions()}</div>
-              </div>
-              <div className="filter-section">
-                <div className="filter-panel-header">
-                  <span className="filter-panel-title">Sort by</span>
-                </div>
-                <div className="filter-panel-list">{renderSortOptions()}</div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
