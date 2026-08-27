@@ -14,10 +14,28 @@ export function CookieConsent() {
     }
   }, []);
 
+  useEffect(() => {
+    function onRevoke() {
+      setDismissing(false);
+      setVisible(false);
+      const timer = setTimeout(() => setVisible(true), 500);
+      return () => clearTimeout(timer);
+    }
+    document.addEventListener('cookie-consent-revoked', onRevoke);
+    return () => document.removeEventListener('cookie-consent-revoked', onRevoke);
+  }, []);
+
   function accept() {
     localStorage.setItem('cookie_consent', 'accepted');
+    dismiss();
+  }
+
+  function dismiss() {
     setDismissing(true);
-    setTimeout(() => setVisible(false), 250);
+    setTimeout(() => {
+      setVisible(false);
+      setDismissing(false);
+    }, 250);
   }
 
   if (!visible) return null;
@@ -47,13 +65,22 @@ export function CookieConsent() {
             </p>
           </div>
         </div>
-        <button
-          onClick={accept}
-          className="shrink-0 px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 text-white"
-          style={{ background: 'var(--primary)' }}
-        >
-          Got it
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={dismiss}
+            className="px-3 py-2 rounded-xl text-sm font-medium hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2"
+            style={{ color: 'var(--muted)' }}
+          >
+            Dismiss
+          </button>
+          <button
+            onClick={accept}
+            className="px-5 py-2 rounded-xl text-sm font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 text-white"
+            style={{ background: 'var(--primary)' }}
+          >
+            Got it
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Download, Shield, Key, FileDown, AlertTriangle } from 'lucide-react';
+import { Loader2, Download, Shield, Key, FileDown, AlertTriangle, Cookie } from 'lucide-react';
 import { Modal } from './ui/Modal';
 import { Input } from './ui/Input';
 import NavHeader from './NavHeader';
@@ -30,9 +30,11 @@ export default function SettingsPage() {
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
+  const [consentRevoked, setConsentRevoked] = useState(false);
 
   const profileUsername = profileEdits.username ?? user?.username ?? '';
   const profileEmail = profileEdits.email ?? user?.email ?? '';
+  const hasConsent = !consentRevoked && localStorage.getItem('cookie_consent') === 'accepted';
 
   if (!token) {
     navigate('/auth', { replace: true });
@@ -111,6 +113,12 @@ export default function SettingsPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function handleRevokeConsent() {
+    localStorage.removeItem('cookie_consent');
+    setConsentRevoked(true);
+    document.dispatchEvent(new CustomEvent('cookie-consent-revoked'));
   }
 
   async function handleExportDownload() {
@@ -291,6 +299,28 @@ export default function SettingsPage() {
               </div>
             </section>
           )}
+
+          <section className="settings-card">
+            <div className="settings-card-header">
+              <div className="settings-card-header-icon primary">
+                <Cookie size={20} className="text-accent" />
+              </div>
+              <div>
+                <h3>Privacy</h3>
+                <p>Manage cookie consent preferences</p>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="text-sm" style={{ color: hasConsent ? 'var(--success)' : 'var(--muted)' }}>
+                {hasConsent ? 'Accepted' : 'Not accepted'}
+              </span>
+              {hasConsent && (
+                <button className="btn-secondary" onClick={handleRevokeConsent}>
+                  Revoke Consent
+                </button>
+              )}
+            </div>
+          </section>
 
           <section className="settings-card danger-border">
             <div className="settings-card-header">
