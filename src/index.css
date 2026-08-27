@@ -958,7 +958,7 @@ body {
 }
 
 .filter-bar {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
@@ -1184,63 +1184,8 @@ body {
   border-radius: 3px;
 }
 
-.filter-bar-mobile {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-@media (min-width: 641px) {
-  .filter-bar {
-    display: flex;
-  }
-
-  .filter-bar-mobile {
-    display: none;
-  }
-}
-
-.filter-trigger-mobile {
-  min-height: 40px;
-}
-
-.filter-count-badge {
-  min-width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 99px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 0 5px;
-}
-
-.filter-panel-mobile {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 8px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
-  z-index: 50;
-  animation: filter-panel-in 180ms var(--ease-smooth);
-}
-
-.filter-section {
-  border-bottom: 1px solid var(--border);
-}
-
-.filter-section:last-child {
-  border-bottom: none;
+.filter-panel-backdrop {
+  display: none;
 }
 
 @media (max-width: 640px) {
@@ -1248,6 +1193,73 @@ body {
     padding: 0 12px;
     height: 52px;
   }
+
+  .filter-bar {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .filter-trigger {
+    height: 36px;
+    flex: none;
+  }
+
+  .filter-trigger-label {
+    display: none;
+  }
+
+  .filter-trigger-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .filter-chevron {
+    width: 14px;
+    height: 14px;
+  }
+
+  .filter-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 49;
+    animation: fade-in 150ms var(--ease-smooth);
+  }
+
+  .filter-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    max-height: 80vh;
+    z-index: 50;
+    animation: sheet-slide-up 250ms var(--ease-smooth);
+  }
+
+  .filter-panel-right {
+    left: 0;
+    right: 0;
+  }
+
+  .filter-panel-list {
+    max-height: 60vh;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 .search-container {
