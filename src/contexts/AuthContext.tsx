@@ -3,6 +3,10 @@ import type { User } from '../types';
 import { API_BASE } from '../lib/api';
 import { AuthContext } from './auth-context';
 
+function broadcastAuthToken(token: string | null) {
+  window.postMessage({ type: 'SIFT_AUTH_TOKEN', token }, '*');
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
@@ -25,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             trialExpiresAt: data.trialExpiresAt || null,
             googleId: data.googleId || null,
           });
+          broadcastAuthToken(token);
         } else {
           localStorage.removeItem('auth_token');
           setToken(null);
@@ -46,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const data = await res.json();
     localStorage.setItem('auth_token', data.token);
+    broadcastAuthToken(data.token);
     setToken(data.token);
     setUser({
       id: data.user.id,
@@ -70,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const data = await res.json();
     localStorage.setItem('auth_token', data.token);
+    broadcastAuthToken(data.token);
     setToken(data.token);
     setUser({
       id: data.user.id,
@@ -94,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const data = await res.json();
     localStorage.setItem('auth_token', data.token);
+    broadcastAuthToken(data.token);
     setToken(data.token);
     setUser({
       id: data.user.id,
@@ -118,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const data = await res.json();
     localStorage.setItem('auth_token', data.token);
+    broadcastAuthToken(data.token);
     setToken(data.token);
     setUser({
       id: data.user.id,
@@ -132,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
+    broadcastAuthToken(null);
     setToken(null);
     setUser(null);
   }, []);
