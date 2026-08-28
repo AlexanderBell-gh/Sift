@@ -242,7 +242,7 @@ export default function WatchlistPage() {
                         </div>
                         {(best.offer_deal || best.prices.loyalty !== null) && (
                           <span className={`product-card-loyalty ${best.offer_deal ? 'expired' : ''}`}>
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
                           </span>
                         )}
                         <span className="product-card-offer expired">Offer expired</span>
@@ -265,7 +265,7 @@ export default function WatchlistPage() {
                         </div>
                         {(best.offer_deal || best.prices.loyalty !== null) && (
                           <span className="product-card-loyalty">
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
                           </span>
                         )}
                         {best.offer_expires_at && (

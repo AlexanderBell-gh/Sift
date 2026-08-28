@@ -83,6 +83,6 @@ export function getLoyaltyClass(store: string): string {
 
 export function cleanDealText(deal: string | null): string | null {
   if (!deal) return deal;
-  const cleaned = deal.replace(/\s*-\s*Selected\s+[^-]+Products\s*$/i, '').trim();
-  return cleaned || deal;
+  const core = deal.split(' - ')[0];
+  return core?.trim() || deal;
 }
