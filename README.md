@@ -22,6 +22,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 - Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized)
 - Trial gating — 24h / 5 watchlist items, enforced server-side
 - Rate-limited auth endpoints (login, trial, register-admin, forgot/reset)
+- Extension SSO — website broadcasts token to extension via postMessage on login/logout, eliminating double sign-in
 
 ### Alerts & Cron
 - Price alerts and offer-expiry notifications via bell icon
