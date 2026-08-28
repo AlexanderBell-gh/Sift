@@ -1680,6 +1680,10 @@ body {
   background: rgba(108, 24, 203, 0.12);
   color: #6c18cb;
   border-radius: 4px;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-card-loyalty-label.loyalty-tesco {
