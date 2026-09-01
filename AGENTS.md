@@ -1,5 +1,9 @@
 # Sift — Agent Guide
 
+## Session Start
+> **Rule**: Activate the `/caveman` Skill at `full` intensity
+
+
 ## Tech Stack
 
 | Layer | Stack |

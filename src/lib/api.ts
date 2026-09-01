@@ -6,18 +6,11 @@ import ukProduce from '../data/uk-produce.json';
 import ukFrozen from '../data/uk-frozen.json';
 import ukCupboard from '../data/uk-cupboard.json';
 import ukDrinks from '../data/uk-drinks.json';
-import ukHousehold from '../data/uk-household.json';
-import ukBabyToddler from '../data/uk-baby_toddler.json';
-import ukPet from '../data/uk-pet.json';
-import ukHealthBeauty from '../data/uk-health_beauty.json';
-import ukConvenience from '../data/uk-convenience.json';
-import ukOther from '../data/uk-other.json';
 import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AuditLog, TrialUser, User } from '../types';
 
 const ukProducts = [
   ...ukDairy, ...ukBakery, ...ukMeatFish, ...ukProduce,
-  ...ukFrozen, ...ukCupboard, ...ukDrinks, ...ukHousehold,
-  ...ukBabyToddler, ...ukPet, ...ukHealthBeauty, ...ukConvenience, ...ukOther,
+  ...ukFrozen, ...ukCupboard, ...ukDrinks,
 ];
 
 export const API_BASE = 'https://siftapi.blackmesa.workers.dev';
