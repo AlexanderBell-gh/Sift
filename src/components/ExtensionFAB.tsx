@@ -13,7 +13,7 @@ const BROWSER_ICONS = {
 } as const;
 
 const EXTENSION_URLS = {
-  chrome: 'https://github.com/Alex-Projects-Master/sift-extension/releases/download/v0.2.5/sift-extension-0.2.5-chrome.zip',
+  chrome: 'https://github.com/AlexanderBell-gh/sift-extension/releases/download/v0.2.6/sift-extension-0.2.6-chrome.zip',
   firefox: '#',
   edge: '#',
   other: '#',
