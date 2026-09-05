@@ -76,7 +76,7 @@ Allowed origins are hardcoded in `workers/index.js`: `https://siftsearch.pages.d
 
 ## External Documentation
 
- - Design tokens: `/home/wsl/Projects/markdowns/Sift-Markdowns/DESIGN.md`
+ - Design tokens: `/home/wsl/Projects/markdowns/sift-markdowns/DESIGN.md`
 
 ## Session Lifecycle Rules
 
@@ -85,7 +85,7 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
 
 1. **Update MEMORY.md:**
    * Insert a reverse-chronological entry directly under the `## Session History` header.
-   * Location: `/home/wsl/Projects/markdowns/Sift-Markdowns/MEMORY.md`
+   * Location: `/home/wsl/Projects/markdowns/sift-markdowns/MEMORY.md`
    
  ### **Format:**
      ### 📝 [DD-MM-YYYY] @ [GMT HH:MM 24-hr] | [Short Session Title]
@@ -96,7 +96,7 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
 2. **Update CONTEXT.md:**
    * Review the current architectural state, tech stack details, or data flows.
    * Update any outdated sections to reflect the exact state of the codebase at the end of this session.
-   * Location: `/home/wsl/Projects/markdowns/Sift-Markdowns/CONTEXT.md`
+   * Location: `/home/wsl/Projects/markdowns/sift-markdowns/CONTEXT.md`
 
 3. **Update README.md:**
    * Review `README.md`. If the session introduced new features, configuration keys (`.env`), or changed installation/build commands, update those specific sections. Do not alter stable project descriptions unless explicitly relevant.
