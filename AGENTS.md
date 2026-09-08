@@ -76,7 +76,7 @@ Allowed origins are hardcoded in `workers/index.js`: `https://siftsearch.pages.d
 
 ## External Documentation
 
- - Design tokens: `/home/wsl/Projects/markdowns/sift-markdowns/DESIGN.md`
+ - Design tokens: `/home/wsl/Repositories/markdowns/sift-markdowns/DESIGN.md`
 
 ## Session Lifecycle Rules
 
@@ -85,10 +85,10 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
 
 1. **Update MEMORY.md:**
    * Insert a reverse-chronological entry directly under the `## Session History` header.
-   * Location: `/home/wsl/Projects/markdowns/sift-markdowns/MEMORY.md`
+   * Location: `/home/wsl/Repositories/markdowns/sift-markdowns/MEMORY.md`
    
  ### **Format:**
-     ### 📝 [DD-MM-YYYY] @ [GMT HH:MM 24-hr] | [Short Session Title]
+     ### 📝 [DD-MM-YYYY] @ [UK HH:MM 24-hr] | [Short Session Title]
      * **Changes:** [One-sentence summary of what was accomplished].
      * **Impacted Files:** `[file_1.ext]`, `[file_2.ext]`.
      * **Left Off At:** [One-sentence summary of outstanding next steps].
@@ -96,13 +96,13 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
 2. **Update CONTEXT.md:**
    * Review the current architectural state, tech stack details, or data flows.
    * Update any outdated sections to reflect the exact state of the codebase at the end of this session.
-   * Location: `/home/wsl/Projects/markdowns/sift-markdowns/CONTEXT.md`
+   * Location: `/home/wsl/Repositories/markdowns/sift-markdowns/CONTEXT.md`
 
 3. **Update README.md:**
    * Review `README.md`. If the session introduced new features, configuration keys (`.env`), or changed installation/build commands, update those specific sections. Do not alter stable project descriptions unless explicitly relevant.
-   * Location: `/home/wsl/Projects/Sift/README.md`
+   * Location: `/home/wsl/Repositories/Sift/README.md`
 
 4. **Guard AGENTS.md (Strict Rule):**
    * **DO NOT** update `AGENTS.md` unless it is completely necessary. 
    * Updates to this file are strictly reserved for critical, sweeping architectural shifts, fundamental changes to the core tech stack, or major global project rules. Do not modify it for routine features, refactors, or bug fixes - this is to be kept very lean.
-   * Location: `/home/wsl/Projects/Sift/AGENTS.md`
+   * Location: `/home/wsl/Repositories/Sift/AGENTS.md`
