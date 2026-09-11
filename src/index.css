@@ -644,9 +644,10 @@ body {
   }
 
   .search-container {
-    padding: 4px;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
     border-radius: 14px;
-    flex-wrap: nowrap;
   }
 
   .search-input {
@@ -661,10 +662,11 @@ body {
   }
 
   .search-button {
-    padding: 0 14px;
-    border-radius: 10px;
-    font-size: 14px;
-    flex-shrink: 0;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 15px;
   }
 
   .store-chip-add {
