@@ -80,9 +80,3 @@ export function getLoyaltyClass(store: string): string {
   };
   return classes[store] ?? '';
 }
-
-export function cleanDealText(deal: string | null): string | null {
-  if (!deal) return deal;
-  const core = deal.split(' - ')[0];
-  return core?.trim() || deal;
-}
