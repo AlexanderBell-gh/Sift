@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist } from '../lib/api';
 import { STORES } from '../lib/stores';
-import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
+import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import WatchlistFilters from './WatchlistFilters';
@@ -242,7 +242,7 @@ export default function WatchlistPage() {
                         </div>
                         {(best.offer_deal || best.prices.loyalty !== null) && (
                           <span className={`product-card-loyalty ${best.offer_deal ? 'expired' : ''}`}>
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
                           </span>
                         )}
                         <span className="product-card-offer expired">Offer expired</span>
@@ -265,7 +265,7 @@ export default function WatchlistPage() {
                         </div>
                         {(best.offer_deal || best.prices.loyalty !== null) && (
                           <span className="product-card-loyalty">
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? cleanDealText(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
+                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
                           </span>
                         )}
                         {best.offer_expires_at && (

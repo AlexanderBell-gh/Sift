@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../lib/api';
-import { getLoyaltyLabel, getLoyaltyClass, cleanDealText } from '../lib/utils';
+import { getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 import type { SearchResult } from '../types';
 
 const TRIAL_LIMIT = 5;
@@ -106,7 +106,7 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
           </div>
           {(deal.offer_deal || deal.prices.loyalty != null) && (
             <span className={`product-card-loyalty-label ${getLoyaltyClass(deal.store)}`} title={deal.offer_deal ?? undefined}>
-              {deal.offer_deal ? cleanDealText(deal.offer_deal) : getLoyaltyLabel(deal.store)}
+              {deal.offer_deal ? deal.offer_deal : getLoyaltyLabel(deal.store)}
             </span>
           )}
         </div>
