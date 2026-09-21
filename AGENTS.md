@@ -18,9 +18,9 @@
 ## Commands
 
 ```bash
-pnpm run dev          # Vite dev server (port 5173)
-pnpm run build        # tsc -b (type-check) then vite build → dist/
-pnpm run lint         # eslint . (flat config, TS/TSX only)
+rtk pnpm run dev          # Vite dev server (port 5173)
+rtk pnpm run build        # tsc -b (type-check) then vite build → dist/
+rtk pnpm run lint         # eslint . (flat config, TS/TSX only)
 ```
 
 **No test framework exists.** There are no test scripts, test configs, or test files.
@@ -30,7 +30,7 @@ pnpm run lint         # eslint . (flat config, TS/TSX only)
 The CI pipeline runs: **lint → build → deploy**. Match it locally:
 
 ```bash
-pnpm run lint && pnpm run build
+rtk pnpm run lint && pnpm run build
 ```
 
 If either fails, the commit will break CI.
@@ -64,10 +64,10 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 Use git to see what changed recently rather than reading file lists:
 
 ```bash
-git log -n 5 --stat           # last 5 commits with file stats
-git status                    # uncommitted changes
-git diff                      # unstaged changes
-git diff --cached             # staged changes
+rtk git log -n 5 --stat           # last 5 commits with file stats
+rtk git status                    # uncommitted changes
+rtk git diff                      # unstaged changes
+rtk git diff --cached             # staged changes
 ```
 
 ## CORS

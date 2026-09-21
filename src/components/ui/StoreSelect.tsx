@@ -9,7 +9,7 @@ interface StoreSelectProps {
   className?: string;
 }
 
-const MAX_STORES = 3;
+export const MAX_STORES = 3;
 
 export function StoreSelect({ selected, onChange, className }: StoreSelectProps) {
   const [isOpen, setIsOpen] = useState(false);

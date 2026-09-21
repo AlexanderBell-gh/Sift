@@ -4,7 +4,7 @@ import { searchAutocomplete, getAllWatchlistNames, type AutocompleteProduct } fr
 import { getHistory, addSearch, clearHistory } from '../lib/searchHistory';
 
 import NavHeader from './NavHeader';
-import { StoreSelect } from './ui/StoreSelect';
+import { StoreSelect, MAX_STORES } from './ui/StoreSelect';
 import { DealSection } from './DealSection';
 import { STORES } from '../lib/stores';
 
@@ -33,12 +33,15 @@ export default function SearchPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as string[];
-        return new Set(parsed);
+        const valid = parsed.filter((id) => STORES.some((s) => s.id === id));
+        if (valid.length > 0 && valid.length <= MAX_STORES) {
+          return new Set(valid);
+        }
       } catch {
-        return new Set(STORES.map((s) => s.id));
+        // fall through to empty default
       }
     }
-    return new Set(STORES.map((s) => s.id));
+    return new Set<string>();
   });
 
   useEffect(() => {
