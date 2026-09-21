@@ -174,7 +174,7 @@ export default function WatchlistPage() {
                   <span className="extension-cta-title">Sift - Product Extractor</span>
                 </div>
                 <span className="extension-cta-text">
-                  Click the browser icon bottom right to download the extension, it is required to add products directly from store pages.
+                  Click the browser icon bottom right to download the extension, it's required to add products directly from store pages.
                 </span>
               </div>
             )}
