@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const hasConsent = !consentRevoked && localStorage.getItem('cookie_consent') === 'accepted';
 
   if (!token) {
-    navigate('/auth', { replace: true });
+    navigate('/', { replace: true });
     return null;
   }
   const t = token;

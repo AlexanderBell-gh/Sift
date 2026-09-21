@@ -21,9 +21,10 @@
 rtk pnpm run dev          # Vite dev server (port 5173)
 rtk pnpm run build        # tsc -b (type-check) then vite build → dist/
 rtk pnpm run lint         # eslint . (flat config, TS/TSX only)
+rtk pnpm test             # node --test worker category scorer (zero-dep, no framework)
 ```
 
-**No test framework exists.** There are no test scripts, test configs, or test files.
+**No test framework exists.** The only tests are `workers/lib/category.test.js` (worker category scorer, run via `pnpm test`). There are no test configs or frontend test files.
 
 ## Verify before committing
 
@@ -45,7 +46,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 ```
 
 - Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /search, /watchlist, /admin, /settings)
-- Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers)
+- Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer, plain JS, tested by `workers/lib/category.test.js`)
 - DB schema: `workers/schema.sql` — 6 tables (users, rate_limits, watchlist, alerts, audit_logs, password_resets)
 
 ## Key gotchas

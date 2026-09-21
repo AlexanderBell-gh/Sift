@@ -13,6 +13,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ### Watchlist
 - Pin products to a personal watchlist with price tracking
+- Worker-owned category taxonomy — `POST /api/watchlist` scores the extension's `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties) and stores the result with `taxonomy_version`; old clients send only a legacy guess (clamped, version 0). Tests: `pnpm test`
 - Dedicated filter bar: store + category multi-select and sort (mobile "Filters" pill)
 - Live trial-usage banner (X of 5 items + progress bar)
 
@@ -61,6 +62,7 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account
 
 ```bash
 pnpm run build  # output → dist/
+pnpm test       # worker category scorer (node --test, no framework)
 ```
 
 **Automatic:** Push to `main` triggers GitHub Actions (lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
@@ -84,6 +86,7 @@ Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrang
 - `0003_watchlist_unique` — `UNIQUE(user_id, product_id)` index
 - `0004_password_reset_lookup` — `token_sha256` column + index (O(1) reset lookup)
 - `0005_alert_types` — widen `alerts.type` CHECK to `('price_drop','offer_expiry','offer_created')` (matches `src/types/index.ts`; table rebuild)
+- `0006_watchlist_taxonomy` — `taxonomy_version` column (0 = legacy client guess, 1 = worker-scored from extension `category_signals`)
 
 ```bash
 pnpm exec wrangler d1 create sift

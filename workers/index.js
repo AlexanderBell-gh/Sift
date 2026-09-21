@@ -1211,7 +1211,13 @@ async function handleRequest(request, env) {
       let finalCategory;
       let taxonomyVersion;
       const categorySignals = result.category_signals;
-      if (categorySignals && typeof categorySignals === 'object') {
+      const hasUsableSignals = categorySignals && typeof categorySignals === 'object' && !!(
+        (Array.isArray(categorySignals.breadcrumb_raw) && categorySignals.breadcrumb_raw.length > 0) ||
+        categorySignals.breadcrumb_leaf ||
+        categorySignals.title ||
+        categorySignals.jsonld_category
+      );
+      if (hasUsableSignals) {
         const scored = scoreCategory(categorySignals);
         finalCategory = scored.category;
         taxonomyVersion = scored.taxonomy_version;

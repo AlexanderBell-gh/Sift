@@ -28,7 +28,7 @@ export default function WatchlistPage() {
 
   useEffect(() => {
     if (!token) {
-      navigate('/auth');
+      navigate('/', { replace: true });
       return;
     }
     getWatchlist(token)

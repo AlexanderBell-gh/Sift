@@ -133,6 +133,12 @@ describe('vetoes, tie-breaks, floor', () => {
     assert.equal(r.low_confidence, true);
   });
 
+  it('empty signals score Other (worker treats them as absent, legacy clamp)', () => {
+    const r = scoreCategory({});
+    assert.equal(r.category, 'Other');
+    assert.equal(r.low_confidence, true);
+  });
+
   it('accepts legacy store display name field', () => {
     const { store_id, ...rest } = signals({ title: 'Fresh Milk 2 Pints' });
     void store_id;
