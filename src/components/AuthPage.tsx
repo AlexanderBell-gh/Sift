@@ -21,8 +21,12 @@ declare global {
 }
 
 export default function AuthPage() {
-  const { login, register, loginWithGoogle, startTrial } = useAuth();
+  const { token, login, register, loginWithGoogle, startTrial } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token) navigate('/', { replace: true });
+  }, [token, navigate]);
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<AuthTab>('signin');
   const [username, setUsername] = useState('');
@@ -91,7 +95,7 @@ export default function AuthPage() {
     setError('');
     try {
       await loginWithGoogle(response.credential);
-      navigate('/search');
+      navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
     } finally {
@@ -192,7 +196,7 @@ export default function AuthPage() {
       } else {
         await startTrial();
       }
-      navigate('/search');
+      navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

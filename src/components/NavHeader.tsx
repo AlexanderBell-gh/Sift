@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ArrowLeft, Sun, Moon, Settings, Shield, Menu, X } from 'lucide-react';
+import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
 import { useTheme } from '../hooks/useTheme';
 import AlertBell from './AlertBell';
@@ -74,7 +74,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <a href="/search" className="logo">
+          <a href="/" className="logo">
             <div className="logo-mark">
               <div className="logo-tag"></div>
               <div className="logo-scan-line"></div>
@@ -85,12 +85,15 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
 
         <div className="nav-links">
           <div className="hidden sm:flex items-center gap-6">
-            <button onClick={() => navigate('/search')} className="nav-link">Search</button>
             {token && (
-              <button onClick={() => navigate('/watchlist')} className="nav-link">Watchlist</button>
+              <>
+                <button onClick={() => navigate('/')} className="nav-link">Search</button>
+                <button onClick={() => navigate('/watchlist')} className="nav-link">Watchlist</button>
+              </>
             )}
           </div>
 
+          {token && (
           <div className="sm:hidden relative" ref={mobileMenuRef}>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -100,13 +103,12 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
             </button>
             {mobileMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border py-1 z-50" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                <button onClick={() => { navigate('/search'); setMobileMenuOpen(false); }} className="dropdown-item">Search</button>
-                {token && (
-                  <button onClick={() => { navigate('/watchlist'); setMobileMenuOpen(false); }} className="dropdown-item">Watchlist</button>
-                )}
+                <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="dropdown-item">Search</button>
+                <button onClick={() => { navigate('/watchlist'); setMobileMenuOpen(false); }} className="dropdown-item">Watchlist</button>
               </div>
             )}
           </div>
+          )}
 
           <AlertBell />
 
@@ -152,7 +154,12 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
               )}
             </div>
           ) : (
-            <button onClick={() => navigate('/')} className="search-button">Sign In</button>
+            <button onClick={() => navigate('/auth')} className="user-menu-wrapper" aria-label="Sign in">
+              <div className="user-avatar">
+                <LogIn className="w-4 h-4" />
+              </div>
+              <span className="user-name hidden sm:inline">Sign In</span>
+            </button>
           )}
         </div>
       </div>

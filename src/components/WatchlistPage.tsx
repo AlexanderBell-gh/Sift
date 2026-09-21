@@ -28,7 +28,7 @@ export default function WatchlistPage() {
 
   useEffect(() => {
     if (!token) {
-      navigate('/');
+      navigate('/auth');
       return;
     }
     getWatchlist(token)
@@ -159,7 +159,7 @@ export default function WatchlistPage() {
               <p className="empty-state-desc mb-6">Find and pin groceries from the search tab.</p>
               <div className="flex justify-center">
                 <button
-                  onClick={() => navigate('/search')}
+                   onClick={() => navigate('/')}
                   className="btn-primary px-5 py-2.5"
                 >
                   <Search size={16} />

@@ -21,9 +21,9 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<AuthPage />} />
-          <Route path="/auth" element={<Navigate to="/" replace />} />
-          <Route path="/search" element={<SearchPage />} />
+          <Route path="/" element={<SearchPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/search" element={<Navigate to="/" replace />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/settings" element={<SettingsPage />} />
