@@ -76,12 +76,7 @@ Allowed origins are hardcoded in `workers/index.js`: `https://siftsearch.pages.d
 
 ## Frontend Guidelines
 
-**CRITICAL: When generating, modifying, or refactoring ANY visual components, styling files, or layout code:**
-- You MUST use your `read` tool to load `DESIGN.md` immediately (`/home/wsl/Repositories/markdowns/sift-markdowns/DESIGN.md`).
-- Treat the tokens, primitives, and styling guardrails inside `DESIGN.md` as strict, non-negotiable boundaries.
-- Reuse only documented tokens, classes, radii, easings, and tints. Never invent new hex values, fonts, or radii. If a new value is needed, propose it and stop.
-- `DESIGN.md` wins on conflict. Tailwind arbitrary values are allowed only when `DESIGN.md` lists them.
-- Every visual change must preserve the `.dark` override, a visible `:focus-visible` state, and the 44px minimum touch target. Check breakpoints 640/768/1024/1200 (plus 1400 for the deals container).
+Visual source of truth is `DESIGN.md` (`/home/wsl/Repositories/markdowns/sift-markdowns/DESIGN.md`) — tokens, type scale, motion, breakpoints, implementation constraints. Read it before touching any component, style, or layout code. Reuse documented tokens/classes only; never invent values. `DESIGN.md` wins on conflict.
 
 ## Session Lifecycle Rules
 
