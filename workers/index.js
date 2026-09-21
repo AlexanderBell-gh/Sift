@@ -15,6 +15,7 @@ import {
   base64UrlToArrayBuffer,
 } from './auth.js';
 import { queryAll, queryOne, execute } from './db.js';
+import { scoreCategory, clampLegacyCategory } from './lib/category.js';
 
 
 
@@ -1142,6 +1143,7 @@ async function handleRequest(request, env) {
         image_url: r.image_url,
         unit: r.unit,
         category: r.category,
+        taxonomy_version: r.taxonomy_version ?? 0,
         prices: {
           normal: r.normal_price,
           loyalty: r.loyalty_price,
@@ -1202,10 +1204,35 @@ async function handleRequest(request, env) {
       const now = Date.now();
       const id = `wl_${now}_${Math.random().toString(36).substr(2, 9)}`;
 
+      // Category: worker owns taxonomy. New extensions send category_signals
+      // (scored here); old ones send only a legacy guess (clamped, version 0).
+      // Legacy rows and title-only backfill keep version 0 and are never
+      // forced into a possibly-wrong category.
+      let finalCategory;
+      let taxonomyVersion;
+      const categorySignals = result.category_signals;
+      if (categorySignals && typeof categorySignals === 'object') {
+        const scored = scoreCategory(categorySignals);
+        finalCategory = scored.category;
+        taxonomyVersion = scored.taxonomy_version;
+        if (scored.low_confidence || scored.category === 'Other') {
+          console.log('Category unknown-bucket:', JSON.stringify({
+            title: categorySignals.title || null,
+            leaf: categorySignals.breadcrumb_leaf || null,
+            winner: scored.category,
+            reason: scored.reason,
+            taxonomy_version: scored.taxonomy_version,
+          }));
+        }
+      } else {
+        finalCategory = clampLegacyCategory(result.category);
+        taxonomyVersion = 0;
+      }
+
       await execute(
         env,
-         `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, offer_deal, product_url, is_on_offer, category, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, offer_deal, product_url, is_on_offer, category, taxonomy_version, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           auth.userId,
@@ -1224,7 +1251,8 @@ async function handleRequest(request, env) {
           result.offer_deal || null,
           result.product_url || '',
           result.is_on_offer ? 1 : 0,
-          result.category || null,
+          finalCategory,
+          taxonomyVersion,
           null,
           now,
           now,
@@ -1253,6 +1281,7 @@ async function handleRequest(request, env) {
           product_url: row.product_url,
           is_on_offer: !!row.is_on_offer,
           category: row.category,
+          taxonomy_version: row.taxonomy_version ?? 0,
           notes: row.notes,
           created_at: row.created_at,
           updated_at: row.updated_at,

@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
   product_url TEXT NOT NULL DEFAULT '',
   is_on_offer INTEGER NOT NULL DEFAULT 0,
   category TEXT,
+  taxonomy_version INTEGER NOT NULL DEFAULT 0,
   notes TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
