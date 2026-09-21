@@ -112,6 +112,16 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
 
           <AlertBell />
 
+          {!token && (
+          <button
+            onClick={toggle}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          )}
+
           {token ? (
             <div className="relative" ref={menuRef}>
               <button onClick={() => setMenuOpen(!menuOpen)} className="user-menu-wrapper">

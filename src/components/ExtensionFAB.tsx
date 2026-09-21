@@ -35,7 +35,7 @@ export default function ExtensionFAB() {
 
   const BrowserIcon = BROWSER_ICONS[browser];
 
-  const isAuthPage = location.pathname === '/' || location.pathname === '/auth';
+  const isAuthPage = location.pathname === '/auth';
 
   useEffect(() => {
     if (!installed && fabState === 'hidden' && !isAuthPage) {
