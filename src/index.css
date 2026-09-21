@@ -2569,7 +2569,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .auth-card {
+.auth-card {
     padding: 24px;
     border-radius: 16px;
   }

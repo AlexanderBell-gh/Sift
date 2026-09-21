@@ -235,7 +235,7 @@ export default function AuthPage() {
             <div className="logo-scan-line" />
           </div>
           <h2 className="auth-title">Welcome to Sift</h2>
-          <p className="auth-subtitle">Find and keep track of those offers</p>
+          <p className="auth-subtitle">Sign-in or Register to track grocery offers</p>
         </div>
 
         <div className="auth-tabs" role="tablist" aria-label="Authentication method">
@@ -444,6 +444,11 @@ export default function AuthPage() {
             </span>
           )}
           {activeTab === 'trial' && <span>This is a temporary account with no login credentials</span>}
+        </div>
+        <div className="auth-footer">
+          <button type="button" className="auth-link" onClick={() => navigate('/')}>
+            Back to home
+          </button>
         </div>
       </div>
     </div>
