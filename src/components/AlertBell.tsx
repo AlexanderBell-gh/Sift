@@ -93,7 +93,7 @@ function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
           title="Dismiss"
           aria-label="Dismiss alert"
         >
-          <X className="w-4 h-4" />
+          <X className="icon-sm" />
         </button>
       )}
     </div>
@@ -163,12 +163,12 @@ export default function AlertBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-lg cursor-pointer text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
+        className="relative icon-btn"
         title="Alerts"
       >
-        <Bell className="w-4 h-4" />
+        <Bell className="icon-sm" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
+          <span className="alert-badge">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

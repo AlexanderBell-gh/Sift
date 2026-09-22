@@ -320,7 +320,7 @@ export default function AuthPage() {
                     aria-pressed={showPassword}
                     onClick={() => setShowPassword((v) => !v)}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
                   </button>
                 }
               />
@@ -384,7 +384,7 @@ export default function AuthPage() {
                           aria-pressed={showResetPassword}
                           onClick={() => setShowResetPassword((v) => !v)}
                         >
-                          {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showResetPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
                         </button>
                       }
                     />
@@ -394,7 +394,7 @@ export default function AuthPage() {
             )}
 
             <button type="submit" className="auth-submit" disabled={loading}>
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading && <Loader2 className="icon-sm animate-spin" />}
               {submitLabel}
             </button>
           </form>

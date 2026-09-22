@@ -48,14 +48,10 @@ export function CookieConsent() {
       )}
     >
       <div
-        className="mx-auto max-w-3xl mb-4 mx-4 sm:mx-auto rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 shadow-2xl"
-        style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-        }}
+        className="cookie-banner"
       >
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <Cookie className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--primary)' }} />
+        <div className="cookie-banner-body">
+          <Cookie className="cookie-banner-icon" />
           <div className="min-w-0">
             <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>
               This site uses cookies

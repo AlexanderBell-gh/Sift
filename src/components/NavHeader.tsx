@@ -64,14 +64,14 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
 
   return (
     <nav className="nav">
-      <div className="container" style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="flex items-center gap-3">
+      <div className="container nav-inner">
+        <div className="nav-cluster">
           {showBack && (
             <button
               onClick={() => navigate('/')}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
+              className="icon-btn-sm"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="icon-md" />
             </button>
           )}
           <a href="/" className="logo">
@@ -94,15 +94,15 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           </div>
 
           {token && (
-          <div className="sm:hidden relative" ref={mobileMenuRef}>
+          <div className="mobile-menu-wrap" ref={mobileMenuRef}>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
+              className="icon-btn"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <X className="icon-md" /> : <Menu className="icon-md" />}
             </button>
             {mobileMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border py-1 z-50" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+              <div className="mobile-menu-pop">
                 <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="dropdown-item">Search</button>
                 <button onClick={() => { navigate('/watchlist'); setMobileMenuOpen(false); }} className="dropdown-item">Watchlist</button>
               </div>
@@ -116,9 +116,9 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           <button
             onClick={toggle}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-150"
+            className="icon-btn"
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isDark ? <Sun className="icon-md" /> : <Moon className="icon-md" />}
           </button>
           )}
 
@@ -143,21 +143,21 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
                   )}
                   {!isTrial && user?.role === 'admin' && (
                     <button onClick={() => { navigate('/admin'); setMenuOpen(false); }} className="dropdown-item">
-                      <Shield className="w-4 h-4" />
+                      <Shield className="icon-sm" />
                       Admin Panel
                     </button>
                   )}
                   <button onClick={() => { navigate('/settings'); setMenuOpen(false); }} className="dropdown-item">
-                    <Settings className="w-4 h-4" />
+                    <Settings className="icon-sm" />
                     Account Settings
                   </button>
                   <button onClick={() => { toggle(); setMenuOpen(false); }} className="dropdown-item">
-                    {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    {isDark ? <Sun className="icon-sm" /> : <Moon className="icon-sm" />}
                     {isDark ? 'Light Mode' : 'Dark Mode'}
                   </button>
                   <div className="dropdown-divider" />
                   <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }} className="dropdown-item sign-out">
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="icon-sm" />
                     Sign Out
                   </button>
                 </div>
@@ -166,7 +166,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           ) : (
             <button onClick={() => navigate('/auth')} className="user-menu-wrapper" aria-label="Sign in">
               <div className="user-avatar">
-                <LogIn className="w-4 h-4" />
+                <LogIn className="icon-sm" />
               </div>
               <span className="user-name hidden sm:inline">Sign In</span>
             </button>

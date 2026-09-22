@@ -250,7 +250,7 @@ export default function SearchPage() {
                     role="option"
                     aria-selected={i === activeIndex}
                   >
-                    <Search className="w-4 h-4 opacity-50" />
+                    <Search className="icon-sm opacity-50" />
                     <span className="text-sm">{product.name}</span>
                   </button>
                 ))}
@@ -294,7 +294,7 @@ export default function SearchPage() {
                     aria-label={item}
                     aria-selected={i === activeIndex}
                   >
-                    <Search className="w-4 h-4 opacity-50" />
+                    <Search className="icon-sm opacity-50" />
                     {item}
                   </button>
                 ))}

@@ -88,7 +88,7 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="page-shell">
       <NavHeader />
 
       <WatchlistFilters
@@ -100,8 +100,8 @@ export default function WatchlistPage() {
         onSortChange={setSortBy}
       />
 
-      <section className="pt-12 pb-8">
-        <div className="container flex justify-between items-end mb-8">
+      <section className="watchlist-hero">
+        <div className="container watchlist-head">
           <div>
             <h1 className="page-title">Your Watchlist</h1>
             <p className="text-sm text-muted">All your offers in one place</p>
@@ -111,7 +111,7 @@ export default function WatchlistPage() {
 
       <div className="container">
         {error && (
-          <div className="alert-error mb-4" role="alert">
+          <div className="alert-error watchlist-alert" role="alert">
             {error}
           </div>
         )}
@@ -138,14 +138,14 @@ export default function WatchlistPage() {
               <div key={i} className="product-card animate-pulse">
                 <div className="product-card-top">
                   <div className="product-card-logo">
-                    <div className="skeleton w-8 h-8 rounded-full" />
+                    <div className="skeleton skeleton-circle" />
                   </div>
                 </div>
                 <div className="product-card-bottom">
-                  <div className="skeleton h-3 w-20 rounded" />
-                  <div className="skeleton h-4 w-full rounded mt-1" />
-                  <div className="skeleton h-6 w-16 rounded mt-2" />
-                  <div className="skeleton h-3 w-24 rounded mt-2" />
+                  <div className="skeleton skeleton-line-sm" />
+                  <div className="skeleton skeleton-line" />
+                  <div className="skeleton skeleton-line-lg" />
+                  <div className="skeleton skeleton-line-sm" />
                 </div>
               </div>
             ))}
@@ -156,11 +156,11 @@ export default function WatchlistPage() {
           <>
             <div className="empty-state-box">
               <p className="empty-state-title">Your Watchlist is empty</p>
-              <p className="empty-state-desc mb-6">Find and pin groceries from the search tab.</p>
-              <div className="flex justify-center">
+              <p className="empty-state-desc">Find and pin groceries from the search tab.</p>
+              <div className="empty-state-cta-wrap">
                 <button
                    onClick={() => navigate('/')}
-                  className="btn-primary px-5 py-2.5"
+                  className="btn-primary empty-state-cta"
                 >
                   <Search size={16} />
                   Search Products

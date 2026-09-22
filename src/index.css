@@ -76,6 +76,62 @@ body {
   }
 }
 
+/* Icon sizes (lucide-react + BrowserIcons only) — w-3/w-4/w-5 equivalents */
+.icon-xs {
+  width: 12px;
+  height: 12px;
+}
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+.icon-md {
+  width: 20px;
+  height: 20px;
+}
+
+/* Ghost icon button — p-2 default, p-1.5 small (back arrow) */
+.icon-btn,
+.icon-btn-sm {
+  border-radius: 0.5rem;
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.icon-btn {
+  padding: 8px;
+}
+.icon-btn-sm {
+  padding: 6px;
+}
+.icon-btn:hover,
+.icon-btn-sm:hover {
+  color: #18181b;
+  background-color: #f4f4f5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+.dark .icon-btn:hover,
+.dark .icon-btn-sm:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.icon-btn:focus-visible,
+.icon-btn-sm:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Page shell — full-height app background */
+.page-shell {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* Flex-fill helper for paired buttons */
+.btn-flex {
+  flex: 1;
+}
+
 /* Navigation */
 .nav {
   height: 72px;
@@ -169,6 +225,39 @@ body {
 
 .nav-link:hover, .nav-link.active {
   color: var(--primary);
+}
+
+/* Nav inner layout + mobile menu */
+.nav-inner {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+.nav-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mobile-menu-wrap {
+  position: relative;
+}
+@media (min-width: 640px) {
+  .mobile-menu-wrap {
+    display: none;
+  }
+}
+.mobile-menu-pop {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
+  width: 192px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 8px;
+  z-index: 50;
 }
 
 /* User Dropdown */
@@ -1414,6 +1503,22 @@ body {
 }
 
 /* Alerts Dropdown */
+.alert-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+}
 .alerts-dropdown {
   position: absolute;
   right: 0;
@@ -1682,10 +1787,19 @@ body {
   background: rgba(108, 24, 203, 0.12);
   color: #6c18cb;
   border-radius: 4px;
+  display: inline-block;
   max-width: 280px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+/* Deal tiles are narrower than the 280px cap — clamp to tile width so
+   long multi-buy terms ellipsize instead of overflowing (full text kept
+   in the title tooltip). */
+.deal-card .product-card-loyalty-label {
+  max-width: 100%;
 }
 
 .product-card-loyalty-label.loyalty-tesco {
@@ -1891,6 +2005,62 @@ body {
   color: var(--text);
 }
 
+/* Admin dashboard + list stacks */
+.admin-side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+@media (min-width: 640px) {
+  .admin-dash-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.admin-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.admin-stack-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-stack-xs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-search-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .admin-search-row {
+    flex-direction: row;
+  }
+}
+.admin-search-field {
+  position: relative;
+  flex: 1;
+}
+.admin-search-action {
+  flex-shrink: 0;
+}
+.user-role-select {
+  width: 160px;
+}
+.admin-alert {
+  margin-bottom: 24px;
+}
+
 /* Admin Metrics Dashboard */
 .metrics-grid {
   display: grid;
@@ -1970,6 +2140,29 @@ body {
 .empty-state-desc {
   font-size: 14px;
   color: var(--muted);
+}
+
+/* Watchlist hero + list head */
+.watchlist-hero {
+  padding-top: 48px;
+  padding-bottom: 32px;
+}
+.watchlist-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
+}
+.watchlist-alert {
+  margin-bottom: 16px;
+}
+.empty-state-cta-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+.empty-state-cta {
+  padding: 10px 20px;
 }
 
 .extension-cta {
@@ -3034,6 +3227,24 @@ body {
 }
 
 /* Settings Screen */
+/* Settings stacks + hints */
+.settings-top {
+  padding-top: 48px;
+}
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+.settings-hint {
+  font-size: 14px;
+  color: var(--muted);
+}
+.settings-danger-text {
+  color: var(--danger);
+  font-size: 14px;
+}
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -3389,6 +3600,36 @@ body {
   background-size: 200% 100%;
 }
 
+/* Skeleton sizes (pair with .skeleton shimmer) */
+.skeleton-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+.skeleton-line-sm {
+  height: 12px;
+  width: 80px;
+  border-radius: 4px;
+}
+.skeleton-line {
+  height: 16px;
+  width: 100%;
+  border-radius: 4px;
+}
+.skeleton-line-lg {
+  height: 24px;
+  width: 64px;
+  border-radius: 4px;
+}
+.skeleton-card-lg {
+  height: 112px;
+  border-radius: 16px;
+}
+.skeleton-row {
+  height: 64px;
+  border-radius: 12px;
+}
+
 /* Button press effect */
 /* Mobile overrides for nav dropdowns */
 @media (max-width: 640px) {
@@ -3511,6 +3752,47 @@ body {
 }
 
 /* Watchlist product-row styles are defined in the Watchlist Screen section above */
+
+/* Cookie Consent */
+.cookie-banner {
+  max-width: 750px;
+  margin: 0 16px 16px;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+.cookie-banner-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.cookie-banner-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--primary);
+}
+@media (min-width: 640px) {
+  .cookie-banner {
+    margin: 0 auto 16px;
+    padding: 20px;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+}
+.dark .cookie-banner {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
 
 /* Extension FAB */
 .extension-fab-container {

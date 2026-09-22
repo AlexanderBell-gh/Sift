@@ -173,14 +173,14 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div className="page-shell">
       <NavHeader />
 
       <div className="admin-grid">
         {/* Sidebar */}
         <aside className="admin-sidebar">
           <div className="admin-sidebar-header">Admin Control</div>
-          <nav className="flex flex-col gap-2">
+          <nav className="admin-side-nav">
             {navItems.map(item => (
               <button
                 key={item.key}
@@ -189,7 +189,7 @@ export default function AdminPage() {
                 aria-label={item.label}
                 aria-current={tab === item.key ? 'page' : undefined}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="icon-md" />
                 {item.label}
               </button>
             ))}
@@ -221,29 +221,29 @@ export default function AdminPage() {
           </div>
 
           {error && (
-            <div className="alert-error mb-6" role="alert">
+            <div className="alert-error admin-alert" role="alert">
               {error}
             </div>
           )}
 
           {loadingByTab['dashboard'] && !tabLoaded['dashboard'] && tab === 'dashboard' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
+            <div className="admin-dash-grid">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-28 rounded-2xl skeleton animate-pulse" />
+                <div key={i} className="skeleton skeleton-card-lg animate-pulse" />
               ))}
             </div>
           )}
 
           {loadingByTab[tab] && !tabLoaded[tab] && tab !== 'dashboard' && (
-            <div className="space-y-3">
+            <div className="admin-stack-sm">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-xl skeleton animate-pulse" />
+                <div key={i} className="skeleton skeleton-row animate-pulse" />
               ))}
             </div>
           )}
 
           {tab === 'dashboard' && stats && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
+            <div className="admin-dash-grid">
               <StatCard label="Total Users" value={stats.totalUsers} />
               <StatCard label="Regular Users" value={stats.regularUsers} />
               <StatCard label="Trial Users" value={stats.trialUsers} />
@@ -261,9 +261,9 @@ export default function AdminPage() {
           )}
 
           {tab === 'users' && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
+            <div className="admin-stack">
+              <div className="admin-search-row">
+                <div className="admin-search-field">
                   <SearchIcon className="search-icon-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
@@ -274,7 +274,7 @@ export default function AdminPage() {
                     className="admin-input"
                   />
                 </div>
-                <div className="flex-shrink-0">
+                <div className="admin-search-action">
                   <AdminSelect
                     value={userFilter}
                     onChange={val => { setUserFilter(val); loadUsers(1, userSearch, val); }}
@@ -288,7 +288,7 @@ export default function AdminPage() {
 
               <p className="admin-meta">{usersTotal} users found</p>
 
-              <div className="space-y-2">
+              <div className="admin-stack-xs">
                 {users.map(u => (
                   <div key={u.id} className="user-row-card">
                     <div className="user-profile-meta">
@@ -303,7 +303,7 @@ export default function AdminPage() {
                       <span className={`user-badge-role ${u.role === 'admin' ? 'user-badge-admin' : 'user-badge-user'}`}>{u.role}</span>
                     </div>
                      <div className="user-action-cell">
-                       <div className="w-40">
+                       <div className="user-role-select">
                          <AdminSelect
                            size="small"
                            value={u.role}
@@ -333,7 +333,7 @@ export default function AdminPage() {
           )}
 
           {tab === 'audit' && (
-            <div className="space-y-4">
+            <div className="admin-stack">
               <div className="audit-filter-pills">
                 {[
                   { key: 'all', label: 'All Events' },
@@ -358,7 +358,7 @@ export default function AdminPage() {
                   <p className="audit-empty-desc">Audit entries appear when admin actions are taken</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+              <div className="admin-stack-xs">
                   {logs
                     .map(log => {
                       const time = new Date(log.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -396,9 +396,9 @@ export default function AdminPage() {
           )}
 
           {tab === 'trials' && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-shrink-0">
+            <div className="admin-stack">
+              <div className="admin-search-row">
+                <div className="admin-search-action">
                   <AdminSelect
                     value={trialsStatus}
                     onChange={val => { setTrialsStatus(val); loadTrials(1, val); }}
@@ -418,7 +418,7 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="admin-stack-xs">
                 {trials.map(t => (
                   <div key={t.id} className="trial-card">
                     <div>
@@ -465,7 +465,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
         className="pagination-btn"
         aria-label="Previous page"
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft className="icon-sm" />
       </button>
       <span className="pagination-label">{page} / {totalPages}</span>
       <button
@@ -474,7 +474,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
         className="pagination-btn"
         aria-label="Next page"
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight className="icon-sm" />
       </button>
     </div>
   );
@@ -515,7 +515,7 @@ function AdminSelect({
         aria-expanded={open}
       >
         <span>{current?.label ?? 'Select'}</span>
-        <ChevronDown className="chevron w-4 h-4" />
+        <ChevronDown className="chevron icon-sm" />
       </button>
       {open && (
         <div className="admin-select-menu" role="listbox">
@@ -529,7 +529,7 @@ function AdminSelect({
               className={`dropdown-item ${opt.value === value ? 'active' : ''}`}
             >
               <span className="flex-1">{opt.label}</span>
-              {opt.value === value && <Check className="w-4 h-4 text-primary" strokeWidth={3} />}
+              {opt.value === value && <Check className="icon-sm text-primary" strokeWidth={3} />}
             </button>
           ))}
         </div>

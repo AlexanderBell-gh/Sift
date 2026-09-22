@@ -57,7 +57,7 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
           >
             <img src={store.logo} alt={store.name} className="w-4 h-4 rounded object-contain" />
             <span>{store.name}</span>
-            <X className="w-3 h-3" />
+            <X className="icon-xs" />
           </button>
         ))}
         {selected.size < MAX_STORES && (
@@ -68,7 +68,7 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
             aria-expanded={isOpen}
             className={cn('store-chip-add', isOpen && 'store-chip-add-active')}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="icon-sm" />
             {selected.size === 0 ? 'Select stores' : 'Add store'}
           </button>
         )}
@@ -116,7 +116,7 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
                       isSelected && 'store-check-selected'
                     )}
                   >
-                    {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                    {isSelected && <Check className="icon-xs text-white" strokeWidth={3} />}
                   </span>
                   <img
                     src={store.logo}

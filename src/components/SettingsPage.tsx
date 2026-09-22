@@ -144,15 +144,14 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="page-shell">
       <NavHeader />
-      <div className="h-20" />
-      <div className="container pb-12">
+      <div className="container settings-top pb-12">
         <div className="mb-8">
           <h2 className="page-title">
             Account Settings
           </h2>
-          <p className="text-sm text-muted mt-2">
+          <p className="settings-hint mt-2">
             Manage your credentials, watchlist data, and account preferences
           </p>
         </div>
@@ -186,7 +185,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               {user?.googleId ? (
-                <div className="flex flex-col gap-4 mt-2">
+                <div className="settings-stack">
                   <div className="form-group">
                     <label className="field-label">Username</label>
                     <input type="text" className="form-input" value={user.username} disabled />
@@ -195,10 +194,10 @@ export default function SettingsPage() {
                     <label className="field-label">Email Address</label>
                     <input type="email" className="form-input" value={user.email} disabled />
                   </div>
-                  <p className="text-sm text-muted">Signed in via Google. Email and username cannot be changed.</p>
+                  <p className="settings-hint">Signed in via Google. Email and username cannot be changed.</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4 mt-2">
+                <div className="settings-stack">
                   <Input
                     label="Username"
                     type="text"
@@ -223,7 +222,7 @@ export default function SettingsPage() {
                     required
                     error={profileErrors.profilePassword}
                   />
-                  {profileError && <p className="danger-text text-sm">{profileError}</p>}
+                  {profileError && <p className="settings-danger-text">{profileError}</p>}
                   {profileSuccess && <p className="text-sm" style={{ color: 'var(--success)' }}>{profileSuccess}</p>}
                   <button className="btn-primary self-start" onClick={handleProfileSave} disabled={profileLoading}>
                     {profileLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Details'}
@@ -244,7 +243,7 @@ export default function SettingsPage() {
                   <p>Update your account password</p>
                 </div>
               </div>
-              <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 mt-2" noValidate>
+              <form onSubmit={handlePasswordChange} className="settings-stack" noValidate>
                 <Input
                   label="Current Password"
                   type="password"
@@ -270,7 +269,7 @@ export default function SettingsPage() {
                   error={passwordErrors.confirmPassword}
                 />
                 {passwordError && (
-                  <p className="danger-text text-sm">{passwordError}</p>
+                  <p className="settings-danger-text">{passwordError}</p>
                 )}
                 <button type="submit" className="btn-primary self-start" disabled={isLoading}>
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
@@ -295,7 +294,7 @@ export default function SettingsPage() {
                   {exportLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                   Download Watchlist CSV
                 </button>
-                {exportError && <p className="danger-text text-sm mt-2">{exportError}</p>}
+                {exportError && <p className="settings-danger-text mt-2">{exportError}</p>}
               </div>
             </section>
           )}
@@ -342,7 +341,7 @@ export default function SettingsPage() {
       </div>
 
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Account">
-        <p className="text-sm text-muted">
+        <p className="settings-hint">
           This will permanently delete your account, watchlist, and all associated data. This action cannot be undone.
         </p>
         {!isTrial && !user?.googleId && (
@@ -358,10 +357,10 @@ export default function SettingsPage() {
           </div>
         )}
         <div className="flex gap-3 mt-2">
-          <button className="btn-secondary flex-1" onClick={() => setIsDeleteModalOpen(false)}>
+          <button className="btn-secondary btn-flex" onClick={() => setIsDeleteModalOpen(false)}>
             Cancel
           </button>
-          <button className="btn-danger flex-1" onClick={handleDeleteAccount} disabled={isLoading}>
+          <button className="btn-danger btn-flex" onClick={handleDeleteAccount} disabled={isLoading}>
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Delete Account'}
           </button>
         </div>

@@ -85,7 +85,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             className="p-1.5 rounded-lg cursor-pointer transition-all duration-150 text-muted hover:bg-surface-hover hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)]"
             aria-label="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="icon-sm" />
           </button>
         </div>
         <div className="p-6 space-y-4">
