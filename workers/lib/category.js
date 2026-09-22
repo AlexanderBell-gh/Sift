@@ -4,11 +4,11 @@
 //
 // Signal contract (from extension `result.category_signals`):
 //   { breadcrumb_raw[], breadcrumb_leaf, title, brand, store | store_id,
-//     url_path, jsonld_category }
+//     url_path, jsonld_category, storage_text }
 // Legacy clients send only `result.category`; that path uses
 // clampLegacyCategory() and stores taxonomy_version 0.
 
-export const TAXONOMY_VERSION = 1;
+export const TAXONOMY_VERSION = 2;
 
 export const CANONICAL_CATEGORIES = [
   'Chilled',
@@ -40,7 +40,10 @@ const AISLE_TERMS = {
   Chilled: [
     'chilled', 'dairy', 'milk', 'yogurt', 'yoghurt', 'yoghurts', 'cheese',
     'butter', 'cream', 'eggs', 'bacon', 'sausages', 'sausage', 'ham',
-    'chicken', 'poultry', 'salmon', 'trout', 'salmon, tuna & trout',
+    'chicken', 'chicken breast', 'poultry', 'turkey', 'duck', 'beef',
+    'pork', 'lamb', 'mince', 'steak', 'meatballs', 'kebab', 'shawarma',
+    'prawn', 'prawns', 'shrimp', 'salmon', 'trout', 'salmon, tuna & trout',
+    'ready meal', 'ready meals', 'high protein', 'grain bowl',
   ],
   Snacks: [
     'snacks', 'crisps', 'chocolate', 'cookies', 'cookie', 'biscuits',
@@ -76,10 +79,14 @@ const AISLE_TERMS = {
 
 // Flavour/ingredient words stripped from titles before scoring. A blueberry
 // flapjack is not chilled produce; modifiers alone must never decide.
+// v2 also strips carb/veg side ingredients in the title path so a protein plus
+// a side (chicken noodles, shawarma sweet potato) scores on the protein. The
+// crumb path keeps them, so plain noodles still land in Food Cupboard.
 const TITLE_MODIFIERS = new Set([
   'berry', 'berries', 'blueberry', 'blueberries', 'strawberry',
   'strawberries', 'raspberry', 'raspberries', 'blackberry', 'blackberries',
   'lemon', 'lime', 'toffee', 'vanilla', 'caramel',
+  'noodles', 'noodle', 'pasta', 'rice', 'potato', 'potatoes', 'grains',
 ]);
 
 // Personal-care and household markers force Other before scoring.
@@ -99,6 +106,38 @@ const DRY_GOODS_MARKERS = [
 // Chilled, not Food Cupboard).
 const DAIRY_SIGNALS = [
   'milk', 'yogurt', 'yoghurt', 'cheese', 'butter', 'cream', 'dairy',
+];
+
+// Fresh-protein markers (v2, title-first for crumb-less stores). A strong
+// meat/meal signal with no ambient cues vetoes Food Cupboard and Produce and
+// confirms Chilled (PROTEIN_CONFIRM_POINTS meets the floor exactly).
+const FRESH_PROTEIN_MARKERS = [
+  'chicken', 'chicken breast', 'turkey', 'duck', 'beef', 'pork', 'lamb',
+  'prawn', 'prawns', 'shrimp', 'mince', 'steak', 'meatballs', 'kebab',
+  'shawarma', 'high protein', 'ready meal', 'ready meals', 'grain bowl',
+];
+
+// Ambient meal exemptions: protein-adjacent words marking shelf-stable goods.
+// Block the fresh-protein veto so soups, stocks and flavour-only snacks stay
+// out of Chilled.
+const AMBIENT_MEAL_EXEMPTIONS = [
+  'soup', 'stock', 'crisps', 'flavour', 'flavor', 'tinned', 'canned',
+  'long life', 'uht', 'baby food',
+];
+
+// Storage keep-condition markers (v2 Option A, extension `storage_text`).
+// Kept strict: 'suitable for freezing' is deliberately absent (fresh meat
+// carries it); '-18' is matched separately as a substring.
+const STORAGE_FROZEN_MARKERS = [
+  'keep frozen', 'store frozen', 'do not refreeze',
+];
+const STORAGE_AMBIENT_MARKERS = [
+  'cool dry place', 'cool dry', 'ambient', 'do not refrigerate',
+  'no refrigeration', 'store cupboard', 'long life', 'uht',
+];
+const STORAGE_CHILLED_MARKERS = [
+  'refrigerate', 'refrigerated', 'refrigeration', 'chilled', 'fridge',
+  'use by', 'eat within', 'keep cool', 'serve chilled',
 ];
 
 // Small per-store aisle alias table. Leaf exact match adds leaf-weight
@@ -123,6 +162,8 @@ const SUBSTRING_POINTS = 0.5;
 const FLOOR = 1.5;
 const LEAF_WEIGHT = 1;
 const CONTEXT_WEIGHT = 0.5;
+const PROTEIN_CONFIRM_POINTS = 0.5;
+const STORAGE_CHILLED_POINTS = 1;
 
 function tokenize(text) {
   return String(text || '')
@@ -217,14 +258,42 @@ export function scoreCategory(signals = {}) {
   if (combinedTokens.includes('frozen')) {
     return { category: 'Frozen', taxonomy_version: TAXONOMY_VERSION, scores: null, low_confidence: false, reason: 'frozen-veto' };
   }
+
+  const vetoed = new Set();
+
+  // Storage layer (v2 Option A): semantic keep-condition text from the
+  // extension. Scored separately from combined text so storage copy such as
+  // 'wash before use' can never trip the non-food veto.
+  const storageText = String(signals.storage_text || '');
+  const storageJoined = storageText.toLowerCase();
+  const storageTokens = tokenize(storageText);
+  if (hasMarker(storageTokens, storageJoined, STORAGE_FROZEN_MARKERS) || storageJoined.includes('-18')) {
+    return { category: 'Frozen', taxonomy_version: TAXONOMY_VERSION, scores: null, low_confidence: false, reason: 'storage-frozen' };
+  }
+  const storageAmbient = hasMarker(storageTokens, storageJoined, STORAGE_AMBIENT_MARKERS);
+  if (storageAmbient) {
+    vetoed.add('Chilled');
+    vetoed.add('Produce');
+  }
+  const storageChilled = !storageAmbient && hasMarker(storageTokens, storageJoined, STORAGE_CHILLED_MARKERS);
+
   if (hasMarker(combinedTokens, combinedJoined, NON_FOOD_SIGNALS)) {
     return { category: 'Other', taxonomy_version: TAXONOMY_VERSION, scores: null, low_confidence: false, reason: 'non-food' };
   }
 
-  const vetoed = new Set();
   const hasDairy = hasMarker(combinedTokens, combinedJoined, DAIRY_SIGNALS);
   if (!hasDairy && hasMarker(combinedTokens, combinedJoined, DRY_GOODS_MARKERS)) {
     vetoed.add('Chilled');
+    vetoed.add('Produce');
+  }
+
+  // Fresh-protein confirmation: strong meat/meal signal, no ambient cues.
+  // Vetoes ambient/veg categories and confirms Chilled. Single-protein
+  // titles now clear the floor at exactly 1.5 (low confidence, logged).
+  const hasAmbientMeal = storageAmbient || hasMarker(combinedTokens, combinedJoined, AMBIENT_MEAL_EXEMPTIONS);
+  const proteinConfirm = !hasAmbientMeal && hasMarker(combinedTokens, combinedJoined, FRESH_PROTEIN_MARKERS);
+  if (proteinConfirm) {
+    vetoed.add('Food Cupboard');
     vetoed.add('Produce');
   }
 
@@ -232,6 +301,8 @@ export function scoreCategory(signals = {}) {
   const crumbScores = blankScores();
   addScores(crumbScores, scoreText(leaf, LEAF_WEIGHT, false));
   addScores(crumbScores, scoreText(`${pathText} ${jsonld} ${urlWords}`, CONTEXT_WEIGHT, false));
+  if (proteinConfirm) crumbScores.Chilled += PROTEIN_CONFIRM_POINTS;
+  if (storageChilled) crumbScores.Chilled += STORAGE_CHILLED_POINTS;
 
   // Small alias table: exact leaf match adds leaf-weight points.
   const leafNorm = leaf.toLowerCase();

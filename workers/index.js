@@ -1228,6 +1228,7 @@ async function handleRequest(request, env) {
             winner: scored.category,
             reason: scored.reason,
             taxonomy_version: scored.taxonomy_version,
+            storage: !!categorySignals.storage_text,
           }));
         }
       } else {

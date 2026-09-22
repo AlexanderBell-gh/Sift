@@ -147,6 +147,138 @@ describe('vetoes, tie-breaks, floor', () => {
   });
 });
 
+describe('v2 protein + storage (title-first for crumb-less stores)', () => {
+  it('teriyaki chicken noodles title-only -> Chilled (side stripped, protein confirms)', () => {
+    const r = scoreCategory(signals({
+      title: "Sainsbury's 300g Small But Mighty Teriyaki Chicken with Wholewheat Noodles & Edamame",
+    }));
+    assert.equal(r.category, 'Chilled');
+    assert.equal(r.taxonomy_version, TAXONOMY_VERSION);
+  });
+
+  it('chicken shawarma sweet potato title-only -> Chilled', () => {
+    const r = scoreCategory(signals({
+      title: 'Hide Chicken Shawarma with Hot Honey Sweet Potato 380g',
+      brand: 'Hide',
+      store_id: 'tesco',
+    }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('high protein peri peri chicken title-only -> Chilled (meal phrase clears floor)', () => {
+    const r = scoreCategory(signals({
+      title: "Sainsbury's 400g High Protein Peri Peri Chicken",
+      store_id: 'sainsburys',
+    }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('generic peri peri chicken title-only -> Chilled (protein confirmation meets floor)', () => {
+    const r = scoreCategory(signals({ title: 'Peri Peri Chicken 400g' }));
+    assert.equal(r.category, 'Chilled');
+    assert.equal(r.low_confidence, true);
+  });
+
+  it('single non-protein title-only stays Other (sweet potato)', () => {
+    const r = scoreCategory(signals({ title: 'Sweet Potato 500g' }));
+    assert.equal(r.category, 'Other');
+  });
+
+  it('chicken soup with cupboard crumb -> Food Cupboard (ambient exemption blocks protein veto)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Food Cupboard', 'Tins & Cans', 'Soup'],
+      breadcrumb_leaf: 'Soup',
+      title: 'Chicken Soup 400g',
+    }));
+    assert.equal(r.category, 'Food Cupboard');
+  });
+
+  it('chicken flavour crisps with snacks crumb -> Snacks (flavour exemption)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Snacks', 'Crisps'],
+      breadcrumb_leaf: 'Crisps',
+      title: 'Chicken Flavour Crisps 150g',
+    }));
+    assert.equal(r.category, 'Snacks');
+  });
+
+  it('chilled storage text confirms Chilled', () => {
+    const r = scoreCategory(signals({
+      title: 'Peri Peri Chicken 400g',
+      storage_text: 'Microwave from chilled. Stir thoroughly. Check food is piping hot.',
+    }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('serve-chilled cola stays Beverages (storage never demotes a confident crumb)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Beverages', 'Soft Drinks', 'Cola'],
+      breadcrumb_leaf: 'Cola',
+      title: 'Fresh Cola 2L',
+      storage_text: 'Serve chilled. Shake before use. Once opened keep refrigerated.',
+    }));
+    assert.equal(r.category, 'Beverages');
+    assert.equal(r.reason, 'breadcrumb');
+  });
+
+  it('cool-dry-place chicken is not Chilled (ambient storage vetoes)', () => {
+    const r = scoreCategory(signals({
+      title: 'Chicken in White Sauce 400g',
+      storage_text: 'Store in a cool dry place. Once opened keep refrigerated and eat within 2 days.',
+    }));
+    assert.notEqual(r.category, 'Chilled');
+  });
+
+  it('keep-frozen storage forces Frozen', () => {
+    const r = scoreCategory(signals({
+      title: 'Garden Peas 500g',
+      storage_text: 'Keep frozen at -18C. Do not refreeze once defrosted.',
+    }));
+    assert.equal(r.category, 'Frozen');
+  });
+
+  it('suitable-for-freezing fresh meat stays Chilled (no false frozen force)', () => {
+    const r = scoreCategory(signals({
+      title: 'Fresh Chicken Breast 500g',
+      storage_text: 'Suitable for home freezing. Keep refrigerated below 5C. Use by the date shown.',
+    }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('wash instructions never trip non-food veto (lettuce stays Produce)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Produce', 'Salad', 'Lettuce'],
+      breadcrumb_leaf: 'Lettuce',
+      title: 'Iceberg Lettuce 200g',
+      storage_text: 'Wash before use. Keep refrigerated below 5C.',
+    }));
+    assert.equal(r.category, 'Produce');
+  });
+
+  it('Sainsbury-style ready-meal trail -> Chilled confident (no Frozen trap)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Dairy, eggs & chilled', 'Ready meals', 'Ready meals for one'],
+      breadcrumb_leaf: 'Ready meals for one',
+      title: "Sainsbury's 300g Small But Mighty Teriyaki Chicken with Wholewheat Noodles & Edamame",
+      store_id: 'sainsburys',
+    }));
+    assert.equal(r.category, 'Chilled');
+    assert.equal(r.reason, 'breadcrumb');
+    assert.equal(r.low_confidence, false);
+  });
+
+  it('Tesco high-protein ready-meal leaf -> Chilled confident', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Fresh Food', 'Ready Meals', 'High Protein Ready Meal'],
+      breadcrumb_leaf: 'High Protein Ready Meal',
+      title: 'Hide Chicken Shawarma with Hot Honey Sweet Potato 380g',
+      store_id: 'tesco',
+    }));
+    assert.equal(r.category, 'Chilled');
+    assert.equal(r.reason, 'breadcrumb');
+  });
+});
+
 describe('clampLegacyCategory (old extensions without signals)', () => {
   it('keeps canonical values, trims and case-folds', () => {
     assert.equal(clampLegacyCategory('chilled '), 'Chilled');
