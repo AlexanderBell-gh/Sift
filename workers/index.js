@@ -16,6 +16,7 @@ import {
 } from './auth.js';
 import { queryAll, queryOne, execute } from './db.js';
 import { scoreCategory, clampLegacyCategory } from './lib/category.js';
+import { isValidUsername, isValidPassword, USERNAME_ERROR, PASSWORD_ERROR } from './lib/validate.js';
 
 
 
@@ -54,10 +55,6 @@ function errorResponse(message, request = null, status = 400) {
 
 function isValidEmail(email) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
-}
-
-function isValidPassword(password) {
-  return password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
 }
 
 function generateId(prefix) {
@@ -287,11 +284,14 @@ async function handleRequest(request, env) {
       if (!email || !username || !password) {
         return errorResponse('Email, username, and password are required', request);
       }
+      if (!isValidUsername(username)) {
+        return errorResponse(USERNAME_ERROR, request);
+      }
       if (!isValidEmail(email)) {
         return errorResponse('Invalid email format', request);
       }
       if (!isValidPassword(password)) {
-        return errorResponse('Password must be at least 8 characters with at least one letter and one number', request);
+        return errorResponse(PASSWORD_ERROR, request);
       }
 
       if (await getUserByEmail(env, email)) {
@@ -363,11 +363,14 @@ async function handleRequest(request, env) {
       if (!email || !username || !password) {
         return errorResponse('Email, username, and password are required', request);
       }
+      if (!isValidUsername(username)) {
+        return errorResponse(USERNAME_ERROR, request);
+      }
       if (!isValidEmail(email)) {
         return errorResponse('Invalid email format', request);
       }
       if (!isValidPassword(password)) {
-        return errorResponse('Password must be at least 8 characters with at least one letter and one number', request);
+        return errorResponse(PASSWORD_ERROR, request);
       }
 
       if (await getUserByEmail(env, email)) {
@@ -466,6 +469,9 @@ async function handleRequest(request, env) {
       }
 
       const trialUsername = username || `trial_${crypto.randomUUID().slice(0, 8)}`;
+      if (username && !isValidUsername(trialUsername)) {
+        return errorResponse(USERNAME_ERROR, request);
+      }
       const trialEmail = `${trialUsername}@trial.sift`;
 
       if (await getUserByUsername(env, trialUsername)) {
@@ -548,7 +554,7 @@ async function handleRequest(request, env) {
       const { token, newPassword } = body;
       if (!token) return errorResponse('Reset token required', request);
       if (!isValidPassword(newPassword)) {
-        return errorResponse('New password must be at least 8 characters with at least one letter and one number', request);
+        return errorResponse(PASSWORD_ERROR, request);
       }
 
       const match = await queryOne(
@@ -689,7 +695,7 @@ async function handleRequest(request, env) {
             return errorResponse('Current password is incorrect', request);
           }
           if (!isValidPassword(body.newPassword)) {
-            return errorResponse('New password must be at least 8 characters with at least one letter and one number', request);
+            return errorResponse(PASSWORD_ERROR, request);
           }
           user.passwordHash = await hashPassword(body.newPassword);
         }
@@ -704,13 +710,10 @@ async function handleRequest(request, env) {
 
           if (body.username !== undefined) {
             const rawUsername = body.username.trim();
+            if (!isValidUsername(rawUsername)) {
+              return errorResponse(USERNAME_ERROR, request);
+            }
             const newUsername = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1).toLowerCase();
-            if (!newUsername || newUsername.length < 4) {
-              return errorResponse('Username must be at least 4 characters', request);
-            }
-            if (/\s/.test(newUsername)) {
-              return errorResponse('Username cannot contain spaces', request);
-            }
             if (newUsername !== user.username) {
               const existing = await getUserByUsername(env, newUsername);
               if (existing && existing.id !== user.id) {

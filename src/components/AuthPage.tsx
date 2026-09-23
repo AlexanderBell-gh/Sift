@@ -152,12 +152,27 @@ export default function AuthPage() {
           setFieldErrors({ resetNewPassword: 'Password must be at least 8 characters' });
           return;
         }
+        // Mirrors workers/lib/validate.js isValidPassword.
+        if (!/^(?=.*[a-zA-Z])(?=.*[0-9])[A-Za-z0-9._]{8,128}$/.test(resetNewPassword)) {
+          setFieldErrors({ resetNewPassword: 'Password must be 8-128 characters with a letter and a number, using only letters, numbers, dots and underscores' });
+          return;
+        }
       }
     } else if (activeTab === 'signin' || activeTab === 'register') {
       const errors: Record<string, string> = {};
+      // Charset rules mirror workers/lib/validate.js (no shared build across
+      // layers — keep regexes and messages identical). Sign-in stays lenient so
+      // pre-existing accounts can still log in; register enforces strictly.
       if (!username.trim()) errors.username = 'Username is required';
+      else if (activeTab === 'register' && !/^[A-Za-z0-9]{4,30}$/.test(username)) {
+        errors.username = 'Username must be 4-30 characters, letters and numbers only';
+      }
       if (!password) errors.password = 'Password is required';
-      else if (password.length < 8) errors.password = 'Password must be at least 8 characters';
+      else if (activeTab === 'register' && !/^(?=.*[a-zA-Z])(?=.*[0-9])[A-Za-z0-9._]{8,128}$/.test(password)) {
+        errors.password = 'Password must be 8-128 characters with a letter and a number, using only letters, numbers, dots and underscores';
+      } else if (activeTab === 'signin' && password.length < 8) {
+        errors.password = 'Password must be at least 8 characters';
+      }
       if (activeTab === 'register') {
         if (!email.trim()) errors.email = 'Email is required';
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Enter a valid email address';

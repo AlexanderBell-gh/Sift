@@ -20,7 +20,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 ### Auth & Accounts
 - JWT + Google OAuth + username/password auth
 - Self-service password recovery (no-email reset-token flow)
-- Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized)
+- Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized, restricted to letters + numbers, 4–30 chars; passwords restricted to letters, numbers, dots and underscores, 8–128 chars with a letter and a number)
 - Trial gating — 24h / 5 watchlist items, enforced server-side
 - Rate-limited auth endpoints (login, register, Google OAuth, trial, register-admin, me, forgot/reset)
 - Extension SSO — website broadcasts token to extension via postMessage on login/logout, eliminating double sign-in
@@ -31,6 +31,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ### Admin
 - Dashboard, user management, audit logs (card-based, filterable by action type), trials
+- Admin-only route guard (non-admins get a 403 page, never the admin shell); DESIGN-matched 404 page for unknown routes plus an error boundary for unexpected failures
 
 ### UI
 - Dark/light mode (light default, toggle in nav for guests / user menu when signed in), mobile responsive
@@ -62,7 +63,7 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account
 
 ```bash
 pnpm run build  # output → dist/
-pnpm test       # worker category scorer (node --test, no framework)
+pnpm test       # worker category scorer + input validators (node --test, no framework)
 ```
 
 **Automatic:** Push to `main` triggers GitHub Actions (lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
@@ -133,7 +134,7 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
-workers/          Cloudflare Worker API (index.js, auth.js, db.js, schema.sql, seed.sql, migrations/)
+workers/          Cloudflare Worker API (index.js, auth.js, db.js, lib/category.js + lib/validate.js, schema.sql, seed.sql, migrations/)
 public/           Store logo SVGs + favicon.svg + theme-init.js (dark-mode flash prevention)
 ```
 

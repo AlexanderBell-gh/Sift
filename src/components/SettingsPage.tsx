@@ -48,7 +48,10 @@ export default function SettingsPage() {
     const errors: Record<string, string> = {};
     if (!passwordForm.currentPassword) errors.currentPassword = 'Password is required';
     if (!passwordForm.newPassword) errors.newPassword = 'Password is required';
-    else if (passwordForm.newPassword.length < 8) errors.newPassword = 'Must be at least 8 characters';
+    // Mirrors workers/lib/validate.js isValidPassword.
+    else if (!/^(?=.*[a-zA-Z])(?=.*[0-9])[A-Za-z0-9._]{8,128}$/.test(passwordForm.newPassword)) {
+      errors.newPassword = 'Must be 8-128 characters with a letter and a number, using only letters, numbers, dots and underscores';
+    }
     if (!passwordForm.confirmPassword) errors.confirmPassword = 'Please confirm your password';
     else if (passwordForm.newPassword !== passwordForm.confirmPassword) errors.confirmPassword = 'Passwords do not match';
     if (Object.keys(errors).length > 0) {
@@ -74,8 +77,10 @@ export default function SettingsPage() {
     const errors: Record<string, string> = {};
     const username = profileUsername.trim();
     const email = profileEmail.trim();
-    if (!username || username.length < 4) errors.username = 'Must be at least 4 characters';
-    else if (/\s/.test(username)) errors.username = 'Cannot contain spaces';
+    // Mirrors workers/lib/validate.js isValidUsername.
+    if (!username || !/^[A-Za-z0-9]{4,30}$/.test(username)) {
+      errors.username = 'Must be 4-30 characters, letters and numbers only';
+    }
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.email = 'Invalid email format';
     if (!profilePassword) errors.profilePassword = 'Current password is required';
     if (Object.keys(errors).length > 0) {

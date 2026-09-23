@@ -21,10 +21,10 @@
 rtk pnpm run dev          # Vite dev server (port 5173)
 rtk pnpm run build        # tsc -b (type-check) then vite build → dist/
 rtk pnpm run lint         # eslint . (flat config, TS/TSX only)
-rtk pnpm test             # node --test worker category scorer (zero-dep, no framework)
+rtk pnpm test             # node --test workers/lib/*.test.js (zero-dep, no framework)
 ```
 
-**No test framework exists.** The only tests are `workers/lib/category.test.js` (worker category scorer, run via `pnpm test`). There are no test configs or frontend test files.
+**No test framework exists.** The tests are `workers/lib/category.test.js` (category scorer) + `workers/lib/validate.test.js` (username/password allowlists), run via `pnpm test`. There are no test configs or frontend test files.
 
 ## Verify before committing
 
@@ -46,7 +46,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 ```
 
 - Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /search, /watchlist, /admin, /settings)
-- Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer, plain JS, tested by `workers/lib/category.test.js`)
+- Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer) + `workers/lib/validate.js` (username/password allowlists) — both plain JS, both with `*.test.js` coverage
 - DB schema: `workers/schema.sql` — 6 tables (users, rate_limits, watchlist, alerts, audit_logs, password_resets)
 
 ## Key gotchas
@@ -54,6 +54,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 - **Worker is plain JS**, not TypeScript. Don't try to type-check it with `tsc`. Only `src/` is TypeScript.
 - **CSP is injected at build time** by a Vite plugin in `vite.config.ts` (`cspMeta()`) **and** enforced as a real header via `public/_headers` (copied to `dist/`, enforced by Pages). Keep both in sync (cross-referenced in each file). Dev server omits it so HMR works.
 - **`isOfferExpired` is duplicated** — once in `workers/index.js` and once in `src/lib/utils.ts`. Both must stay identical. No shared build across layers.
+- **Validation rules are mirrored, not shared** — `workers/lib/validate.js` (server truth) is duplicated as inline regexes in `src/components/AuthPage.tsx` and `src/components/SettingsPage.tsx`. Keep regexes and error messages identical in all three places; do not import worker code into the frontend (or vice versa).
 - **Migrations auto-apply on push to main** via CI. To create a new migration, add a numbered `.sql` file to `workers/migrations/` (e.g. `0006_your_change.sql`). Update `workers/schema.sql` to match.
 - **Rate limits** are enforced server-side on auth endpoints. Don't remove them.
 - **Trial gating** — max 5 watchlist items, 24h expiry, enforced server-side on `POST /api/watchlist`.
