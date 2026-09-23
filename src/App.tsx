@@ -6,6 +6,8 @@ import AuthPage from './components/AuthPage';
 import WatchlistPage from './components/WatchlistPage';
 import AdminPage from './components/AdminPage';
 import SettingsPage from './components/SettingsPage';
+import RequireAdmin from './components/RequireAdmin';
+import { NotFoundPage, RouteErrorBoundary } from './components/ErrorPage';
 import { CookieConsent } from './components/ui/CookieConsent';
 import ExtensionFAB from './components/ExtensionFAB';
 
@@ -20,15 +22,24 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <RouteErrorBoundary>
         <Routes>
           <Route path="/" element={<SearchPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/search" element={<Navigate to="/" replace />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route
+            path="/admin"
+            element={
+              <RequireAdmin>
+                <AdminPage />
+              </RequireAdmin>
+            }
+          />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </RouteErrorBoundary>
         <ExtensionFAB />
         <CookieConsent />
       </AuthProvider>

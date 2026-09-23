@@ -10,7 +10,9 @@ function broadcastAuthToken(token: string | null) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
-  const [loading, setLoading] = useState(true);
+  // No stored token means no validation round-trip; start resolved so route
+  // guards redirect immediately instead of hanging on `loading`.
+  const [loading, setLoading] = useState(token !== null);
 
   useEffect(() => {
     if (!token) return;

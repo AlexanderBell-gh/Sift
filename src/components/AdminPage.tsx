@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
-import { useNavigate } from 'react-router-dom';
 import NavHeader from './NavHeader';
 import {
   getAdminStats,
@@ -18,8 +17,8 @@ type Tab = 'dashboard' | 'users' | 'audit' | 'trials';
 
 export default function AdminPage() {
   const { token, user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [error, setError] = useState('');
+  const isAuthorized = !authLoading && !!token && user?.role === 'admin';
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -53,8 +52,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (authLoading) return;
+    // Route guard (RequireAdmin) owns access control; never fetch or render shell when unauthorized.
     if (!token || user?.role !== 'admin') {
-      navigate('/');
       return;
     }
     getAdminStats(token)
@@ -67,7 +66,7 @@ export default function AdminPage() {
         setTabLoaded(prev => ({ ...prev, dashboard: true }));
       })
       .finally(() => setLoadingByTab(prev => ({ ...prev, dashboard: false })));
-  }, [token, user, authLoading, navigate]);
+  }, [token, user, authLoading]);
 
   const loadUsers = useCallback(async (page = 1, search = '', filter = 'users') => {
     if (!token) return;
@@ -120,11 +119,12 @@ export default function AdminPage() {
   }, [token]);
 
   useEffect(() => {
+    if (!isAuthorized) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- idiomatic fetch-on-tab-change; loaders set their loading flag synchronously
     if (tab === 'users') loadUsers(1, userSearch, userFilter);
     if (tab === 'audit') loadLogs(1);
     if (tab === 'trials') loadTrials(1, trialsStatus);
-  }, [tab, loadUsers, loadLogs, loadTrials, userSearch, userFilter, trialsStatus]);
+  }, [tab, loadUsers, loadLogs, loadTrials, userSearch, userFilter, trialsStatus, isAuthorized]);
 
   // audit filter re-fetch handled inline in filter pill onClick
 
@@ -171,6 +171,8 @@ export default function AdminPage() {
     { key: 'audit', label: 'Audit Logs', icon: ScrollText },
     { key: 'trials', label: 'Trials', icon: Timer },
   ];
+
+  if (!isAuthorized) return null;
 
   return (
     <div className="page-shell">
