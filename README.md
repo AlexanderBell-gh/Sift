@@ -22,7 +22,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 - Self-service password recovery (no-email reset-token flow)
 - Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized)
 - Trial gating — 24h / 5 watchlist items, enforced server-side
-- Rate-limited auth endpoints (login, trial, register-admin, forgot/reset)
+- Rate-limited auth endpoints (login, register, Google OAuth, trial, register-admin, me, forgot/reset)
 - Extension SSO — website broadcasts token to extension via postMessage on login/logout, eliminating double sign-in
 
 ### Alerts & Cron
@@ -74,7 +74,7 @@ pnpm exec wrangler deploy --config workers/wrangler.toml
 
 Required secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
-**CSP:** production builds get a strict Content-Security-Policy meta injected by `vite.config.ts` (`cspMeta()`); the dev server omits it so HMR keeps working.
+**CSP:** production gets a real Content-Security-Policy header via `public/_headers` (enforced by Pages, includes `frame-ancestors`/`form-action`) plus a matching build-time meta from `vite.config.ts` (`cspMeta()`) — keep both in sync; the dev server omits it so HMR keeps working.
 
 ## Database
 

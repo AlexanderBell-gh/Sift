@@ -52,7 +52,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 ## Key gotchas
 
 - **Worker is plain JS**, not TypeScript. Don't try to type-check it with `tsc`. Only `src/` is TypeScript.
-- **CSP is injected at build time** by a Vite plugin in `vite.config.ts` (`cspMeta()`). Dev server omits it so HMR works. If you need to update CSP headers, edit the plugin, not a config file.
+- **CSP is injected at build time** by a Vite plugin in `vite.config.ts` (`cspMeta()`) **and** enforced as a real header via `public/_headers` (copied to `dist/`, enforced by Pages). Keep both in sync (cross-referenced in each file). Dev server omits it so HMR works.
 - **`isOfferExpired` is duplicated** — once in `workers/index.js` and once in `src/lib/utils.ts`. Both must stay identical. No shared build across layers.
 - **Migrations auto-apply on push to main** via CI. To create a new migration, add a numbered `.sql` file to `workers/migrations/` (e.g. `0006_your_change.sql`). Update `workers/schema.sql` to match.
 - **Rate limits** are enforced server-side on auth endpoints. Don't remove them.
