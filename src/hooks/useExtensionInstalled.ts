@@ -29,6 +29,7 @@ export function useExtensionInstalled() {
     }
 
     function onMessage(e: MessageEvent) {
+      if (e.origin !== window.location.origin) return;
       if (e.data?.type === 'SIFT_EXTENSION_INSTALLED') dismiss();
     }
     window.addEventListener('message', onMessage);

@@ -4,7 +4,7 @@ import { API_BASE } from '../lib/api';
 import { AuthContext } from './auth-context';
 
 function broadcastAuthToken(token: string | null) {
-  window.postMessage({ type: 'SIFT_AUTH_TOKEN', token }, '*');
+  window.postMessage({ type: 'SIFT_AUTH_TOKEN', token }, window.location.origin);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

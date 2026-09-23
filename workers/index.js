@@ -508,7 +508,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/forgot-password' && method === 'POST') {
     try {
-      const rl = await checkRateLimit(env, `forgot:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+      const rl = await checkRateLimit(env, `forgot:${getClientIp(request)}`, 3, 60 * 60 * 1000);
       if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
 
       const body = await request.json();
@@ -525,11 +525,11 @@ async function handleRequest(request, env) {
         env,
         `INSERT INTO password_resets (id, user_id, token_hash, token_sha256, expires_at, used, created_at)
          VALUES (?, ?, ?, ?, ?, 0, ?)`,
-        [generateId('pr'), user.id, await hashPassword(token), await sha256Hex(token), Date.now() + 30 * 60 * 1000, Date.now()]
+        [generateId('pr'), user.id, await hashPassword(token), await sha256Hex(token), Date.now() + 10 * 60 * 1000, Date.now()]
       );
 
       console.log(`Password reset requested for ${user.email}`);
-      return jsonResponse({ token, expiresInMinutes: 30 }, request);
+      return jsonResponse({ token, expiresInMinutes: 10 }, request);
     } catch (e) {
       console.error('Forgot password error:', e);
       return errorResponse('Invalid request body', request);
@@ -538,7 +538,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/reset-password' && method === 'POST') {
     try {
-      const rl = await checkRateLimit(env, `reset:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+      const rl = await checkRateLimit(env, `reset:${getClientIp(request)}`, 3, 60 * 60 * 1000);
       if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
 
       const body = await request.json();
@@ -647,7 +647,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/me') {
     const auth = await requireAuth(request, env);
-    if (auth && auth.error) return auth;
+    if (auth instanceof Response) return auth;
 
     if (method === 'GET') {
       const user = await getUserById(env, auth.userId);
@@ -773,7 +773,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/admin/stats') {
     const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
+    if (admin instanceof Response) return admin;
 
     const userStats = await queryOne(
       env,
@@ -800,7 +800,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/admin/users') {
     const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
+    if (admin instanceof Response) return admin;
 
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
@@ -850,7 +850,7 @@ async function handleRequest(request, env) {
   const adminUserMatch = path.match(/^\/api\/admin\/users\/(.+)$/);
   if (adminUserMatch && method === 'DELETE') {
     const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
+    if (admin instanceof Response) return admin;
 
     const userId = adminUserMatch[1];
     if (userId === admin.userId) {
@@ -889,7 +889,7 @@ async function handleRequest(request, env) {
   const roleMatch = path.match(/^\/api\/admin\/users\/(.+)\/role$/);
   if (roleMatch && method === 'PUT') {
     const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
+    if (admin instanceof Response) return admin;
 
     const targetUserId = roleMatch[1];
     const targetUser = await getUserById(env, targetUserId);
@@ -935,7 +935,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/admin/audit') {
     const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
+    if (admin instanceof Response) return admin;
 
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
@@ -982,7 +982,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/admin/trials') {
     const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
+    if (admin instanceof Response) return admin;
 
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
@@ -1036,7 +1036,7 @@ async function handleRequest(request, env) {
 
   if (path === '/api/admin/trials/cleanup' && method === 'DELETE') {
     const admin = await requireAdmin(request, env);
-    if (admin && admin.error) return admin;
+    if (admin instanceof Response) return admin;
 
     const result = await execute(
       env,

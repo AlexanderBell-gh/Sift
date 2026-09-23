@@ -341,7 +341,7 @@ export default function AuthPage() {
                     </p>
                   ) : (
                     <p className="auth-promo-desc">
-                      Use this token once within 30 minutes to set a new password.
+                      Use this token once within 10 minutes to set a new password.
                     </p>
                   )}
                 </div>
