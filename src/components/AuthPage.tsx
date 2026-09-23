@@ -41,7 +41,6 @@ export default function AuthPage() {
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [showResetPassword, setShowResetPassword] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -70,7 +69,6 @@ export default function AuthPage() {
     setResetToken(null);
     setForgotEmail('');
     setResetNewPassword('');
-    setCopied(false);
     setFieldErrors({});
     setShowPassword(false);
     setShowResetPassword(false);
@@ -204,23 +202,11 @@ export default function AuthPage() {
     }
   }
 
-  async function handleCopyToken() {
-    if (!resetToken) return;
-    try {
-      await navigator.clipboard.writeText(resetToken);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard unavailable
-    }
-  }
-
   function handleBackToSignIn() {
     setForgotMode(false);
     setResetToken(null);
     setForgotEmail('');
     setResetNewPassword('');
-    setCopied(false);
     setError('');
     setFieldErrors({});
     setShowResetPassword(false);
@@ -341,7 +327,7 @@ export default function AuthPage() {
                     </p>
                   ) : (
                     <p className="auth-promo-desc">
-                      Use this token once within 10 minutes to set a new password.
+                      Enter a new password below. The reset token is held automatically and expires 10 minutes after issue.
                     </p>
                   )}
                 </div>
@@ -357,38 +343,27 @@ export default function AuthPage() {
                     error={fieldErrors.forgotEmail}
                   />
                 ) : (
-                  <>
-                    <div className="auth-token-box">
-                      <div className="auth-token-label">Reset token</div>
-                      <div className="auth-token-value">
-                        <code className="auth-token-code">{resetToken}</code>
-                        <button type="button" className="auth-token-copy" onClick={handleCopyToken}>
-                          {copied ? 'Copied' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                    <Input
-                      label="New Password"
-                      type={showResetPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={resetNewPassword}
-                      onChange={(e) => { setResetNewPassword(e.target.value); clearFieldError('resetNewPassword'); }}
-                      required
-                      minLength={8}
-                      error={fieldErrors.resetNewPassword}
-                      suffix={
-                        <button
-                          type="button"
-                          className="auth-password-toggle"
-                          aria-label={showResetPassword ? 'Hide password' : 'Show password'}
-                          aria-pressed={showResetPassword}
-                          onClick={() => setShowResetPassword((v) => !v)}
-                        >
-                          {showResetPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
-                        </button>
-                      }
-                    />
-                  </>
+                  <Input
+                    label="New Password"
+                    type={showResetPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={resetNewPassword}
+                    onChange={(e) => { setResetNewPassword(e.target.value); clearFieldError('resetNewPassword'); }}
+                    required
+                    minLength={8}
+                    error={fieldErrors.resetNewPassword}
+                    suffix={
+                      <button
+                        type="button"
+                        className="auth-password-toggle"
+                        aria-label={showResetPassword ? 'Hide password' : 'Show password'}
+                        aria-pressed={showResetPassword}
+                        onClick={() => setShowResetPassword((v) => !v)}
+                      >
+                        {showResetPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
+                      </button>
+                    }
+                  />
                 )}
               </>
             )}

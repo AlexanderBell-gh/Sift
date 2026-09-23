@@ -2,7 +2,7 @@ import { queryOne, queryAll, execute } from './db.js';
 
 const SALT_LENGTH = 16;
 const ITERATIONS = 100000;
-const JWT_EXPIRY_DAYS = 7;
+const JWT_EXPIRY_DAYS = 1;
 const encoder = new TextEncoder();
 
 function getJwtSecret(env) {

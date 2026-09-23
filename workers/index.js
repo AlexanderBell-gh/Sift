@@ -278,6 +278,9 @@ async function handleRequest(request, env) {
 
   if (path === '/api/auth/register' && method === 'POST') {
     try {
+      const rl = await checkRateLimit(env, `register:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
+
       const body = await request.json();
       const { email, username, password } = body;
 
@@ -576,6 +579,9 @@ async function handleRequest(request, env) {
       return errorResponse('Google sign-in not configured', request, 501);
     }
     try {
+      const rl = await checkRateLimit(env, `google:${getClientIp(request)}`, 10, 15 * 60 * 1000);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
+
       const body = await request.json();
       const { idToken } = body;
       if (!idToken) return errorResponse('ID token required', request);
@@ -667,6 +673,9 @@ async function handleRequest(request, env) {
 
     if (method === 'PUT') {
       try {
+        const rl = await checkRateLimit(env, `me:${getClientIp(request)}`, 10, 15 * 60 * 1000);
+        if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
+
         const body = await request.json();
         const user = await getUserById(env, auth.userId);
         if (!user) return errorResponse('User not found', request, 404);
@@ -747,6 +756,9 @@ async function handleRequest(request, env) {
 
     if (method === 'DELETE') {
       try {
+        const rl = await checkRateLimit(env, `me:${getClientIp(request)}`, 10, 15 * 60 * 1000);
+        if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
+
         const user = await getUserById(env, auth.userId);
         if (!user) return errorResponse('User not found', request, 404);
 

@@ -1,0 +1,6 @@
+# Keep in sync with the cspMeta() plugin in vite.config.ts (build-time <meta> fallback).
+# _headers is copied verbatim to dist/ and enforced by Cloudflare Pages.
+# img-src stays broad (https:) — product images come from 11 store CDNs plus
+# user-pinned URLs, not enumerable at build time. See SECURITYAUDIT.md H4.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://siftapi.blackmesa.workers.dev https://accounts.google.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'
