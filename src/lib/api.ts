@@ -13,7 +13,7 @@ const ukProducts = [
   ...ukFrozen, ...ukCupboard, ...ukDrinks,
 ];
 
-export const API_BASE = 'https://siftapi.blackmesa.workers.dev';
+export const API_BASE = import.meta.env.VITE_API_BASE || 'https://siftapi.blackmesa.workers.dev';
 
 export async function updatePassword(token: string, currentPassword: string, newPassword: string): Promise<User> {
   const response = await fetch(`${API_BASE}/api/auth/me`, {

@@ -88,6 +88,7 @@ Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrang
 - `0004_password_reset_lookup` — `token_sha256` column + index (O(1) reset lookup)
 - `0005_alert_types` — widen `alerts.type` CHECK to `('price_drop','offer_expiry','offer_created')` (matches `src/types/index.ts`; table rebuild)
 - `0006_watchlist_taxonomy` — `taxonomy_version` column (0 = legacy client guess, 1 = v1 worker score, 2 = v2 worker score with protein confirmation + storage signals)
+- `0007_rate_limits` — `rate_limits` table + `reset_at` index (previously created inline per request; pruned by the daily cron)
 
 ```bash
 pnpm exec wrangler d1 create sift
@@ -114,6 +115,13 @@ The frontend reads the Google Client ID from `VITE_GOOGLE_CLIENT_ID` (Vite build
 
 This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the Worker.
 
+### API base — optional frontend env var
+
+The frontend targets the Worker via `VITE_API_BASE` (`src/lib/api.ts`), defaulting to
+production (`https://siftapi.blackmesa.workers.dev`). Set `VITE_API_BASE=http://localhost:5173`
+in `.env` for local dev. Production builds keep the pinned prod host in CSP
+(`public/_headers` + `vite.config.ts`), so this override is dev-time only.
+
 ## Search Flow
 
 1. Select up to 3 stores via multi-select dropdown (persisted in localStorage; starts empty on first visit — search stays disabled until at least one store is picked)
@@ -126,7 +134,7 @@ This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the
 
 - Watchlist for pinned products
 - Multi-buy deal terms are captured (`offer_deal`, e.g. "Any 3 for £12"). A product whose only offer is a multi-buy deal (no loyalty price / no expiry) stores `is_on_offer = 1` and shows its normal price with the multi-buy term in a store-coloured loyalty pill (`.product-card-loyalty-label`, tinted by store) in Deals of the Day and on the watchlist card. Non-multi-buy items show the store loyalty label ("Clubcard price" etc) in the same pill. Deal text is cleaned at source by the extension before storage; the pill truncates overflow with ellipsis and shows full text on hover.
-- CSV export (Settings) includes an `Offer Deal` column
+- CSV export (Settings) includes an `Offer Deal` column (formula-injection safe: trigger-led cells get a `'` prefix)
 - Trial users: max 5 watchlist items — watchlist page shows a live "X of 5" usage banner with progress bar; Deals of the Day Add buttons disable at the limit. Expired trials are blocked server-side on `POST /api/watchlist` (403 `trial_expired`), and the unique `(user_id, product_id)` index (migration `0003`) prevents duplicate pins under concurrent requests
 - Cron: daily 6am UTC — for every watchlist item past its offer expiry, marks `is_on_offer = 0` and creates a deduplicated "offer ended" alert (no price refresh, no per-user/total caps)
 

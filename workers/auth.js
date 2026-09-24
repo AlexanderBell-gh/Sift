@@ -79,8 +79,11 @@ async function hashPassword(password) {
     256
   );
 
-  const saltBase64 = arrayBufferToBase64(salt);
-  const hashBase64 = arrayBufferToBase64(derivedBits);
+  // Base64url on both sides: verifyPassword decodes with the base64url
+  // decoder, so encode the same alphabet here (old standard-base64 rows
+  // still verify — the decoder tolerates both).
+  const saltBase64 = arrayBufferToBase64Url(salt);
+  const hashBase64 = arrayBufferToBase64Url(derivedBits);
 
   return `${saltBase64}:${hashBase64}`;
 }
@@ -112,8 +115,22 @@ async function verifyPassword(password, storedHash) {
     256
   );
 
-  const computedHash = arrayBufferToBase64(derivedBits);
-  return computedHash === hashBase64;
+  // Byte-level compare: stored rows may use the legacy standard-base64
+  // alphabet while new rows use base64url — decode both sides first.
+  const storedBytes = new Uint8Array(base64UrlToArrayBuffer(hashBase64));
+  const computedBytes = new Uint8Array(derivedBits);
+  return timingSafeEqual(storedBytes, computedBytes);
+}
+
+// Constant-time byte compare (length mixed into the accumulator so
+// unequal lengths do not early-return).
+function timingSafeEqual(a, b) {
+  const len = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (a[i % a.length] ?? 0) ^ (b[i % b.length] ?? 0);
+  }
+  return diff === 0;
 }
 
 function generateToken() {

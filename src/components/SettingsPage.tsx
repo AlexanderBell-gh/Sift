@@ -396,6 +396,9 @@ function generateCSV(items: WatchlistItem[]): string {
 }
 
 function escapeCSV(value: string): string {
+  // Neutralize formula injection: prefix trigger-led cells so spreadsheet
+  // apps treat them as text, then quote as before.
+  if (/^[=+\-@\t\r]/.test(value)) value = `'${value}`;
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return `"${value.replace(/"/g, '""')}"`;
   }

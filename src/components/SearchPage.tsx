@@ -108,7 +108,7 @@ export default function SearchPage() {
 
     const storesToSearch = STORES.filter((s) => selectedStores.has(s.id));
     storesToSearch.forEach((store) => {
-      window.open(store.searchUrl(q), '_blank');
+      window.open(store.searchUrl(q), '_blank', 'noopener,noreferrer');
     });
   }, [selectedStores, closeDropdowns]);
 
