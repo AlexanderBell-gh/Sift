@@ -301,8 +301,11 @@ export function scoreCategory(signals = {}) {
   }
   const storageAmbient = hasMarker(storageTokens, storageJoined, STORAGE_AMBIENT_MARKERS);
   if (storageAmbient) {
+    // Cupboard-stable does not mean not-produce: bananas, potatoes and
+    // onions keep honestly in a cool dry place (Tesco bananas case,
+    // 24-09-2026 — vetoing Produce zeroed a 1.5 Produce score into Other).
+    // Veto Chilled only; nothing chilled is cupboard-stable.
     vetoed.add('Chilled');
-    vetoed.add('Produce');
   }
   const storageChilled = !storageAmbient && hasMarker(storageTokens, storageJoined, STORAGE_CHILLED_MARKERS);
 

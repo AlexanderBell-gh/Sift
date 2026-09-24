@@ -305,6 +305,15 @@ describe('v2 protein + storage (title-first for crumb-less stores)', () => {
     }));
     assert.equal(r.category, 'Produce');
   });
+
+  it('cupboard-stored bananas stay Produce (ambient storage never vetoes Produce)', () => {
+    const r = scoreCategory(signals({
+      title: 'Tesco Fairtrade Organic Bananas 5 Pack',
+      store_id: 'tesco',
+      storage_text: 'Store in a cool dry place away from direct sunlight.',
+    }));
+    assert.equal(r.category, 'Produce');
+  });
 });
 
 describe('clampLegacyCategory (old extensions without signals)', () => {

@@ -13,7 +13,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ### Watchlist
 - Pin products to a personal watchlist with price tracking
-- Worker-owned category taxonomy — `POST /api/watchlist` scores the extension's `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals) and stores the result with `taxonomy_version` (v2); old clients send only a legacy guess (clamped, version 0). Tests: `pnpm test`
+- Worker-owned category taxonomy — `POST /api/watchlist` scores the extension's `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals) and stores the result with `taxonomy_version` (v2); old clients send only a legacy guess (clamped, version 0, with a product-name fallback when the guess is missing/`Other`). Tests: `pnpm test`
 - Dedicated filter bar: store + category multi-select and sort (mobile "Filters" pill)
 - Live trial-usage banner (X of 5 items + progress bar)
 
