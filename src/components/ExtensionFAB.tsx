@@ -114,14 +114,27 @@ export default function ExtensionFAB() {
               <span className="extension-fab-panel-desc">Get the official extension to add products directly from store pages</span>
             </div>
           </div>
-          <a
-            href={EXTENSION_URLS[browser]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="extension-fab-download"
-          >
-            Download
-          </a>
+          {/* L9: no dead '#' links — browsers without a published build get a
+              disabled state. Publish SHA-256 hashes alongside release
+              artifacts so downloads are verifiable. */}
+          {EXTENSION_URLS[browser] === '#' ? (
+            <span
+              className="extension-fab-download extension-fab-download-disabled"
+              aria-disabled="true"
+              title="Extension coming soon for this browser"
+            >
+              Coming soon
+            </span>
+          ) : (
+            <a
+              href={EXTENSION_URLS[browser]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="extension-fab-download"
+            >
+              Download
+            </a>
+          )}
         </div>
       )}
       <button

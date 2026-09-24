@@ -1,17 +1,31 @@
 import { useState, useEffect } from 'react';
 
-function extensionSignalReceived() {
+// L8: strong signals are deliberate extension handshakes (any one suffices).
+// Weak signals are heuristics any page can trip (Chromium UA, loose class
+// substring) — require at least two independent weak hits.
+function strongSignalReceived() {
   const checks = [
     () => window.__SIFT_EXTENSION_INSTALLED,
     () => document.querySelector('meta[name="sift-extension"]')?.getAttribute('content') === 'installed',
     () => document.querySelector('[data-sift-extension]'),
     () => document.getElementById('sift-extension-root'),
+  ];
+  return checks.some(fn => !!fn());
+}
+
+function weakSignalCount() {
+  const checks = [
     () => document.querySelector('[class*="sift-"], [id*="sift-"]'),
     () => {
       try { return window.chrome?.runtime?.id; } catch { return false; }
     },
   ];
-  return checks.some(fn => !!fn());
+  return checks.filter(fn => !!fn()).length;
+}
+
+function extensionSignalReceived() {
+  if (strongSignalReceived()) return true;
+  return weakSignalCount() >= 2;
 }
 
 export function useExtensionInstalled() {

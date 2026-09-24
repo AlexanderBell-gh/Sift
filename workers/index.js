@@ -62,6 +62,12 @@ function isValidEmail(email) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
 
+// L4: UK-only catalogue — GBP is the sole accepted currency. Coerce client
+// prefs and extension-scraped values; never store anything else.
+function normalizeCurrency(value) {
+  return typeof value === 'string' && value.trim().toUpperCase() === 'GBP' ? 'GBP' : 'GBP';
+}
+
 function generateId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
@@ -314,7 +320,7 @@ async function handleRequest(request, env) {
         trialExpiresAt: null,
         searchCount: 0,
         preferences: {
-          currency: body.currency || 'USD',
+          currency: normalizeCurrency(body.currency),
           defaultStore: body.defaultStore || null,
         },
         createdAt: new Date().toISOString(),
@@ -356,9 +362,11 @@ async function handleRequest(request, env) {
       if (!adminSecret || !env.ADMIN_SECRET) {
         return errorResponse('Invalid admin secret', request, 403);
       }
+      // L1: compare SHA-256 digests (fixed length) so a wrong-length guess
+      // reveals nothing about the real secret's length.
       const secretMatch = safeEqual(
-        new TextEncoder().encode(adminSecret),
-        new TextEncoder().encode(env.ADMIN_SECRET)
+        new TextEncoder().encode(await sha256Hex(adminSecret)),
+        new TextEncoder().encode(await sha256Hex(env.ADMIN_SECRET))
       );
       if (!secretMatch) {
         return errorResponse('Invalid admin secret', request, 403);
@@ -392,7 +400,7 @@ async function handleRequest(request, env) {
         isTrial: false,
         searchCount: 0,
         preferences: {
-          currency: body.currency || 'USD',
+          currency: normalizeCurrency(body.currency),
           defaultStore: body.defaultStore || null,
         },
         createdAt: new Date().toISOString(),
@@ -492,7 +500,7 @@ async function handleRequest(request, env) {
         role: 'user',
         isTrial: true,
         trialExpiresAt,
-        preferences: { currency: 'USD', defaultStore: null },
+        preferences: { currency: 'GBP', defaultStore: null },
         createdAt: new Date().toISOString(),
       };
 
@@ -540,7 +548,7 @@ async function handleRequest(request, env) {
         [generateId('pr'), user.id, await hashPassword(token), await sha256Hex(token), Date.now() + 10 * 60 * 1000, Date.now()]
       );
 
-      console.log(`Password reset requested for ${user.email}`);
+      console.log(`Password reset requested for user ${user.id}`);
       return jsonResponse({ token, expiresInMinutes: 10 }, request);
     } catch (e) {
       console.error('Forgot password error:', e);
@@ -691,6 +699,7 @@ async function handleRequest(request, env) {
 
         if (body.preferences) {
           user.preferences = { ...user.preferences, ...body.preferences };
+          user.preferences.currency = normalizeCurrency(user.preferences.currency);
         }
 
         if (body.currentPassword && body.newPassword) {
@@ -1270,7 +1279,7 @@ async function handleRequest(request, env) {
           result.prices?.normal ?? null,
           result.prices?.loyalty ?? null,
           result.prices?.unit_price ?? null,
-          result.prices?.currency || 'GBP',
+          normalizeCurrency(result.prices?.currency),
           result.loyalty_type || null,
           normalizeDateString(result.offer_expires_at),
           result.offer_deal || null,
