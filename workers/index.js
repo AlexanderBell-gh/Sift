@@ -1232,9 +1232,8 @@ async function handleRequest(request, env) {
       const id = `wl_${now}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Category: worker owns taxonomy. New extensions send category_signals
-      // (scored here); old ones send only a legacy guess (clamped, version 0).
-      // Legacy rows and title-only backfill keep version 0 and are never
-      // forced into a possibly-wrong category.
+      // (scored here); old ones send only a legacy guess (clamped, version 0,
+      // with a name-scored fallback when the guess is missing/Other).
       let finalCategory;
       let taxonomyVersion;
       const categorySignals = result.category_signals;
@@ -1259,8 +1258,20 @@ async function handleRequest(request, env) {
           }));
         }
       } else {
+        // Legacy rows and title-only backfill keep version 0 and are never
+        // forced into a possibly-wrong category — except when the legacy
+        // guess is missing/Other: then the product name alone is scored and
+        // adopted only for a non-Other winner (Tesco loose Bananas case,
+        // 24-09-2026). Genuine unknowns still land Other.
         finalCategory = clampLegacyCategory(result.category);
         taxonomyVersion = 0;
+        if ((!result.category || finalCategory === 'Other') && result.name) {
+          const nameScored = scoreCategory({ title: result.name });
+          if (nameScored.category && nameScored.category !== 'Other') {
+            finalCategory = nameScored.category;
+            taxonomyVersion = nameScored.taxonomy_version;
+          }
+        }
       }
 
       await execute(

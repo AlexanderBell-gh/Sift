@@ -277,6 +277,34 @@ describe('v2 protein + storage (title-first for crumb-less stores)', () => {
     assert.equal(r.category, 'Chilled');
     assert.equal(r.reason, 'breadcrumb');
   });
+
+  it('Huel High Protein Noodles title-only -> Food Cupboard (claim is marketing, not freshness)', () => {
+    const r = scoreCategory(signals({
+      title: 'Huel Black Edition Spicy Korean Noodles High Protein Noodles 102g',
+      brand: 'Huel',
+    }));
+    assert.equal(r.category, 'Food Cupboard');
+    assert.equal(r.taxonomy_version, TAXONOMY_VERSION);
+  });
+
+  it('bare High Protein leaf -> Chilled via aisle alias (term-removal backstop)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Fresh Food', 'High Protein'],
+      breadcrumb_leaf: 'High Protein',
+      title: 'Protein Bar 60g',
+      store_id: 'tesco',
+    }));
+    assert.equal(r.category, 'Chilled');
+    assert.equal(r.reason, 'breadcrumb');
+  });
+
+  it('Bananas title-only -> Produce (Tesco loose fruit case)', () => {
+    const r = scoreCategory(signals({
+      title: 'Tesco Bananas 5 Pack',
+      store_id: 'tesco',
+    }));
+    assert.equal(r.category, 'Produce');
+  });
 });
 
 describe('clampLegacyCategory (old extensions without signals)', () => {

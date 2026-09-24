@@ -43,7 +43,12 @@ const AISLE_TERMS = {
     'chicken', 'chicken breast', 'poultry', 'turkey', 'duck', 'beef',
     'pork', 'lamb', 'mince', 'steak', 'meatballs', 'kebab', 'shawarma',
     'prawn', 'prawns', 'shrimp', 'salmon', 'trout', 'salmon, tuna & trout',
-    'ready meal', 'ready meals', 'high protein', 'grain bowl',
+    'ready meal', 'ready meals', 'grain bowl',
+    // NOTE: 'high protein' deliberately absent (removed 24-09-2026). As a
+    // title claim it is marketing, not freshness (Huel noodles scored
+    // Chilled on the claim alone). Real chilled high-protein aisles are
+    // covered by 'ready meal'/'grain bowl' plus the STORE_AISLE_ALIASES
+    // 'high protein' leaf backstop below.
   ],
   Snacks: [
     'snacks', 'crisps', 'chocolate', 'cookies', 'cookie', 'biscuits',
@@ -72,22 +77,27 @@ const AISLE_TERMS = {
     'food cupboard', 'cereals', 'cereal', 'flapjack', 'flapjacks', 'oat',
     'oats', 'oat boosts', 'granola', 'muesli', 'porridge', 'pasta', 'rice',
     'flour', 'sugar', 'soup', 'stock', 'sauce', 'sauces', 'ketchup',
-    'beans', 'lentils', 'couscous', 'noodles', 'tins', 'canned',
+    'beans', 'lentils', 'couscous', 'noodle', 'noodles', 'tins', 'canned',
   ],
   Other: [],
 };
 
-// Flavour/ingredient words stripped from titles before scoring. A blueberry
-// flapjack is not chilled produce; modifiers alone must never decide.
-// v2 also strips carb/veg side ingredients in the title path so a protein plus
-// a side (chicken noodles, shawarma sweet potato) scores on the protein. The
-// crumb path keeps them, so plain noodles still land in Food Cupboard.
+// Flavour/ingredient words always stripped from titles before scoring. A
+// blueberry flapjack is not chilled produce; modifiers alone must never
+// decide. Carb staples are NOT in this set: they strip only when real meat
+// is present (see STAPLE_CARBS below), so meat-free noodles/pasta can still
+// score Food Cupboard while 'chicken noodles' scores on the protein.
 const TITLE_MODIFIERS = new Set([
   'berry', 'berries', 'blueberry', 'blueberries', 'strawberry',
   'strawberries', 'raspberry', 'raspberries', 'blackberry', 'blackberries',
   'lemon', 'lime', 'toffee', 'vanilla', 'caramel',
-  'noodles', 'noodle', 'pasta', 'rice', 'potato', 'potatoes', 'grains',
+  'potato', 'potatoes', 'grains',
 ]);
+
+// Staple carbs: stripped from the title path only when the product carries
+// real meat (chicken noodles -> protein wins). Without meat they stay and
+// score Food Cupboard (Huel High Protein Noodles -> cupboard, 24-09-2026).
+const STAPLE_CARBS = new Set(['noodles', 'noodle', 'pasta', 'rice']);
 
 // Personal-care and household markers force Other before scoring.
 const NON_FOOD_SIGNALS = [
@@ -119,11 +129,22 @@ const FRESH_PROTEIN_MARKERS = [
 
 // Ambient meal exemptions: protein-adjacent words marking shelf-stable goods.
 // Block the fresh-protein veto so soups, stocks and flavour-only snacks stay
-// out of Chilled.
+// out of Chilled. Staple carbs (noodles/pasta) included: a shelf-stable
+// instant-noodle pot carrying a 'high protein' marketing claim must not
+// confirm Chilled (Huel Black Edition case, 24-09-2026).
 const AMBIENT_MEAL_EXEMPTIONS = [
   'soup', 'stock', 'crisps', 'flavour', 'flavor', 'tinned', 'canned',
   'long life', 'uht', 'baby food',
+  'noodle', 'noodles', 'pasta',
 ];
+
+// Real-meat markers for the staple-strip decision. Claim phrases ('high
+// protein', 'ready meal', 'grain bowl') are excluded: a marketing claim is
+// not meat, and must not trigger the strip (else Huel noodles lose their
+// only cupboard signal).
+const MEAT_MARKERS = FRESH_PROTEIN_MARKERS.filter(
+  (m) => !['high protein', 'ready meal', 'ready meals', 'grain bowl'].includes(m)
+);
 
 // Storage keep-condition markers (v2 Option A, extension `storage_text`).
 // Kept strict: 'suitable for freezing' is deliberately absent (fresh meat
@@ -147,6 +168,12 @@ const STORE_AISLE_ALIASES = [
   { store: 'sainsburys', leaf: 'flapjacks', category: 'Food Cupboard' },
   { store: 'asda', leaf: 'flapjacks', category: 'Food Cupboard' },
   { store: 'morrisons', leaf: 'flapjacks', category: 'Food Cupboard' },
+  // Bare 'High Protein' aisle is chilled floor space (backstop for the
+  // 'high protein' term removal, 24-09-2026).
+  { store: 'tesco', leaf: 'high protein', category: 'Chilled' },
+  { store: 'sainsburys', leaf: 'high protein', category: 'Chilled' },
+  { store: 'asda', leaf: 'high protein', category: 'Chilled' },
+  { store: 'morrisons', leaf: 'high protein', category: 'Chilled' },
 ];
 
 // Brand defaults. Empty by design: the locked Graze flapjack cases land in
@@ -185,10 +212,12 @@ function blankScores() {
 
 // Score one text against AISLE_TERMS at the given weight. Phrases match on
 // the full token stream; single tokens match exactly, else substring.
-function scoreText(text, weight, stripModifiers) {
+// stripStaples=false keeps staple carbs (meat-free title path).
+function scoreText(text, weight, stripModifiers, stripStaples = true) {
   const scores = blankScores();
   let tokens = tokenize(text);
   if (stripModifiers) tokens = tokens.filter((t) => !TITLE_MODIFIERS.has(t));
+  if (stripModifiers && stripStaples) tokens = tokens.filter((t) => !STAPLE_CARBS.has(t));
   if (tokens.length === 0 || weight === 0) return scores;
   const joined = tokens.join(' ');
 
@@ -304,11 +333,11 @@ export function scoreCategory(signals = {}) {
   if (proteinConfirm) crumbScores.Chilled += PROTEIN_CONFIRM_POINTS;
   if (storageChilled) crumbScores.Chilled += STORAGE_CHILLED_POINTS;
 
-  // Small alias table: exact leaf match adds leaf-weight points.
+  // Small alias table: exact leaf match is a confident aisle signal.
   const leafNorm = leaf.toLowerCase();
   for (const alias of STORE_AISLE_ALIASES) {
     if (alias.leaf === leafNorm && (!alias.store || store.includes(alias.store))) {
-      crumbScores[alias.category] += TOKEN_POINTS * LEAF_WEIGHT;
+      crumbScores[alias.category] += PHRASE_POINTS * LEAF_WEIGHT;
     }
   }
 
@@ -324,9 +353,13 @@ export function scoreCategory(signals = {}) {
     };
   }
 
-  // Weak or absent breadcrumb: title decides at full weight.
+  // Weak or absent breadcrumb: title decides at full weight. Staple carbs
+  // survive only without real meat (Huel noodles keep them, chicken
+  // noodles strip to the protein).
   const totals = { ...crumbScores };
-  addScores(totals, scoreText(title, 1, true));
+  const titleTokens = tokenize(title);
+  const hasMeat = hasMarker(titleTokens, titleTokens.join(' '), MEAT_MARKERS);
+  addScores(totals, scoreText(title, 1, true, hasMeat));
 
   // Brand defaults apply only when the breadcrumb is weak (never override it).
   const brand = String(signals.brand || '').toLowerCase();
