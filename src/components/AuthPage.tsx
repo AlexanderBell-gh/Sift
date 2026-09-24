@@ -84,8 +84,10 @@ export default function AuthPage() {
     e.preventDefault();
     const dir = e.key === 'ArrowRight' ? 1 : -1;
     const next = (index + dir + tabs.length) % tabs.length;
-    handleTabChange(tabs[next].key);
-    document.getElementById(`auth-tab-${tabs[next].key}`)?.focus();
+    const tab = tabs[next];
+    if (!tab) return;
+    handleTabChange(tab.key);
+    document.getElementById(`auth-tab-${tab.key}`)?.focus();
   }
 
   const handleGoogleResponse = useCallback(async (response: { credential: string }) => {

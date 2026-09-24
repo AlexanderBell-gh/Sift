@@ -49,9 +49,10 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
   }, []);
 
   useEffect(() => {
-    if (!user?.isTrial || !user.trialExpiresAt) return;
+    if (!user?.isTrial || user.trialExpiresAt == null) return;
+    const expiresAt: number = user.trialExpiresAt;
     function tick() {
-      setTrialCountdown(formatTrialTime(user!.trialExpiresAt!));
+      setTrialCountdown(formatTrialTime(expiresAt));
     }
     tick();
     const id = setInterval(tick, 1000);

@@ -29,14 +29,15 @@ function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
   }
 
   function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
-    startX.current = e.touches[0].clientX;
+    startX.current = e.touches[0]?.clientX ?? null;
     offset.current = 0;
   }
 
   function handleTouchMove(e: TouchEvent<HTMLDivElement>) {
     const el = ref.current;
-    if (el && startX.current !== null) {
-      offset.current = e.touches[0].clientX - startX.current;
+    const touch = e.touches[0];
+    if (el && startX.current !== null && touch) {
+      offset.current = touch.clientX - startX.current;
       if (offset.current < 0) {
         el.style.transition = 'none';
         el.style.transform = `translateX(${Math.max(offset.current, -100)}px)`;

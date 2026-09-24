@@ -158,9 +158,11 @@ export default function SearchPage() {
     if (e.key === 'Enter' && activeIndex >= 0) {
       e.preventDefault();
       if (suggestionsOpen) {
-        selectSuggestion(autocompleteProducts[activeIndex].name);
+        const product = autocompleteProducts[activeIndex];
+        if (product) selectSuggestion(product.name);
       } else if (historyOpen) {
-        selectHistory(history[activeIndex]);
+        const entry = history[activeIndex];
+        if (entry !== undefined) selectHistory(entry);
       }
     }
   }

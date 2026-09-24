@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import { Search } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
@@ -9,10 +9,12 @@ import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyC
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import WatchlistFilters from './WatchlistFilters';
+import WatchlistSkeletonCard from './WatchlistSkeletonCard';
 import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 
 const ALL_STORES = STORES.map(s => s.name);
 const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard', 'Other'];
+const PAGE_SIZE = 12;
 
 export default function WatchlistPage() {
   const { token, user } = useAuth();
@@ -68,6 +70,55 @@ export default function WatchlistPage() {
     return Array.from(map.values());
   }, [filtered]);
 
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const pendingRef = useRef(false);
+  const timerRef = useRef<number | undefined>(undefined);
+
+  const hasMore = visibleCount < products.length;
+  const visibleProducts = useMemo(() => products.slice(0, visibleCount), [products, visibleCount]);
+  const moreCount = Math.min(PAGE_SIZE, products.length - visibleCount);
+
+  function resetPaging() {
+    if (timerRef.current !== undefined) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = undefined;
+    }
+    pendingRef.current = false;
+    setLoadingMore(false);
+    setVisibleCount(PAGE_SIZE);
+  }
+
+  function handleFilterReset() {
+    resetPaging();
+    window.scrollTo(0, 0);
+  }
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !pendingRef.current) {
+          pendingRef.current = true;
+          setLoadingMore(true);
+          timerRef.current = window.setTimeout(() => {
+            setVisibleCount((c) => Math.min(c + PAGE_SIZE, products.length));
+            setLoadingMore(false);
+            pendingRef.current = false;
+          }, 1000);
+        }
+      },
+      { rootMargin: '600px' }
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(timerRef.current);
+    };
+  }, [hasMore, products.length]);
+
   const isTrial = user?.isTrial === true;
   const watchlistLimit = 5;
   const usedCount = useMemo(() => new Set(items.map(i => i.product_id)).size, [items]);
@@ -93,11 +144,11 @@ export default function WatchlistPage() {
 
       <WatchlistFilters
         selectedStores={selectedStores}
-        onStoresChange={setSelectedStores}
+        onStoresChange={(v) => { setSelectedStores(v); handleFilterReset(); }}
         selectedCategories={selectedCategories}
-        onCategoriesChange={setSelectedCategories}
+        onCategoriesChange={(v) => { setSelectedCategories(v); handleFilterReset(); }}
         sortBy={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={(v) => { setSortBy(v); handleFilterReset(); }}
       />
 
       <section className="watchlist-hero">
@@ -134,20 +185,8 @@ export default function WatchlistPage() {
 
         {loading && (
           <div className="products-grid">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="product-card animate-pulse">
-                <div className="product-card-top">
-                  <div className="product-card-logo">
-                    <div className="skeleton skeleton-circle" />
-                  </div>
-                </div>
-                <div className="product-card-bottom">
-                  <div className="skeleton skeleton-line-sm" />
-                  <div className="skeleton skeleton-line" />
-                  <div className="skeleton skeleton-line-lg" />
-                  <div className="skeleton skeleton-line-sm" />
-                </div>
-              </div>
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              <WatchlistSkeletonCard key={i} />
             ))}
           </div>
         )}
@@ -190,11 +229,12 @@ export default function WatchlistPage() {
 
         {!loading && products.length > 0 && (
           <div className="products-grid">
-            {products.map(group => {
+            {visibleProducts.map(group => {
               const product = group[0];
               const lastUpdated = Math.max(...group.map(i => i.updated_at));
               const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
               const best = sorted[0];
+              if (!product || !best) return null;
 
               const cardContent = (
                 <>
@@ -297,6 +337,22 @@ export default function WatchlistPage() {
               );
             })}
           </div>
+        )}
+
+        {!loading && products.length > 0 && hasMore && (
+          <div ref={sentinelRef} role="status" aria-live="polite" aria-label={loadingMore ? 'Loading more items' : undefined}>
+            {loadingMore && (
+              <div className="products-grid">
+                {Array.from({ length: moreCount }).map((_, i) => (
+                  <WatchlistSkeletonCard key={`more-${i}`} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!loading && !hasMore && products.length > PAGE_SIZE && (
+          <p className="text-sm text-muted watchlist-count">Showing all {products.length} products</p>
         )}
       </div>
     </div>
