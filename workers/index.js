@@ -13,6 +13,7 @@ import {
   saveUser,
   deleteUser,
   base64UrlToArrayBuffer,
+  base64UrlDecode,
 } from './auth.js';
 import { queryAll, queryOne, execute } from './db.js';
 import { scoreCategory, clampLegacyCategory } from './lib/category.js';
@@ -28,9 +29,12 @@ const ALLOWED_ORIGINS = [
 
 function buildCorsHeaders(request) {
   const origin = request?.headers?.get('Origin') || '';
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  // No CORS headers for disallowed or missing origins (same-origin and
+  // non-browser callers do not need them). No Allow-Credentials: the
+  // frontend authenticates with Bearer tokens, never cross-origin cookies.
+  if (!ALLOWED_ORIGINS.includes(origin)) return {};
   return {
-    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
@@ -42,6 +46,7 @@ function jsonResponse(data, request = null, status = 200) {
     status,
     headers: {
       'Content-Type': 'application/json',
+      'Vary': 'Origin',
       ...buildCorsHeaders(request),
     },
   });
@@ -118,20 +123,7 @@ async function logAudit(env, entry) {
   );
 }
 
-async function ensureRateLimitTable(env) {
-  await execute(
-    env,
-    `CREATE TABLE IF NOT EXISTS rate_limits (
-       key TEXT PRIMARY KEY,
-       count INTEGER NOT NULL,
-       reset_at INTEGER NOT NULL
-     )`
-  );
-  await execute(env, 'CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at)');
-}
-
 async function checkRateLimit(env, key, max, windowMs) {
-  await ensureRateLimitTable(env);
   const now = Date.now();
   const resetAt = now + windowMs;
   const row = await queryOne(
@@ -221,13 +213,20 @@ async function verifyGoogleIdToken(idToken, clientId) {
 
     const [headerB64, payloadB64, sigB64] = parts;
 
-    const header = JSON.parse(atob(headerB64));
+    const header = JSON.parse(base64UrlDecode(headerB64));
     const kid = header.kid;
     if (!kid) return null;
 
-    const keys = await getGooglePublicKeys();
-    const jwk = keys.find(k => k.kid === kid);
-    if (!jwk) return null;
+    // Refresh once on unknown kid so a Google key rotation during the
+    // 24h cache window does not lock out logins.
+    let keys = await getGooglePublicKeys();
+    let jwk = keys.find(k => k.kid === kid);
+    if (!jwk) {
+      googleCertsCache = null;
+      keys = await getGooglePublicKeys();
+      jwk = keys.find(k => k.kid === kid);
+      if (!jwk) return null;
+    }
 
     const key = await crypto.subtle.importKey(
       'jwk',
@@ -249,11 +248,15 @@ async function verifyGoogleIdToken(idToken, clientId) {
 
     if (!valid) return null;
 
-    const payload = JSON.parse(atob(payloadB64));
+    const payload = JSON.parse(base64UrlDecode(payloadB64));
 
-    if (payload.aud !== clientId) return null;
+    // Multi-audience tokens must name this client in azp (authorized party).
+    if (Array.isArray(payload.aud)) {
+      if (!payload.aud.includes(clientId) || payload.azp !== clientId) return null;
+    } else if (payload.aud !== clientId) return null;
     if (payload.iss !== 'https://accounts.google.com' && payload.iss !== 'accounts.google.com') return null;
-    if (payload.exp * 1000 < Date.now()) return null;
+    // 60s clock leeway for exp only; iat (if present) is not trusted for age.
+    if (payload.exp * 1000 < Date.now() - 60000) return null;
 
     return payload;
   } catch (e) {
@@ -817,8 +820,8 @@ async function handleRequest(request, env) {
     const admin = await requireAdmin(request, env);
     if (admin instanceof Response) return admin;
 
-    const page = parseInt(url.searchParams.get('page')) || 1;
-    const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit')) || 20));
     const search = url.searchParams.get('search')?.toLowerCase() || '';
     const filter = url.searchParams.get('filter') || 'users';
 
@@ -952,8 +955,8 @@ async function handleRequest(request, env) {
     const admin = await requireAdmin(request, env);
     if (admin instanceof Response) return admin;
 
-    const page = parseInt(url.searchParams.get('page')) || 1;
-    const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit')) || 20));
     const actionFilter = url.searchParams.get('action') || '';
     const search = url.searchParams.get('search')?.toLowerCase() || '';
     const startDate = url.searchParams.get('startDate');
@@ -999,8 +1002,8 @@ async function handleRequest(request, env) {
     const admin = await requireAdmin(request, env);
     if (admin instanceof Response) return admin;
 
-    const page = parseInt(url.searchParams.get('page')) || 1;
-    const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit')) || 20));
     const status = url.searchParams.get('status') || 'all';
     const search = url.searchParams.get('search')?.toLowerCase() || '';
 
@@ -1323,14 +1326,13 @@ async function handleRequest(request, env) {
 
     const itemId = watchlistItemMatch[1];
     try {
-      const row = await queryOne(
+      const row = await execute(
         env,
-        'SELECT id FROM watchlist WHERE id = ? AND user_id = ?',
+        'DELETE FROM watchlist WHERE id = ? AND user_id = ?',
         [itemId, auth.userId]
       );
-      if (!row) return errorResponse('Watchlist item not found', request, 404);
+      if (!row?.meta?.changes) return errorResponse('Watchlist item not found', request, 404);
 
-      await execute(env, 'DELETE FROM watchlist WHERE id = ?', [itemId]);
       return jsonResponse({ success: true }, request);
     } catch (e) {
       console.error('Watchlist DELETE error:', e);
@@ -1377,14 +1379,13 @@ async function handleRequest(request, env) {
 
     const alertId = path.split('/')[3];
     try {
-      const row = await queryOne(
+      const row = await execute(
         env,
-        'SELECT id FROM alerts WHERE id = ? AND user_id = ?',
+        'UPDATE alerts SET read = 1 WHERE id = ? AND user_id = ?',
         [alertId, auth.userId]
       );
-      if (!row) return errorResponse('Alert not found', request, 404);
+      if (!row?.meta?.changes) return errorResponse('Alert not found', request, 404);
 
-      await execute(env, 'UPDATE alerts SET read = 1 WHERE id = ?', [alertId]);
       return jsonResponse({ success: true }, request);
     } catch (e) {
       console.error('Alert read error:', e);
@@ -1398,14 +1399,13 @@ async function handleRequest(request, env) {
 
     const alertId = path.split('/')[3];
     try {
-      const row = await queryOne(
+      const row = await execute(
         env,
-        'SELECT id FROM alerts WHERE id = ? AND user_id = ?',
+        'DELETE FROM alerts WHERE id = ? AND user_id = ?',
         [alertId, auth.userId]
       );
-      if (!row) return errorResponse('Alert not found', request, 404);
+      if (!row?.meta?.changes) return errorResponse('Alert not found', request, 404);
 
-      await execute(env, 'DELETE FROM alerts WHERE id = ?', [alertId]);
       return jsonResponse({ success: true }, request);
     } catch (e) {
       console.error('Alert DELETE error:', e);
@@ -1431,6 +1431,9 @@ export default {
 };
 
 async function handleScheduled(env) {
+  // Prune expired rate-limit rows (table DDL lives in migrations/0007).
+  await execute(env, 'DELETE FROM rate_limits WHERE reset_at <= ?', [Date.now()]);
+
   const items = await queryAll(
     env,
     "SELECT * FROM watchlist WHERE offer_expires_at IS NOT NULL"

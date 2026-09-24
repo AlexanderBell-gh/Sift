@@ -281,4 +281,5 @@ export {
   saveUser,
   deleteUser,
   base64UrlToArrayBuffer,
+  base64UrlDecode,
 };
