@@ -9,10 +9,11 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 ### Search & Discovery
 - 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect
 - Local autocomplete via UK grocery product dictionary (~1600 items) + Fuse.js fuzzy search
-- Deals of the Day — random de-duplicated on-offer items from all users' watchlists, each with an Add to Watchlist button
+- Deals of the Day — random de-duplicated on-offer items from all users' watchlists. Signed-in users get an Add to Watchlist button per tile (spinner while adding → green "Added" check for 1.5s → greyed-out "Added" permanently); hidden for signed-out visitors
 
 ### Watchlist
 - Pin products to a personal watchlist with price tracking
+- Infinite scroll — 12 product cards per batch via `IntersectionObserver` (600px prefetch), skeleton cards while appending, filter/sort changes reset to the first batch and scroll to top
 - Worker-owned category taxonomy — `POST /api/watchlist` scores the extension's `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals) and stores the result with `taxonomy_version` (v2); old clients send only a legacy guess (clamped, version 0, with a product-name fallback when the guess is missing/`Other`). Tests: `pnpm test`
 - Dedicated filter bar: store + category multi-select and sort (mobile "Filters" pill)
 - Live trial-usage banner (X of 5 items + progress bar)
@@ -66,7 +67,7 @@ pnpm run build  # output → dist/
 pnpm test       # worker category scorer + input validators (node --test, no framework)
 ```
 
-**Automatic:** Push to `main` triggers GitHub Actions (lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
+**Automatic:** Push to `main` triggers GitHub Actions (audit → lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
 **Manual:**
 ```bash
 pnpm exec wrangler pages deploy dist --project-name=siftsearch
@@ -127,7 +128,7 @@ in `.env` for local dev. Production builds keep the pinned prod host in CSP
 1. Select up to 3 stores via multi-select dropdown (persisted in localStorage; starts empty on first visit — search stays disabled until at least one store is picked)
 2. Type query → autocomplete from local UK grocery dictionary (dairy, bakery, cupboard, frozen, meat/fish, produce, drinks) + all users' watchlist items (Fuse.js, debounced 150ms). Combobox with full keyboard support (ArrowUp/Down to highlight, Enter to pick, Escape to close); zero-hit queries show a "press Enter to search anyway" hint
 3. Press enter → opens each selected store's search URL in new tab (Search disabled until a query is entered **and** at least one store is selected)
-4. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists, each tile has an Add to Watchlist button (greyed out for trial users at the 5-item limit)
+4. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists; signed-in tiles carry an Add to Watchlist button (greyed out for trial users at the 5-item limit; spinner → green "Added" → greyed-out "Added" on success), hidden for signed-out visitors
 5. No backend search involved
 
 ## Product Tracking

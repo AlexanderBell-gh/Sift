@@ -28,10 +28,10 @@ rtk pnpm test             # node --test workers/lib/*.test.js (zero-dep, no fram
 
 ## Verify before committing
 
-The CI pipeline runs: **lint → build → deploy**. Match it locally:
+The CI pipeline runs: **audit → lint → build → deploy**. Match it locally:
 
 ```bash
-rtk pnpm run lint && pnpm run build
+rtk pnpm audit --audit-level=high && pnpm run lint && pnpm run build
 ```
 
 If either fails, the commit will break CI.
@@ -45,7 +45,7 @@ workers/migrations/   D1 SQL migrations (applied automatically on push to main)
 public/           Static assets — store logo SVGs, favicon, theme-init.js
 ```
 
-- Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /search, /watchlist, /admin, /settings)
+- Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /admin, /settings)
 - Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer) + `workers/lib/validate.js` (username/password allowlists) — both plain JS, both with `*.test.js` coverage
 - DB schema: `workers/schema.sql` — 6 tables (users, rate_limits, watchlist, alerts, audit_logs, password_resets)
 

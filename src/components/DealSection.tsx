@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
 import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../lib/api';
 import { getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
@@ -9,6 +10,8 @@ const TRIAL_LIMIT = 5;
 function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReached: boolean; onAdded: () => void }) {
   const { token } = useAuth();
   const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const [notice, setNotice] = useState<{ text: string; type: 'error' | 'info' } | null>(null);
 
   useEffect(() => {
@@ -17,11 +20,17 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
     return () => clearTimeout(timer);
   }, [notice]);
 
+  useEffect(() => {
+    if (!added) return;
+    const timer = setTimeout(() => {
+      setAdded(false);
+      setPinned(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [added]);
+
   function handleAddToWatchlist() {
-    if (!token) {
-      setNotice({ text: 'Sign in to add to watchlist', type: 'info' });
-      return;
-    }
+    if (!token) return;
     setAdding(true);
     setNotice(null);
     const result: SearchResult = {
@@ -40,7 +49,10 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
       is_on_offer: deal.is_on_offer,
     };
     addToWatchlist(token, result)
-      .then(onAdded)
+      .then(() => {
+        onAdded();
+        setAdded(true);
+      })
       .catch((err: unknown) => {
         if (err instanceof ApiError && (err.status === 403 || err.reason === 'watchlist_limit')) {
           setNotice({ text: 'Trial limit reached — upgrade to add more', type: 'error' });
@@ -111,14 +123,29 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
           )}
         </div>
       </a>
-      <button
-        onClick={handleAddToWatchlist}
-        disabled={adding || limitReached}
-        className="deal-watchlist-btn"
-        aria-label={`Add ${deal.product_name} to watchlist`}
-      >
-        {adding ? 'Adding...' : 'Add to watchlist'}
-      </button>
+      {token && (
+        <button
+          onClick={handleAddToWatchlist}
+          disabled={adding || added || pinned || limitReached}
+          aria-busy={adding}
+          className={`deal-watchlist-btn${added ? ' is-added' : pinned ? ' is-pinned' : ''}`}
+          aria-label={adding ? `Adding ${deal.product_name} to watchlist` : `Add ${deal.product_name} to watchlist`}
+        >
+          {adding ? (
+            <>
+              <Loader2 size={12} className="animate-spin" aria-hidden="true" />
+              Adding...
+            </>
+          ) : added || pinned ? (
+            <>
+              <Check size={12} aria-hidden="true" />
+              Added
+            </>
+          ) : (
+            'Add to watchlist'
+          )}
+        </button>
+      )}
       {notice && (
         <span className={`deal-watchlist-notice ${notice.type === 'error' ? 'danger-text' : 'text-muted'} text-xs`}>
           {notice.text}

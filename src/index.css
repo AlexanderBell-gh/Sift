@@ -562,10 +562,14 @@ body {
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 8px;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   transition: background-color 0.15s;
   font-family: var(--font-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .deal-watchlist-btn:hover {
@@ -588,6 +592,45 @@ body {
 .deal-watchlist-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.deal-watchlist-btn.is-added {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(22, 163, 74, 0.4);
+  opacity: 1;
+  cursor: default;
+}
+
+.deal-watchlist-btn.is-pinned {
+  background: var(--surface-hover);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deal-watchlist-btn.is-pinned svg path {
+  stroke-dashoffset: 0;
+}
+
+.deal-watchlist-btn.is-added svg path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: deal-check-draw 0.35s ease-out 0.05s forwards;
+}
+
+@keyframes deal-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-watchlist-btn.is-added svg path {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
 }
 
 .trial-limit-banner {
@@ -1820,6 +1863,11 @@ body {
 .product-card-loyalty-label.loyalty-mns {
   background: rgba(68, 65, 83, 0.12);
   color: #444153;
+}
+
+.dark .product-card-loyalty-label.loyalty-mns {
+  background: rgba(169, 164, 190, 0.18);
+  color: #A9A4BE;
 }
 
 .product-card-loyalty-label.loyalty-lidl {
