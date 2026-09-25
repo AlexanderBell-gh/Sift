@@ -45,7 +45,7 @@ workers/migrations/   D1 SQL migrations (applied automatically on push to main)
 public/           Static assets — store logo SVGs, favicon, theme-init.js
 ```
 
-- Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /admin, /settings)
+- Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /admin, /settings). `/` is conditional (`HomeRoute`): `SearchPage` when signed in, `LandingPage` (`src/components/LandingPage.tsx`) when guest
 - Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer) + `workers/lib/validate.js` (username/password allowlists) — both plain JS, both with `*.test.js` coverage
 - DB schema: `workers/schema.sql` — 6 tables (users, rate_limits, watchlist, alerts, audit_logs, password_resets)
 
@@ -60,6 +60,8 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 - **Trial gating** — max 5 watchlist items, 24h expiry, enforced server-side on `POST /api/watchlist`.
 - **Google OAuth** requires `VITE_GOOGLE_CLIENT_ID` (frontend env) and `GOOGLE_CLIENT_ID` (Worker secret). Both must match.
 - **`.env`** is gitignored. Use `.env.example` as template. Local dev needs `VITE_GOOGLE_CLIENT_ID`.
+- **Store logos have two sets** — `public/*_Logo.svg` (favicon-style marks for app chips/cards) vs `public/landing/` (wordmarks for the guest landing marquee). Don't mix them.
+- **ExtensionFAB hides for guests** (no token) and on `/auth`. Don't re-add it to guest surfaces.
 
 ## Discovering recent changes
 

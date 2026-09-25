@@ -20,7 +20,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ### Auth & Accounts
 - JWT + Google OAuth + username/password auth
-- Guest landing page — signed-out visitors get a marketing landing at `/` (hero, features, how-it-works, gated Search/Watchlist links → `/auth`); Search, Watchlist, deals, and autocomplete all require sign-in (`src/components/LandingPage.tsx`, conditional `/` route in `App.tsx`, plan in `LANDING.md`)
+- Guest landing page — signed-out visitors get a marketing landing at `/` (hero + faded store-mark marquee, features, how-it-works, CTA box with Sign In + Android-coming-soon placeholder; nav is logo/theme/Sign In only); Search, Watchlist, deals, and autocomplete all require sign-in, which lands on a greeting hero (`src/components/LandingPage.tsx`, conditional `/` route in `App.tsx`, plan in `LANDING.md`)
 - Self-service password recovery (no-email reset-token flow)
 - Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized, restricted to letters + numbers, 4–30 chars; passwords restricted to letters, numbers, dots and underscores, 8–128 chars with a letter and a number)
 - Trial gating — 24h / 5 watchlist items, enforced server-side
