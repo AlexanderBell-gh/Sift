@@ -7,8 +7,10 @@ import NavHeader from './NavHeader';
 import { StoreSelect, MAX_STORES } from './ui/StoreSelect';
 import { DealSection } from './DealSection';
 import { STORES } from '../lib/stores';
+import { useAuth } from '../contexts/auth-context';
 
 export default function SearchPage() {
+  const { token } = useAuth();
   const [query, setQuery] = useState('');
   const queryRef = useRef(query);
 
@@ -25,8 +27,13 @@ export default function SearchPage() {
   const [watchlistNames, setWatchlistNames] = useState<string[]>([]);
 
   useEffect(() => {
-    getAllWatchlistNames().then(setWatchlistNames).catch(() => {});
-  }, []);
+    if (!token) return;
+    let cancelled = false;
+    getAllWatchlistNames(token)
+      .then(names => { if (!cancelled) setWatchlistNames(names); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token]);
 
   const [selectedStores, setSelectedStores] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('sift-selected-stores');

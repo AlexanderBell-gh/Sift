@@ -130,13 +130,17 @@ export interface DealOffer {
   product_url: string;
 }
 
-export async function getDealOffers(): Promise<DealOffer[]> {
-  const response = await fetch(`${API_BASE}/api/deal-offers`);
+export async function getDealOffers(token: string): Promise<DealOffer[]> {
+  const response = await fetch(`${API_BASE}/api/deal-offers`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return handleResponse<DealOffer[]>(response);
 }
 
-export async function getAllWatchlistNames(): Promise<string[]> {
-  const response = await fetch(`${API_BASE}/api/watchlist-names`);
+export async function getAllWatchlistNames(token: string): Promise<string[]> {
+  const response = await fetch(`${API_BASE}/api/watchlist-names`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return handleResponse<string[]>(response);
 }
 
