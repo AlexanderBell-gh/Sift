@@ -164,13 +164,14 @@ export function DealSection() {
   const isTrial = !!user?.isTrial;
 
   useEffect(() => {
+    if (!token) return;
     let cancelled = false;
-    getDealOffers()
+    getDealOffers(token)
       .then(data => { if (!cancelled) setDeals(data); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (!isTrial || !token) return;

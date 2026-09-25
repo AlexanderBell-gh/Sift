@@ -7,8 +7,10 @@ import NavHeader from './NavHeader';
 import { StoreSelect, MAX_STORES } from './ui/StoreSelect';
 import { DealSection } from './DealSection';
 import { STORES } from '../lib/stores';
+import { useAuth } from '../contexts/auth-context';
 
 export default function SearchPage() {
+  const { token, user } = useAuth();
   const [query, setQuery] = useState('');
   const queryRef = useRef(query);
 
@@ -25,8 +27,13 @@ export default function SearchPage() {
   const [watchlistNames, setWatchlistNames] = useState<string[]>([]);
 
   useEffect(() => {
-    getAllWatchlistNames().then(setWatchlistNames).catch(() => {});
-  }, []);
+    if (!token) return;
+    let cancelled = false;
+    getAllWatchlistNames(token)
+      .then(names => { if (!cancelled) setWatchlistNames(names); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token]);
 
   const [selectedStores, setSelectedStores] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('sift-selected-stores');
@@ -167,17 +174,19 @@ export default function SearchPage() {
     }
   }
 
+  const hour = new Date().getHours();
+  const daypart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  const firstName = !user?.isTrial ? user?.username?.split(' ')[0] : undefined;
+  const greeting = `Good ${daypart}${firstName ? `, ${firstName}` : ''}`;
+
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <NavHeader />
 
       <section className="hero">
         <div className="container">
-          <h1>
-            Find and Track Offers
-            <span className="text-gradient block">In One Place</span>
-          </h1>
-          <p>Find the best grocery offers across 11 UK supermarkets</p>
+          <h1>{greeting}</h1>
+          <p>Pick up to 3 stores, search, and pin what you buy.</p>
 
           <div className="store-chips-wrapper">
             <StoreSelect

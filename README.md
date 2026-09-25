@@ -9,7 +9,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 ### Search & Discovery
 - 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect
 - Local autocomplete via UK grocery product dictionary (~1600 items) + Fuse.js fuzzy search
-- Deals of the Day — random de-duplicated on-offer items from all users' watchlists. Signed-in users get an Add to Watchlist button per tile (spinner while adding → green "Added" check for 1.5s → greyed-out "Added" permanently); hidden for signed-out visitors
+- Deals of the Day — random de-duplicated on-offer items from all users' watchlists. Signed-in users get an Add to Watchlist button per tile (spinner while adding → green "Added" check for 1.5s → greyed-out "Added" permanently); shown on Search only — guests see the landing page
 
 ### Watchlist
 - Pin products to a personal watchlist with price tracking
@@ -20,6 +20,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ### Auth & Accounts
 - JWT + Google OAuth + username/password auth
+- Guest landing page — signed-out visitors get a marketing landing at `/` (hero + faded store-mark marquee, features, how-it-works, CTA box with Sign In + Android-coming-soon placeholder; nav is logo/theme/Sign In only); Search, Watchlist, deals, and autocomplete all require sign-in, which lands on a greeting hero (`src/components/LandingPage.tsx`, conditional `/` route in `App.tsx`, plan in `LANDING.md`)
 - Self-service password recovery (no-email reset-token flow)
 - Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized, restricted to letters + numbers, 4–30 chars; passwords restricted to letters, numbers, dots and underscores, 8–128 chars with a letter and a number)
 - Trial gating — 24h / 5 watchlist items, enforced server-side
@@ -128,7 +129,7 @@ in `.env` for local dev. Production builds keep the pinned prod host in CSP
 1. Select up to 3 stores via multi-select dropdown (persisted in localStorage; starts empty on first visit — search stays disabled until at least one store is picked)
 2. Type query → autocomplete from local UK grocery dictionary (dairy, bakery, cupboard, frozen, meat/fish, produce, drinks) + all users' watchlist items (Fuse.js, debounced 150ms). Combobox with full keyboard support (ArrowUp/Down to highlight, Enter to pick, Escape to close); zero-hit queries show a "press Enter to search anyway" hint
 3. Press enter → opens each selected store's search URL in new tab (Search disabled until a query is entered **and** at least one store is selected)
-4. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists; signed-in tiles carry an Add to Watchlist button (greyed out for trial users at the 5-item limit; spinner → green "Added" → greyed-out "Added" on success), hidden for signed-out visitors
+4. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists; signed-in tiles carry an Add to Watchlist button (greyed out for trial users at the 5-item limit; spinner → green "Added" → greyed-out "Added" on success), on Search only (guests land on the landing page)
 5. No backend search involved
 
 ## Product Tracking

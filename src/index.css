@@ -822,6 +822,130 @@ body {
   }
 }
 
+/* Landing page (guest marketing) — DESIGN tokens only, no new values */
+.landing-hero-cta {
+  display: flex;
+  justify-content: center;
+}
+
+.landing-hero-cta .btn-primary {
+  width: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+  min-height: 44px;
+}
+
+.landing-cta-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.landing-cta-actions .btn-primary,
+.landing-cta-actions .btn-secondary {
+  width: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+  min-height: 44px;
+}
+
+.landing-section {
+  margin-top: 32px;
+}
+
+.landing-cta-section {
+  margin-top: 32px;
+  margin-bottom: 80px;
+}
+
+.landing-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.landing-card-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.metric-card--static {
+  gap: 12px;
+}
+
+.metric-card--static:hover {
+  border-color: var(--border);
+}
+
+.landing-cta-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.landing-cta-title {
+  margin-bottom: 8px;
+}
+
+.landing-cta-desc {
+  font-size: 16px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.landing-footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Landing store strip — faded ghost SVGs, slow scroll below hero */
+.stores-marquee {
+  overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 24px;
+}
+
+.stores-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: deals-scroll 90s linear infinite;
+  padding: 4px 0;
+  filter: grayscale(1);
+}
+
+.stores-track:hover {
+  animation-play-state: paused;
+}
+
+.stores-track img {
+  height: 41px;
+  width: auto;
+  flex-shrink: 0;
+  margin-right: 60px;
+  opacity: 0.35;
+}
+
+.dark .stores-track img {
+  opacity: 0.55;
+  filter: invert(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stores-track {
+    animation: none;
+  }
+}
+
 .store-chips-wrapper {
   max-width: 750px;
   margin: 0 auto 20px;

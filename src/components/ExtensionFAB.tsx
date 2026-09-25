@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/auth-context';
 import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 import { useBrowser } from '../hooks/useBrowser';
 import { ChromeIcon, FirefoxIcon, EdgeIcon, OtherIcon } from './ui/BrowserIcons';
@@ -25,6 +26,7 @@ type FabState = 'hidden' | 'visible' | 'dismissing';
 
 export default function ExtensionFAB() {
   const location = useLocation();
+  const { token } = useAuth();
   const { installed } = useExtensionInstalled();
   const { browser } = useBrowser();
   const [fabState, setFabState] = useState<FabState>('hidden');
@@ -36,13 +38,14 @@ export default function ExtensionFAB() {
   const BrowserIcon = BROWSER_ICONS[browser];
 
   const isAuthPage = location.pathname === '/auth';
+  const isGuest = !token;
 
   useEffect(() => {
-    if (!installed && fabState === 'hidden' && !isAuthPage) {
+    if (!installed && fabState === 'hidden' && !isAuthPage && !isGuest) {
       const timer = setTimeout(() => setFabState('visible'), 800);
       return () => clearTimeout(timer);
     }
-  }, [installed, fabState, isAuthPage]);
+  }, [installed, fabState, isAuthPage, isGuest]);
 
   useEffect(() => {
     if (fabState === 'visible' && !localStorage.getItem(TOOLTIP_KEY)) {
@@ -76,7 +79,7 @@ export default function ExtensionFAB() {
     setTooltipVisible(false);
   }
 
-  if (fabState === 'hidden' || isAuthPage) return null;
+  if (fabState === 'hidden' || isAuthPage || isGuest) return null;
 
   return (
     <div

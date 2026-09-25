@@ -1087,6 +1087,8 @@ async function handleRequest(request, env) {
 
   if (path === '/api/watchlist-names' && method === 'GET') {
     try {
+      const auth = await requireAuth(request, env);
+      if (!auth?.userId) return auth;
       const rows = await queryAll(
         env,
         "SELECT DISTINCT product_name FROM watchlist WHERE product_name IS NOT NULL AND product_name != ''"
@@ -1100,6 +1102,8 @@ async function handleRequest(request, env) {
 
   if (path === '/api/deal-offers' && method === 'GET') {
     try {
+      const auth = await requireAuth(request, env);
+      if (!auth?.userId) return auth;
        const rows = await queryAll(
          env,
          `SELECT product_id, product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, loyalty_type, category, is_on_offer, offer_expires_at, offer_deal, product_url
