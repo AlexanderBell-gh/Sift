@@ -1397,6 +1397,23 @@ async function handleRequest(request, env) {
     }
   }
 
+  if (path === '/api/alerts/read-all' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    try {
+      const row = await execute(
+        env,
+        'UPDATE alerts SET read = 1 WHERE user_id = ? AND read = 0',
+        [auth.userId]
+      );
+      return jsonResponse({ success: true, marked: row?.meta?.changes ?? 0 }, request);
+    } catch (e) {
+      console.error('Alerts read-all error:', e);
+      return errorResponse('Failed to mark alerts as read', request);
+    }
+  }
+
   if (path.match(/^\/api\/alerts\/.+\/read$/) && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (!auth?.userId) return auth;

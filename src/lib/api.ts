@@ -190,6 +190,14 @@ export async function markAlertRead(token: string, id: string): Promise<void> {
   return handleResponse(response);
 }
 
+export async function markAllAlertsRead(token: string): Promise<{ marked: number }> {
+  const response = await fetch(`${API_BASE}/api/alerts/read-all`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
 export async function deleteAlert(token: string, id: string): Promise<void> {
   const response = await fetch(`${API_BASE}/api/alerts/${id}`, {
     method: 'DELETE',

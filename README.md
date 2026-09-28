@@ -7,7 +7,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 ## Features
 
 ### Search & Discovery
-- 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect
+- 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect (bottom-sheet picker on mobile)
 - Local autocomplete via UK grocery product dictionary (~1600 items) + Fuse.js fuzzy search
 - Deals of the Day — random de-duplicated on-offer items from all users' watchlists. Signed-in users get an Add to Watchlist button per tile (spinner while adding → green "Added" check for 1.5s → greyed-out "Added" permanently); shown on Search only — guests see the landing page
 
@@ -28,7 +28,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 - Extension SSO — website broadcasts token to extension via postMessage on login/logout, eliminating double sign-in
 
 ### Alerts & Cron
-- Price alerts and offer-expiry notifications via bell icon
+- Price alerts and offer-expiry notifications via bell icon (mark-all-read, swipe-to-dismiss + bottom sheet on mobile)
 - Cron offer-expiry check (6am UTC)
 
 ### Admin

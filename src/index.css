@@ -1719,6 +1719,9 @@ body {
   font-weight: 700;
   padding: 0 4px;
 }
+.alerts-backdrop {
+  display: none;
+}
 .alerts-dropdown {
   position: absolute;
   right: 0;
@@ -1732,14 +1735,22 @@ body {
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   z-index: 50;
+  animation: filter-panel-in 180ms var(--ease-smooth);
 }
 
 .alerts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 12px;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
+}
+
+.alerts-swipe-hint {
+  display: none;
 }
 
 .alerts-empty {
@@ -1759,6 +1770,7 @@ body {
   overflow: hidden;
   touch-action: pan-y;
   transition: background 150ms ease;
+  background: var(--surface);
 }
 
 .alert-item:hover {
@@ -1766,7 +1778,23 @@ body {
 }
 
 .alert-item.unread {
-  background: rgba(255, 87, 1, 0.05);
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+}
+
+.alert-swipe {
+  position: relative;
+  overflow: hidden;
+}
+
+.alert-swipe-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 16px;
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--danger);
 }
 
 .alert-body {
@@ -1837,6 +1865,9 @@ body {
 }
 @media (max-width: 640px) {
   .products-grid { grid-template-columns: 1fr; }
+  .product-card-bottom > p:last-child {
+    display: none;
+  }
 }
 
 .product-card {
@@ -1889,11 +1920,6 @@ body {
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  opacity: 0;
-}
-
-.product-card:hover .product-card-remove {
-  opacity: 1;
 }
 
 .product-card-remove:hover {
@@ -3796,12 +3822,36 @@ body {
 @media (max-width: 640px) {
   .alerts-dropdown {
     position: fixed;
-    top: 64px;
-    right: 16px;
-    left: 16px;
-    width: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
     margin-top: 0;
-    max-height: 60vh;
+    max-height: 80vh;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    z-index: 111;
+    animation: sheet-slide-up 250ms var(--ease-smooth);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .alerts-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 110;
+    animation: fade-in 150ms var(--ease-smooth);
+  }
+
+  .alerts-swipe-hint {
+    display: block;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 8px 12px 0;
   }
 
   .nav-links {
