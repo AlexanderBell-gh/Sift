@@ -2509,13 +2509,9 @@ body {
 .shoplist-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   margin-bottom: 24px;
-}
-
-.shoplist-head .page-title {
-  margin: 0;
 }
 
 .shoplist-clear {
@@ -2696,14 +2692,51 @@ body {
 }
 
 @media (max-width: 640px) {
-  .shoplist-line {
+  .shoplist-summary {
+    padding: 16px;
+  }
+
+  .shoplist-store-head {
     flex-wrap: wrap;
-    gap: 12px;
+  }
+
+  .shoplist-line {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    grid-template-areas:
+      "thumb info total"
+      "thumb qty qty";
+    gap: 4px 12px;
+    padding: 16px;
+  }
+
+  .shoplist-thumb,
+  .shoplist-thumb-fallback {
+    grid-area: thumb;
+    width: 48px;
+    height: 48px;
+  }
+
+  .shoplist-info {
+    grid-area: info;
+  }
+
+  .shoplist-qty {
+    grid-area: qty;
+    justify-self: start;
+    margin-top: 8px;
+  }
+
+  .qty-btn {
+    width: 44px;
+    height: 44px;
   }
 
   .shoplist-line-total {
+    grid-area: total;
+    align-self: start;
     min-width: 0;
-    text-align: left;
+    text-align: right;
   }
 }
 

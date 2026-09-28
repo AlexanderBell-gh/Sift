@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../lib/api';
 import { isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 import { lineTotal, lineSavings, formatGBP, type LineTotal } from '../lib/pricing';
+import { STORES } from '../lib/stores';
 import NavHeader from './NavHeader';
 
 interface PricedEntry {
@@ -140,15 +141,14 @@ export default function ShoppingListPage() {
       <NavHeader />
 
       <div className="container watchlist-content">
-        <div className="shoplist-head">
-          <h1 className="page-title">Shopping list</h1>
-          {!loading && entries.length > 0 && (
+        {!loading && entries.length > 0 && (
+          <div className="shoplist-head">
             <button onClick={handleClear} className="btn-secondary shoplist-clear">
               <Trash2 size={14} />
               {confirmClear ? 'Confirm clear?' : 'Clear all'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {error && (
           <div className="alert-error watchlist-alert" role="alert">
@@ -212,10 +212,17 @@ export default function ShoppingListPage() {
                   hasSavings = true;
                 }
               }
+              const storeLogo = STORES.find(s => s.name === store)?.logo
+                ?? lines[0]?.entry.item.store_logo;
               return (
                 <section key={store} aria-label={store} className="shoplist-store">
                   <div className="shoplist-store-head">
-                    <span className="store-card">{store}</span>
+                    <span className="store-card">
+                      {storeLogo && (
+                        <img src={storeLogo} alt={store} className="store-logo" />
+                      )}
+                      {store}
+                    </span>
                     <span className="shoplist-store-total">
                       {formatGBP(subtotal)}{!complete && '*'}
                       {hasSavings && <span className="shoplist-savings"> · save {formatGBP(savings)}</span>}
@@ -238,7 +245,6 @@ export default function ShoppingListPage() {
                             <p className="shoplist-name">{item.product_name}</p>
                             <p className="shoplist-unit">
                               {priced.unitPrice !== null ? `${formatGBP(priced.unitPrice)} each` : 'Price unavailable'}
-                              {item.offer_deal && !expired && ` · ${item.offer_deal}`}
                             </p>
                             {item.offer_deal ? (
                               <span className={`product-card-loyalty-label ${getLoyaltyClass(item.store)}`} title={item.offer_deal}>

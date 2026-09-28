@@ -177,7 +177,6 @@ export default function SearchPage() {
   const hour = new Date().getHours();
   const daypart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
   const firstName = !user?.isTrial ? user?.username?.split(' ')[0] : undefined;
-  const greeting = `Good ${daypart}${firstName ? `, ${firstName}` : ''}`;
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -185,7 +184,7 @@ export default function SearchPage() {
 
       <section className="hero">
         <div className="container">
-          <h1>{greeting}</h1>
+          <h1>Good {daypart}{firstName ? <>, <span className="text-gradient">{firstName}</span></> : ''}</h1>
           <p>Pick up to 3 stores, search, and pin what you buy.</p>
 
           <div className="store-chips-wrapper">

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, Bell, Puzzle, Sun, Moon, LogIn, Smartphone } from 'lucide-react';
+import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 
 const STORE_MARKS = [
@@ -36,6 +36,11 @@ const FEATURES = [
     icon: Puzzle,
     title: 'Browser extension',
     desc: 'Add products straight from any supermarket site. The extension reads the page and pins it in one click.',
+  },
+  {
+    icon: ShoppingCart,
+    title: 'Multibuy-smart shopping list',
+    desc: 'Add watchlist items in quantities and get per-store totals with multi-buy sets applied — plus savings vs shelf price.',
   },
 ];
 
