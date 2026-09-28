@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Store, LayoutGrid, ArrowUpDown } from 'lucide-react';
+import { Store, LayoutGrid, ArrowUpDown, Search, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { STORES } from '../lib/stores';
 import FilterTrigger from './filters/FilterTrigger';
@@ -23,6 +23,8 @@ interface WatchlistFiltersProps {
   onCategoriesChange: (categories: string[]) => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }
 
 type PanelKey = 'stores' | 'categories' | 'sort' | null;
@@ -34,6 +36,8 @@ export default function WatchlistFilters({
   onCategoriesChange,
   sortBy,
   onSortChange,
+  searchQuery,
+  onSearchChange,
 }: WatchlistFiltersProps) {
   const [openPanel, setOpenPanel] = useState<PanelKey>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -196,6 +200,33 @@ export default function WatchlistFilters({
                   />
                 ))}
               </FilterPanel>
+            )}
+          </div>
+
+          <div className="watchlist-search" role="search">
+            <Search className="watchlist-search-icon" aria-hidden="true" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' && searchQuery) {
+                  onSearchChange('');
+                }
+              }}
+              placeholder="Search products…"
+              aria-label="Search watchlist"
+              className="watchlist-search-input"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search"
+                className="watchlist-search-clear"
+              >
+                <X size={14} />
+              </button>
             )}
           </div>
         </div>

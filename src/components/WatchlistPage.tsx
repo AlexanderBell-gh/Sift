@@ -27,6 +27,7 @@ export default function WatchlistPage() {
   const [selectedStores, setSelectedStores] = useState<string[]>(ALL_STORES);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(ALL_CATEGORIES);
   const [sortBy, setSortBy] = useState('relevance');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!token) {
@@ -44,6 +45,10 @@ export default function WatchlistPage() {
     if (selectedCategories.length < ALL_CATEGORIES.length) {
       result = result.filter(i => i.category && selectedCategories.includes(i.category));
     }
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter(i => i.product_name.toLowerCase().includes(q));
+    }
 
     switch (sortBy) {
       case 'price_asc':
@@ -58,7 +63,7 @@ export default function WatchlistPage() {
     }
 
     return result;
-  }, [items, selectedStores, selectedCategories, sortBy]);
+  }, [items, selectedStores, selectedCategories, sortBy, searchQuery]);
 
   const products = useMemo(() => {
     const map = new Map<string, WatchlistItem[]>();
@@ -70,15 +75,33 @@ export default function WatchlistPage() {
     return Array.from(map.values());
   }, [filtered]);
 
+  function getBest(group: WatchlistItem[]): WatchlistItem {
+    return [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity))[0]!;
+  }
+
+  const { activeProducts, expiredProducts } = useMemo(() => {
+    const active: WatchlistItem[][] = [];
+    const expired: WatchlistItem[][] = [];
+    for (const group of products) {
+      const best = getBest(group);
+      if (isOfferExpired(best.offer_expires_at)) {
+        expired.push(group);
+      } else {
+        active.push(group);
+      }
+    }
+    return { activeProducts: active, expiredProducts: expired };
+  }, [products]);
+
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef(false);
   const timerRef = useRef<number | undefined>(undefined);
 
-  const hasMore = visibleCount < products.length;
-  const visibleProducts = useMemo(() => products.slice(0, visibleCount), [products, visibleCount]);
-  const moreCount = Math.min(PAGE_SIZE, products.length - visibleCount);
+  const hasMore = visibleCount < activeProducts.length;
+  const visibleProducts = useMemo(() => activeProducts.slice(0, visibleCount), [activeProducts, visibleCount]);
+  const moreCount = Math.min(PAGE_SIZE, activeProducts.length - visibleCount);
 
   function resetPaging() {
     if (timerRef.current !== undefined) {
@@ -95,6 +118,13 @@ export default function WatchlistPage() {
     window.scrollTo(0, 0);
   }
 
+  function handleClearSearch() {
+    setSearchQuery('');
+    handleFilterReset();
+  }
+
+  const searchActive = searchQuery.trim().length > 0;
+
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasMore) return;
@@ -104,7 +134,7 @@ export default function WatchlistPage() {
           pendingRef.current = true;
           setLoadingMore(true);
           timerRef.current = window.setTimeout(() => {
-            setVisibleCount((c) => Math.min(c + PAGE_SIZE, products.length));
+            setVisibleCount((c) => Math.min(c + PAGE_SIZE, activeProducts.length));
             setLoadingMore(false);
             pendingRef.current = false;
           }, 1000);
@@ -117,7 +147,7 @@ export default function WatchlistPage() {
       io.disconnect();
       window.clearTimeout(timerRef.current);
     };
-  }, [hasMore, products.length]);
+  }, [hasMore, activeProducts.length]);
 
   const isTrial = user?.isTrial === true;
   const watchlistLimit = 5;
@@ -138,6 +168,115 @@ export default function WatchlistPage() {
     }
   }
 
+  function renderGroup(group: WatchlistItem[], expired: boolean) {
+    const product = group[0];
+    const lastUpdated = Math.max(...group.map(i => i.updated_at));
+    const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
+    const best = sorted[0];
+    if (!product || !best) return null;
+
+    const cardContent = (
+      <>
+        <div className="product-card-top">
+          <button
+            onClick={(e) => handleRemoveProduct(product.product_id, e)}
+            className="product-card-remove"
+            title="Remove"
+          >
+            ✕
+          </button>
+          {best.image_url ? (
+            <img src={best.image_url} alt={product.product_name} className="product-card-image" />
+          ) : (
+            <div className="product-card-logo">
+              {best.store_logo ? (
+                <img src={best.store_logo} alt={best.store} className="product-card-logo-img" />
+              ) : (
+                <span className="product-card-logo-text">{best.store.slice(0, 2).toUpperCase()}</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="product-card-bottom">
+          <span className="store-card">
+            {best.store_logo && (
+              <img src={best.store_logo} alt={best.store} className="store-logo" />
+            )}
+            {best.store}
+          </span>
+          <h3>{product.product_name}</h3>
+          {best.category && (
+            <span className={`product-card-category category-${best.category.toLowerCase().replace(/\s+/g, '-')}`}>{best.category}</span>
+          )}
+          {expired ? (
+            <>
+              <div className="product-card-price">
+                <span className="expired-price">
+                  £{(best.prices.normal ?? best.prices.loyalty ?? 0).toFixed(2)}
+                </span>
+                {best.prices.normal !== null && best.prices.loyalty !== null && (
+                  <span className="was-price">was £{best.prices.loyalty.toFixed(2)}</span>
+                )}
+              </div>
+              {(best.offer_deal || best.prices.loyalty !== null) && (
+                <span className="product-card-loyalty">
+                  <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
+                </span>
+              )}
+              <span className="product-card-offer expired">Offer expired</span>
+            </>
+          ) : (
+            <>
+              <div className="product-card-price">
+                {best.offer_deal ? (
+                  <span className="offer-price">£{(best.prices.normal ?? 0).toFixed(2)}</span>
+                ) : (
+                  <>
+                    {best.prices.normal !== null && best.prices.loyalty !== null && (
+                      <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
+                    )}
+                    <span className="offer-price">
+                      £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
+                    </span>
+                  </>
+                )}
+              </div>
+              {(best.offer_deal || best.prices.loyalty !== null) && (
+                <span className="product-card-loyalty">
+                  <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
+                </span>
+              )}
+              {best.offer_expires_at && (
+                <span className="product-card-offer">
+                  Offer ends {formatDate(best.offer_expires_at)}
+                </span>
+              )}
+            </>
+          )}
+          <p>Updated {formatTimeAgo(lastUpdated)}</p>
+        </div>
+      </>
+    );
+
+    const cardClass = expired ? 'product-card is-expired' : 'product-card';
+    return best.product_url ? (
+      <a
+        key={product.product_id}
+        href={best.product_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cardClass}
+      >
+        {cardContent}
+      </a>
+    ) : (
+      <div key={product.product_id} className={cardClass}>
+        {cardContent}
+      </div>
+    );
+  }
+
   return (
     <div className="page-shell">
       <NavHeader />
@@ -149,6 +288,8 @@ export default function WatchlistPage() {
         onCategoriesChange={(v) => { setSelectedCategories(v); handleFilterReset(); }}
         sortBy={sortBy}
         onSortChange={(v) => { setSortBy(v); handleFilterReset(); }}
+        searchQuery={searchQuery}
+        onSearchChange={(v) => { setSearchQuery(v); resetPaging(); }}
       />
 
       <div className="container watchlist-content">
@@ -211,126 +352,35 @@ export default function WatchlistPage() {
           </>
         )}
 
-        {!loading && items.length > 0 && filtered.length === 0 && (
+        {!loading && items.length > 0 && filtered.length === 0 && searchActive && (
+          <div className="empty-state-box">
+            <p className="empty-state-title">No results for &ldquo;{searchQuery.trim()}&rdquo;</p>
+            <p className="empty-state-desc">Try a different spelling or clear the search</p>
+            <div className="empty-state-cta-wrap">
+              <button
+                onClick={handleClearSearch}
+                className="btn-secondary empty-state-cta"
+              >
+                Clear search
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!loading && items.length > 0 && filtered.length === 0 && !searchActive && (
           <div className="empty-state-box">
             <p className="empty-state-title">No items match filters</p>
             <p className="empty-state-desc">Try selecting more stores</p>
           </div>
         )}
 
-        {!loading && products.length > 0 && (
+        {!loading && visibleProducts.length > 0 && (
           <div className="products-grid">
-            {visibleProducts.map(group => {
-              const product = group[0];
-              const lastUpdated = Math.max(...group.map(i => i.updated_at));
-              const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
-              const best = sorted[0];
-              if (!product || !best) return null;
-
-              const cardContent = (
-                <>
-                  <div className="product-card-top">
-                    <button
-                      onClick={(e) => handleRemoveProduct(product.product_id, e)}
-                      className="product-card-remove"
-                      title="Remove"
-                    >
-                      ✕
-                    </button>
-                    {best.image_url ? (
-                      <img src={best.image_url} alt={product.product_name} className="product-card-image" />
-                    ) : (
-                      <div className="product-card-logo">
-                        {best.store_logo ? (
-                          <img src={best.store_logo} alt={best.store} className="product-card-logo-img" />
-                        ) : (
-                          <span className="product-card-logo-text">{best.store.slice(0, 2).toUpperCase()}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="product-card-bottom">
-                    <span className="store-card">
-                      {best.store_logo && (
-                        <img src={best.store_logo} alt={best.store} className="store-logo" />
-                      )}
-                      {best.store}
-                    </span>
-                    <h3>{product.product_name}</h3>
-                    {best.category && (
-                      <span className={`product-card-category category-${best.category.toLowerCase().replace(/\s+/g, '-')}`}>{best.category}</span>
-                    )}
-                    {isOfferExpired(best.offer_expires_at) ? (
-                      <>
-                        <div className="product-card-price">
-                          <span className="expired-price">
-                            £{(best.prices.normal ?? best.prices.loyalty ?? 0).toFixed(2)}
-                          </span>
-                          {best.prices.normal !== null && best.prices.loyalty !== null && (
-                            <span className="was-price">was £{best.prices.loyalty.toFixed(2)}</span>
-                          )}
-                        </div>
-                        {(best.offer_deal || best.prices.loyalty !== null) && (
-                          <span className={`product-card-loyalty ${best.offer_deal ? 'expired' : ''}`}>
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
-                          </span>
-                        )}
-                        <span className="product-card-offer expired">Offer expired</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="product-card-price">
-                          {best.offer_deal ? (
-                            <span className="offer-price">£{(best.prices.normal ?? 0).toFixed(2)}</span>
-                          ) : (
-                            <>
-                              {best.prices.normal !== null && best.prices.loyalty !== null && (
-                                <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
-                              )}
-                              <span className="offer-price">
-                                £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                        {(best.offer_deal || best.prices.loyalty !== null) && (
-                          <span className="product-card-loyalty">
-                            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
-                          </span>
-                        )}
-                        {best.offer_expires_at && (
-                          <span className="product-card-offer">
-                            Offer ends {formatDate(best.offer_expires_at)}
-                          </span>
-                        )}
-                      </>
-                    )}
-                    <p>Updated {formatTimeAgo(lastUpdated)}</p>
-                  </div>
-                </>
-              );
-
-              return best.product_url ? (
-                <a
-                  key={product.product_id}
-                  href={best.product_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="product-card"
-                >
-                  {cardContent}
-                </a>
-              ) : (
-                <div key={product.product_id} className="product-card">
-                  {cardContent}
-                </div>
-              );
-            })}
+            {visibleProducts.map(group => renderGroup(group, false))}
           </div>
         )}
 
-        {!loading && products.length > 0 && hasMore && (
+        {!loading && activeProducts.length > 0 && hasMore && (
           <div ref={sentinelRef} role="status" aria-live="polite" aria-label={loadingMore ? 'Loading more items' : undefined}>
             {loadingMore && (
               <div className="products-grid">
@@ -342,8 +392,17 @@ export default function WatchlistPage() {
           </div>
         )}
 
-        {!loading && !hasMore && products.length > PAGE_SIZE && (
-          <p className="text-sm text-muted watchlist-count">Showing all {products.length} products</p>
+        {!loading && !hasMore && activeProducts.length > PAGE_SIZE && (
+          <p className="text-sm text-muted watchlist-count">Showing all {activeProducts.length} products</p>
+        )}
+
+        {!loading && expiredProducts.length > 0 && (
+          <section aria-label="Expired offers" className="watchlist-expired">
+            <h2 className="watchlist-expired-heading">Expired offers ({expiredProducts.length})</h2>
+            <div className="products-grid">
+              {expiredProducts.map(group => renderGroup(group, true))}
+            </div>
+          </section>
         )}
       </div>
     </div>
