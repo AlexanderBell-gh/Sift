@@ -6,6 +6,7 @@ import SearchPage from './components/SearchPage';
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
 import WatchlistPage from './components/WatchlistPage';
+import ShoppingListPage from './components/ShoppingListPage';
 import AdminPage from './components/AdminPage';
 import SettingsPage from './components/SettingsPage';
 import RequireAdmin from './components/RequireAdmin';
@@ -49,6 +50,7 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/search" element={<Navigate to="/" replace />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
+          <Route path="/list" element={<ShoppingListPage />} />
           <Route
             path="/admin"
             element={

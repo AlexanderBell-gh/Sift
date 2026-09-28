@@ -175,6 +175,46 @@ export async function removeFromWatchlist(token: string, id: string): Promise<vo
   return handleResponse(response);
 }
 
+export interface ShoppingListEntry {
+  list_id: string;
+  quantity: number;
+  item: WatchlistItem;
+}
+
+export async function getShoppingList(token: string): Promise<ShoppingListEntry[]> {
+  const response = await fetch(`${API_BASE}/api/shopping-list`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await handleResponse<{ items: ShoppingListEntry[] }>(response);
+  return data.items;
+}
+
+export async function addToShoppingList(token: string, watchlistId: string, quantity = 1): Promise<{ list_id: string; quantity: number }> {
+  const response = await fetch(`${API_BASE}/api/shopping-list`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ watchlist_id: watchlistId, quantity }),
+  });
+  return handleResponse(response);
+}
+
+export async function setShoppingListQty(token: string, listId: string, quantity: number): Promise<{ success: boolean; deleted?: boolean }> {
+  const response = await fetch(`${API_BASE}/api/shopping-list/${listId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ quantity }),
+  });
+  return handleResponse(response);
+}
+
+export async function clearShoppingList(token: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/api/shopping-list`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
 export async function getAlerts(token: string): Promise<{ alerts: Alert[]; unreadCount: number }> {
   const response = await fetch(`${API_BASE}/api/alerts`, {
     headers: { Authorization: `Bearer ${token}` },

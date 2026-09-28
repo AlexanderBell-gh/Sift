@@ -90,6 +90,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
               <>
                 <button onClick={() => navigate('/')} className="nav-link">Search</button>
                 <button onClick={() => navigate('/watchlist')} className="nav-link">Watchlist</button>
+                <button onClick={() => navigate('/list')} className="nav-link">Shopping List</button>
               </>
             )}
           </div>
@@ -106,6 +107,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
               <div className="mobile-menu-pop">
                 <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="dropdown-item">Search</button>
                 <button onClick={() => { navigate('/watchlist'); setMobileMenuOpen(false); }} className="dropdown-item">Watchlist</button>
+                <button onClick={() => { navigate('/list'); setMobileMenuOpen(false); }} className="dropdown-item">Shopping List</button>
               </div>
             )}
           </div>

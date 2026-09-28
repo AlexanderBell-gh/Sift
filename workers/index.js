@@ -1357,10 +1357,186 @@ async function handleRequest(request, env) {
       );
       if (!row?.meta?.changes) return errorResponse('Watchlist item not found', request, 404);
 
+      // D1 does not enforce FK cascades: drop orphan shopping-list rows.
+      await execute(
+        env,
+        'DELETE FROM shopping_list WHERE watchlist_id = ? AND user_id = ?',
+        [itemId, auth.userId]
+      );
+
       return jsonResponse({ success: true }, request);
     } catch (e) {
       console.error('Watchlist DELETE error:', e);
       return errorResponse('Failed to remove from watchlist', request);
+    }
+  }
+
+  // ===== SHOPPING LIST =====
+  // Quantities against watchlist rows (watchlist items only). Prices always
+  // read live from watchlist; these endpoints store qty only.
+
+  const MAX_QTY = 99;
+
+  function mapShoppingRow(r) {
+    return {
+      list_id: r.list_id,
+      quantity: r.quantity,
+      item: {
+        id: r.id,
+        product_id: r.product_id,
+        product_name: r.product_name,
+        store: r.store,
+        store_logo: r.store_logo,
+        image_url: r.image_url,
+        unit: r.unit,
+        prices: {
+          normal: r.normal_price,
+          loyalty: r.loyalty_price,
+          unit_price: r.unit_price,
+          currency: r.currency,
+        },
+        loyalty_type: r.loyalty_type,
+        offer_expires_at: r.offer_expires_at,
+        offer_deal: r.offer_deal,
+        product_url: r.product_url,
+        is_on_offer: !!r.is_on_offer,
+        category: r.category,
+        taxonomy_version: r.taxonomy_version ?? 0,
+        notes: r.notes,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+      },
+    };
+  }
+
+  if (path === '/api/shopping-list' && method === 'GET') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    try {
+      const rows = await queryAll(
+        env,
+        `SELECT sl.id AS list_id, sl.quantity, w.*
+         FROM shopping_list sl
+         INNER JOIN watchlist w ON w.id = sl.watchlist_id AND w.user_id = sl.user_id
+         WHERE sl.user_id = ?
+         ORDER BY sl.created_at ASC`,
+        [auth.userId]
+      );
+      return jsonResponse({ items: rows.map(mapShoppingRow) }, request);
+    } catch (e) {
+      console.error('Shopping list GET error:', e);
+      return errorResponse('Failed to fetch shopping list', request);
+    }
+  }
+
+  if (path === '/api/shopping-list' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    try {
+      const body = await request.json();
+      const watchlistId = body.watchlist_id;
+      if (!watchlistId || typeof watchlistId !== 'string') {
+        return errorResponse('watchlist_id required', request);
+      }
+      let qty = body.quantity === undefined ? 1 : Math.floor(Number(body.quantity));
+      if (!Number.isFinite(qty) || qty < 1) {
+        return errorResponse('quantity must be a positive integer', request);
+      }
+      qty = Math.min(qty, MAX_QTY);
+
+      const item = await queryOne(
+        env,
+        'SELECT id FROM watchlist WHERE id = ? AND user_id = ?',
+        [watchlistId, auth.userId]
+      );
+      if (!item) return errorResponse('Watchlist item not found', request, 404);
+
+      const now = Date.now();
+      const existing = await queryOne(
+        env,
+        'SELECT id, quantity FROM shopping_list WHERE user_id = ? AND watchlist_id = ?',
+        [auth.userId, watchlistId]
+      );
+      if (existing) {
+        const next = Math.min(existing.quantity + qty, MAX_QTY);
+        await execute(
+          env,
+          'UPDATE shopping_list SET quantity = ?, updated_at = ? WHERE id = ?',
+          [next, now, existing.id]
+        );
+        return jsonResponse({ list_id: existing.id, quantity: next }, request);
+      }
+
+      const id = `sl_${now}_${Math.random().toString(36).substr(2, 9)}`;
+      await execute(
+        env,
+        'INSERT INTO shopping_list (id, user_id, watchlist_id, quantity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, auth.userId, watchlistId, qty, now, now]
+      );
+      return jsonResponse({ list_id: id, quantity: qty }, request, 201);
+    } catch (e) {
+      console.error('Shopping list POST error:', e);
+      return errorResponse('Failed to add to shopping list', request);
+    }
+  }
+
+  if (path === '/api/shopping-list' && method === 'DELETE') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    try {
+      await execute(env, 'DELETE FROM shopping_list WHERE user_id = ?', [auth.userId]);
+      return jsonResponse({ success: true }, request);
+    } catch (e) {
+      console.error('Shopping list clear error:', e);
+      return errorResponse('Failed to clear shopping list', request);
+    }
+  }
+
+  const shoppingItemMatch = path.match(/^\/api\/shopping-list\/(.+)$/);
+  if (shoppingItemMatch && (method === 'PUT' || method === 'DELETE')) {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    const listId = shoppingItemMatch[1];
+    try {
+      if (method === 'DELETE') {
+        const row = await execute(
+          env,
+          'DELETE FROM shopping_list WHERE id = ? AND user_id = ?',
+          [listId, auth.userId]
+        );
+        if (!row?.meta?.changes) return errorResponse('Shopping list item not found', request, 404);
+        return jsonResponse({ success: true }, request);
+      }
+
+      const body = await request.json();
+      const qty = Math.floor(Number(body.quantity));
+      if (!Number.isFinite(qty) || qty < 0) {
+        return errorResponse('quantity must be a non-negative integer', request);
+      }
+      // Qty 0 deletes the row.
+      if (qty === 0) {
+        const row = await execute(
+          env,
+          'DELETE FROM shopping_list WHERE id = ? AND user_id = ?',
+          [listId, auth.userId]
+        );
+        if (!row?.meta?.changes) return errorResponse('Shopping list item not found', request, 404);
+        return jsonResponse({ success: true, deleted: true }, request);
+      }
+      const row = await execute(
+        env,
+        'UPDATE shopping_list SET quantity = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+        [Math.min(qty, MAX_QTY), Date.now(), listId, auth.userId]
+      );
+      if (!row?.meta?.changes) return errorResponse('Shopping list item not found', request, 404);
+      return jsonResponse({ success: true }, request);
+    } catch (e) {
+      console.error('Shopping list item error:', e);
+      return errorResponse('Failed to update shopping list', request);
     }
   }
 

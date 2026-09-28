@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Plus, Check } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
-import { getWatchlist, removeFromWatchlist } from '../lib/api';
+import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../lib/api';
 import { STORES } from '../lib/stores';
 import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 import type { WatchlistItem } from '../types';
@@ -168,6 +168,28 @@ export default function WatchlistPage() {
     }
   }
 
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+
+  async function handleAddToList(watchlistId: string, e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!token || addedIds.has(watchlistId)) return;
+    try {
+      await addToShoppingList(token, watchlistId, 1);
+      setAddedIds(prev => new Set(prev).add(watchlistId));
+      setError('');
+      window.setTimeout(() => {
+        setAddedIds(prev => {
+          const next = new Set(prev);
+          next.delete(watchlistId);
+          return next;
+        });
+      }, 1500);
+    } catch {
+      setError('Failed to add to shopping list');
+    }
+  }
+
   function renderGroup(group: WatchlistItem[], expired: boolean) {
     const product = group[0];
     const lastUpdated = Math.max(...group.map(i => i.updated_at));
@@ -255,6 +277,15 @@ export default function WatchlistPage() {
             </>
           )}
           <p>Updated {formatTimeAgo(lastUpdated)}</p>
+          <button
+            onClick={(e) => handleAddToList(best.id, e)}
+            className={`product-card-add${addedIds.has(best.id) ? ' is-added' : ''}`}
+            title="Add to shopping list"
+            aria-label={`Add ${product.product_name} to shopping list`}
+          >
+            {addedIds.has(best.id) ? <Check size={14} /> : <Plus size={14} />}
+            {addedIds.has(best.id) ? 'Added' : 'Add to list'}
+          </button>
         </div>
       </>
     );
