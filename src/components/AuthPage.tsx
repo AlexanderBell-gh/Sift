@@ -47,7 +47,7 @@ export default function AuthPage() {
   const tabs: { key: AuthTab; label: string }[] = [
     { key: 'signin', label: 'Sign In' },
     { key: 'register', label: 'Register' },
-    { key: 'trial', label: '24hr Trial' },
+    { key: 'trial', label: 'Trial' },
   ];
 
   const submitLabel = activeTab === 'signin' && !forgotMode ? 'Sign In'

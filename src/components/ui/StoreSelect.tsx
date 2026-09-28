@@ -21,8 +21,15 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
         setIsOpen(false);
       }
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setIsOpen(false);
+    }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, []);
 
   function toggleStore(id: string) {
@@ -75,24 +82,26 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
       </div>
 
       {isOpen && (
-        <div className="store-panel" role="listbox" aria-label="Select stores">
-          <div className="store-panel-header">
-            <span className="store-panel-title">Select stores</span>
-            <div className="store-panel-actions">
-              <span className={cn('store-panel-count', selected.size >= MAX_STORES && 'store-panel-count-limit')}>
-                {selected.size}/{MAX_STORES}
-              </span>
-              <button
-                type="button"
-                onClick={clearAll}
-                className="store-panel-clear"
-              >
-                Clear
-              </button>
+        <>
+          <div className="store-panel-backdrop" onClick={() => setIsOpen(false)} />
+          <div className="store-panel" role="listbox" aria-label="Select stores">
+            <div className="store-panel-header">
+              <span className="store-panel-title">Select stores</span>
+              <div className="store-panel-actions">
+                <span className={cn('store-panel-count', selected.size >= MAX_STORES && 'store-panel-count-limit')}>
+                  {selected.size}/{MAX_STORES}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="store-panel-clear"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="store-panel-list">
+            <div className="store-panel-list">
             {STORES.map((store) => {
               const isSelected = selected.has(store.id);
               const atLimit = selected.size >= MAX_STORES && !isSelected;
@@ -129,10 +138,11 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
             })}
           </div>
 
-          <div className="store-panel-footer">
-            Searching opens up to 3 stores in new tabs
+            <div className="store-panel-footer">
+              Searching opens up to 3 stores in new tabs
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

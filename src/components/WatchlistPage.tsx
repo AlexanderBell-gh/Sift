@@ -151,16 +151,7 @@ export default function WatchlistPage() {
         onSortChange={(v) => { setSortBy(v); handleFilterReset(); }}
       />
 
-      <section className="watchlist-hero">
-        <div className="container watchlist-head">
-          <div>
-            <h1 className="page-title">Your Watchlist</h1>
-            <p className="text-sm text-muted">All your offers in one place</p>
-          </div>
-        </div>
-      </section>
-
-      <div className="container">
+      <div className="container watchlist-content">
         {error && (
           <div className="alert-error watchlist-alert" role="alert">
             {error}

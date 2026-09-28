@@ -1042,6 +1042,9 @@ body {
 }
 
 /* Store selection panel */
+.store-panel-backdrop {
+  display: none;
+}
 .store-panel {
   position: absolute;
   left: 50%;
@@ -1508,6 +1511,36 @@ body {
   .filter-panel-list {
     max-height: 60vh;
   }
+
+  .store-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 49;
+    animation: fade-in 150ms var(--ease-smooth);
+  }
+
+  .store-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    z-index: 50;
+    animation: sheet-slide-up 250ms var(--ease-smooth);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .store-panel-list {
+    max-height: 60vh;
+  }
 }
 
 @keyframes fade-in {
@@ -1796,7 +1829,6 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-top: 24px;
   margin-bottom: 80px;
 }
 
@@ -2314,16 +2346,9 @@ body {
   color: var(--muted);
 }
 
-/* Watchlist hero + list head */
-.watchlist-hero {
-  padding-top: 48px;
-  padding-bottom: 32px;
-}
-.watchlist-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 32px;
+/* Watchlist list head */
+.watchlist-content {
+  padding-top: 24px;
 }
 .watchlist-alert {
   margin-bottom: 16px;
