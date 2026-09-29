@@ -260,6 +260,11 @@ body {
   z-index: 50;
 }
 
+/* Mobile bottom tab bar — rendered only on small screens when signed in */
+.mobile-tabbar {
+  display: none;
+}
+
 /* User Dropdown */
 .user-menu-wrapper {
   position: relative;
@@ -907,6 +912,13 @@ body {
   margin-bottom: 24px;
 }
 
+.landing-cta-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
 .landing-footer {
   border-top: 1px solid var(--border);
   padding: 24px 0;
@@ -1132,6 +1144,7 @@ body {
 .store-panel-list {
   max-height: 320px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -1454,6 +1467,7 @@ body {
 .filter-panel-list {
   max-height: 320px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -1811,6 +1825,7 @@ body {
   width: 320px;
   max-height: 384px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -2002,7 +2017,46 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
+  margin: 0;
+}
+
+.watchlist-expired-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
   margin: 0 0 16px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.watchlist-expired-toggle:hover .watchlist-expired-heading,
+.watchlist-expired-toggle:hover .watchlist-expired-hint {
+  color: var(--primary);
+}
+
+.watchlist-expired-toggle svg {
+  transition: transform 0.2s var(--ease-spring);
+  flex-shrink: 0;
+}
+
+.watchlist-expired-toggle svg.is-open {
+  transform: rotate(180deg);
+}
+
+.watchlist-expired-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.watchlist-expired .products-grid {
+  margin-bottom: 0;
 }
 
 .product-card-top {
@@ -4193,7 +4247,7 @@ body {
     border: none;
     z-index: 111;
     animation: sheet-slide-up 250ms var(--ease-smooth);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 
   .alerts-backdrop {
@@ -4215,6 +4269,95 @@ body {
 
   .nav-links {
     gap: 8px;
+  }
+
+  .mobile-menu-wrap {
+    display: none;
+  }
+
+  body.has-tabbar {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-tabbar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(var(--nav-bg-rgb), 0.9);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    z-index: 120;
+  }
+
+  .tabbar-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    border-radius: 12px;
+    margin: 6px 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .tabbar-item:hover {
+    color: var(--text);
+  }
+
+  .tabbar-item-active {
+    color: var(--primary);
+    background: rgba(255, 87, 1, 0.08);
+  }
+
+  .tabbar-item:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
+  }
+
+  .tabbar-alerts > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .tabbar-alerts .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    color: var(--muted);
+    background: none;
+    box-shadow: none;
+    border-radius: 12px;
+  }
+
+  .tabbar-alerts .icon-btn:hover {
+    color: var(--text);
+    background: none;
+    box-shadow: none;
+  }
+
+  .tabbar-alerts .icon-btn .icon-sm {
+    width: 22px;
+    height: 22px;
+  }
+
+  .tabbar-alerts .alert-badge {
+    z-index: 1;
+    top: calc(50% - 20px);
+    right: calc(50% - 20px);
   }
 
   .dropdown-item {

@@ -59,6 +59,20 @@ export default function WatchlistFilters({
     };
   }, []);
 
+  useEffect(() => {
+    if (!openPanel) return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    function apply() {
+      document.body.style.overflow = mq.matches ? 'hidden' : '';
+    }
+    apply();
+    mq.addEventListener('change', apply);
+    return () => {
+      document.body.style.overflow = '';
+      mq.removeEventListener('change', apply);
+    };
+  }, [openPanel]);
+
   const allStores = selectedStores.length === STORE_NAMES.length;
   const allCategories = selectedCategories.length === CATEGORIES.length;
 

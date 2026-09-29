@@ -48,7 +48,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 - Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /list, /admin, /settings). `/` is conditional (`HomeRoute`): `SearchPage` when signed in, `LandingPage` (`src/components/LandingPage.tsx`) when guest
 - Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer) + `workers/lib/validate.js` (username/password allowlists) — both plain JS, both with `*.test.js` coverage
 - DB schema: `workers/schema.sql` — 7 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets)
-- Shopping list: `/list` (`src/components/ShoppingListPage.tsx`, account-synced quantities against watchlist rows) + multibuy pricing engine (`src/lib/pricing.ts`, frontend-only — server stores qty, prices read live from watchlist)
+- Shopping list: `/list` (`src/components/ShoppingListPage.tsx`, account-synced quantities against watchlist rows) + multibuy pricing engine (`src/lib/pricing.ts`, frontend-only — server stores qty, prices read live from watchlist, same-tag sets pool across lines)
 
 ## Key gotchas
 

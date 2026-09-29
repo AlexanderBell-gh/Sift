@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
-import { Search, Plus, Check } from 'lucide-react';
+import { Search, Plus, Check, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../lib/api';
@@ -96,6 +96,7 @@ export default function WatchlistPage() {
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [showExpired, setShowExpired] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef(false);
   const timerRef = useRef<number | undefined>(undefined);
@@ -430,10 +431,22 @@ export default function WatchlistPage() {
 
         {!loading && expiredProducts.length > 0 && (
           <section aria-label="Expired offers" className="watchlist-expired">
-            <h2 className="watchlist-expired-heading">Expired offers ({expiredProducts.length})</h2>
-            <div className="products-grid">
-              {expiredProducts.map(group => renderGroup(group, true))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowExpired(v => !v)}
+              aria-expanded={showExpired}
+              aria-controls="expired-grid"
+              className="watchlist-expired-toggle"
+            >
+              <span className="watchlist-expired-heading">Expired offers ({expiredProducts.length})</span>
+              <ChevronDown size={15} className={showExpired ? 'is-open' : ''} aria-hidden="true" />
+              <span className="watchlist-expired-hint">{showExpired ? 'Hide' : 'Show'}</span>
+            </button>
+            {showExpired && (
+              <div className="products-grid" id="expired-grid">
+                {expiredProducts.map(group => renderGroup(group, true))}
+              </div>
+            )}
           </section>
         )}
       </div>

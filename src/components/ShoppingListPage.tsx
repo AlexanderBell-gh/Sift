@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../lib/api';
 import { isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
-import { lineTotal, lineSavings, formatGBP, type LineTotal } from '../lib/pricing';
+import { lineTotal, lineSavings, formatGBP, parseOfferDeal, priceOfferGroup, type LineTotal } from '../lib/pricing';
 import { STORES } from '../lib/stores';
 import NavHeader from './NavHeader';
 
@@ -36,22 +36,60 @@ export default function ShoppingListPage() {
   }, [token, navigate]);
 
   const pricedEntries: PricedEntry[] = useMemo(() => {
-    return entries.map(entry => {
+    const out: PricedEntry[] = new Array(entries.length);
+    // Pool lines sharing one store + offer tag so "any N for £X" sets
+    // complete across different products. Keyed on normalised raw text
+    // (not parsed values) so distinct promos never merge.
+    const groups = new Map<string, number[]>();
+    entries.forEach((entry, idx) => {
       const expired = isOfferExpired(entry.item.offer_expires_at);
-      const priced = lineTotal(
-        entry.quantity,
-        entry.item.prices.normal,
-        entry.item.prices.loyalty,
-        entry.item.offer_deal,
-        expired,
-      );
-      return {
-        entry,
-        expired,
-        priced,
-        savings: lineSavings(entry.quantity, entry.item.prices.normal, priced),
-      };
+      const unitPrice = entry.item.prices.loyalty ?? entry.item.prices.normal;
+      const tag = entry.item.offer_deal;
+      if (!expired && unitPrice !== null && unitPrice !== undefined && tag && parseOfferDeal(tag)) {
+        const key = `${entry.item.store}\n${tag.toLowerCase().trim().replace(/\s+/g, ' ')}`;
+        const arr = groups.get(key) ?? [];
+        arr.push(idx);
+        groups.set(key, arr);
+      } else {
+        const priced = lineTotal(
+          entry.quantity,
+          entry.item.prices.normal,
+          entry.item.prices.loyalty,
+          tag,
+          expired,
+        );
+        out[idx] = {
+          entry,
+          expired,
+          priced,
+          savings: lineSavings(entry.quantity, entry.item.prices.normal, priced),
+        };
+      }
     });
+    for (const idxs of groups.values()) {
+      const first = entries[idxs[0] as number]!;
+      const offer = parseOfferDeal(first.item.offer_deal)!;
+      const results = priceOfferGroup(
+        offer,
+        idxs.map(i => {
+          const e = entries[i as number]!;
+          return { qty: e.quantity, unitPrice: (e.item.prices.loyalty ?? e.item.prices.normal) as number };
+        }),
+      );
+      idxs.forEach((entryIdx, k) => {
+        const entry = entries[entryIdx as number]!;
+        const r = results[k as number]!;
+        const unitPrice = (entry.item.prices.loyalty ?? entry.item.prices.normal) as number;
+        const priced: LineTotal = { total: r.total, unitPrice, basis: r.basis, sets: r.sets };
+        out[entryIdx as number] = {
+          entry,
+          expired: false,
+          priced,
+          savings: lineSavings(entry.quantity, entry.item.prices.normal, priced),
+        };
+      });
+    }
+    return out;
   }, [entries]);
 
   const stores = useMemo(() => {

@@ -198,6 +198,14 @@ export default function AlertBell() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!open || !isMobile) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open, isMobile]);
+
   if (!token) return null;
 
   async function handleMarkRead(id: string) {

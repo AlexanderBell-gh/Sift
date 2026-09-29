@@ -16,18 +16,18 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 - Infinite scroll — 12 product cards per batch via `IntersectionObserver` (600px prefetch), skeleton cards while appending, filter/sort/search changes reset to the first batch and scroll to top
 - Worker-owned category taxonomy — `POST /api/watchlist` scores `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals) and stores the result with `taxonomy_version` (v3: title-first vocab mined from the UK dictionary, singular-only terms since the plural fold double-counted ties, scoped frozen veto — leaf/JSON-LD only, `do not refreeze` excluded as freezable-at-home copy); phone apps send title/brand/store only, old clients send a legacy guess (clamped, version 0, with a product-name fallback when missing/`Other`). Preview via `POST /api/category/score`, upgrades via `POST /api/admin/watchlist/rescore` (dry-run default, `changed/confirmed/kept` counts — `kept` rows hold no signals so the stored category is retained and marked current). Admin dashboard shows taxonomy health (needs-rescore + uncategorised counts) with preview/apply controls; confident veto exits are logged alongside the unknown-bucket line. Tests: `pnpm test`
 - Dedicated filter bar: product-name search (clear + Escape, dedicated no-results state) + store + category multi-select and sort (mobile "Filters" pill)
-- Expired offers render in a separate `Expired offers` section below the live grid, with danger-red hover and full-colour loyalty badges
+- Expired offers render in a collapsed `Expired offers (N)` section below the live grid (Show/Hide toggle, collapsed by default, grid mounts only when open), with danger-red hover and full-colour loyalty badges
 - Live trial-usage banner (X of 5 items + progress bar)
 
 ### Shopping List
 - Synced shopping list at `/list` (nav: Shopping List) — quantities against watchlist items, priced live from tracked prices
-- Multibuy-aware totals (`src/lib/pricing.ts`): parses free-text deal terms (`Any 3 for £12`, `3 for 2`, `Buy 1 get 1 free`, `BOGOF`) into set pricing; sets complete within one store only, expired/unrecognised terms fall back to shelf price with a note
+- Multibuy-aware totals (`src/lib/pricing.ts`): parses free-text deal terms (`Any 3 for £12`, `any two for £6`, `3 for 2`, `Buy 1 get 1 free`, `BOGOF`) into set pricing; sets complete within one store and pool across lines sharing the same offer tag (fixed sets split pro-rata, pence-exact; `3 for 2`-style frees the cheapest units first); expired/unrecognised terms fall back to shelf price with a note
 - Per-store sections (A–Z) with subtotals + savings vs shelf, grand total + savings summary, qty steppers (0 removes), two-tap clear-all
 - Server: `shopping_list` table + `GET/POST/PUT/DELETE /api/shopping-list` (qty capped at 99, `PUT 0` deletes)
 
 ### Auth & Accounts
 - JWT + Google OAuth + username/password auth
-- Guest landing page — signed-out visitors get a marketing landing at `/` (hero + faded store-mark marquee, features, how-it-works, CTA box with Sign In + Android-coming-soon placeholder; nav is logo/theme/Sign In only); Search, Watchlist, deals, and autocomplete all require sign-in, which lands on a greeting hero (`src/components/LandingPage.tsx`, conditional `/` route in `App.tsx`, plan in `LANDING.md`)
+- Guest landing page — signed-out visitors get a marketing landing at `/` (whole-shop positioning: hero + faded store-mark marquee, `All your groceries. One place.` features, how-it-works ending on shop-from-one-list, CTA box with Sign In + plain Android-coming-soon mention; nav is logo/theme/Sign In only); Search, Watchlist, deals, and autocomplete all require sign-in, which lands on a greeting hero (`src/components/LandingPage.tsx`, conditional `/` route in `App.tsx`, plan in `LANDING.md`)
 - Self-service password recovery (no-email reset-token flow)
 - Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized, restricted to letters + numbers, 4–30 chars; passwords restricted to letters, numbers, dots and underscores, 8–128 chars with a letter and a number)
 - Trial gating — 24h / 5 watchlist items, enforced server-side
@@ -44,6 +44,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 
 ### UI
 - Dark/light mode (light default, toggle in nav for guests / user menu when signed in), mobile responsive
+- Mobile bottom tab bar (≤640px, signed-in only): icon-only Search / Watchlist / Shopping List / Alerts with active highlighting — replaces the hamburger menu; body scroll locks while filter/store/alert bottom sheets are open
 
 **Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
 

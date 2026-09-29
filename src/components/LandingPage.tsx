@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone } from 'lucide-react';
+import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 
 const STORE_MARKS = [
@@ -47,7 +47,7 @@ const FEATURES = [
 const STEPS = [
   { n: '01', title: 'Create your account', desc: 'Sign up free, or start a no-signup trial in one click.' },
   { n: '02', title: 'Pin your staples', desc: 'Search or use the extension to add the products you actually buy.' },
-  { n: '03', title: 'Catch endings, not full prices', desc: 'When a pinned offer ends you get a bell alert — re-pin, switch stores, or stock up next time it drops.' },
+  { n: '03', title: 'Shop from one list', desc: 'Add watchlist items in quantities and shop per-store totals with multibuy savings applied — the whole shop in one place.' },
 ];
 
 export default function LandingPage() {
@@ -90,12 +90,12 @@ export default function LandingPage() {
       <section className="hero">
         <div className="container">
           <h1>
-            Every offer. One watchlist.
-            <span className="text-gradient block">Zero full-price surprises.</span>
+            One list for the whole shop.
+            <span className="text-gradient block">Every store. Every deal.</span>
           </h1>
           <p>
-            Search 11 UK supermarkets, pin your staples, and get a bell alert
-            when an offer ends. Free to join — tracking takes seconds.
+            Search 11 UK supermarkets, pin your staples, and shop one smart
+            list. Free to join — tracking takes seconds.
           </p>
         </div>
       </section>
@@ -119,7 +119,7 @@ export default function LandingPage() {
         <div className="text-center mb-6">
           <span className="field-label">Why Sift</span>
           <h2 id="features-heading" className="page-title">
-            Stop paying <span className="text-gradient">full price</span> by accident
+            All your groceries. <span className="text-gradient">One place.</span>
           </h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -154,7 +154,7 @@ export default function LandingPage() {
       <section className="container landing-cta-section">
         <div className="landing-cta-box">
           <h2 className="page-title landing-cta-title">
-            Your watchlist is one sign-in away
+            Your whole shop is one sign-in away
           </h2>
           <p className="landing-cta-desc">
             Join free or start a 24-hour trial
@@ -164,16 +164,15 @@ export default function LandingPage() {
               Sign In / Get Started
               <LogIn className="icon-sm" />
             </button>
-            <button className="btn-secondary" disabled title="Android app coming soon">
-              <Smartphone className="icon-sm" />
-              Android app — coming soon
-            </button>
           </div>
+          <p className="landing-cta-note">
+            Works in your phone browser today — Android app coming soon
+          </p>
         </div>
       </section>
 
       <footer className="landing-footer">
-        <div className="container">Sift — UK supermarket grocery tracker</div>
+        <div className="container">Sift — UK Grocery Tracker</div>
       </footer>
     </div>
   );

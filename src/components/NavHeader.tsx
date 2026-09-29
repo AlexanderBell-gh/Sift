@@ -4,6 +4,7 @@ import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield, Menu, X } from '
 import { useAuth } from '../contexts/auth-context';
 import { useTheme } from '../hooks/useTheme';
 import AlertBell from './AlertBell';
+import MobileTabBar from './MobileTabBar';
 
 interface NavHeaderProps {
   title?: string;
@@ -27,6 +28,15 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
   const menuRef = useRef<HTMLDivElement>(null);
   const [trialCountdown, setTrialCountdown] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -64,6 +74,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
   const avatarText = isTrial ? 'TU' : (user?.username?.slice(0, 2).toUpperCase() || 'U');
 
   return (
+    <>
     <nav className="nav">
       <div className="container nav-inner">
         <div className="nav-cluster">
@@ -95,7 +106,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
             )}
           </div>
 
-          {token && (
+          {token && !isMobile && (
           <div className="mobile-menu-wrap" ref={mobileMenuRef}>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -113,7 +124,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           </div>
           )}
 
-          <AlertBell />
+          {!isMobile && <AlertBell />}
 
           {!token && (
           <button
@@ -177,5 +188,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
         </div>
       </div>
     </nav>
+    {token && isMobile && <MobileTabBar alerts={<AlertBell />} />}
+    </>
   );
 }

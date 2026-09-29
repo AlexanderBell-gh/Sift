@@ -32,6 +32,20 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
     };
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    function apply() {
+      document.body.style.overflow = mq.matches ? 'hidden' : '';
+    }
+    apply();
+    mq.addEventListener('change', apply);
+    return () => {
+      document.body.style.overflow = '';
+      mq.removeEventListener('change', apply);
+    };
+  }, [isOpen]);
+
   function toggleStore(id: string) {
     const next = new Set(selected);
     if (next.has(id)) {
