@@ -44,19 +44,19 @@ const PRIORITY = [
 // titles first.
 const AISLE_TERMS = {
   Chilled: [
-    'chilled', 'dairy', 'milk', 'skimmed', 'semi', 'semi-skimmed', 'yogurt', 'yoghurt', 'yoghurts', 'skyr',
+    'chilled', 'dairy', 'milk', 'skimmed', 'semi', 'semi-skimmed', 'yogurt', 'yoghurt', 'skyr',
     'kefir', 'cheese', 'cheddar', 'mozzarella', 'feta', 'brie', 'stilton',
     'gouda', 'halloumi', 'paneer',
-    'butter', 'cream', 'eggs', 'bacon', 'sausages', 'sausage', 'ham',
+    'butter', 'cream', 'eggs', 'bacon', 'sausage', 'ham',
     'chicken', 'chicken breast', 'poultry', 'turkey', 'duck', 'beef',
     'pork', 'lamb', 'mince', 'steak', 'meatballs', 'kebab', 'shawarma',
-    'prawn', 'prawns', 'shrimp', 'salmon', 'tuna', 'trout', 'fish',
+    'prawn', 'shrimp', 'salmon', 'tuna', 'trout', 'fish',
     'salmon, tuna & trout',
-    'cod', 'haddock', 'sea bass', 'sea bass fillets',
-    'pork pie', 'pork pies',
-    'hummus', 'houmous', 'dip', 'dips', 'coleslaw', 'quiche', 'tofu',
-    'falafel', 'sandwich', 'sandwiches', 'sushi', 'deli',
-    'ready meal', 'ready meals', 'grain bowl',
+    'cod', 'haddock', 'sea bass',
+    'pork pie',
+    'hummus', 'houmous', 'dip', 'coleslaw', 'quiche', 'tofu',
+    'falafel', 'sandwich', 'sushi', 'deli',
+    'ready meal', 'grain bowl',
     // NOTE: 'high protein' deliberately absent (removed 24-09-2026). As a
     // title claim it is marketing, not freshness (Huel noodles scored
     // Chilled on the claim alone). Real chilled high-protein aisles are
@@ -64,9 +64,9 @@ const AISLE_TERMS = {
     // 'high protein' leaf backstop below.
   ],
   Snacks: [
-    'snacks', 'crisps', 'chocolate', 'cookies', 'cookie', 'biscuits',
-    'biscuit', 'nuts', 'popcorn', 'crackers', 'sweets', 'candy',
-    'cereal bars', 'cereal bar', 'pretzel', 'pretzels', 'nachos',
+    'snacks', 'crisps', 'chocolate', 'cookie', 'biscuit',
+    'nuts', 'popcorn', 'crackers', 'sweets', 'candy',
+    'cereal bar', 'pretzel', 'nachos',
     'olives', 'cashews', 'almonds', 'peanuts', 'pistachios',
     'trail mix', 'rice cakes',
   ],
@@ -78,44 +78,46 @@ const AISLE_TERMS = {
     'lemonade', 'cordial', 'kombucha', 'orange juice', 'apple juice',
   ],
   Produce: [
-    'produce', 'fresh produce', 'fruit', 'vegetables', 'vegetable', 'salad',
-    'apple', 'apples', 'banana', 'bananas', 'pepper', 'peppers', 'carrot',
-    'carrots', 'kiwi', 'potato', 'potatoes', 'onion', 'onions', 'tomato',
-    'broccoli', 'cucumber', 'lettuce', 'orange', 'oranges',
-    'grapes', 'lemons', 'limes', 'avocado', 'avocados',
-    'mango', 'pineapple', 'melon', 'watermelon', 'pear', 'pears', 'plum',
-    'plums', 'peach', 'peaches', 'nectarine', 'nectarines', 'cherry',
-    'cherries', 'apricot', 'apricots', 'pomegranate', 'passion fruit',
+    'produce', 'fresh produce', 'fruit', 'vegetable', 'salad',
+    'apple', 'banana', 'pepper', 'carrot',
+    'kiwi', 'potato', 'onion', 'tomato',
+    'broccoli', 'cucumber', 'lettuce', 'orange',
+    'grapes', 'lemons', 'limes', 'avocado',
+    'mango', 'pineapple', 'melon', 'watermelon', 'pear', 'plum',
+    'peach', 'nectarine', 'cherry',
+    'apricot', 'pomegranate', 'passion fruit',
     'aubergine', 'courgette', 'chilli', 'garlic', 'ginger', 'mushroom',
-    'mushrooms', 'celery', 'kale', 'spinach', 'rocket', 'leek', 'leeks',
-    'parsnip', 'parsnips', 'beetroot', 'radish',
-    // NOTE: no 'tomatoes' entry: sameWord() folds tomato/tomatoes, and a
-    // duplicate let fresh-tomato tokens double-count past the 'chopped
-    // tomatoes' cupboard phrase into a tie Produce won (29-09-2026).
+    'celery', 'kale', 'spinach', 'rocket', 'leek',
+    'parsnip', 'beetroot', 'radish',
+    // NOTE: singulars only (29-09-2026). sameWord() folds plurals, and each
+    // duplicate let one token score twice, forging ties the fixed priority
+    // then resolved wrongly (tomatoes past 'chopped tomatoes', peppers past
+    // 'snacks'+'crisps' on Sunbites). Exceptions: 'lemons'/'limes' need both
+    // (EXACT_ONLY skips the fold); 'tomatoes' was already absent likewise.
   ],
   Frozen: [
-    'frozen', 'peas', 'sweetcorn', 'ice cream', 'pizza', 'pie', 'pies',
-    'nuggets', 'nugget', 'waffles', 'waffle', 'fish fingers',
-    'hash browns', 'scampi', 'ice lollies', 'lollies', 'sorbet',
+    'frozen', 'peas', 'sweetcorn', 'ice cream', 'pizza', 'pie',
+    'nugget', 'waffle', 'fish fingers',
+    'hash browns', 'scampi', 'lollies', 'sorbet',
   ],
   Bakery: [
-    'bakery', 'bread', 'baguette', 'croissant', 'rolls', 'roll', 'buns',
-    'bun', 'cake', 'cakes', 'loaf', 'loaves', 'pastries', 'pastry',
-    'tortilla', 'tortillas', 'naan', 'muffins', 'muffin', 'bagel',
-    'bagels', 'brioche', 'scones', 'scone', 'doughnuts', 'donuts',
-    'donut', 'wraps', 'wrap', 'pitta', 'ciabatta', 'focaccia',
-    'crumpets', 'crumpet', 'hot cross buns', 'sourdough', 'bakewell',
+    'bakery', 'bread', 'baguette', 'croissant', 'roll', 'bun',
+    'cake', 'loaf', 'loaves', 'pastry',
+    'tortilla', 'naan', 'muffin', 'bagel',
+    'brioche', 'scone', 'doughnuts',
+    'donut', 'wrap', 'pitta', 'ciabatta', 'focaccia',
+    'crumpet', 'hot cross buns', 'sourdough', 'bakewell',
     'bakewell tart', 'carrot cake',
   ],
   'Food Cupboard': [
-    'food cupboard', 'cereals', 'cereal', 'flapjack', 'flapjacks', 'oat',
-    'oats', 'oat boosts', 'granola', 'muesli', 'porridge', 'pasta', 'rice',
-    'flour', 'sugar', 'soup', 'stock', 'sauce', 'sauces', 'ketchup',
-    'beans', 'lentils', 'couscous', 'noodle', 'noodles', 'tins', 'canned',
-    'tinned', 'dried', 'oil', 'salt', 'vinegar', 'spice', 'spices',
+    'food cupboard', 'cereal', 'flapjack', 'oat',
+    'oat boosts', 'granola', 'muesli', 'porridge', 'pasta', 'rice',
+    'flour', 'sugar', 'soup', 'stock', 'sauce', 'ketchup',
+    'beans', 'lentils', 'couscous', 'noodle', 'tins', 'canned',
+    'tinned', 'dried', 'oil', 'salt', 'vinegar', 'spice',
     'herbs', 'curry', 'honey', 'jam', 'marmalade', 'syrup',
     'peanut butter', 'spaghetti', 'fusilli', 'penne', 'macaroni',
-    'lasagne', 'tagliatelle', 'chickpeas', 'chickpea', 'chopped tomatoes',
+    'lasagne', 'tagliatelle', 'chickpea', 'chopped tomatoes',
     'passata', 'tomato passata', 'coconut milk', 'gravy', 'stuffing',
   ],
   Other: [],
@@ -203,7 +205,7 @@ const FRESH_PROTEIN_MARKERS = [
 const AMBIENT_MEAL_EXEMPTIONS = [
   'soup', 'stock', 'crisps', 'flavour', 'flavor', 'tinned', 'canned',
   'long life', 'uht', 'baby food',
-  'noodle', 'noodles', 'pasta', 'pizza',
+  'noodle', 'noodles', 'pasta', 'pizza', 'nugget', 'nuggets',
 ];
 
 // Real-meat markers for the staple-strip decision. Claim phrases ('high

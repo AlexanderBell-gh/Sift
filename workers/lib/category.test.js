@@ -395,6 +395,45 @@ describe('freezable-at-home storage is not sold-frozen (29-09-2026)', () => {
   });
 });
 
+describe('plural-fold dedup (29-09-2026, Sunbites pepper-tie case)', () => {
+  it('sunbites black pepper multipack -> Snacks (pepper must not double-count past crisps)', () => {
+    const r = scoreCategory(signals({
+      title: 'Sun Bites 6 x 25g Sour Cream & Cracked Black Pepper Multipack Snacks Crisps',
+    }));
+    assert.equal(r.category, 'Snacks');
+  });
+
+  it('potato waffles stay Frozen (tie resolves Frozen at single-count)', () => {
+    const r = scoreCategory(signals({ title: 'Potato Waffles 500g' }));
+    assert.equal(r.category, 'Frozen');
+  });
+
+  it('bananas stay Produce on a single count (floor still clears)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Bananas 5 Pack', store_id: 'tesco' }));
+    assert.equal(r.category, 'Produce');
+  });
+
+  it('sausage rolls stay Bakery (roll fold covers rolls)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Sausage Rolls 4 Pack' }));
+    assert.equal(r.category, 'Bakery');
+  });
+
+  it('prawn sandwich stays Chilled (protein confirm intact)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Prawn Sandwich 200g' }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('ready meal keeps Chilled (meal phrase needs no plural double)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Ready Meal Chicken Tikka 400g' }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('chicken nuggets stay Frozen (nuggets exempt from protein confirm, pizza precedent)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Chicken Nuggets 500g' }));
+    assert.equal(r.category, 'Frozen');
+  });
+});
+
 describe('clampLegacyCategory (old extensions without signals)', () => {
   it('keeps canonical values, trims and case-folds', () => {
     assert.equal(clampLegacyCategory('chilled '), 'Chilled');
