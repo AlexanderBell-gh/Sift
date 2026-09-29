@@ -328,3 +328,104 @@ describe('clampLegacyCategory (old extensions without signals)', () => {
     assert.equal(clampLegacyCategory(''), 'Other');
   });
 });
+
+describe('v3 phone path (title/brand/store only, no crumbs)', () => {
+  it('taxonomy version is 3', () => {
+    assert.equal(TAXONOMY_VERSION, 3);
+    const r = scoreCategory(signals({ title: 'Cheddar 350g' }));
+    assert.equal(r.taxonomy_version, 3);
+  });
+
+  const phoneCases = [
+    // [title, expected]
+    ['Semi-Skimmed Milk 4Pint', 'Chilled'],
+    ['Whole Milk 4Pint', 'Chilled'],
+    ['Cheddar 350g', 'Chilled'],
+    ['Tuna Chunks 145g', 'Chilled'],
+    ['Hummus 200g', 'Chilled'],
+    ['Whole Chicken', 'Chilled'],
+    ['Chicken Breast Fillets', 'Chilled'],
+    ['Salted Peanuts 200g', 'Snacks'],
+    ['Chocolate Chip Cookies 200g', 'Snacks'],
+    ['Diet Coke 2L', 'Beverages'],
+    ['Coca Cola 2L', 'Beverages'],
+    ['Pepsi Max 2L', 'Beverages'],
+    ['Orange Juice 1L', 'Beverages'],
+    ['Apple Braeburn', 'Produce'],
+    ['Bananas Loose', 'Produce'],
+    ['White Potatoes', 'Produce'],
+    ['Lemons 4 Pack', 'Produce'],
+    ['Fish Fingers 500g', 'Frozen'],
+    ['Frozen Peas 500g', 'Frozen'],
+    ['Frozen Pizza Margherita', 'Frozen'],
+    ['Chicken Pizza 300g', 'Frozen'],
+    ['White Bread 800g', 'Bakery'],
+    ['Croissant 4 Pack', 'Bakery'],
+    ['Penne Pasta 500g', 'Food Cupboard'],
+    ['Spaghetti 500g', 'Food Cupboard'],
+    ['Tinned Custard 400g', 'Food Cupboard'],
+    ['Chicken Soup 400g', 'Food Cupboard'],
+    ['Olive Oil 1L', 'Food Cupboard'],
+    ['Sweet Potato 500g', 'Other'],
+    ['Antibacterial Hand Wash 500ml', 'Other'],
+    ['Tasty Treats Value Pack', 'Other'],
+  ];
+  for (const [title, expected] of phoneCases) {
+    it(`title-only ${title} -> ${expected}`, () => {
+      const r = scoreCategory(signals({ title }));
+      assert.equal(r.category, expected);
+    });
+  }
+
+  it('quantities never decide: bare pack sizes stay Other', () => {
+    const r = scoreCategory(signals({ title: '4 Pack 500g 2 Pints' }));
+    assert.equal(r.category, 'Other');
+  });
+
+  it('plural stems match short keywords: waffles keep Frozen on tie-break', () => {
+    const r = scoreCategory(signals({ title: 'Potato Waffles 500g' }));
+    assert.equal(r.category, 'Frozen');
+  });
+
+  it('singular lemon strips but plural lemons scores Produce', () => {
+    assert.equal(scoreCategory(signals({ title: 'Lemon Cheesecake 400g' })).category, 'Other');
+    assert.equal(scoreCategory(signals({ title: 'Lemons 4 Pack' })).category, 'Produce');
+  });
+
+  it('brand adds signal: weak title + drinks brand -> Beverages', () => {
+    const r = scoreCategory(signals({ title: 'Zero 2L', brand: 'Coca Cola' }));
+    assert.equal(r.category, 'Beverages');
+  });
+
+  it('brand never overrides a confident crumb', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Bakery', 'Bread'],
+      breadcrumb_leaf: 'Bread',
+      title: 'Cola Bread',
+      brand: 'Pepsi',
+    }));
+    assert.equal(r.category, 'Bakery');
+    assert.equal(r.reason, 'breadcrumb');
+  });
+
+  it('store-leaf aliases cover all 11 phone stores', () => {
+    const stores = ['tesco', 'sainsburys', 'asda', 'morrisons', 'marksandspencer',
+      'aldi', 'lidl', 'coop', 'waitrose', 'iceland', 'ocado'];
+    for (const store of stores) {
+      const flap = scoreCategory(signals({
+        breadcrumb_raw: ['Cereals', 'Flapjacks'],
+        breadcrumb_leaf: 'Flapjacks',
+        title: 'Flapjack 60g',
+        store_id: store,
+      }));
+      assert.equal(flap.category, 'Food Cupboard');
+      const hp = scoreCategory(signals({
+        breadcrumb_raw: ['Fresh Food', 'High Protein'],
+        breadcrumb_leaf: 'High Protein',
+        title: 'Protein Bar 60g',
+        store_id: store,
+      }));
+      assert.equal(hp.category, 'Chilled');
+    }
+  });
+});

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../lib/api';
 import { STORES } from '../lib/stores';
+import { CATEGORIES } from '../lib/categories';
 import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
@@ -13,7 +14,7 @@ import WatchlistSkeletonCard from './WatchlistSkeletonCard';
 import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 
 const ALL_STORES = STORES.map(s => s.name);
-const ALL_CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard', 'Other'];
+const ALL_CATEGORIES = [...CATEGORIES];
 const PAGE_SIZE = 12;
 
 export default function WatchlistPage() {

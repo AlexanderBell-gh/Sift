@@ -1197,6 +1197,99 @@ async function handleRequest(request, env) {
     }
   }
 
+  // ===== CATEGORY (phone-app preview + taxonomy upgrades) =====
+
+  // Phone apps score title/brand/store without pinning. Authed so the
+  // unknown-bucket log cannot be probed anonymously.
+  if (path === '/api/category/score' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    try {
+      const body = await request.json();
+      const title = typeof body.title === 'string' ? body.title.slice(0, 200) : '';
+      if (!title.trim()) return errorResponse('title required', request);
+      const brand = typeof body.brand === 'string' ? body.brand.slice(0, 100) : '';
+      const store = typeof body.store_id === 'string'
+        ? body.store_id
+        : (typeof body.store === 'string' ? body.store : '');
+      const scored = scoreCategory({ title, brand, store_id: store });
+      return jsonResponse({
+        category: scored.category,
+        taxonomy_version: scored.taxonomy_version,
+        low_confidence: scored.low_confidence,
+        reason: scored.reason,
+        scores: scored.scores,
+      }, request);
+    } catch (e) {
+      console.error('Category score error:', e);
+      return errorResponse('Failed to score category', request);
+    }
+  }
+
+  // One-shot taxonomy upgrade for pre-v3 rows. Rows hold no signals, so
+  // rescore uses the stored product name (title-only v3). Non-Other
+  // winners are adopted; Other keeps the stored category (a v2
+  // crumb-scored row stays more accurate than a title-only guess) and
+  // only the version is bumped so reruns converge. dryRun defaults true.
+  if (path === '/api/admin/watchlist/rescore' && method === 'POST') {
+    const admin = await requireAdmin(request, env);
+    if (admin instanceof Response) return admin;
+
+    try {
+      const body = await request.json().catch(() => ({}));
+      const dryRun = body.dryRun !== false;
+      const limit = Math.min(2000, Math.max(1, parseInt(body.limit) || 500));
+      const rows = await queryAll(
+        env,
+        'SELECT id, product_name, category FROM watchlist WHERE taxonomy_version < 3 OR taxonomy_version IS NULL ORDER BY updated_at ASC LIMIT ?',
+        [limit]
+      );
+      let changed = 0;
+      let confirmed = 0;
+      const sample = [];
+      for (const r of rows || []) {
+        if (!r.product_name) continue;
+        const s = scoreCategory({ title: r.product_name });
+        if (s.category !== 'Other' && s.category !== r.category) {
+          if (!dryRun) {
+            await execute(
+              env,
+              'UPDATE watchlist SET category = ?, taxonomy_version = 3, updated_at = ? WHERE id = ?',
+              [s.category, Date.now(), r.id]
+            );
+          }
+          changed++;
+          if (sample.length < 20) {
+            sample.push({ id: r.id, name: r.product_name, from: r.category, to: s.category });
+          }
+        } else {
+          if (!dryRun && s.category === r.category) {
+            await execute(
+              env,
+              'UPDATE watchlist SET taxonomy_version = 3, updated_at = ? WHERE id = ?',
+              [Date.now(), r.id]
+            );
+          }
+          confirmed++;
+        }
+      }
+      if (!dryRun) {
+        const adminUser = await getUserById(env, admin.userId);
+        await logAudit(env, {
+          action: 'admin.taxonomy_rescore',
+          adminId: admin.userId,
+          adminUsername: adminUser?.username || 'unknown',
+          details: `rescored to v3: ${changed} changed, ${confirmed} confirmed (dryRun false)`,
+        });
+      }
+      return jsonResponse({ dryRun, scanned: (rows || []).length, changed, confirmed, sample }, request);
+    } catch (e) {
+      console.error('Rescore error:', e);
+      return errorResponse('Failed to rescore watchlist', request);
+    }
+  }
+
   if (path === '/api/watchlist' && method === 'POST') {
     const auth = await requireAuth(request, env);
     if (!auth?.userId) return auth;
@@ -1236,8 +1329,10 @@ async function handleRequest(request, env) {
       const id = `wl_${now}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Category: worker owns taxonomy. New extensions send category_signals
-      // (scored here); old ones send only a legacy guess (clamped, version 0,
-      // with a name-scored fallback when the guess is missing/Other).
+      // (scored here); phone app sends title/brand/store only (same path,
+      // title-first). Old clients send only a legacy guess (clamped,
+      // version 0, with a name-scored fallback when the guess is
+      // missing/Other).
       let finalCategory;
       let taxonomyVersion;
       const categorySignals = result.category_signals;
@@ -1245,6 +1340,7 @@ async function handleRequest(request, env) {
         (Array.isArray(categorySignals.breadcrumb_raw) && categorySignals.breadcrumb_raw.length > 0) ||
         categorySignals.breadcrumb_leaf ||
         categorySignals.title ||
+        categorySignals.brand ||
         categorySignals.jsonld_category
       );
       if (hasUsableSignals) {

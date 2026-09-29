@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { Store, LayoutGrid, ArrowUpDown, Search, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { STORES } from '../lib/stores';
+import { CATEGORIES } from '../lib/categories';
 import FilterTrigger from './filters/FilterTrigger';
 import FilterPanel from './filters/FilterPanel';
 import FilterOption from './filters/FilterOption';
 
 const STORE_NAMES = STORES.map(s => s.name);
-const CATEGORIES = ['Chilled', 'Snacks', 'Beverages', 'Produce', 'Frozen', 'Bakery', 'Food Cupboard', 'Other'];
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Relevance' },
@@ -107,7 +107,7 @@ export default function WatchlistFilters({
     <>
       <button
         type="button"
-        onClick={() => onCategoriesChange(CATEGORIES)}
+        onClick={() => onCategoriesChange([...CATEGORIES])}
         className={cn('filter-panel-action', allCategories && 'filter-panel-action-muted')}
       >
         All
