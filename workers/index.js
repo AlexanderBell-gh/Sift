@@ -16,7 +16,7 @@ import {
   base64UrlDecode,
 } from './auth.js';
 import { queryAll, queryOne, execute } from './db.js';
-import { scoreCategory, clampLegacyCategory } from './lib/category.js';
+import { scoreCategory, clampLegacyCategory, TAXONOMY_VERSION } from './lib/category.js';
 import { isValidUsername, isValidPassword, USERNAME_ERROR, PASSWORD_ERROR } from './lib/validate.js';
 
 
@@ -815,6 +815,14 @@ async function handleRequest(request, env) {
     const recentSignups = (await queryOne(env, 'SELECT COUNT(*) as c FROM users WHERE created_at >= ?', [weekAgo]))?.c || 0;
     const trackedStores = (await queryOne(env, 'SELECT COUNT(DISTINCT store) as c FROM watchlist WHERE store IS NOT NULL'))?.c || 0;
 
+    // Taxonomy health for the dashboard card: version histogram, honest-Other
+    // count, and pre-v3 rows awaiting rescore. Aggregate counts only, no PII.
+    const versionRows = await queryAll(env, 'SELECT taxonomy_version as v, COUNT(*) as c FROM watchlist GROUP BY taxonomy_version');
+    const byVersion = {};
+    for (const r of versionRows || []) byVersion[String(r.v ?? 0)] = r.c || 0;
+    const otherCount = (await queryOne(env, "SELECT COUNT(*) as c FROM watchlist WHERE category = 'Other'"))?.c || 0;
+    const staleCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist WHERE taxonomy_version < 3 OR taxonomy_version IS NULL'))?.c || 0;
+
     return jsonResponse({
       totalUsers: userStats?.total || 0,
       regularUsers: userStats?.regular || 0,
@@ -822,6 +830,7 @@ async function handleRequest(request, env) {
       totalProducts: watchlistCount,
       recentSignups7d: recentSignups,
       trackedStores,
+      taxonomy: { byVersion, otherCount, staleCount, version: TAXONOMY_VERSION },
     }, request);
   }
 

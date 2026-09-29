@@ -2343,6 +2343,14 @@ body {
   color: var(--text);
 }
 
+.admin-heading-row h2 {
+  font-family: var(--font-primary);
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
 /* Admin dashboard + list stacks */
 .admin-side-nav {
   display: flex;

@@ -96,6 +96,12 @@ export interface AdminStats {
   totalProducts: number;
   recentSignups7d: number;
   trackedStores: number;
+  taxonomy?: {
+    byVersion: Record<string, number>;
+    otherCount: number;
+    staleCount: number;
+    version: number;
+  };
 }
 
 export interface TrialUser {
