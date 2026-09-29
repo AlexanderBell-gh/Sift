@@ -215,10 +215,13 @@ const MEAT_MARKERS = FRESH_PROTEIN_MARKERS.filter(
 );
 
 // Storage keep-condition markers (v2 Option A, extension `storage_text`).
-// Kept strict: 'suitable for freezing' is deliberately absent (fresh meat
-// carries it); '-18' is matched separately as a substring.
+// Sold-frozen only: 'keep frozen', 'store frozen', '-18' (matched
+// separately as a substring). 'Do not refreeze' is deliberately absent:
+// fresh freezable-at-home bakery carries it alongside defrost instructions
+// ('freeze as soon as possible after purchase', 29-09-2026 scones/sourdough
+// cases) and must score on its title, not force Frozen.
 const STORAGE_FROZEN_MARKERS = [
-  'keep frozen', 'store frozen', 'do not refreeze',
+  'keep frozen', 'store frozen',
 ];
 const STORAGE_AMBIENT_MARKERS = [
   'cool dry place', 'cool dry', 'ambient', 'do not refrigerate',

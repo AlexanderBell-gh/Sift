@@ -1365,6 +1365,18 @@ async function handleRequest(request, env) {
             taxonomy_version: scored.taxonomy_version,
             storage: !!categorySignals.storage_text,
           }));
+        } else if (scored.reason === 'frozen-veto' || scored.reason === 'storage-frozen' || scored.reason === 'non-food') {
+          // Confident veto exits are logged too: a wrong force (29-09-2026
+          // freezable-at-home bakery) is otherwise invisible — the bucket
+          // above only sees low-confidence/Other rows.
+          console.log('Category veto:', JSON.stringify({
+            title: categorySignals.title || null,
+            leaf: categorySignals.breadcrumb_leaf || null,
+            winner: scored.category,
+            reason: scored.reason,
+            taxonomy_version: scored.taxonomy_version,
+            storage: !!categorySignals.storage_text,
+          }));
         }
       } else {
         // Legacy rows and title-only backfill keep version 0 and are never

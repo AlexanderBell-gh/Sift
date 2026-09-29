@@ -367,6 +367,34 @@ describe('hardening batch (29-09-2026, title-only probe misses)', () => {
   });
 });
 
+describe('freezable-at-home storage is not sold-frozen (29-09-2026)', () => {
+  it('bakewell scones with defrost/refreeze copy -> Bakery, not storage-frozen', () => {
+    const r = scoreCategory(signals({
+      title: "Sainsbury's 4 x Cherry Bakewell Scones, Taste the Difference",
+      store_id: 'sainsburys',
+      storage_text: 'For best before date: see front of pack. Store in a cool, dry place away from direct sunlight. Once opened, store in an airtight container for best quality. Once defrosted use the same day. Do not refreeze once defrosted. For best quality, freeze as soon as possible after purchase and always within the best before date. Once frozen consume within 1 month.',
+    }));
+    assert.equal(r.category, 'Bakery');
+  });
+
+  it('tinned sourdough with defrost/refreeze copy -> Bakery, not storage-frozen', () => {
+    const r = scoreCategory(signals({
+      title: "Sainsbury's White Tinned Sourdough Bread, Taste the Difference 500g",
+      store_id: 'sainsburys',
+      storage_text: 'For best before date: see neck tie. Store in a cool, dry place away from direct sunlight. Once opened, store in an airtight container for best quality. For best quality, freeze as soon as possible after purchase and always within the best before date. Once frozen consume within 1 month. Defrost fully before use and use within 24 hours. Do not refreeze once defrosted.',
+    }));
+    assert.equal(r.category, 'Bakery');
+  });
+
+  it('do-not-refreeze alone never forces Frozen (sold-frozen needs keep/store/-18)', () => {
+    const r = scoreCategory(signals({
+      title: 'Fresh Croissants 4 Pack',
+      storage_text: 'Once defrosted, do not refreeze.',
+    }));
+    assert.notEqual(r.reason, 'storage-frozen');
+  });
+});
+
 describe('clampLegacyCategory (old extensions without signals)', () => {
   it('keeps canonical values, trims and case-folds', () => {
     assert.equal(clampLegacyCategory('chilled '), 'Chilled');
