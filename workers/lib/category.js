@@ -99,7 +99,8 @@ const AISLE_TERMS = {
     'tortilla', 'tortillas', 'naan', 'muffins', 'muffin', 'bagel',
     'bagels', 'brioche', 'scones', 'scone', 'doughnuts', 'donuts',
     'donut', 'wraps', 'wrap', 'pitta', 'ciabatta', 'focaccia',
-    'crumpets', 'crumpet', 'hot cross buns',
+    'crumpets', 'crumpet', 'hot cross buns', 'sourdough', 'bakewell',
+    'bakewell tart',
   ],
   'Food Cupboard': [
     'food cupboard', 'cereals', 'cereal', 'flapjack', 'flapjacks', 'oat',
@@ -392,8 +393,18 @@ export function scoreCategory(signals = {}) {
   const combinedJoined = [title, leaf, pathText, jsonld, urlWords].join(' ').toLowerCase();
   const combinedTokens = tokenize(combinedJoined);
 
-  // Veto layer before scoring.
-  if (combinedTokens.includes('frozen')) {
+  // Veto layer before scoring. Frozen force is scoped (30-09-2026): only
+  // title, leaf or JSON-LD carry it. A noisy mid-trail 'frozen' crumb
+  // (Sainsbury's nav contamination) no longer overrides a confident
+  // bakery leaf plus title; it still scores Frozen context points below.
+  const titleVetoTokens = stripQuantityTokens(tokenize(title));
+  const leafVetoTokens = stripQuantityTokens(tokenize(leaf));
+  const jsonldVetoTokens = stripQuantityTokens(tokenize(jsonld));
+  if (
+    titleVetoTokens.includes('frozen') ||
+    leafVetoTokens.includes('frozen') ||
+    jsonldVetoTokens.includes('frozen')
+  ) {
     return { category: 'Frozen', taxonomy_version: TAXONOMY_VERSION, scores: null, low_confidence: false, reason: 'frozen-veto' };
   }
 

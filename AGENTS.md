@@ -56,6 +56,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 - **CSP is injected at build time** by a Vite plugin in `vite.config.ts` (`cspMeta()`) **and** enforced as a real header via `public/_headers` (copied to `dist/`, enforced by Pages). Keep both in sync (cross-referenced in each file). Dev server omits it so HMR works.
 - **`isOfferExpired` is duplicated** — once in `workers/index.js` and once in `src/lib/utils.ts`. Both must stay identical. No shared build across layers.
 - **Validation rules are mirrored, not shared** — `workers/lib/validate.js` (server truth) is duplicated as inline regexes in `src/components/AuthPage.tsx` and `src/components/SettingsPage.tsx`. Keep regexes and error messages identical in all three places; do not import worker code into the frontend (or vice versa).
+- **Category enum is mirrored, not shared** — `CANONICAL_CATEGORIES` in `workers/lib/category.js` (server truth) is duplicated in `src/lib/categories.ts`. Keep identical; both files import from their own copy (no shared build). Frontend components import from `src/lib/categories.ts`, never hardcode the list.
 - **Migrations auto-apply on push to main** via CI. To create a new migration, add a numbered `.sql` file to `workers/migrations/` (e.g. `0006_your_change.sql`). Update `workers/schema.sql` to match.
 - **D1 does not enforce FOREIGN KEY cascades.** Delete dependent rows explicitly (e.g. watchlist DELETE also clears `shopping_list` rows).
 - **Rate limits** are enforced server-side on auth endpoints. Don't remove them.
@@ -99,10 +100,11 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
      * **Impacted Files:** `[file_1.ext]`, `[file_2.ext]`.
      * **Left Off At:** [One-sentence summary of outstanding next steps].
 
-2. **Update CONTEXT.md:**
+2. **Update ARCHITECTURE.md:**
    * Review the current architectural state, tech stack details, or data flows.
-   * Update any outdated sections to reflect the exact state of the codebase at the end of this session.
-   * Location: `/home/wsl/Repositories/markdowns/sift-markdowns/CONTEXT.md`
+   * Update any outdated sections to reflect the exact state of the codebase at the end of this session. Keep it under ~200 lines.
+   * Location: `/home/wsl/Repositories/Sift/ARCHITECTURE.md`
+   * Note: legacy `CONTEXT.md` (`/home/wsl/Repositories/markdowns/sift-markdowns/CONTEXT.md`) is superseded — do not update it.
 
 3. **Update README.md:**
    * Review `README.md`. If the session introduced new features, configuration keys (`.env`), or changed installation/build commands, update those specific sections. Do not alter stable project descriptions unless explicitly relevant.

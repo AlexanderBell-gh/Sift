@@ -429,3 +429,72 @@ describe('v3 phone path (title/brand/store only, no crumbs)', () => {
     }
   });
 });
+
+describe('bakery rescue + scoped frozen veto (30-09-2026)', () => {
+  it('tinned sourdough title-only -> Bakery decisive', () => {
+    const r = scoreCategory(signals({
+      title: "Sainsbury's White Tinned Sourdough Bread, Taste the Difference 500g",
+      store_id: 'sainsburys',
+    }));
+    assert.equal(r.category, 'Bakery');
+    assert.equal(r.reason, 'title');
+  });
+
+  it('cherry bakewell scones title-only -> Bakery (bakewell beats cherry)', () => {
+    const r = scoreCategory(signals({
+      title: "Sainsbury's 4 x Cherry Bakewell Scones, Taste the Difference",
+      store_id: 'sainsburys',
+    }));
+    assert.equal(r.category, 'Bakery');
+  });
+
+  it('noisy frozen mid-trail crumb cannot override bakery leaf + title (sourdough)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Frozen', 'Bakery', 'Bread'],
+      breadcrumb_leaf: 'Bread',
+      title: "Sainsbury's White Tinned Sourdough Bread, Taste the Difference 500g",
+      store_id: 'sainsburys',
+    }));
+    assert.equal(r.category, 'Bakery');
+    assert.equal(r.reason, 'breadcrumb');
+  });
+
+  it('noisy frozen mid-trail crumb cannot override bakery leaf + title (scones)', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Frozen', 'Bakery', 'Scones'],
+      breadcrumb_leaf: 'Scones',
+      title: "Sainsbury's 4 x Cherry Bakewell Scones, Taste the Difference",
+      store_id: 'sainsburys',
+    }));
+    assert.equal(r.category, 'Bakery');
+  });
+
+  it('frozen leaf still forces Frozen', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Frozen', 'Vegetables'],
+      breadcrumb_leaf: 'Frozen Peas',
+      title: 'Garden Peas 500g',
+    }));
+    assert.equal(r.category, 'Frozen');
+    assert.equal(r.reason, 'frozen-veto');
+  });
+
+  it('frozen jsonld category still forces Frozen', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Bakery', 'Bread'],
+      breadcrumb_leaf: 'Bread',
+      title: 'Part-Baked Baguettes 4 Pack',
+      jsonld_category: 'Frozen Food',
+    }));
+    assert.equal(r.category, 'Frozen');
+  });
+
+  it('frozen mid-trail crumb still wins when nothing confident opposes it', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Frozen', 'Pizza'],
+      breadcrumb_leaf: 'Specials',
+      title: 'Stone Baked Special 400g',
+    }));
+    assert.equal(r.category, 'Frozen');
+  });
+});

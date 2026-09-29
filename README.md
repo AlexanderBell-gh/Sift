@@ -14,7 +14,7 @@ A UK supermarket offer tracker. Select up to 3 stores, search opens each store's
 ### Watchlist
 - Pin products to a personal watchlist with price tracking
 - Infinite scroll — 12 product cards per batch via `IntersectionObserver` (600px prefetch), skeleton cards while appending, filter/sort/search changes reset to the first batch and scroll to top
-- Worker-owned category taxonomy — `POST /api/watchlist` scores the extension's `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals) and stores the result with `taxonomy_version` (v2); old clients send only a legacy guess (clamped, version 0, with a product-name fallback when the guess is missing/`Other`). Tests: `pnpm test`
+- Worker-owned category taxonomy — `POST /api/watchlist` scores `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals) and stores the result with `taxonomy_version` (v3: title-first vocab mined from the UK dictionary, single-token floor clear, scoped frozen veto); phone apps send title/brand/store only, old clients send a legacy guess (clamped, version 0, with a product-name fallback when missing/`Other`). Preview via `POST /api/category/score`, upgrades via `POST /api/admin/watchlist/rescore` (dry-run default). Tests: `pnpm test`
 - Dedicated filter bar: product-name search (clear + Escape, dedicated no-results state) + store + category multi-select and sort (mobile "Filters" pill)
 - Expired offers render in a separate `Expired offers` section below the live grid, with danger-red hover and full-colour loyalty badges
 - Live trial-usage banner (X of 5 items + progress bar)
@@ -96,7 +96,7 @@ Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrang
 - `0003_watchlist_unique` — `UNIQUE(user_id, product_id)` index
 - `0004_password_reset_lookup` — `token_sha256` column + index (O(1) reset lookup)
 - `0005_alert_types` — widen `alerts.type` CHECK to `('price_drop','offer_expiry','offer_created')` (matches `src/types/index.ts`; table rebuild)
-- `0006_watchlist_taxonomy` — `taxonomy_version` column (0 = legacy client guess, 1 = v1 worker score, 2 = v2 worker score with protein confirmation + storage signals)
+- `0006_watchlist_taxonomy` — `taxonomy_version` column (0 = legacy client guess, 1 = v1 worker score, 2 = v2 worker score with protein confirmation + storage signals, 3 = v3 title-first score)
 - `0007_rate_limits` — `rate_limits` table + `reset_at` index (previously created inline per request; pruned by the daily cron)
 - `0008_shopping_list` — `shopping_list` table (qty-only rows, unique per user + watchlist item) for the `/list` page
 
