@@ -104,13 +104,14 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
    * Review the current architectural state, tech stack details, or data flows.
    * Update any outdated sections to reflect the exact state of the codebase at the end of this session. Keep it under ~200 lines.
    * Location: `/home/wsl/Repositories/Sift/ARCHITECTURE.md`
-   * Note: legacy `CONTEXT.md` (`/home/wsl/Repositories/markdowns/sift-markdowns/CONTEXT.md`) is superseded — do not update it.
 
 3. **Update README.md:**
    * Review `README.md`. If the session introduced new features, configuration keys (`.env`), or changed installation/build commands, update those specific sections. Do not alter stable project descriptions unless explicitly relevant.
    * Location: `/home/wsl/Repositories/Sift/README.md`
 
-4. **Guard AGENTS.md (Strict Rule):**
-   * **DO NOT** update `AGENTS.md` unless it is completely necessary. 
-   * Updates to this file are strictly reserved for critical, sweeping architectural shifts, fundamental changes to the core tech stack, or major global project rules. Do not modify it for routine features, refactors, or bug fixes - this is to be kept very lean.
+4. **Update AGENTS.md:** 
+   * Updates to this file are strictly reserved for critical, sweeping architectural shifts, fundamental changes to the core tech stack, or major global project rules. Do not modify it for routine features, refactors, or bug fixes. Keep it under ~200 lines
    * Location: `/home/wsl/Repositories/Sift/AGENTS.md`
+
+5. **Commit Message**
+   * Once docs are upto date suggest a quick commit message with either `feat:`, `polish:` etc
