@@ -103,7 +103,7 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
 2. **Update ARCHITECTURE.md:**
    * Review the current architectural state, tech stack details, or data flows.
    * Update any outdated sections to reflect the exact state of the codebase at the end of this session. Keep it under ~200 lines.
-   * Location: `/home/wsl/Repositories/Sift/ARCHITECTURE.md`
+   * Location: `/home/wsl/Repositories/markdowns/sift-markdowns/ARCHITECTURE.md`
 
 3. **Update README.md:**
    * Review `README.md`. If the session introduced new features, configuration keys (`.env`), or changed installation/build commands, update those specific sections. Do not alter stable project descriptions unless explicitly relevant.

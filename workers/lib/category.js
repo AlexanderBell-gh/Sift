@@ -52,6 +52,8 @@ const AISLE_TERMS = {
     'pork', 'lamb', 'mince', 'steak', 'meatballs', 'kebab', 'shawarma',
     'prawn', 'prawns', 'shrimp', 'salmon', 'tuna', 'trout', 'fish',
     'salmon, tuna & trout',
+    'cod', 'haddock', 'sea bass', 'sea bass fillets',
+    'pork pie', 'pork pies',
     'hummus', 'houmous', 'dip', 'dips', 'coleslaw', 'quiche', 'tofu',
     'falafel', 'sandwich', 'sandwiches', 'sushi', 'deli',
     'ready meal', 'ready meals', 'grain bowl',
@@ -79,7 +81,7 @@ const AISLE_TERMS = {
     'produce', 'fresh produce', 'fruit', 'vegetables', 'vegetable', 'salad',
     'apple', 'apples', 'banana', 'bananas', 'pepper', 'peppers', 'carrot',
     'carrots', 'kiwi', 'potato', 'potatoes', 'onion', 'onions', 'tomato',
-    'tomatoes', 'broccoli', 'cucumber', 'lettuce', 'orange', 'oranges',
+    'broccoli', 'cucumber', 'lettuce', 'orange', 'oranges',
     'grapes', 'lemons', 'limes', 'avocado', 'avocados',
     'mango', 'pineapple', 'melon', 'watermelon', 'pear', 'pears', 'plum',
     'plums', 'peach', 'peaches', 'nectarine', 'nectarines', 'cherry',
@@ -87,6 +89,9 @@ const AISLE_TERMS = {
     'aubergine', 'courgette', 'chilli', 'garlic', 'ginger', 'mushroom',
     'mushrooms', 'celery', 'kale', 'spinach', 'rocket', 'leek', 'leeks',
     'parsnip', 'parsnips', 'beetroot', 'radish',
+    // NOTE: no 'tomatoes' entry: sameWord() folds tomato/tomatoes, and a
+    // duplicate let fresh-tomato tokens double-count past the 'chopped
+    // tomatoes' cupboard phrase into a tie Produce won (29-09-2026).
   ],
   Frozen: [
     'frozen', 'peas', 'sweetcorn', 'ice cream', 'pizza', 'pie', 'pies',
@@ -100,7 +105,7 @@ const AISLE_TERMS = {
     'bagels', 'brioche', 'scones', 'scone', 'doughnuts', 'donuts',
     'donut', 'wraps', 'wrap', 'pitta', 'ciabatta', 'focaccia',
     'crumpets', 'crumpet', 'hot cross buns', 'sourdough', 'bakewell',
-    'bakewell tart',
+    'bakewell tart', 'carrot cake',
   ],
   'Food Cupboard': [
     'food cupboard', 'cereals', 'cereal', 'flapjack', 'flapjacks', 'oat',
@@ -111,7 +116,7 @@ const AISLE_TERMS = {
     'herbs', 'curry', 'honey', 'jam', 'marmalade', 'syrup',
     'peanut butter', 'spaghetti', 'fusilli', 'penne', 'macaroni',
     'lasagne', 'tagliatelle', 'chickpeas', 'chickpea', 'chopped tomatoes',
-    'passata', 'coconut milk', 'gravy', 'stuffing',
+    'passata', 'tomato passata', 'coconut milk', 'gravy', 'stuffing',
   ],
   Other: [],
 };
@@ -155,10 +160,13 @@ const QUANTITY_UNITS = new Set([
 const STAPLE_CARBS = new Set(['noodles', 'noodle', 'pasta', 'rice']);
 
 // Personal-care and household markers force Other before scoring.
+// 'roll' is deliberately absent (bakery rolls); the phrases cover paper.
 const NON_FOOD_SIGNALS = [
   'wash', 'soap', 'antibacterial', 'shampoo', 'conditioner', 'detergent',
   'bleach', 'cleaner', 'lotion', 'toothpaste', 'deodorant', 'nappies',
   'washing powder',
+  'toilet', 'toilet roll', 'kitchen roll', 'tissue', 'tissues',
+  'wipe', 'wipes',
 ];
 
 // Dry-goods markers veto Chilled and Produce (flavoured flapjacks, oat bars).
@@ -166,6 +174,11 @@ const DRY_GOODS_MARKERS = [
   'flapjack', 'flapjacks', 'oat boosts', 'granola', 'muesli', 'porridge',
   'cereal bar', 'cereal bars',
 ];
+
+// Tinned/canned markers veto Chilled and Produce (tinned tomatoes are
+// cupboard, not produce). Bakery is never vetoed (tinned sourdough stays
+// Bakery). Same dairy exemption as the dry-goods veto.
+const TINNED_MARKERS = ['tinned', 'canned'];
 
 // Dairy context exempts a row from the dry-goods veto (locked: Oat Milk is
 // Chilled, not Food Cupboard).
@@ -435,6 +448,10 @@ export function scoreCategory(signals = {}) {
 
   const hasDairy = hasMarker(combinedTokens, combinedJoined, DAIRY_SIGNALS);
   if (!hasDairy && hasMarker(combinedTokens, combinedJoined, DRY_GOODS_MARKERS)) {
+    vetoed.add('Chilled');
+    vetoed.add('Produce');
+  }
+  if (!hasDairy && hasMarker(combinedTokens, combinedJoined, TINNED_MARKERS)) {
     vetoed.add('Chilled');
     vetoed.add('Produce');
   }

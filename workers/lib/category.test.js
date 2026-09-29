@@ -316,6 +316,57 @@ describe('v2 protein + storage (title-first for crumb-less stores)', () => {
   });
 });
 
+describe('hardening batch (29-09-2026, title-only probe misses)', () => {
+  it('pork pies title-only -> Chilled (meat pie beats frozen pie token)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Pork Pies 4 Pack' }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('tinned tomatoes title-only -> Food Cupboard (tinned vetoes Produce)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Tinned Tomatoes 400g' }));
+    assert.equal(r.category, 'Food Cupboard');
+  });
+
+  it('chopped tomatoes title-only -> Food Cupboard (cupboard phrase beats produce tie)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Chopped Tomatoes 400g' }));
+    assert.equal(r.category, 'Food Cupboard');
+  });
+
+  it('carrot cake title-only -> Bakery (cake phrase beats carrot token)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Carrot Cake 400g' }));
+    assert.equal(r.category, 'Bakery');
+  });
+
+  it('cod fillets title-only -> Chilled (corpus fish, was below-floor Other)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Cod Fillets 300g' }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('haddock title-only -> Chilled (corpus fish)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Haddock Fillets 300g' }));
+    assert.equal(r.category, 'Chilled');
+  });
+
+  it('toilet roll title-only -> Other (household non-food, never Bakery)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Toilet Roll 9 Pack' }));
+    assert.equal(r.category, 'Other');
+    assert.equal(r.reason, 'non-food');
+  });
+
+  it('tomato passata title-only -> Food Cupboard (phrase beats tomato token)', () => {
+    const r = scoreCategory(signals({ title: 'Tesco Tomato Passata 500g' }));
+    assert.equal(r.category, 'Food Cupboard');
+  });
+
+  it('tinned sourdough still Bakery (tinned veto never touches Bakery)', () => {
+    const r = scoreCategory(signals({
+      title: "Sainsbury's White Tinned Sourdough Bread, Taste the Difference 500g",
+      store_id: 'sainsburys',
+    }));
+    assert.equal(r.category, 'Bakery');
+  });
+});
+
 describe('clampLegacyCategory (old extensions without signals)', () => {
   it('keeps canonical values, trims and case-folds', () => {
     assert.equal(clampLegacyCategory('chilled '), 'Chilled');
