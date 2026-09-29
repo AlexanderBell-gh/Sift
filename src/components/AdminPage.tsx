@@ -284,13 +284,17 @@ export default function AdminPage() {
               <div className="admin-stack">
                 <div className="admin-heading-row">
                   <div>
-                    <h2>Category taxonomy (v{stats.taxonomy.version})</h2>
-                    <p className="admin-subtitle">Unknown-bucket health: stale rows await rescore, honest Other rows stay unforced.</p>
+                    <h2>Watchlist categories</h2>
+                    <p className="admin-subtitle">
+                      {stats.taxonomy.staleCount === 0
+                        ? `Every product is on the current taxonomy (v${stats.taxonomy.version}).`
+                        : `${stats.taxonomy.staleCount} product${stats.taxonomy.staleCount === 1 ? '' : 's'} scored by an older taxonomy. Preview the upgrade, then apply it.`}
+                    </p>
                   </div>
                 </div>
                 <div className="admin-dash-grid">
-                  <StatCard label="Rows below current version" value={stats.taxonomy.staleCount} />
-                  <StatCard label="Honest Other rows" value={stats.taxonomy.otherCount} />
+                  <StatCard label="Needs rescore" value={stats.taxonomy.staleCount} />
+                  <StatCard label="Uncategorised" value={stats.taxonomy.otherCount} />
                 </div>
                 <div className="admin-search-row">
                   <button
@@ -298,7 +302,7 @@ export default function AdminPage() {
                     className="btn-secondary"
                     disabled={rescoring}
                   >
-                    {rescoring ? 'Scoring…' : 'Dry-run rescore'}
+                    {rescoring ? 'Scoring…' : 'Preview rescore'}
                   </button>
                   <button
                     onClick={() => handleRescore(false)}
@@ -310,8 +314,13 @@ export default function AdminPage() {
                 </div>
                 {rescore && (
                   <p className="admin-meta">
-                    {rescore.dryRun ? 'Dry run' : 'Applied'}: scanned {rescore.scanned}, {rescore.changed} would change, {rescore.confirmed} confirmed.
+                    {rescore.dryRun
+                      ? `Preview: scanned ${rescore.scanned}, ${rescore.changed} would change category, ${rescore.confirmed} already correct${rescore.kept > 0 ? `, ${rescore.kept} kept as-is (title unclear, stored category kept)` : ''}.`
+                      : `Applied: scanned ${rescore.scanned}, ${rescore.changed} updated, ${rescore.confirmed} already correct${rescore.kept > 0 ? `, ${rescore.kept} kept as-is` : ''}.`}
                   </p>
+                )}
+                {rescore && !rescore.dryRun && rescore.changed === 0 && (
+                  <p className="admin-meta">Nothing to update — every scanned row is already correct.</p>
                 )}
                 {rescore && rescore.sample.length > 0 && (
                   <div className="admin-stack-xs">

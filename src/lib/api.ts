@@ -200,6 +200,7 @@ export interface RescoreResult {
   scanned: number;
   changed: number;
   confirmed: number;
+  kept: number;
   sample: { id: string; name: string; from: string | null; to: string }[];
 }
 

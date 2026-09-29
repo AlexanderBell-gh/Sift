@@ -1256,6 +1256,7 @@ async function handleRequest(request, env) {
       );
       let changed = 0;
       let confirmed = 0;
+      let kept = 0;
       const sample = [];
       for (const r of rows || []) {
         if (!r.product_name) continue;
@@ -1272,8 +1273,20 @@ async function handleRequest(request, env) {
           if (sample.length < 20) {
             sample.push({ id: r.id, name: r.product_name, from: r.category, to: s.category });
           }
+        } else if (s.category === 'Other') {
+          // Title-only signals are thin (rows hold no crumbs/storage): Other
+          // means unclear, not wrong. Keep the stored category and mark the
+          // row current so reruns converge instead of rescanning it forever.
+          if (!dryRun) {
+            await execute(
+              env,
+              'UPDATE watchlist SET taxonomy_version = 3, updated_at = ? WHERE id = ?',
+              [Date.now(), r.id]
+            );
+          }
+          kept++;
         } else {
-          if (!dryRun && s.category === r.category) {
+          if (!dryRun) {
             await execute(
               env,
               'UPDATE watchlist SET taxonomy_version = 3, updated_at = ? WHERE id = ?',
@@ -1289,10 +1302,10 @@ async function handleRequest(request, env) {
           action: 'admin.taxonomy_rescore',
           adminId: admin.userId,
           adminUsername: adminUser?.username || 'unknown',
-          details: `rescored to v3: ${changed} changed, ${confirmed} confirmed (dryRun false)`,
+          details: `rescored to v3: ${changed} changed, ${confirmed} confirmed, ${kept} kept (dryRun false)`,
         });
       }
-      return jsonResponse({ dryRun, scanned: (rows || []).length, changed, confirmed, sample }, request);
+      return jsonResponse({ dryRun, scanned: (rows || []).length, changed, confirmed, kept, sample }, request);
     } catch (e) {
       console.error('Rescore error:', e);
       return errorResponse('Failed to rescore watchlist', request);

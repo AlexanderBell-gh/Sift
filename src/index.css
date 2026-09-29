@@ -2373,12 +2373,15 @@ body {
   flex-direction: column;
   gap: 16px;
 }
+/* Nested metric grids inside a stacked section keep stack rhythm (no 48px trailing gap). */
+.admin-stack .admin-dash-grid {
+  margin-bottom: 0;
+}
 .admin-stack-sm {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-.admin-stack-xs {
+}.admin-stack-xs {
   display: flex;
   flex-direction: column;
   gap: 8px;
