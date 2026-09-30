@@ -20,7 +20,7 @@
 
 <!-- Screenshots (pending real captures): Search hero, Watchlist grid, Shopping list per-store totals -->
 
-UK supermarket grocery tracker. Pick up to 3 stores, search once, pin deals to a watchlist, and shop them from one multibuy-aware list.
+UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products to a watchlist, and shop them from one multibuy-aware list.
 
 ## Features
 
