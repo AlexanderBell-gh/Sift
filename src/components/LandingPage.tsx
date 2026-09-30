@@ -1,6 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn } from 'lucide-react';
+import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
+import {
+  SearchVisual,
+  PinVisual,
+  AlertVisual,
+  ExtensionVisual,
+  ListVisual,
+} from './landing/visuals';
 
 const STORE_MARKS = [
   { id: 'tesco', logo: '/landing/landing_tescos.svg' },
@@ -21,26 +28,31 @@ const FEATURES = [
     icon: Search,
     title: 'Search 11 UK supermarkets',
     desc: 'One search box opens results across Tesco, Sainsbury’s, M&S, Asda, Aldi, Lidl and more — up to 3 stores at a time.',
+    Visual: SearchVisual,
+  },
+  {
+    icon: Puzzle,
+    title: 'Browser extension',
+    desc: 'Add products straight from any supermarket site on your computer — click the Sift icon and pin it in one click.',
+    Visual: ExtensionVisual,
   },
   {
     icon: Bookmark,
     title: 'Pin to your watchlist',
     desc: 'Save the products you buy, with normal and loyalty prices side by side plus offer end dates and multi-buy terms.',
+    Visual: PinVisual,
   },
   {
     icon: Bell,
     title: 'Offer-end alerts',
     desc: 'Sift checks your pinned offers daily and rings the bell when one ends — so expired deals never sit silently in your list.',
-  },
-  {
-    icon: Puzzle,
-    title: 'Browser extension',
-    desc: 'Add products straight from any supermarket site. The extension reads the page and pins it in one click.',
+    Visual: AlertVisual,
   },
   {
     icon: ShoppingCart,
     title: 'Multibuy-smart shopping list',
     desc: 'Add watchlist items in quantities and get per-store totals with multi-buy sets applied — plus savings vs shelf price.',
+    Visual: ListVisual,
   },
 ];
 
@@ -130,6 +142,7 @@ export default function LandingPage() {
               </div>
               <h3 className="landing-card-title">{f.title}</h3>
               <p className="landing-card-desc">{f.desc}</p>
+              <f.Visual />
             </div>
           ))}
         </div>
@@ -165,11 +178,13 @@ export default function LandingPage() {
               <LogIn className="icon-sm" />
             </button>
           </div>
-          <p className="landing-cta-note">
-            Works in your phone browser today — Android app coming soon
-          </p>
         </div>
       </section>
+
+      <p className="landing-app-strip">
+        <Smartphone className="icon-sm" aria-hidden="true" />
+        Android app coming soon
+      </p>
 
       <footer className="landing-footer">
         <div className="container">Sift — UK Grocery Tracker</div>
