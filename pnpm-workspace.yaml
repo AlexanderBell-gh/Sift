@@ -4,5 +4,5 @@ allowBuilds:
   tesseract.js: true
   workerd: true
 minimumReleaseAgeExclude:
-  - miniflare@4.20260529.0
-  - wrangler@4.96.0
+  - miniflare@4.20260529.0 || 5.20260926.1-alpha
+  - wrangler@4.96.0 || 4.144.0
