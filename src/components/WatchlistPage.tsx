@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
-import { Search, Plus, Check, ChevronDown } from 'lucide-react';
+import { Search, Plus, Check } from 'lucide-react';
 import { useAuth } from '../contexts/auth-context';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../lib/api';
 import { STORES } from '../lib/stores';
 import { CATEGORIES } from '../lib/categories';
@@ -10,6 +10,7 @@ import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyC
 import type { WatchlistItem } from '../types';
 import NavHeader from './NavHeader';
 import WatchlistFilters from './WatchlistFilters';
+import type { OfferStatus } from './WatchlistFilters';
 import WatchlistSkeletonCard from './WatchlistSkeletonCard';
 import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 
@@ -58,9 +59,6 @@ export default function WatchlistPage() {
       case 'price_desc':
         result = [...result].sort((a, b) => (b.prices.normal ?? -1) - (a.prices.normal ?? -1));
         break;
-      case 'store_asc':
-        result = [...result].sort((a, b) => a.store.localeCompare(b.store));
-        break;
     }
 
     return result;
@@ -80,30 +78,42 @@ export default function WatchlistPage() {
     return [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity))[0]!;
   }
 
-  const { activeProducts, expiredProducts } = useMemo(() => {
-    const active: WatchlistItem[][] = [];
+  const { offerGroups, plainGroups, expiredProducts, allGroups } = useMemo(() => {
+    const offers: WatchlistItem[][] = [];
+    const plain: WatchlistItem[][] = [];
     const expired: WatchlistItem[][] = [];
     for (const group of products) {
       const best = getBest(group);
       if (isOfferExpired(best.offer_expires_at)) {
         expired.push(group);
+      } else if (best.is_on_offer) {
+        offers.push(group);
       } else {
-        active.push(group);
+        plain.push(group);
       }
     }
-    return { activeProducts: active, expiredProducts: expired };
+    return { offerGroups: offers, plainGroups: plain, expiredProducts: expired, allGroups: [...offers, ...plain] };
   }, [products]);
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [showExpired, setShowExpired] = useState(false);
+  const [view, setView] = useState<OfferStatus>('all');
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef(false);
   const timerRef = useRef<number | undefined>(undefined);
 
-  const hasMore = visibleCount < activeProducts.length;
-  const visibleProducts = useMemo(() => activeProducts.slice(0, visibleCount), [activeProducts, visibleCount]);
-  const moreCount = Math.min(PAGE_SIZE, activeProducts.length - visibleCount);
+  const currentProducts = view === 'all' ? allGroups : view === 'offers' ? offerGroups : view === 'plain' ? plainGroups : expiredProducts;
+  const statusCounts: Record<OfferStatus, number> = {
+    all: allGroups.length,
+    offers: offerGroups.length,
+    plain: plainGroups.length,
+    expired: expiredProducts.length,
+  };
+  const hasMore = visibleCount < currentProducts.length;
+  const visibleProducts = useMemo(() => currentProducts.slice(0, visibleCount), [currentProducts, visibleCount]);
+  const moreCount = Math.min(PAGE_SIZE, currentProducts.length - visibleCount);
 
   function resetPaging() {
     if (timerRef.current !== undefined) {
@@ -118,6 +128,12 @@ export default function WatchlistPage() {
   function handleFilterReset() {
     resetPaging();
     window.scrollTo(0, 0);
+  }
+
+  function handleStatusChange(next: OfferStatus) {
+    if (next === view) return;
+    setView(next);
+    handleFilterReset();
   }
 
   function handleClearSearch() {
@@ -136,7 +152,7 @@ export default function WatchlistPage() {
           pendingRef.current = true;
           setLoadingMore(true);
           timerRef.current = window.setTimeout(() => {
-            setVisibleCount((c) => Math.min(c + PAGE_SIZE, activeProducts.length));
+            setVisibleCount((c) => Math.min(c + PAGE_SIZE, currentProducts.length));
             setLoadingMore(false);
             pendingRef.current = false;
           }, 1000);
@@ -149,7 +165,62 @@ export default function WatchlistPage() {
       io.disconnect();
       window.clearTimeout(timerRef.current);
     };
-  }, [hasMore, activeProducts.length]);
+  }, [hasMore, currentProducts.length]);
+
+  // Deep-link from alerts (?item=<watchlist_id>): switch to owning tab,
+  // scroll card into view, flash highlight. Param cleared.
+  // State updates deferred to timers: no sync setState in effect body.
+  useEffect(() => {
+    if (loading) return;
+    const targetId = searchParams.get('item');
+    if (!targetId) return;
+    let scrollTimer: number | undefined;
+    let clearTimer: number | undefined;
+    const applyTimer = window.setTimeout(() => {
+      const target = items.find(i => i.id === targetId);
+      if (!target) {
+        setSearchParams({}, { replace: true });
+        return;
+      }
+      // Card renders per product group under cheapest row id: resolve group best.
+      const group = items.filter(i => i.product_id === target.product_id);
+      const best = [...group].sort(
+        (a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity)
+      )[0];
+      if (!best) {
+        setSearchParams({}, { replace: true });
+        return;
+      }
+      if (isOfferExpired(target.offer_expires_at)) {
+        setView('expired');
+        const idx = expiredProducts.findIndex(g => g[0]?.product_id === target.product_id);
+        if (idx >= visibleCount) setVisibleCount(idx + 1);
+      } else if (target.is_on_offer) {
+        setView('offers');
+        const idx = offerGroups.findIndex(g => g[0]?.product_id === target.product_id);
+        if (idx >= visibleCount) setVisibleCount(idx + 1);
+      } else {
+        setView('all');
+        const idx = allGroups.findIndex(g => g[0]?.product_id === target.product_id);
+        if (idx >= visibleCount) setVisibleCount(idx + 1);
+      }
+      setHighlightedId(best.id);
+      setSearchParams({}, { replace: true });
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      scrollTimer = window.setTimeout(() => {
+        document.getElementById(`watchlist-card-${best.id}`)?.scrollIntoView({
+          behavior: reduceMotion ? 'auto' : 'smooth',
+          block: 'center',
+        });
+      }, 150);
+      clearTimer = window.setTimeout(() => setHighlightedId(null), 3000);
+    }, 0);
+    return () => {
+      window.clearTimeout(applyTimer);
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [loading, items, allGroups, offerGroups, expiredProducts, visibleCount, searchParams, setSearchParams]);
 
   const isTrial = user?.isTrial === true;
   const watchlistLimit = 5;
@@ -292,10 +363,12 @@ export default function WatchlistPage() {
       </>
     );
 
-    const cardClass = expired ? 'product-card is-expired' : 'product-card';
+    const baseClass = expired ? 'product-card is-expired' : 'product-card';
+    const cardClass = highlightedId === best.id ? `${baseClass} is-highlighted` : baseClass;
     return best.product_url ? (
       <a
         key={product.product_id}
+        id={`watchlist-card-${best.id}`}
         href={best.product_url}
         target="_blank"
         rel="noopener noreferrer"
@@ -304,7 +377,7 @@ export default function WatchlistPage() {
         {cardContent}
       </a>
     ) : (
-      <div key={product.product_id} className={cardClass}>
+      <div key={product.product_id} id={`watchlist-card-${best.id}`} className={cardClass}>
         {cardContent}
       </div>
     );
@@ -323,6 +396,9 @@ export default function WatchlistPage() {
         onSortChange={(v) => { setSortBy(v); handleFilterReset(); }}
         searchQuery={searchQuery}
         onSearchChange={(v) => { setSearchQuery(v); resetPaging(); }}
+        status={view}
+        onStatusChange={handleStatusChange}
+        statusCounts={statusCounts}
       />
 
       <div className="container watchlist-content">
@@ -409,11 +485,11 @@ export default function WatchlistPage() {
 
         {!loading && visibleProducts.length > 0 && (
           <div className="products-grid">
-            {visibleProducts.map(group => renderGroup(group, false))}
+            {visibleProducts.map(group => renderGroup(group, view === 'expired'))}
           </div>
         )}
 
-        {!loading && activeProducts.length > 0 && hasMore && (
+        {!loading && currentProducts.length > 0 && hasMore && (
           <div ref={sentinelRef} role="status" aria-live="polite" aria-label={loadingMore ? 'Loading more items' : undefined}>
             {loadingMore && (
               <div className="products-grid">
@@ -425,29 +501,8 @@ export default function WatchlistPage() {
           </div>
         )}
 
-        {!loading && !hasMore && activeProducts.length > PAGE_SIZE && (
-          <p className="text-sm text-muted watchlist-count">Showing all {activeProducts.length} products</p>
-        )}
-
-        {!loading && expiredProducts.length > 0 && (
-          <section aria-label="Expired offers" className="watchlist-expired">
-            <button
-              type="button"
-              onClick={() => setShowExpired(v => !v)}
-              aria-expanded={showExpired}
-              aria-controls="expired-grid"
-              className="watchlist-expired-toggle"
-            >
-              <span className="watchlist-expired-heading">Expired offers ({expiredProducts.length})</span>
-              <ChevronDown size={15} className={showExpired ? 'is-open' : ''} aria-hidden="true" />
-              <span className="watchlist-expired-hint">{showExpired ? 'Hide' : 'Show'}</span>
-            </button>
-            {showExpired && (
-              <div className="products-grid" id="expired-grid">
-                {expiredProducts.map(group => renderGroup(group, true))}
-              </div>
-            )}
-          </section>
+        {!loading && !hasMore && currentProducts.length > PAGE_SIZE && (
+          <p className="text-sm text-muted watchlist-count">Showing all {currentProducts.length} products</p>
         )}
       </div>
     </div>

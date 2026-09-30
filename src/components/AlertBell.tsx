@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { TouchEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, X } from 'lucide-react';
+import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/auth-context';
 import { getAlerts, markAlertRead, markAllAlertsRead, deleteAlert } from '../lib/api';
 import { formatTimeAgo } from '../lib/utils';
@@ -12,10 +14,11 @@ const SWIPE_THRESHOLD = 60;
 interface AlertRowProps {
   alert: Alert;
   onMarkRead: (id: string) => void;
+  onOpen: (alert: Alert) => void;
   onDismiss: (id: string) => void;
 }
 
-function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
+function AlertRow({ alert, onMarkRead, onOpen, onDismiss }: AlertRowProps) {
   const ref = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
@@ -97,8 +100,8 @@ function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
             swiped.current = false;
             return;
           }
-          if (alert.read) return;
-          onMarkRead(alert.id);
+          if (!alert.read) onMarkRead(alert.id);
+          onOpen(alert);
         }}
       >
         {!alert.read && (
@@ -124,9 +127,33 @@ function AlertRow({ alert, onMarkRead, onDismiss }: AlertRowProps) {
 
 export default function AlertBell() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const closeTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+
+  function openPanel() {
+    window.clearTimeout(closeTimer.current);
+    setIsClosing(false);
+    setOpen(true);
+  }
+
+  function closePanel() {
+    if (!open) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setOpen(false);
+      return;
+    }
+    setIsClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      setOpen(false);
+      setIsClosing(false);
+    }, 200);
+  }
   const [loadError, setLoadError] = useState(false);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
@@ -185,10 +212,10 @@ export default function AlertBell() {
       const target = e.target as Node;
       if (ref.current?.contains(target)) return;
       if (panelRef.current?.contains(target)) return;
-      setOpen(false);
+      closePanel();
     }
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') closePanel();
     }
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleKey);
@@ -196,7 +223,7 @@ export default function AlertBell() {
       document.removeEventListener('mousedown', handleClick);
       document.removeEventListener('keydown', handleKey);
     };
-  }, []);
+  });
 
   useEffect(() => {
     if (!open || !isMobile) return;
@@ -238,6 +265,11 @@ export default function AlertBell() {
     }
   }
 
+  function handleOpen(alert: Alert) {
+    closePanel();
+    navigate(`/watchlist?item=${encodeURIComponent(alert.watchlist_id)}`);
+  }
+
   async function handleDismiss(id: string) {
     if (!token) return;
     const removed = alerts.find(a => a.id === id);
@@ -260,8 +292,8 @@ export default function AlertBell() {
 
   const panel = (
     <>
-      <div className="alerts-backdrop" onClick={() => setOpen(false)} />
-      <div ref={panelRef} className="alerts-dropdown" role="dialog" aria-label="Alerts">
+      <div className={cn('alerts-backdrop', isClosing && 'is-closing')} onClick={closePanel} />
+      <div ref={panelRef} className={cn('alerts-dropdown', isClosing && 'is-closing')} role="dialog" aria-label="Alerts">
         <div className="alerts-header">
           <span>Alerts</span>
           {unreadCount > 0 && (
@@ -286,6 +318,7 @@ export default function AlertBell() {
                 key={alert.id}
                 alert={alert}
                 onMarkRead={handleMarkRead}
+                onOpen={handleOpen}
                 onDismiss={handleDismiss}
               />
             ))}
@@ -298,7 +331,7 @@ export default function AlertBell() {
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => (open ? closePanel() : openPanel())}
         className="relative icon-btn"
         title="Alerts"
         aria-label="Alerts"

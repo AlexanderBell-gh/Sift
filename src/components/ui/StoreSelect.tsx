@@ -13,16 +13,39 @@ export const MAX_STORES = 3;
 
 export function StoreSelect({ selected, onChange, className }: StoreSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+
+  function openPanel() {
+    window.clearTimeout(closeTimer.current);
+    setIsClosing(false);
+    setIsOpen(true);
+  }
+
+  function closePanel() {
+    if (!isOpen) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setIsOpen(false);
+      return;
+    }
+    setIsClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      setIsOpen(false);
+      setIsClosing(false);
+    }, 200);
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        closePanel();
       }
     }
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setIsOpen(false);
+      if (e.key === 'Escape') closePanel();
     }
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleKey);
@@ -30,7 +53,7 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKey);
     };
-  }, []);
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,7 +107,7 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
         {selected.size < MAX_STORES && (
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => (isOpen ? closePanel() : openPanel())}
             aria-haspopup="listbox"
             aria-expanded={isOpen}
             className={cn('store-chip-add', isOpen && 'store-chip-add-active')}
@@ -97,8 +120,8 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
 
       {isOpen && (
         <>
-          <div className="store-panel-backdrop" onClick={() => setIsOpen(false)} />
-          <div className="store-panel" role="listbox" aria-label="Select stores">
+          <div className={cn('store-panel-backdrop', isClosing && 'is-closing')} onClick={closePanel} />
+          <div className={cn('store-panel', isClosing && 'is-closing')} role="listbox" aria-label="Select stores">
             <div className="store-panel-header">
               <span className="store-panel-title">Select stores</span>
               <div className="store-panel-actions">

@@ -5,12 +5,13 @@ interface FilterPanelProps {
   align?: 'left' | 'right';
   actions?: React.ReactNode;
   children: React.ReactNode;
+  closing?: boolean;
 }
 
-export default function FilterPanel({ title, align = 'left', actions, children }: FilterPanelProps) {
+export default function FilterPanel({ title, align = 'left', actions, children, closing = false }: FilterPanelProps) {
   return (
     <div
-      className={cn('filter-panel', align === 'right' && 'filter-panel-right')}
+      className={cn('filter-panel', align === 'right' && 'filter-panel-right', closing && 'is-closing')}
       role="listbox"
       aria-label={title}
     >

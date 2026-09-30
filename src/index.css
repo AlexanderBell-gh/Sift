@@ -1092,6 +1092,21 @@ body {
   }
 }
 
+@keyframes store-panel-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+}
+
+.store-panel.is-closing {
+  animation: store-panel-out 150ms var(--ease-smooth) forwards;
+}
+
 .store-panel-header {
   display: flex;
   align-items: center;
@@ -1410,6 +1425,32 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes panel-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes sheet-slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.filter-panel.is-closing,
+.alerts-dropdown.is-closing {
+  animation: panel-out 150ms var(--ease-smooth) forwards;
+}
+
+.filter-panel-backdrop.is-closing,
+.store-panel-backdrop.is-closing,
+.alerts-backdrop.is-closing {
+  animation: fade-out 150ms var(--ease-smooth) forwards;
+}
+
 .filter-panel-header {
   display: flex;
   align-items: center;
@@ -1550,6 +1591,34 @@ body {
     height: 52px;
   }
 
+  .filter-nav {
+    position: fixed;
+    top: 72px;
+    left: 0;
+    right: 0;
+    transition: transform 0.2s var(--ease-smooth);
+  }
+
+  .filter-nav.is-hidden {
+    transform: translateY(-110%);
+  }
+
+  .filter-nav + .watchlist-content {
+    padding-top: 76px;
+    transition: padding-top 0.2s var(--ease-smooth);
+  }
+
+  .filter-nav.is-hidden + .watchlist-content {
+    padding-top: 24px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .filter-nav,
+    .filter-nav + .watchlist-content {
+      transition: none;
+    }
+  }
+
   .filter-bar {
     justify-content: center;
     gap: 8px;
@@ -1596,6 +1665,7 @@ body {
     max-height: 80vh;
     z-index: 50;
     animation: sheet-slide-up 250ms var(--ease-smooth);
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 
   .filter-panel-right {
@@ -1605,6 +1675,11 @@ body {
 
   .filter-panel-list {
     max-height: 60vh;
+  }
+
+  .filter-panel.is-closing,
+  .store-panel.is-closing {
+    animation: sheet-slide-down 200ms var(--ease-smooth) forwards;
   }
 
   .store-panel-backdrop {
@@ -1630,7 +1705,7 @@ body {
     border: none;
     z-index: 50;
     animation: sheet-slide-up 250ms var(--ease-smooth);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 
   .store-panel-list {
@@ -2005,58 +2080,14 @@ body {
   box-shadow: 0 8px 40px 6px rgba(220, 38, 38, 0.08);
 }
 
-.watchlist-expired {
-  margin-top: 40px;
-  margin-bottom: 80px;
+.product-card.is-highlighted {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 
-.watchlist-expired-heading {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  margin: 0;
-}
-
-.watchlist-expired-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  margin: 0 0 16px 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--muted);
-}
-
-.watchlist-expired-toggle:hover .watchlist-expired-heading,
-.watchlist-expired-toggle:hover .watchlist-expired-hint {
-  color: var(--primary);
-}
-
-.watchlist-expired-toggle svg {
-  transition: transform 0.2s var(--ease-spring);
-  flex-shrink: 0;
-}
-
-.watchlist-expired-toggle svg.is-open {
-  transform: rotate(180deg);
-}
-
-.watchlist-expired-hint {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  margin-left: auto;
-}
-
-.watchlist-expired .products-grid {
-  margin-bottom: 0;
+.dark .product-card.is-highlighted {
+  border-color: color-mix(in oklab, var(--danger) 70%, transparent);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
 }
 
 .product-card-top {
@@ -4248,6 +4279,10 @@ body {
     z-index: 111;
     animation: sheet-slide-up 250ms var(--ease-smooth);
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .alerts-dropdown.is-closing {
+    animation: sheet-slide-down 200ms var(--ease-smooth) forwards;
   }
 
   .alerts-backdrop {

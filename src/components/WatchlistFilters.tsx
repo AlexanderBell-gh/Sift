@@ -7,13 +7,21 @@ import FilterTrigger from './filters/FilterTrigger';
 import FilterPanel from './filters/FilterPanel';
 import FilterOption from './filters/FilterOption';
 
+export type OfferStatus = 'all' | 'offers' | 'plain' | 'expired';
+
+const STATUS_OPTIONS: { value: OfferStatus; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'offers', label: 'On offer' },
+  { value: 'plain', label: 'Not on offer' },
+  { value: 'expired', label: 'Expired' },
+];
+
 const STORE_NAMES = STORES.map(s => s.name);
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Relevance' },
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'store_asc', label: 'Store A-Z' },
 ] as const;
 
 interface WatchlistFiltersProps {
@@ -25,6 +33,9 @@ interface WatchlistFiltersProps {
   onSortChange: (sort: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  status: OfferStatus;
+  onStatusChange: (status: OfferStatus) => void;
+  statusCounts: Record<OfferStatus, number>;
 }
 
 type PanelKey = 'stores' | 'categories' | 'sort' | null;
@@ -38,18 +49,38 @@ export default function WatchlistFilters({
   onSortChange,
   searchQuery,
   onSearchChange,
+  status,
+  onStatusChange,
+  statusCounts,
 }: WatchlistFiltersProps) {
   const [openPanel, setOpenPanel] = useState<PanelKey>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+
+  function closePanel() {
+    if (openPanel === null) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setOpenPanel(null);
+      return;
+    }
+    setIsClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      setOpenPanel(null);
+      setIsClosing(false);
+    }, 200);
+  }
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (barRef.current && !barRef.current.contains(e.target as Node)) {
-        setOpenPanel(null);
+        closePanel();
       }
     }
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpenPanel(null);
+      if (e.key === 'Escape') closePanel();
     }
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleKey);
@@ -57,7 +88,7 @@ export default function WatchlistFilters({
       document.removeEventListener('mousedown', handleClick);
       document.removeEventListener('keydown', handleKey);
     };
-  }, []);
+  });
 
   useEffect(() => {
     if (!openPanel) return;
@@ -73,13 +104,69 @@ export default function WatchlistFilters({
     };
   }, [openPanel]);
 
+  // Mobile only: hide filter bar on scroll down, reveal on scroll up.
+  // Class-driven (no re-renders); forced visible while a panel is open.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const bar = barRef.current;
+    let lastY = window.scrollY;
+    let ticking = false;
+    function update() {
+      ticking = false;
+      if (!bar || !mq.matches) {
+        bar?.classList.remove('is-hidden');
+        return;
+      }
+      if (openPanel !== null) {
+        bar.classList.remove('is-hidden');
+        lastY = window.scrollY;
+        return;
+      }
+      const y = window.scrollY;
+      const dy = y - lastY;
+      lastY = y;
+      if (y <= 120 || dy < -4) {
+        bar.classList.remove('is-hidden');
+      } else if (dy > 4) {
+        bar.classList.add('is-hidden');
+      }
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    }
+    function onMqChange() {
+      lastY = window.scrollY;
+      update();
+    }
+    lastY = window.scrollY;
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    mq.addEventListener('change', onMqChange);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      mq.removeEventListener('change', onMqChange);
+      bar?.classList.remove('is-hidden');
+    };
+  }, [openPanel]);
+
   const allStores = selectedStores.length === STORE_NAMES.length;
   const allCategories = selectedCategories.length === CATEGORIES.length;
 
-  const sortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? 'Relevance';
+  const sortLabel = status !== 'all'
+    ? STATUS_OPTIONS.find(o => o.value === status)?.label ?? 'All'
+    : SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? 'Relevance';
+  const sortActive = sortBy !== 'relevance' || status !== 'all';
 
   function togglePanel(key: Exclude<PanelKey, null>) {
-    setOpenPanel(prev => (prev === key ? null : key));
+    if (openPanel === key) {
+      closePanel();
+      return;
+    }
+    window.clearTimeout(closeTimer.current);
+    setIsClosing(false);
+    setOpenPanel(key);
   }
 
   function toggleStore(store: string) {
@@ -138,7 +225,7 @@ export default function WatchlistFilters({
 
   return (
     <div ref={barRef} className="filter-nav">
-      {openPanel && <div className="filter-panel-backdrop" onClick={() => setOpenPanel(null)} />}
+      {openPanel && <div className={cn('filter-panel-backdrop', isClosing && 'is-closing')} onClick={closePanel} />}
       <div className="filter-nav-inner">
         <div className="filter-bar">
           <div className="filter-group">
@@ -150,7 +237,7 @@ export default function WatchlistFilters({
               onClick={() => togglePanel('stores')}
             />
             {openPanel === 'stores' && (
-              <FilterPanel title="Stores" actions={storeActions}>
+              <FilterPanel title="Stores" actions={storeActions} closing={isClosing}>
                 {STORES.map(store => {
                   const selected = selectedStores.includes(store.name);
                   return (
@@ -177,7 +264,7 @@ export default function WatchlistFilters({
               onClick={() => togglePanel('categories')}
             />
             {openPanel === 'categories' && (
-              <FilterPanel title="Category" actions={categoryActions}>
+              <FilterPanel title="Category" actions={categoryActions} closing={isClosing}>
                 {CATEGORIES.map(category => {
                   const selected = selectedCategories.includes(category);
                   return (
@@ -199,18 +286,28 @@ export default function WatchlistFilters({
             <FilterTrigger
               icon={ArrowUpDown}
               label={sortLabel}
-              active={sortBy !== 'relevance'}
+              active={sortActive}
               expanded={openPanel === 'sort'}
               onClick={() => togglePanel('sort')}
             />
             {openPanel === 'sort' && (
-              <FilterPanel title="Sort by" align="right">
+              <FilterPanel title="Sort & status" align="right" closing={isClosing}>
+                <span className="filter-panel-title">Sort</span>
                 {SORT_OPTIONS.map(opt => (
                   <FilterOption
                     key={opt.value}
                     selected={sortBy === opt.value}
                     onClick={() => onSortChange(opt.value)}
                     label={opt.label}
+                  />
+                ))}
+                <span className="filter-panel-title">Status</span>
+                {STATUS_OPTIONS.map(opt => (
+                  <FilterOption
+                    key={opt.value}
+                    selected={status === opt.value}
+                    onClick={() => onStatusChange(opt.value)}
+                    label={`${opt.label} (${statusCounts[opt.value]})`}
                   />
                 ))}
               </FilterPanel>

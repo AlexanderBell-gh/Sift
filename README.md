@@ -1,160 +1,140 @@
-# Sift
+<p align="center">
+  <img src="./public/favicon.svg" width="96" alt="Sift logo" />
+</p>
 
-A UK supermarket offer tracker. Select up to 3 stores, search opens each store's results page in a new tab.
+<h1 align="center">Sift</h1>
 
-**Live:** https://siftsearch.pages.dev
+<p align="center"><strong>All your groceries. One place.</strong></p>
+
+<p align="center">
+  <a href="https://siftsearch.pages.dev"><strong>Live: siftsearch.pages.dev</strong></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Cloudflare-Workers_%2B_D1-F38020?logo=cloudflare&logoColor=white" alt="Cloudflare Workers + D1" />
+  <img src="https://img.shields.io/badge/pnpm-11-F69220?logo=pnpm&logoColor=white" alt="pnpm 11" />
+  <img src="https://img.shields.io/badge/License-MIT-16A34A" alt="MIT license" />
+</p>
+
+<!-- Screenshots (pending real captures): Search hero, Watchlist grid, Shopping list per-store totals -->
+
+UK supermarket grocery tracker. Pick up to 3 stores, search once, pin deals to a watchlist, and shop them from one multibuy-aware list.
 
 ## Features
 
-### Search & Discovery
-- 11-store multi-select search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) with store-aware query redirect (bottom-sheet picker on mobile)
-- Local autocomplete via UK grocery product dictionary (~1600 items) + Fuse.js fuzzy search
-- Deals of the Day — random de-duplicated on-offer items from all users' watchlists. Signed-in users get an Add to Watchlist button per tile (spinner while adding → green "Added" check for 1.5s → greyed-out "Added" permanently); shown on Search only — guests see the landing page
+### Search & Deals
+- 11-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) — query opens each store's results in a new tab, bottom-sheet store picker on mobile
+- Local autocomplete from a ~1,600-item UK grocery dictionary with fuzzy matching, plus your own watchlist items; full keyboard support
+- Deals of the Day — de-duplicated on-offer items with one-tap Add to Watchlist (spinner → green Added → pinned)
 
 ### Watchlist
-- Pin products to a personal watchlist with price tracking
-- Infinite scroll — 12 product cards per batch via `IntersectionObserver` (600px prefetch), skeleton cards while appending, filter/sort/search changes reset to the first batch and scroll to top
-- Worker-owned category taxonomy — `POST /api/watchlist` scores `category_signals` server-side (`workers/lib/category.js`: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals) and stores the result with `taxonomy_version` (v3: title-first vocab mined from the UK dictionary, singular-only terms since the plural fold double-counted ties, scoped frozen veto — leaf/JSON-LD only, `do not refreeze` excluded as freezable-at-home copy); phone apps send title/brand/store only, old clients send a legacy guess (clamped, version 0, with a product-name fallback when missing/`Other`). Preview via `POST /api/category/score`, upgrades via `POST /api/admin/watchlist/rescore` (dry-run default, `changed/confirmed/kept` counts — `kept` rows hold no signals so the stored category is retained and marked current). Admin dashboard shows taxonomy health (needs-rescore + uncategorised counts) with preview/apply controls; confident veto exits are logged alongside the unknown-bucket line. Tests: `pnpm test`
-- Dedicated filter bar: product-name search (clear + Escape, dedicated no-results state) + store + category multi-select and sort (mobile "Filters" pill)
-- Expired offers render in a collapsed `Expired offers (N)` section below the live grid (Show/Hide toggle, collapsed by default, grid mounts only when open), with danger-red hover and full-colour loyalty badges
-- Live trial-usage banner (X of 5 items + progress bar)
+- Pin any product, on offer or not; infinite scroll (12 per batch, skeletons while appending)
+- Status facet inside the Sort & status dropdown: All / On offer / Not on offer / Expired, with counts — combinable with price sorting
+- Worker-owned category taxonomy scores every pin server-side (preview + admin rescore tools)
+- Live trial banner (X of 5 items + progress bar)
 
 ### Shopping List
-- Synced shopping list at `/list` (nav: Shopping List) — quantities against watchlist items, priced live from tracked prices
-- Multibuy-aware totals (`src/lib/pricing.ts`): parses free-text deal terms (`Any 3 for £12`, `any two for £6`, `3 for 2`, `Buy 1 get 1 free`, `BOGOF`) into set pricing; sets complete within one store and pool across lines sharing the same offer tag (fixed sets split pro-rata, pence-exact; `3 for 2`-style frees the cheapest units first); expired/unrecognised terms fall back to shelf price with a note
-- Per-store sections (A–Z) with subtotals + savings vs shelf, grand total + savings summary, qty steppers (0 removes), two-tap clear-all
-- Server: `shopping_list` table + `GET/POST/PUT/DELETE /api/shopping-list` (qty capped at 99, `PUT 0` deletes)
+- Quantities against watchlist items at `/list`, priced live from tracked prices
+- Multibuy-aware totals — parses free-text deal terms (`Any 3 for £12`, `3 for 2`, `BOGOF`) into set pricing, pools same-tag sets across lines
+- Per-store subtotals with savings vs shelf, grand total, qty steppers, two-tap clear-all
+
+### Alerts
+- Single-fire offer-expiry alerts via the bell (mark-all-read, swipe-to-dismiss, bottom sheet on mobile)
+- Tap an alert to jump straight to the item on your watchlist
 
 ### Auth & Accounts
-- JWT + Google OAuth + username/password auth
-- Guest landing page — signed-out visitors get a marketing landing at `/` (whole-shop positioning: hero + faded store-mark marquee, `All your groceries. One place.` features, how-it-works ending on shop-from-one-list, CTA box with Sign In + plain Android-coming-soon mention; nav is logo/theme/Sign In only); Search, Watchlist, deals, and autocomplete all require sign-in, which lands on a greeting hero (`src/components/LandingPage.tsx`, conditional `/` route in `App.tsx`, plan in `LANDING.md`)
-- Self-service password recovery (no-email reset-token flow)
-- Profile editing (username + email, gated by current password; Google OAuth users read-only; usernames normalized to first-letter-capitalized, restricted to letters + numbers, 4–30 chars; passwords restricted to letters, numbers, dots and underscores, 8–128 chars with a letter and a number)
-- Trial gating — 24h / 5 watchlist items, enforced server-side
-- Rate-limited auth endpoints (login, register, Google OAuth, trial, register-admin, me, forgot/reset)
-- Extension SSO — website broadcasts token to extension via postMessage on login/logout, eliminating double sign-in
+- JWT + Google OAuth + username/password, guest landing page, self-service password recovery
+- Trial gating — 24h / 5 watchlist items, enforced server-side; rate-limited auth endpoints
+- Extension SSO — website hands its token to the Chrome extension, no double sign-in
 
-### Alerts & Cron
-- Price alerts and offer-expiry notifications via bell icon (mark-all-read, swipe-to-dismiss + bottom sheet on mobile)
-- Cron offer-expiry check (6am UTC)
+### Admin & Mobile
+- Dashboard, user management, audit logs, trial management behind an admin-only guard (403 + 404 pages, error boundary)
+- Dark/light mode, mobile bottom tab bar (≤640px, signed-in), body scroll-lock under bottom sheets
 
-### Admin
-- Dashboard, user management, audit logs (card-based, filterable by action type), trials
-- Admin-only route guard (non-admins get a 403 page, never the admin shell); DESIGN-matched 404 page for unknown routes plus an error boundary for unexpected failures
+**Browser Extension:** extracts product data from store pages into your watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
 
-### UI
-- Dark/light mode (light default, toggle in nav for guests / user menu when signed in), mobile responsive
-- Mobile bottom tab bar (≤640px, signed-in only): icon-only Search / Watchlist / Shopping List / Alerts with active highlighting — replaces the hamburger menu; body scroll locks while filter/store/alert bottom sheets are open
-
-**Browser Extension:** Chrome extension that extracts product data from store pages and adds to Sift watchlist. Separate repo: [sift-extension](https://github.com/Alex-Projects-Master/sift-extension)
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 19 + TypeScript + Vite + Tailwind v4 |
-| Backend | Cloudflare Workers + D1 (SQLite) |
-| Search | Client-side redirect (no backend search) |
-| Auth | Custom JWT + Google OAuth + username/password login/register, password recovery (no-email reset-token flow) |
-| Autocomplete | Local UK product dictionary + Fuse.js (client-side) |
-| Extension | WXT (Chrome MV3) — [sift-extension](https://github.com/Alex-Projects-Master/sift-extension) |
-| CI/CD | GitHub Actions + pnpm 11 |
-
-## Getting Started
+## Quickstart
 
 ```bash
 pnpm install
-pnpm run dev
+pnpm run dev          # Vite on :5173
 ```
 
-Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account
+Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account. Local dev needs `VITE_GOOGLE_CLIENT_ID` in `.env` (gitignored — see `.env.example`); it must match the Worker's `GOOGLE_CLIENT_ID` secret.
 
-## Build & Deploy
+## Commands
 
-```bash
-pnpm run build  # output → dist/
-pnpm test       # worker category scorer + input validators (node --test, no framework)
-```
+| Command | What it does |
+|---------|--------------|
+| `pnpm run dev` | Vite dev server (no CSP, HMR works) |
+| `pnpm run build` | `tsc -b` then `vite build` → `dist/` |
+| `pnpm run lint` | ESLint over `src/` |
+| `pnpm test` | Worker unit tests — `node --test workers/lib/*.test.js`, zero-dep |
+| `pnpm audit --audit-level=high` | Dependency audit (CI gate) |
 
-**Automatic:** Push to `main` triggers GitHub Actions (audit → lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
+## Deploy
+
+**Automatic:** push to `main` → GitHub Actions (audit → lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
+
 **Manual:**
 ```bash
 pnpm exec wrangler pages deploy dist --project-name=siftsearch
 pnpm exec wrangler deploy --config workers/wrangler.toml
 ```
 
-Required secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, plus Worker secrets `ADMIN_SECRET`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`. Production also needs `VITE_GOOGLE_CLIENT_ID` set in Pages → Settings → Environment variables.
 
-**CSP:** production gets a real Content-Security-Policy header via `public/_headers` (enforced by Pages, includes `frame-ancestors`/`form-action`) plus a matching build-time meta from `vite.config.ts` (`cspMeta()`) — keep both in sync; the dev server omits it so HMR keeps working.
+**CSP:** real header via `public/_headers` + matching build-time meta from `vite.config.ts` — keep both in sync; dev omits it for HMR.
 
-## Database
+<details>
+<summary><strong>Database & migrations</strong></summary>
 
-Schema: `workers/schema.sql` — 7 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets).
+Schema: `workers/schema.sql` — 7 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets). Migrations in `workers/migrations/` auto-apply on push:
 
-Migrations live in `workers/migrations/` (`migrations_dir` set in `workers/wrangler.toml`) and auto-apply on push via the "Apply D1 migrations" CI step:
 - `0001_offer_deal` — `offer_deal` column
-- `0002_password_resets` — password reset tokens
+- `0002_password_resets` — reset tokens
 - `0003_watchlist_unique` — `UNIQUE(user_id, product_id)` index
-- `0004_password_reset_lookup` — `token_sha256` column + index (O(1) reset lookup)
-- `0005_alert_types` — widen `alerts.type` CHECK to `('price_drop','offer_expiry','offer_created')` (matches `src/types/index.ts`; table rebuild)
-- `0006_watchlist_taxonomy` — `taxonomy_version` column (0 = legacy client guess, 1 = v1 worker score, 2 = v2 worker score with protein confirmation + storage signals, 3 = v3 title-first score)
-- `0007_rate_limits` — `rate_limits` table + `reset_at` index (previously created inline per request; pruned by the daily cron)
-- `0008_shopping_list` — `shopping_list` table (qty-only rows, unique per user + watchlist item) for the `/list` page
+- `0004_password_reset_lookup` — `token_sha256` column + index
+- `0005_alert_types` — `alerts.type` widened to `price_drop` / `offer_expiry` / `offer_created`
+- `0006_watchlist_taxonomy` — `taxonomy_version` column
+- `0007_rate_limits` — `rate_limits` table (pruned by the daily cron)
+- `0008_shopping_list` — `shopping_list` table for `/list`
 
 ```bash
-pnpm exec wrangler d1 create sift
 pnpm exec wrangler d1 execute sift --remote --file=workers/schema.sql
-pnpm exec wrangler d1 migrations apply sift --remote  # apply pending migrations
+pnpm exec wrangler d1 migrations apply sift --remote
 ```
 
-Update `database_id` in `workers/wrangler.toml`.
+</details>
 
-## API Keys
+<details>
+<summary><strong>Category taxonomy</strong></summary>
 
-```bash
-pnpm exec wrangler secret put ADMIN_SECRET    # Admin registration
-pnpm exec wrangler secret put JWT_SECRET      # JWT signing
-pnpm exec wrangler secret put GOOGLE_CLIENT_ID  # Google OAuth (Worker)
-```
+`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). Pipeline: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals. v3 vocab is title-first and singular-only (plural folding double-counted ties); the frozen veto reads leaf/JSON-LD only and `do not refreeze` is treated as freezable-at-home copy. Preview via `POST /api/category/score`, bulk upgrades via `POST /api/admin/watchlist/rescore` (dry-run default), health on the admin dashboard.
 
-### Google OAuth — frontend env var
+</details>
 
-The frontend reads the Google Client ID from `VITE_GOOGLE_CLIENT_ID` (Vite build-time env). Set it in two places:
+<details>
+<summary><strong>How it works</strong></summary>
 
-- **Local dev:** create `.env` (gitignored) with `VITE_GOOGLE_CLIENT_ID=your-client-id`
-- **Production:** Cloudflare Pages → siftsearch → Settings → Environment variables → add `VITE_GOOGLE_CLIENT_ID` (Production branch), then redeploy
+1. Select up to 3 stores (persisted locally; search stays disabled until one is picked)
+2. Type → autocomplete suggests from the grocery dictionary and your watchlist (debounced, keyboard navigable)
+3. Enter → each store's results open in a new tab; pin what you like via the extension or Deals of the Day
+4. Watchlist tracks prices and offer dates; the 6am UTC cron flips past-expiry rows off-offer and fires one alert each
+5. Shopping list turns pins into per-store totals with multibuy sets applied
 
-This must match the value set via `wrangler secret put GOOGLE_CLIENT_ID` for the Worker.
+Offer notes: a product whose only offer is a multi-buy term (no loyalty price/expiry) stores `is_on_offer = 1` and shows its normal price with the term in a store-coloured pill. CSV export (Settings) is formula-injection safe. Usernames: letters + numbers, 4–30 chars; passwords: letters, numbers, dots, underscores, 8–128 chars with a letter and a number.
 
-### API base — optional frontend env var
-
-The frontend targets the Worker via `VITE_API_BASE` (`src/lib/api.ts`), defaulting to
-production (`https://siftapi.blackmesa.workers.dev`). Set `VITE_API_BASE=http://localhost:5173`
-in `.env` for local dev. Production builds keep the pinned prod host in CSP
-(`public/_headers` + `vite.config.ts`), so this override is dev-time only.
-
-## Search Flow
-
-1. Select up to 3 stores via multi-select dropdown (persisted in localStorage; starts empty on first visit — search stays disabled until at least one store is picked)
-2. Type query → autocomplete from local UK grocery dictionary (dairy, bakery, cupboard, frozen, meat/fish, produce, drinks) + all users' watchlist items (Fuse.js, debounced 150ms). Combobox with full keyboard support (ArrowUp/Down to highlight, Enter to pick, Escape to close); zero-hit queries show a "press Enter to search anyway" hint
-3. Press enter → opens each selected store's search URL in new tab (Search disabled until a query is entered **and** at least one store is selected)
-4. Deals of the Day → horizontal scroll of random de-duplicated on-offer items from all users' watchlists; signed-in tiles carry an Add to Watchlist button (greyed out for trial users at the 5-item limit; spinner → green "Added" → greyed-out "Added" on success), on Search only (guests land on the landing page)
-5. No backend search involved
-
-## Product Tracking
-
-- Watchlist for pinned products
-- Multi-buy deal terms are captured (`offer_deal`, e.g. "Any 3 for £12"). A product whose only offer is a multi-buy deal (no loyalty price / no expiry) stores `is_on_offer = 1` and shows its normal price with the multi-buy term in a store-coloured loyalty pill (`.product-card-loyalty-label`, tinted by store) in Deals of the Day and on the watchlist card. Non-multi-buy items show the store loyalty label ("Clubcard price" etc) in the same pill. Deal text is cleaned at source by the extension before storage; the pill truncates overflow with ellipsis and shows full text on hover.
-- CSV export (Settings) includes an `Offer Deal` column (formula-injection safe: trigger-led cells get a `'` prefix)
-- Trial users: max 5 watchlist items — watchlist page shows a live "X of 5" usage banner with progress bar; Deals of the Day Add buttons disable at the limit. Expired trials are blocked server-side on `POST /api/watchlist` (403 `trial_expired`), and the unique `(user_id, product_id)` index (migration `0003`) prevents duplicate pins under concurrent requests
-- Cron: daily 6am UTC — for every watchlist item past its offer expiry, marks `is_on_offer = 0` and creates a deduplicated "offer ended" alert (no price refresh, no per-user/total caps)
+</details>
 
 ## Project Structure
 
 ```
 src/              React SPA (components, contexts, hooks, lib, types)
-workers/          Cloudflare Worker API (index.js, auth.js, db.js, lib/category.js + lib/validate.js, schema.sql, seed.sql, migrations/)
-public/           Store logo SVGs + favicon.svg + theme-init.js (dark-mode flash prevention)
+workers/          Cloudflare Worker API (index.js, auth.js, db.js, lib/, schema.sql, migrations/)
+public/           Store logo SVGs + favicon.svg + theme-init.js + _headers
 ```
 
 ## License

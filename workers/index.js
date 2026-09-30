@@ -1487,10 +1487,15 @@ async function handleRequest(request, env) {
       );
       if (!row?.meta?.changes) return errorResponse('Watchlist item not found', request, 404);
 
-      // D1 does not enforce FK cascades: drop orphan shopping-list rows.
+      // D1 does not enforce FK cascades: drop orphan shopping-list rows + alerts.
       await execute(
         env,
         'DELETE FROM shopping_list WHERE watchlist_id = ? AND user_id = ?',
+        [itemId, auth.userId]
+      );
+      await execute(
+        env,
+        'DELETE FROM alerts WHERE watchlist_id = ? AND user_id = ?',
         [itemId, auth.userId]
       );
 
@@ -1783,7 +1788,7 @@ async function handleScheduled(env) {
 
   const items = await queryAll(
     env,
-    "SELECT * FROM watchlist WHERE offer_expires_at IS NOT NULL"
+    "SELECT * FROM watchlist WHERE is_on_offer = 1 AND offer_expires_at IS NOT NULL"
   );
 
   const today = new Date();
@@ -1799,13 +1804,9 @@ async function handleScheduled(env) {
       [Date.now(), item.id]
     );
 
-    const existing = await queryOne(
-      env,
-      "SELECT id FROM alerts WHERE watchlist_id = ? AND type = 'offer_expiry'",
-      [item.id]
-    );
-    if (existing) continue;
-
+    // Transition-based: is_on_offer = 1 above guarantees first expiry only.
+    // Dismiss-safe (no dependency on alert row surviving) and re-alerts
+    // correctly if offer reactivates with a new date.
     const alertId = `al_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     await execute(
       env,
