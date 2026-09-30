@@ -122,7 +122,7 @@ export default function LandingPage() {
             All your groceries. <span className="text-gradient">One place.</span>
           </h2>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(f => (
             <div key={f.title} className="metric-card metric-card--static">
               <div className="settings-card-header-icon primary text-accent" aria-hidden="true">

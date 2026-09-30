@@ -43,7 +43,7 @@ export function CookieConsent() {
   return (
     <div
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-[100] transition-all duration-250',
+        'cookie-consent-wrap fixed bottom-0 left-0 right-0 z-[100] transition-all duration-250',
         dismissing ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
       )}
     >

@@ -74,6 +74,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
         className={cn(
           'relative rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto',
           'animate-slide-up',
+          'modal-sheet',
           'max-w-sm',
           'bg-surface border border-border shadow-[0_24px_48px_-12px_rgba(0,0,0,0.25)]',
           className
