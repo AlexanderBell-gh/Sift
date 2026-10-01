@@ -1,4 +1,4 @@
-import { Search, Check, Bell, MousePointerClick, Tag } from 'lucide-react';
+import { Search, Check, Bell, MousePointerClick, Tag, Plus } from 'lucide-react';
 
 /**
  * Landing card visuals — pure CSS/SVG mockups, zero image weight.
@@ -9,25 +9,32 @@ import { Search, Check, Bell, MousePointerClick, Tag } from 'lucide-react';
 export function SearchVisual() {
   return (
     <div className="landing-visual landing-visual--search" aria-hidden="true">
+      <div className="lv-chips">
+        <span className="lv-chip lv-chip--pick-a">Tesco</span>
+        <span className="lv-chip lv-chip--pick-b">Asda</span>
+        <span className="lv-chip lv-chip--pick-c">Aldi</span>
+      </div>
       <div className="lv-searchbar">
         <Search className="lv-search-icon" />
         <span className="lv-typed">
-          <i className="lv-letter lv-t1">S</i>
-          <i className="lv-letter lv-t2">o</i>
-          <i className="lv-letter lv-t3">u</i>
-          <i className="lv-letter lv-t4">r</i>
-          <i className="lv-letter lv-t5">d</i>
-          <i className="lv-letter lv-t6">o</i>
-          <i className="lv-letter lv-t7">u</i>
-          <i className="lv-letter lv-t8">g</i>
-          <i className="lv-letter lv-t9">h</i>
+          <span className="lv-word">Sourdough</span>
         </span>
         <span className="lv-caret" />
+        <span className="lv-searchbtn">Search</span>
       </div>
-      <div className="lv-chips">
-        <span className="lv-chip lv-chip--pick">Tesco</span>
-        <span className="lv-chip">Asda</span>
-        <span className="lv-chip">Aldi</span>
+      <div className="lv-tabs">
+        <span className="lv-tab lv-tab--a">
+          <i className="lv-tab-dot" />
+          Tesco
+        </span>
+        <span className="lv-tab lv-tab--b">
+          <i className="lv-tab-dot" />
+          Asda
+        </span>
+        <span className="lv-tab lv-tab--c">
+          <i className="lv-tab-dot" />
+          Aldi
+        </span>
       </div>
     </div>
   );
@@ -36,28 +43,37 @@ export function SearchVisual() {
 export function PinVisual() {
   return (
     <div className="landing-visual landing-visual--tall" aria-hidden="true">
-      <div className="lv-row">
-        <span className="lv-thumb" />
-        <span className="lv-lines">
-          <span className="lv-line lv-line--long" />
-          <span className="lv-line lv-line--short" />
+      <div className="lv-wlcard">
+        <div className="lv-wltop">
+          <span className="lv-thumb" />
+          <span className="lv-wllines">
+            <span className="lv-line lv-line--long" />
+            <span className="lv-line lv-line--short" />
+          </span>
+        </div>
+        <div className="lv-wlprice lv-stage-2">
+          <span className="lv-wvar lv-wvar--loyalty">
+            <span className="lv-wlwas">£2.10</span>
+            <span className="lv-wlnow">£1.75</span>
+            <i className="lv-walt">offer</i>
+          </span>
+          <span className="lv-wvar lv-wvar--multi">
+            <span className="lv-wlplain">£2.10</span>
+            <i className="lv-walt">Multi-buy · 2 for £3</i>
+          </span>
+        </div>
+        <span className="lv-wlexpiry lv-stage-3">Offer ends Sunday</span>
+        <span className="lv-wladd">
+          <span className="lv-wladd-btn">
+            <Plus className="lv-wladd-icon" />
+            Add to list
+          </span>
+          <span className="lv-wladd-done">
+            <Check className="lv-check" />
+            Added
+          </span>
         </span>
       </div>
-      <div className="lv-prices lv-stage-2">
-        <span className="lv-price">£2.10</span>
-        <span className="lv-price lv-price--loyalty">£1.75 loyalty</span>
-      </div>
-      <div className="lv-pmeta lv-stage-3">
-        <span className="lv-pmeta-text">Offer ends Sunday</span>
-        <span className="lv-tag">2 for £3</span>
-      </div>
-      <span className="lv-pinswap">
-        <span className="lv-pinbtn">Add to watchlist</span>
-        <span className="lv-pindone">
-          <Check className="lv-check" />
-          Added
-        </span>
-      </span>
     </div>
   );
 }

@@ -26,7 +26,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 
 ### Search & Deals
 - 11-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) — query opens each store's results in a new tab, bottom-sheet store picker on mobile
-- Local autocomplete from a ~1,600-item UK grocery dictionary with fuzzy matching, plus your own watchlist items; full keyboard support
+- Local autocomplete from a ~1,600-item UK grocery dictionary with fuzzy matching, plus a shared catalog of every product ever pinned — names persist even after the item leaves your watchlist; full keyboard support
 - Deals of the Day — de-duplicated on-offer items with one-tap Add to Watchlist (spinner → green Added → pinned)
 
 ### Watchlist
@@ -91,7 +91,7 @@ Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, plus Worker secrets `A
 <details>
 <summary><strong>Database & migrations</strong></summary>
 
-Schema: `workers/schema.sql` — 7 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets). Migrations in `workers/migrations/` auto-apply on push:
+Schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog). Migrations in `workers/migrations/` auto-apply on push:
 
 - `0001_offer_deal` — `offer_deal` column
 - `0002_password_resets` — reset tokens
@@ -101,6 +101,7 @@ Schema: `workers/schema.sql` — 7 tables (users, rate_limits, watchlist, shoppi
 - `0006_watchlist_taxonomy` — `taxonomy_version` column
 - `0007_rate_limits` — `rate_limits` table (pruned by the daily cron)
 - `0008_shopping_list` — `shopping_list` table for `/list`
+- `0009_product_catalog` — `product_catalog` table; persistent autocomplete pool (fed on watchlist add, kept on remove)
 
 ```bash
 pnpm exec wrangler d1 execute sift --remote --file=workers/schema.sql
@@ -120,7 +121,7 @@ pnpm exec wrangler d1 migrations apply sift --remote
 <summary><strong>How it works</strong></summary>
 
 1. Select up to 3 stores (persisted locally; search stays disabled until one is picked)
-2. Type → autocomplete suggests from the grocery dictionary and your watchlist (debounced, keyboard navigable)
+2. Type → autocomplete suggests from the grocery dictionary and the shared pin catalog (debounced, keyboard navigable)
 3. Enter → each store's results open in a new tab; pin what you like via the extension or Deals of the Day
 4. Watchlist tracks prices and offer dates; the 6am UTC cron flips past-expiry rows off-offer and fires one alert each
 5. Shopping list turns pins into per-store totals with multibuy sets applied

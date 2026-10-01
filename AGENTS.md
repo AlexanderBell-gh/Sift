@@ -47,7 +47,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 
 - Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /list, /admin, /settings). `/` is conditional (`HomeRoute`): `SearchPage` when signed in, `LandingPage` (`src/components/LandingPage.tsx`) when guest
 - Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer) + `workers/lib/validate.js` (username/password allowlists) — both plain JS, both with `*.test.js` coverage
-- DB schema: `workers/schema.sql` — 7 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets)
+- DB schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog)
 - Shopping list: `/list` (`src/components/ShoppingListPage.tsx`, account-synced quantities against watchlist rows) + multibuy pricing engine (`src/lib/pricing.ts`, frontend-only — server stores qty, prices read live from watchlist, same-tag sets pool across lines)
 
 ## Key gotchas
@@ -58,7 +58,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 - **Validation rules are mirrored, not shared** — `workers/lib/validate.js` (server truth) is duplicated as inline regexes in `src/components/AuthPage.tsx` and `src/components/SettingsPage.tsx`. Keep regexes and error messages identical in all three places; do not import worker code into the frontend (or vice versa).
 - **Category enum is mirrored, not shared** — `CANONICAL_CATEGORIES` in `workers/lib/category.js` (server truth) is duplicated in `src/lib/categories.ts`. Keep identical; both files import from their own copy (no shared build). Frontend components import from `src/lib/categories.ts`, never hardcode the list.
 - **Positioning** — Sift is a UK supermarket grocery tracker (search → watchlist → shopping list), not an offer-only tool. Pins need not be on offer; never write copy that assumes a discount.
-- **Migrations auto-apply on push to main** via CI. To create a new migration, add a numbered `.sql` file to `workers/migrations/` (e.g. `0009_your_change.sql`). Update `workers/schema.sql` to match.
+- **Migrations auto-apply on push to main** via CI. To create a new migration, add a numbered `.sql` file to `workers/migrations/` (e.g. `0010_your_change.sql`). Update `workers/schema.sql` to match.
 - **D1 does not enforce FOREIGN KEY cascades.** Delete dependent rows explicitly (e.g. watchlist DELETE also clears `shopping_list` + `alerts` rows).
 - **Rate limits** are enforced server-side on auth endpoints. Don't remove them.
 - **Trial gating** — max 5 watchlist items, 24h expiry, enforced server-side on `POST /api/watchlist`.

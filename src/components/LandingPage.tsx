@@ -39,7 +39,7 @@ const FEATURES = [
   {
     icon: Bookmark,
     title: 'Pin to your watchlist',
-    desc: 'Save the products you buy, with normal and loyalty prices side by side plus offer end dates and multi-buy terms.',
+    desc: 'Save the products you buy, with normal and loyalty prices side by side plus offer end dates and multi-buy terms — one tap into your shopping list.',
     Visual: PinVisual,
   },
   {

@@ -1003,7 +1003,8 @@ body {
   height: 14px;
   background: var(--primary);
   border-radius: 2px;
-  animation: lv-blink 1s var(--ease-smooth) infinite;
+  opacity: 1;
+  animation: lv-caret-6s 6s var(--ease-smooth) infinite;
 }
 
 .lv-chips {
@@ -1017,45 +1018,91 @@ body {
 
 .lv-typed {
   display: inline-flex;
-  font-size: 13px;
-  color: var(--text);
-  overflow: hidden;
-  white-space: nowrap;
+  min-width: 0;
 }
 
-.lv-letter {
-  font-style: normal;
+.lv-word {
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;
-  opacity: 1;
-  animation-duration: 6s;
-  animation-timing-function: var(--ease-smooth);
-  animation-iteration-count: infinite;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  max-width: 9ch;
+  animation: lv-type 6s var(--ease-smooth) infinite;
 }
 
-.lv-t1 { animation-name: lv-t1; }
-.lv-t2 { animation-name: lv-t2; }
-.lv-t3 { animation-name: lv-t3; }
-.lv-t4 { animation-name: lv-t4; }
-.lv-t5 { animation-name: lv-t5; }
-.lv-t6 { animation-name: lv-t6; }
-.lv-t7 { animation-name: lv-t7; }
-.lv-t8 { animation-name: lv-t8; }
-.lv-t9 { animation-name: lv-t9; }
-
-.lv-chip {
+.lv-searchbtn {
+  margin-left: auto;
+  flex-shrink: 0;
   font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 10px;
+  padding: 4px 10px;
+  animation: lv-search-press 6s var(--ease-smooth) infinite;
+}
+
+.lv-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.lv-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--muted);
   background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.lv-tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.lv-tab--a {
+  animation: tab-pop-a 6s var(--ease-smooth) infinite;
+}
+
+.lv-tab--b {
+  animation: tab-pop-b 6s var(--ease-smooth) infinite;
+}
+
+.lv-tab--c {
+  animation: tab-pop-c 6s var(--ease-smooth) infinite;
+}
+
+.lv-chip {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(255, 87, 1, 0.08);
+  border: 1px solid rgba(255, 87, 1, 0.4);
   border-radius: 99px;
   padding: 4px 10px;
 }
 
-.lv-chip--pick {
-  animation: lv-chip-pick 6s var(--ease-smooth) infinite;
+.lv-chip--pick-a {
+  animation: lv-pick-a 6s var(--ease-smooth) infinite;
+}
+
+.lv-chip--pick-b {
+  animation: lv-pick-b 6s var(--ease-smooth) infinite;
+}
+
+.lv-chip--pick-c {
+  animation: lv-pick-c 6s var(--ease-smooth) infinite;
 }
 
 .lv-row {
@@ -1087,55 +1134,24 @@ body {
   width: 40%;
 }
 
-.lv-pinswap {
-  position: relative;
-  width: 100%;
-  min-height: 30px;
-  flex-shrink: 0;
+.lv-wlcard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  animation: lv-wl-card 6s var(--ease-smooth) infinite;
 }
 
-.lv-pinbtn {
-  position: absolute;
-  inset: 0;
+.lv-wltop {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: #fff;
-  background: var(--primary);
-  border-radius: 8px;
-  padding: 4px 6px;
-  white-space: nowrap;
-  animation: lv-pinopen 6s var(--ease-smooth) infinite;
+  gap: 10px;
 }
 
-.lv-pindone {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--success);
-  background: rgba(22, 163, 74, 0.12);
-  border: 1px solid rgba(22, 163, 74, 0.4);
-  border-radius: 8px;
-  padding: 4px 6px;
-  white-space: nowrap;
-  opacity: 0;
-  transform: scale(0.95);
-  animation: lv-pindone 6s var(--ease-smooth) infinite;
-}
-
-.lv-pindone .lv-check {
-  width: 12px;
-  height: 12px;
-}
-
-.lv-lines {
+.lv-wllines {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1149,33 +1165,118 @@ body {
   color: var(--success);
 }
 
-.lv-prices {
+.lv-wlprice {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: 8px;
   font-family: var(--font-mono);
+  min-height: 20px;
 }
 
-.lv-price {
-  font-size: 13px;
-  font-weight: 600;
+.lv-wvar {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  animation-duration: 6s;
+  animation-timing-function: var(--ease-smooth);
+  animation-iteration-count: infinite;
+}
+
+.lv-wvar--loyalty {
+  animation-name: wl-variant-loyalty;
+}
+
+.lv-wvar--multi {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  animation-name: wl-variant-multi;
+}
+
+.lv-wlwas,
+.lv-wlplain {
+  font-size: 12px;
+  font-weight: 500;
   color: var(--muted);
+  text-decoration: line-through;
 }
 
-.lv-price--loyalty {
-  color: var(--primary);
+.lv-wlplain {
+  font-size: 15px;
   font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
 }
 
-.lv-pmeta {
+.lv-wlnow {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.lv-walt {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(255, 87, 1, 0.08);
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.lv-wlexpiry {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--warning);
+}
+
+.lv-wladd {
+  position: relative;
+  display: block;
+  min-height: 30px;
+  margin-top: auto;
+}
+
+.lv-wladd-btn {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  animation: lv-wl-btn 6s var(--ease-smooth) infinite;
 }
 
-.lv-pmeta-text {
-  font-size: 11px;
-  color: var(--muted);
+.lv-wladd-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.lv-wladd-done {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success);
+  background: rgba(22, 163, 74, 0.12);
+  border: 1px solid rgba(22, 163, 74, 0.4);
+  border-radius: 8px;
+  opacity: 0;
+  transform: scale(0.95);
+  animation: lv-wl-done 6s var(--ease-smooth) infinite;
 }
 
 .lv-stage-2 {
@@ -1402,93 +1503,153 @@ body {
   animation: lv-pulse 5s var(--ease-smooth) infinite;
 }
 
-@keyframes lv-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+@keyframes lv-caret-6s {
+  0%, 55% { opacity: 1; }
+  58%, 62% { opacity: 0; }
+  65%, 69% { opacity: 1; }
+  72%, 76% { opacity: 0; }
+  79%, 100% { opacity: 1; }
 }
 
-@keyframes lv-chip-pick {
-  0%, 28% {
+@keyframes lv-type {
+  0%, 30% { max-width: 0; animation-timing-function: steps(9, end); }
+  55%, 88% { max-width: 9ch; animation-timing-function: steps(9, end); }
+  93%, 100% { max-width: 0; }
+}
+
+@keyframes lv-search-press {
+  0%, 54% { transform: scale(1); box-shadow: 0 0 0 3px rgba(255, 87, 1, 0); }
+  56%, 58% { transform: scale(0.94); box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12); }
+  62%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(255, 87, 1, 0); }
+}
+
+@keyframes lv-pick-a {
+  0%, 5% {
     color: var(--muted);
     border-color: var(--border);
     background: var(--surface);
+    transform: scale(1);
   }
-  33%, 88% {
+  8% {
     color: var(--primary);
     border-color: rgba(255, 87, 1, 0.4);
     background: rgba(255, 87, 1, 0.08);
+    transform: scale(1.08);
   }
-  93%, 100% {
+  12%, 93% {
+    color: var(--primary);
+    border-color: rgba(255, 87, 1, 0.4);
+    background: rgba(255, 87, 1, 0.08);
+    transform: scale(1);
+  }
+  97%, 100% {
     color: var(--muted);
     border-color: var(--border);
     background: var(--surface);
+    transform: scale(1);
   }
 }
 
-@keyframes lv-t1 {
-  0%, 48% { opacity: 0; max-width: 0; }
-  52%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
+@keyframes lv-pick-b {
+  0%, 13% {
+    color: var(--muted);
+    border-color: var(--border);
+    background: var(--surface);
+    transform: scale(1);
+  }
+  16% {
+    color: var(--primary);
+    border-color: rgba(255, 87, 1, 0.4);
+    background: rgba(255, 87, 1, 0.08);
+    transform: scale(1.08);
+  }
+  20%, 93% {
+    color: var(--primary);
+    border-color: rgba(255, 87, 1, 0.4);
+    background: rgba(255, 87, 1, 0.08);
+    transform: scale(1);
+  }
+  97%, 100% {
+    color: var(--muted);
+    border-color: var(--border);
+    background: var(--surface);
+    transform: scale(1);
+  }
 }
 
-@keyframes lv-t2 {
-  0%, 52% { opacity: 0; max-width: 0; }
-  56%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
+@keyframes lv-pick-c {
+  0%, 21% {
+    color: var(--muted);
+    border-color: var(--border);
+    background: var(--surface);
+    transform: scale(1);
+  }
+  24% {
+    color: var(--primary);
+    border-color: rgba(255, 87, 1, 0.4);
+    background: rgba(255, 87, 1, 0.08);
+    transform: scale(1.08);
+  }
+  28%, 93% {
+    color: var(--primary);
+    border-color: rgba(255, 87, 1, 0.4);
+    background: rgba(255, 87, 1, 0.08);
+    transform: scale(1);
+  }
+  97%, 100% {
+    color: var(--muted);
+    border-color: var(--border);
+    background: var(--surface);
+    transform: scale(1);
+  }
 }
 
-@keyframes lv-t3 {
-  0%, 56% { opacity: 0; max-width: 0; }
-  60%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
+@keyframes tab-pop-a {
+  0%, 61% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  64%, 86% { opacity: 1; transform: translateY(0) scale(1); }
+  91%, 100% { opacity: 0; transform: translateY(4px) scale(0.9); }
 }
 
-@keyframes lv-t4 {
-  0%, 60% { opacity: 0; max-width: 0; }
-  64%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
+@keyframes tab-pop-b {
+  0%, 67% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  70%, 86% { opacity: 1; transform: translateY(0) scale(1); }
+  91%, 100% { opacity: 0; transform: translateY(4px) scale(0.9); }
 }
 
-@keyframes lv-t5 {
-  0%, 64% { opacity: 0; max-width: 0; }
-  68%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
+@keyframes tab-pop-c {
+  0%, 73% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  76%, 86% { opacity: 1; transform: translateY(0) scale(1); }
+  91%, 100% { opacity: 0; transform: translateY(4px) scale(0.9); }
 }
 
-@keyframes lv-t6 {
-  0%, 68% { opacity: 0; max-width: 0; }
-  72%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
+@keyframes lv-wl-card {
+  0% { opacity: 0; transform: translateY(6px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(6px); }
 }
 
-@keyframes lv-t7 {
-  0%, 72% { opacity: 0; max-width: 0; }
-  76%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
-}
-
-@keyframes lv-t8 {
-  0%, 76% { opacity: 0; max-width: 0; }
-  80%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
-}
-
-@keyframes lv-t9 {
-  0%, 80% { opacity: 0; max-width: 0; }
-  84%, 88% { opacity: 1; max-width: 1ch; }
-  93%, 100% { opacity: 0; max-width: 0; }
-}
-
-@keyframes lv-pinopen {
+@keyframes wl-variant-loyalty {
   0%, 55% { opacity: 1; }
-  60%, 85% { opacity: 0; }
-  90%, 100% { opacity: 1; }
+  60%, 90% { opacity: 0; }
+  95%, 100% { opacity: 1; }
 }
 
-@keyframes lv-pindone {
-  0%, 55% { opacity: 0; transform: scale(0.95); }
-  60%, 85% { opacity: 1; transform: scale(1); }
-  90%, 100% { opacity: 0; transform: scale(0.95); }
+@keyframes wl-variant-multi {
+  0%, 55% { opacity: 0; }
+  60%, 90% { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes lv-wl-btn {
+  0%, 62% { opacity: 1; transform: scale(1); }
+  66%, 68% { opacity: 1; transform: scale(0.96); }
+  72%, 100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes lv-wl-done {
+  0%, 71% { opacity: 0; transform: scale(0.95); }
+  74%, 88% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(0.95); }
 }
 
 @keyframes lv-stage2 {
