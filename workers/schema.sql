@@ -52,6 +52,12 @@ CREATE TABLE IF NOT EXISTS watchlist (
 CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product ON watchlist(user_id, product_id);
 
+CREATE TABLE IF NOT EXISTS product_catalog (
+  name TEXT PRIMARY KEY COLLATE NOCASE,
+  first_seen_at INTEGER NOT NULL,
+  last_seen_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS shopping_list (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,

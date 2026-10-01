@@ -1098,9 +1098,14 @@ async function handleRequest(request, env) {
     try {
       const auth = await requireAuth(request, env);
       if (!auth?.userId) return auth;
+      // Catalog persists after watchlist DELETE; live watchlist union keeps
+      // fresh rows visible before migration backfill edge cases.
       const rows = await queryAll(
         env,
-        "SELECT DISTINCT product_name FROM watchlist WHERE product_name IS NOT NULL AND product_name != ''"
+        `SELECT name AS product_name FROM product_catalog
+         UNION
+         SELECT DISTINCT product_name FROM watchlist
+         WHERE product_name IS NOT NULL AND product_name != ''`
       );
       return jsonResponse(rows.map(r => r.product_name), request);
     } catch (e) {
@@ -1437,6 +1442,18 @@ async function handleRequest(request, env) {
           now,
         ]
       );
+
+      // Persistent search pool: names survive watchlist DELETE.
+      const catalogName = typeof result.name === 'string' ? result.name.trim() : '';
+      if (catalogName) {
+        await execute(
+          env,
+          `INSERT INTO product_catalog (name, first_seen_at, last_seen_at)
+           VALUES (?, ?, ?)
+           ON CONFLICT(name) DO UPDATE SET last_seen_at = excluded.last_seen_at`,
+          [catalogName, now, now]
+        );
+      }
 
       const row = await queryOne(env, 'SELECT * FROM watchlist WHERE id = ?', [id]);
       if (row) {
