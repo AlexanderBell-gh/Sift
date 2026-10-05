@@ -414,7 +414,7 @@ export default function WatchlistPage() {
               <span className="trial-limit-title">Trial watchlist</span>
               <span className="trial-limit-sub">
                 {trialLimitReached
-                  ? 'Limit reached — trial users can pin up to 5 items at a time, register to remove this limit'
+                  ? 'Limit reached — trial users can pin up to 5 items at a time, register to remove this limit.'
                   : `${usedCount} of ${watchlistLimit} items pinned`}
               </span>
             </div>
@@ -451,7 +451,7 @@ export default function WatchlistPage() {
               <div className="extension-cta">
                 <div className="extension-cta-header">
                   <img src="/favicon.svg" alt="" className="extension-cta-icon" />
-                  <span className="extension-cta-title">Sift - Product Extractor</span>
+                  <span className="extension-cta-title">Sift — Product Extractor</span>
                 </div>
                 <span className="extension-cta-text">
                   Click the browser icon bottom right to download the extension, it's required to add products directly from store pages.
@@ -464,7 +464,7 @@ export default function WatchlistPage() {
         {!loading && items.length > 0 && filtered.length === 0 && searchActive && (
           <div className="empty-state-box">
             <p className="empty-state-title">No results for &ldquo;{searchQuery.trim()}&rdquo;</p>
-            <p className="empty-state-desc">Try a different spelling or clear the search</p>
+            <p className="empty-state-desc">Try a different spelling or clear the search.</p>
             <div className="empty-state-cta-wrap">
               <button
                 onClick={handleClearSearch}
@@ -479,7 +479,7 @@ export default function WatchlistPage() {
         {!loading && items.length > 0 && filtered.length === 0 && !searchActive && (
           <div className="empty-state-box">
             <p className="empty-state-title">No items match filters</p>
-            <p className="empty-state-desc">Try selecting more stores</p>
+            <p className="empty-state-desc">Try selecting more stores.</p>
           </div>
         )}
 

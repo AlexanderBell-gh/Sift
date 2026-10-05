@@ -113,7 +113,7 @@ export default function ExtensionFAB() {
           <div className="extension-fab-panel-text">
             <img src="/favicon.svg" alt="" className="extension-fab-panel-icon" />
             <div>
-              <span className="extension-fab-panel-title">Sift - Product Extractor</span>
+              <span className="extension-fab-panel-title">Sift — Product Extractor</span>
               <span className="extension-fab-panel-desc">Get the official extension to add products directly from store pages</span>
             </div>
           </div>

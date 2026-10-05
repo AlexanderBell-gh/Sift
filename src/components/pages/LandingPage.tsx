@@ -93,7 +93,7 @@ export default function LandingPage() {
               <div className="user-avatar">
                 <LogIn className="icon-sm" />
               </div>
-              <span className="user-name hidden sm:inline">Sign In</span>
+              <span className="user-name hidden sm:inline">Sign in</span>
             </button>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function LandingPage() {
           </p>
           <div className="landing-cta-actions">
             <button onClick={() => navigate('/auth')} className="btn-primary">
-              Sign In / Get Started
+              Sign in / Get started
               <LogIn className="icon-sm" />
             </button>
           </div>

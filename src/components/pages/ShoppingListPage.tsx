@@ -299,10 +299,10 @@ export default function ShoppingListPage() {
                               </p>
                             )}
                             {expired && item.offer_deal && (
-                              <p className="shoplist-note">Offer expired — priced at shelf</p>
+                              <p className="shoplist-note">Offer expired — priced at shelf.</p>
                             )}
                             {priced.basis === 'unit' && item.offer_deal && !expired && (
-                              <p className="shoplist-note">Offer terms not recognised — shelf price used</p>
+                              <p className="shoplist-note">Offer terms not recognised — shelf price used.</p>
                             )}
                           </div>
                           <div className="shoplist-qty" role="group" aria-label={`Quantity for ${item.product_name}`}>

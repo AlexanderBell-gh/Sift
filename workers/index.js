@@ -151,6 +151,12 @@ function getClientIp(request) {
   return request.headers.get('CF-Connecting-IP') || '0.0.0.0';
 }
 
+function formatCooldown(retryAfterMs) {
+  const mins = Math.max(1, Math.ceil((retryAfterMs || 0) / 60000));
+  if (mins >= 120) return `try again in about ${Math.ceil(mins / 60)} h`;
+  return `try again in ${mins} min`;
+}
+
 async function authenticate(request, env) {
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/auth_token=([^;]+)/);
@@ -744,6 +750,12 @@ async function handleRequest(request, env) {
               if (existing && existing.id !== user.id) {
                 return errorResponse('Username already in use', request);
               }
+              // Budget consumed only by real changes — validation and
+              // duplicates above cost nothing.
+              const rlName = await checkRateLimit(env, `username_change:${user.id}`, 1, 20 * 60 * 1000);
+              if (!rlName.ok) {
+                return errorResponse(`You can change your username once every 20 minutes — ${formatCooldown(rlName.retryAfter)}`, request, 429);
+              }
               user.username = newUsername;
             }
           }
@@ -757,6 +769,12 @@ async function handleRequest(request, env) {
               const existing = await getUserByEmail(env, newEmail);
               if (existing && existing.id !== user.id) {
                 return errorResponse('Email already in use', request);
+              }
+              // Budget consumed only by real changes — validation and
+              // duplicates above cost nothing.
+              const rlEmail = await checkRateLimit(env, `email_change:${user.id}`, 1, 24 * 60 * 60 * 1000);
+              if (!rlEmail.ok) {
+                return errorResponse(`You can change your email once a day — ${formatCooldown(rlEmail.retryAfter)}`, request, 429);
               }
               user.email = newEmail;
             }
@@ -1235,7 +1253,7 @@ async function handleRequest(request, env) {
     try {
       const body = await request.json();
       const title = typeof body.title === 'string' ? body.title.slice(0, 200) : '';
-      if (!title.trim()) return errorResponse('title required', request);
+      if (!title.trim()) return errorResponse('Title is required', request);
       const brand = typeof body.brand === 'string' ? body.brand.slice(0, 100) : '';
       const store = typeof body.store_id === 'string'
         ? body.store_id
@@ -1603,11 +1621,11 @@ async function handleRequest(request, env) {
       const body = await request.json();
       const watchlistId = body.watchlist_id;
       if (!watchlistId || typeof watchlistId !== 'string') {
-        return errorResponse('watchlist_id required', request);
+        return errorResponse('A watchlist item is required', request);
       }
       let qty = body.quantity === undefined ? 1 : Math.floor(Number(body.quantity));
       if (!Number.isFinite(qty) || qty < 1) {
-        return errorResponse('quantity must be a positive integer', request);
+        return errorResponse('Quantity must be a positive integer', request);
       }
       qty = Math.min(qty, MAX_QTY);
 
@@ -1680,7 +1698,7 @@ async function handleRequest(request, env) {
       const body = await request.json();
       const qty = Math.floor(Number(body.quantity));
       if (!Number.isFinite(qty) || qty < 0) {
-        return errorResponse('quantity must be a non-negative integer', request);
+        return errorResponse('Quantity must be a non-negative integer', request);
       }
       // Qty 0 deletes the row.
       if (qty === 0) {

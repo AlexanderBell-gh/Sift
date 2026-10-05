@@ -45,12 +45,12 @@ export default function AuthPage() {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const tabs: { key: AuthTab; label: string }[] = [
-    { key: 'signin', label: 'Sign In' },
+    { key: 'signin', label: 'Sign in' },
     { key: 'register', label: 'Register' },
     { key: 'trial', label: 'Trial' },
   ];
 
-  const submitLabel = activeTab === 'signin' && !forgotMode ? 'Sign In'
+  const submitLabel = activeTab === 'signin' && !forgotMode ? 'Sign in'
     : activeTab === 'signin' && forgotMode ? (resetToken ? 'Reset Password' : 'Get Reset Token')
     : activeTab === 'register' ? 'Create Account'
     : 'Start';
@@ -420,7 +420,7 @@ export default function AuthPage() {
             <span>
               Remembered it?{' '}
               <button type="button" className="auth-link" onClick={handleBackToSignIn}>
-                Back to Sign In
+                Back to Sign in
               </button>
             </span>
           )}
@@ -436,7 +436,7 @@ export default function AuthPage() {
             <span>
               Already have an account?{' '}
               <button type="button" className="auth-link" onClick={() => handleTabChange('signin')}>
-                Sign In
+                Sign in
               </button>
             </span>
           )}

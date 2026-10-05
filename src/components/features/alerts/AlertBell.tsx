@@ -302,13 +302,13 @@ export default function AlertBell() {
               onClick={handleMarkAllRead}
               className="filter-panel-action"
             >
-              Mark all read
+              Mark all as read
             </button>
           )}
         </div>
         <p className="alerts-swipe-hint">Swipe to dismiss</p>
         {loadError && alerts.length === 0 ? (
-          <div className="alerts-empty">Couldn't load alerts</div>
+          <div className="alerts-empty">Failed to load alerts</div>
         ) : alerts.length === 0 ? (
           <div className="alerts-empty">No alerts yet</div>
         ) : (

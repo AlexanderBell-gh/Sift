@@ -94,7 +94,7 @@ export default function SettingsPage() {
       try {
         const updated = await updateProfile(t, { username });
         updateUser(updated);
-        setProfileSuccess('Username updated successfully');
+        setProfileSuccess('Username updated');
         setProfileEdits({});
       } catch (err) {
         setProfileError(err instanceof Error ? err.message : 'Failed to update username');
@@ -121,7 +121,7 @@ export default function SettingsPage() {
     try {
       const updated = await updateProfile(t, { username, email, currentPassword: profilePassword });
       updateUser(updated);
-      setProfileSuccess('Profile updated successfully');
+      setProfileSuccess('Profile updated');
       setProfileEdits({});
       setProfilePassword('');
     } catch (err) {
@@ -225,7 +225,7 @@ export default function SettingsPage() {
                     type="text"
                     autoComplete="username"
                     value={profileUsername}
-                    onChange={e => { setProfileEdits({ ...profileEdits, username: e.target.value }); setProfileErrors(pe => ({ ...pe, username: '' })); }}
+                    onChange={e => { setProfileEdits({ ...profileEdits, username: e.target.value }); setProfileErrors(pe => ({ ...pe, username: '' })); setProfileError(''); }}
                     required
                     error={profileErrors.username}
                   />
@@ -234,7 +234,7 @@ export default function SettingsPage() {
                     <input type="email" className="form-input" value={user.email} disabled />
                   </div>
                   <p className="settings-hint">Signed in via Google. Only your username can be changed.</p>
-                  {profileError && <p className="settings-danger-text">{profileError}</p>}
+                  {profileError && <div className="alert-error" role="alert">{profileError}</div>}
                   {profileSuccess && <p className="text-sm" style={{ color: 'var(--success)' }}>{profileSuccess}</p>}
                   <button className="btn-primary self-start" onClick={handleProfileSave} disabled={profileLoading}>
                     {profileLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Username'}
@@ -247,7 +247,7 @@ export default function SettingsPage() {
                     type="text"
                     autoComplete="username"
                     value={profileUsername}
-                    onChange={e => { setProfileEdits({ ...profileEdits, username: e.target.value }); setProfileErrors(pe => ({ ...pe, username: '' })); }}
+                    onChange={e => { setProfileEdits({ ...profileEdits, username: e.target.value }); setProfileErrors(pe => ({ ...pe, username: '' })); setProfileError(''); }}
                     required
                     error={profileErrors.username}
                   />
@@ -256,7 +256,7 @@ export default function SettingsPage() {
                     type="email"
                     autoComplete="email"
                     value={profileEmail}
-                    onChange={e => { setProfileEdits({ ...profileEdits, email: e.target.value }); setProfileErrors(pe => ({ ...pe, email: '' })); }}
+                    onChange={e => { setProfileEdits({ ...profileEdits, email: e.target.value }); setProfileErrors(pe => ({ ...pe, email: '' })); setProfileError(''); }}
                     required
                     error={profileErrors.email}
                   />
@@ -265,11 +265,11 @@ export default function SettingsPage() {
                     type="password"
                     autoComplete="current-password"
                     value={profilePassword}
-                    onChange={e => { setProfilePassword(e.target.value); setProfileErrors(pe => ({ ...pe, profilePassword: '' })); }}
+                    onChange={e => { setProfilePassword(e.target.value); setProfileErrors(pe => ({ ...pe, profilePassword: '' })); setProfileError(''); }}
                     required
                     error={profileErrors.profilePassword}
                   />
-                  {profileError && <p className="settings-danger-text">{profileError}</p>}
+                  {profileError && <div className="alert-error" role="alert">{profileError}</div>}
                   {profileSuccess && <p className="text-sm" style={{ color: 'var(--success)' }}>{profileSuccess}</p>}
                   <button className="btn-primary self-start" onClick={handleProfileSave} disabled={profileLoading}>
                     {profileLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Details'}
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                   type="password"
                   autoComplete="current-password"
                   value={passwordForm.currentPassword}
-                  onChange={e => { setPasswordForm({ ...passwordForm, currentPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, currentPassword: '' })); }}
+                  onChange={e => { setPasswordForm({ ...passwordForm, currentPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, currentPassword: '' })); setPasswordError(''); }}
                   required
                   disabled={!!user?.googleId}
                   error={passwordErrors.currentPassword}
@@ -309,7 +309,7 @@ export default function SettingsPage() {
                   type="password"
                   autoComplete="new-password"
                   value={passwordForm.newPassword}
-                  onChange={e => { setPasswordForm({ ...passwordForm, newPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, newPassword: '' })); }}
+                  onChange={e => { setPasswordForm({ ...passwordForm, newPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, newPassword: '' })); setPasswordError(''); }}
                   required
                   disabled={!!user?.googleId}
                   error={passwordErrors.newPassword}
@@ -319,13 +319,13 @@ export default function SettingsPage() {
                   type="password"
                   autoComplete="new-password"
                   value={passwordForm.confirmPassword}
-                  onChange={e => { setPasswordForm({ ...passwordForm, confirmPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, confirmPassword: '' })); }}
+                  onChange={e => { setPasswordForm({ ...passwordForm, confirmPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, confirmPassword: '' })); setPasswordError(''); }}
                   required
                   disabled={!!user?.googleId}
                   error={passwordErrors.confirmPassword}
                 />
                 {passwordError && (
-                  <p className="settings-danger-text">{passwordError}</p>
+                  <div className="alert-error" role="alert">{passwordError}</div>
                 )}
                 <button type="submit" className="btn-primary self-start" disabled={isLoading || !!user?.googleId}>
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
@@ -350,7 +350,7 @@ export default function SettingsPage() {
                   {exportLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                   Download Watchlist CSV
                 </button>
-                {exportError && <p className="settings-danger-text mt-2">{exportError}</p>}
+                {exportError && <div className="alert-error mt-2" role="alert">{exportError}</div>}
               </div>
             </section>
           )}

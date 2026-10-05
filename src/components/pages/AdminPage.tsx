@@ -166,7 +166,7 @@ export default function AdminPage() {
       setError('');
       loadTrials(1, trialsStatus);
     } catch {
-      setError('Failed to cleanup trials');
+      setError('Failed to clean up trials');
     }
   }
 
@@ -356,7 +356,7 @@ export default function AdminPage() {
                   <SearchIcon className="search-icon-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search users..."
+                    placeholder="Search users…"
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && loadUsers(1, userSearch, userFilter)}
@@ -503,7 +503,7 @@ export default function AdminPage() {
                   className="btn-danger"
                   disabled={trials.filter(t => t.isExpired).length === 0}
                 >
-                  Clean Expired
+                  Clear expired
                 </button>
               </div>
 

@@ -172,7 +172,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
                   <div className="dropdown-divider" />
                   <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }} className="dropdown-item sign-out">
                     <LogOut className="icon-sm" />
-                    Sign Out
+                    Sign out
                   </button>
                 </div>
               )}
@@ -182,7 +182,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
               <div className="user-avatar">
                 <LogIn className="icon-sm" />
               </div>
-              <span className="user-name hidden sm:inline">Sign In</span>
+              <span className="user-name hidden sm:inline">Sign in</span>
             </button>
           )}
         </div>

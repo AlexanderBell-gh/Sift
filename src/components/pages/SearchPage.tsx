@@ -225,7 +225,7 @@ export default function SearchPage() {
                 }
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Search for butter, oat milk, avocados..."
+              placeholder="Search for butter, oat milk, avocados…"
               className="search-input"
               role="combobox"
               aria-expanded={dropdownOpen !== null}
@@ -270,7 +270,7 @@ export default function SearchPage() {
             {showNoMatches && query.length >= 2 && !suggestionsOpen && (
               <div className="suggestions-dropdown" role="status">
                 <div className="suggestions-empty">
-                  No matching products — press Enter to search anyway
+                  No matching products — press Enter to search anyway.
                 </div>
               </div>
             )}

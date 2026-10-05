@@ -55,9 +55,9 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
       })
       .catch((err: unknown) => {
         if (err instanceof ApiError && (err.status === 403 || err.reason === 'watchlist_limit')) {
-          setNotice({ text: 'Trial limit reached — upgrade to add more', type: 'error' });
+          setNotice({ text: 'Trial limit reached — upgrade to add more.', type: 'error' });
         } else if (err instanceof ApiError && err.reason === 'trial_expired') {
-          setNotice({ text: 'Your trial has expired', type: 'error' });
+          setNotice({ text: 'Your trial has expired.', type: 'error' });
         } else {
           setNotice({ text: 'Failed to add to watchlist', type: 'error' });
         }
@@ -134,7 +134,7 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
           {adding ? (
             <>
               <Loader2 size={12} className="animate-spin" aria-hidden="true" />
-              Adding...
+              Adding…
             </>
           ) : added || pinned ? (
             <>
