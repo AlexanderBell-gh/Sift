@@ -24,7 +24,7 @@ export async function updatePassword(token: string, currentPassword: string, new
   return handleResponse<User>(response);
 }
 
-export async function updateProfile(token: string, data: { username?: string; email?: string; currentPassword: string }): Promise<User> {
+export async function updateProfile(token: string, data: { username?: string; email?: string; currentPassword?: string }): Promise<User> {
   const response = await fetch(`${API_BASE}/api/auth/me`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

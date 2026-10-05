@@ -44,6 +44,8 @@ export default function SettingsPage() {
 
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault();
+    // Google sign-in accounts have no password — the form is disabled, this is a backstop.
+    if (user?.googleId) return;
     setPasswordError('');
     const errors: Record<string, string> = {};
     if (!passwordForm.currentPassword) errors.currentPassword = 'Password is required';
@@ -74,6 +76,33 @@ export default function SettingsPage() {
   async function handleProfileSave() {
     setProfileError('');
     setProfileSuccess('');
+    // Google sign-in: username only — no email change, no password to verify.
+    // The server enforces the same rule (email/password changes rejected).
+    if (user?.googleId) {
+      const errors: Record<string, string> = {};
+      const username = profileUsername.trim();
+      // Mirrors workers/lib/validate.js isValidUsername.
+      if (!username || !/^[A-Za-z0-9]{4,30}$/.test(username)) {
+        errors.username = 'Must be 4-30 characters, letters and numbers only';
+      }
+      if (Object.keys(errors).length > 0) {
+        setProfileErrors(errors);
+        return;
+      }
+      setProfileErrors({});
+      setProfileLoading(true);
+      try {
+        const updated = await updateProfile(t, { username });
+        updateUser(updated);
+        setProfileSuccess('Username updated successfully');
+        setProfileEdits({});
+      } catch (err) {
+        setProfileError(err instanceof Error ? err.message : 'Failed to update username');
+      } finally {
+        setProfileLoading(false);
+      }
+      return;
+    }
     const errors: Record<string, string> = {};
     const username = profileUsername.trim();
     const email = profileEmail.trim();
@@ -191,21 +220,32 @@ export default function SettingsPage() {
               </div>
               {user?.googleId ? (
                 <div className="settings-stack">
-                  <div className="form-group">
-                    <label className="field-label">Username</label>
-                    <input type="text" className="form-input" value={user.username} disabled />
-                  </div>
+                  <Input
+                    label="Username"
+                    type="text"
+                    autoComplete="username"
+                    value={profileUsername}
+                    onChange={e => { setProfileEdits({ ...profileEdits, username: e.target.value }); setProfileErrors(pe => ({ ...pe, username: '' })); }}
+                    required
+                    error={profileErrors.username}
+                  />
                   <div className="form-group">
                     <label className="field-label">Email Address</label>
                     <input type="email" className="form-input" value={user.email} disabled />
                   </div>
-                  <p className="settings-hint">Signed in via Google. Email and username cannot be changed.</p>
+                  <p className="settings-hint">Signed in via Google. Only your username can be changed.</p>
+                  {profileError && <p className="settings-danger-text">{profileError}</p>}
+                  {profileSuccess && <p className="text-sm" style={{ color: 'var(--success)' }}>{profileSuccess}</p>}
+                  <button className="btn-primary self-start" onClick={handleProfileSave} disabled={profileLoading}>
+                    {profileLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Username'}
+                  </button>
                 </div>
               ) : (
                 <div className="settings-stack">
                   <Input
                     label="Username"
                     type="text"
+                    autoComplete="username"
                     value={profileUsername}
                     onChange={e => { setProfileEdits({ ...profileEdits, username: e.target.value }); setProfileErrors(pe => ({ ...pe, username: '' })); }}
                     required
@@ -214,6 +254,7 @@ export default function SettingsPage() {
                   <Input
                     label="Email Address"
                     type="email"
+                    autoComplete="email"
                     value={profileEmail}
                     onChange={e => { setProfileEdits({ ...profileEdits, email: e.target.value }); setProfileErrors(pe => ({ ...pe, email: '' })); }}
                     required
@@ -222,6 +263,7 @@ export default function SettingsPage() {
                   <Input
                     label="Current Password"
                     type="password"
+                    autoComplete="current-password"
                     value={profilePassword}
                     onChange={e => { setProfilePassword(e.target.value); setProfileErrors(pe => ({ ...pe, profilePassword: '' })); }}
                     required
@@ -245,38 +287,47 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h3>Change Password</h3>
-                  <p>Update your account password</p>
+                  <p>{user?.googleId ? 'Not available for Google sign-in' : 'Update your account password'}</p>
                 </div>
               </div>
-              <form onSubmit={handlePasswordChange} className="settings-stack" noValidate>
+              <form onSubmit={handlePasswordChange} className="settings-stack" noValidate aria-disabled={user?.googleId ? true : undefined}>
+                {user?.googleId && (
+                  <p className="settings-hint">You sign in with Google and have no password to change.</p>
+                )}
                 <Input
                   label="Current Password"
                   type="password"
+                  autoComplete="current-password"
                   value={passwordForm.currentPassword}
                   onChange={e => { setPasswordForm({ ...passwordForm, currentPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, currentPassword: '' })); }}
                   required
+                  disabled={!!user?.googleId}
                   error={passwordErrors.currentPassword}
                 />
                 <Input
                   label="New Password"
                   type="password"
+                  autoComplete="new-password"
                   value={passwordForm.newPassword}
                   onChange={e => { setPasswordForm({ ...passwordForm, newPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, newPassword: '' })); }}
                   required
+                  disabled={!!user?.googleId}
                   error={passwordErrors.newPassword}
                 />
                 <Input
                   label="Confirm New Password"
                   type="password"
+                  autoComplete="new-password"
                   value={passwordForm.confirmPassword}
                   onChange={e => { setPasswordForm({ ...passwordForm, confirmPassword: e.target.value }); setPasswordErrors(pe => ({ ...pe, confirmPassword: '' })); }}
                   required
+                  disabled={!!user?.googleId}
                   error={passwordErrors.confirmPassword}
                 />
                 {passwordError && (
                   <p className="settings-danger-text">{passwordError}</p>
                 )}
-                <button type="submit" className="btn-primary self-start" disabled={isLoading}>
+                <button type="submit" className="btn-primary self-start" disabled={isLoading || !!user?.googleId}>
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
                 </button>
               </form>
@@ -354,6 +405,7 @@ export default function SettingsPage() {
             <Input
               label="Password"
               type="password"
+              autoComplete="current-password"
               value={deletePassword}
               onChange={e => { setDeletePassword(e.target.value); setDeleteError(''); }}
               required

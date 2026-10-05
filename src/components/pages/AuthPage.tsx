@@ -285,6 +285,7 @@ export default function AuthPage() {
               <Input
                 label="Username"
                 type="text"
+                autoComplete="username"
                 placeholder="Enter your username"
                 value={username}
                 onChange={(e) => { setUsername(e.target.value); clearFieldError('username'); }}
@@ -297,6 +298,7 @@ export default function AuthPage() {
               <Input
                 label="Email Address"
                 type="email"
+                autoComplete="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
@@ -309,6 +311,7 @@ export default function AuthPage() {
               <Input
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete={activeTab === 'register' ? 'new-password' : 'current-password'}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
@@ -353,6 +356,7 @@ export default function AuthPage() {
                   <Input
                     label="Account Email"
                     type="email"
+                    autoComplete="email"
                     placeholder="you@example.com"
                     value={forgotEmail}
                     onChange={(e) => { setForgotEmail(e.target.value); clearFieldError('forgotEmail'); }}
@@ -363,6 +367,7 @@ export default function AuthPage() {
                   <Input
                     label="New Password"
                     type={showResetPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     placeholder="••••••••"
                     value={resetNewPassword}
                     onChange={(e) => { setResetNewPassword(e.target.value); clearFieldError('resetNewPassword'); }}

@@ -702,6 +702,17 @@ async function handleRequest(request, env) {
           user.preferences.currency = normalizeCurrency(user.preferences.currency);
         }
 
+        // Google sign-in accounts have a random unknowable password hash —
+        // password and email changes are rejected explicitly instead of
+        // failing the password check with a misleading message.
+        const isGoogleAccount = !!user.googleId;
+        if (isGoogleAccount && body.newPassword) {
+          return errorResponse('Google sign-in accounts have no password to change', request);
+        }
+        if (isGoogleAccount && body.email !== undefined) {
+          return errorResponse('Email is tied to your Google account and cannot be changed', request);
+        }
+
         if (body.currentPassword && body.newPassword) {
           if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
             return errorResponse('Current password is incorrect', request);
@@ -713,10 +724,12 @@ async function handleRequest(request, env) {
         }
 
         if (body.username !== undefined || body.email !== undefined) {
-          if (!body.currentPassword) {
+          // Google accounts reach here with username only (email rejected
+          // above) and have no password to verify — skip the check for them.
+          if (!body.currentPassword && !isGoogleAccount) {
             return errorResponse('Current password is required to update profile', request);
           }
-          if (!(await verifyPassword(body.currentPassword, user.passwordHash))) {
+          if (!isGoogleAccount && !(await verifyPassword(body.currentPassword, user.passwordHash))) {
             return errorResponse('Current password is incorrect', request);
           }
 
