@@ -1,2 +1,0 @@
--- Sift: No seed data required
--- Legacy PriceTrackr categories removed (2026-06-30)
