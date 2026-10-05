@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../../lib/api';
 import { isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';

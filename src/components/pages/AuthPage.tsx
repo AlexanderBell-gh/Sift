@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, type FormEvent, type KeyboardEvent } from 'react';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Input } from '../ui/Input';

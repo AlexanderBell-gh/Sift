@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 import { useExtensionInstalled } from '../../hooks/useExtensionInstalled';
 import { useBrowser } from '../../hooks/useBrowser';
 import { ChromeIcon, FirefoxIcon, EdgeIcon, OtherIcon } from '../ui/BrowserIcons';

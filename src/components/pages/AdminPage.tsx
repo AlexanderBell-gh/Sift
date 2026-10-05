@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3, ChevronDown, Check } from 'lucide-react';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 import NavHeader from '../layout/NavHeader';
 import {
   getAdminStats,

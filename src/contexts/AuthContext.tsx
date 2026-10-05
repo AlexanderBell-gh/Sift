@@ -1,7 +1,27 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
+/* eslint-disable react-refresh/only-export-components -- context object + hook co-located with provider by design */
+import { useState, useEffect, useCallback, useContext, createContext, type ReactNode } from 'react';
 import type { User } from '../types';
 import { API_BASE } from '../lib/api';
-import { AuthContext } from './auth-context';
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  login: (username: string, password: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
+  startTrial: () => Promise<void>;
+  logout: () => void;
+  updateUser: (user: User) => void;
+}
+
+export const AuthContext = createContext<AuthContextType | null>(null);
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
+  return ctx;
+}
 
 function broadcastAuthToken(token: string | null) {
   window.postMessage({ type: 'SIFT_AUTH_TOKEN', token }, window.location.origin);

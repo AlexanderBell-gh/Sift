@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import { Search, Plus, Check } from 'lucide-react';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../../lib/api';
 import { STORES } from '../../lib/stores';

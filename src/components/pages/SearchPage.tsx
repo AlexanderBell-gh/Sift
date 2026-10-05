@@ -7,7 +7,7 @@ import NavHeader from '../layout/NavHeader';
 import { StoreSelect, MAX_STORES } from '../ui/StoreSelect';
 import { DealSection } from '../features/search/DealSection';
 import { STORES } from '../../lib/stores';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function SearchPage() {
   const { token, user } = useAuth();

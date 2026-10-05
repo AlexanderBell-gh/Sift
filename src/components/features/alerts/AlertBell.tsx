@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, X } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import { useAuth } from '../../../contexts/auth-context';
+import { useAuth } from '../../../contexts/AuthContext';
 import { getAlerts, markAlertRead, markAllAlertsRead, deleteAlert } from '../../../lib/api';
 import { formatTimeAgo } from '../../../lib/utils';
 import type { Alert } from '../../../types';

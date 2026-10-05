@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield, Menu, X } from 'lucide-react';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import AlertBell from '../features/alerts/AlertBell';
 import MobileTabBar from './MobileTabBar';
