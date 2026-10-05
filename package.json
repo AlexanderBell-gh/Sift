@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "node --test workers/lib/*.test.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sift": "node bin/sift.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

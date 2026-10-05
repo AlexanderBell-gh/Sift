@@ -74,6 +74,9 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account. Local dev needs `VITE_
 | `pnpm run lint` | ESLint over `src/` |
 | `pnpm test` | Worker unit tests — `node --test workers/lib/*.test.js`, zero-dep |
 | `pnpm audit --audit-level=high` | Dependency audit (CI gate) |
+| `pnpm sift --help` | Ops CLI: doctor, CI gate, D1 migrate/query, admin reads/writes |
+
+**CLI:** `pnpm sift doctor` checks toolchain/env/wrangler auth; `pnpm sift gate` mirrors CI locally. `db migrate|query|users` and `admin stats|users|trials|trials-cleanup|rescore|category` wrap wrangler D1 and the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
 
 ## Deploy
 
