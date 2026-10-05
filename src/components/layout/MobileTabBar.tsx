@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Bookmark, ShoppingCart } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 interface MobileTabBarProps {
   alerts: ReactNode;

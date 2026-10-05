@@ -3,11 +3,11 @@ import type { TouchEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, X } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { useAuth } from '../contexts/auth-context';
-import { getAlerts, markAlertRead, markAllAlertsRead, deleteAlert } from '../lib/api';
-import { formatTimeAgo } from '../lib/utils';
-import type { Alert } from '../types';
+import { cn } from '../../../lib/utils';
+import { useAuth } from '../../../contexts/auth-context';
+import { getAlerts, markAlertRead, markAllAlertsRead, deleteAlert } from '../../../lib/api';
+import { formatTimeAgo } from '../../../lib/utils';
+import type { Alert } from '../../../types';
 
 const SWIPE_THRESHOLD = 60;
 

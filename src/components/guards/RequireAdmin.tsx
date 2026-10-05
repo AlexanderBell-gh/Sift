@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useAuth } from '../contexts/auth-context';
+import { useAuth } from '../../contexts/auth-context';
 import { ForbiddenPage } from './ErrorPage';
 
 export default function RequireAdmin({ children }: { children: ReactNode }) {

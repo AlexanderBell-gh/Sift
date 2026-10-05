@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from '../../hooks/useTheme';
 import {
   SearchVisual,
   PinVisual,
   AlertVisual,
   ExtensionVisual,
   ListVisual,
-} from './landing/visuals';
+} from '../features/landing/LandingVisuals';
 
 const STORE_MARKS = [
   { id: 'tesco', logo: '/landing/landing_tescos.svg' },

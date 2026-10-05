@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Check, Loader2 } from 'lucide-react';
-import { useAuth } from '../contexts/auth-context';
-import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../lib/api';
-import { getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
-import type { SearchResult } from '../types';
+import { useAuth } from '../../../contexts/auth-context';
+import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../../../lib/api';
+import { getLoyaltyLabel, getLoyaltyClass } from '../../../lib/utils';
+import type { SearchResult } from '../../../types';
 
 const TRIAL_LIMIT = 5;
 

@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
-import { useAuth } from '../contexts/auth-context';
+import { useAuth } from '../../contexts/auth-context';
 import { useNavigate } from 'react-router-dom';
-import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../lib/api';
-import { isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../lib/utils';
-import { lineTotal, lineSavings, formatGBP, parseOfferDeal, priceOfferGroup, type LineTotal } from '../lib/pricing';
-import { STORES } from '../lib/stores';
-import NavHeader from './NavHeader';
+import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../../lib/api';
+import { isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
+import { lineTotal, lineSavings, formatGBP, parseOfferDeal, priceOfferGroup, type LineTotal } from '../../lib/pricing';
+import { STORES } from '../../lib/stores';
+import NavHeader from '../layout/NavHeader';
 
 interface PricedEntry {
   entry: ShoppingListEntry;

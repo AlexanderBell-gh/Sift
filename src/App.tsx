@@ -2,17 +2,17 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/auth-context';
 import { ThemeProvider } from './contexts/ThemeContext';
-import SearchPage from './components/SearchPage';
-import LandingPage from './components/LandingPage';
-import AuthPage from './components/AuthPage';
-import WatchlistPage from './components/WatchlistPage';
-import ShoppingListPage from './components/ShoppingListPage';
-import AdminPage from './components/AdminPage';
-import SettingsPage from './components/SettingsPage';
-import RequireAdmin from './components/RequireAdmin';
-import { NotFoundPage, RouteErrorBoundary } from './components/ErrorPage';
+import SearchPage from './components/pages/SearchPage';
+import LandingPage from './components/pages/LandingPage';
+import AuthPage from './components/pages/AuthPage';
+import WatchlistPage from './components/pages/WatchlistPage';
+import ShoppingListPage from './components/pages/ShoppingListPage';
+import AdminPage from './components/pages/AdminPage';
+import SettingsPage from './components/pages/SettingsPage';
+import RequireAdmin from './components/guards/RequireAdmin';
+import { NotFoundPage, RouteErrorBoundary } from './components/guards/ErrorPage';
 import { CookieConsent } from './components/ui/CookieConsent';
-import ExtensionFAB from './components/ExtensionFAB';
+import ExtensionFAB from './components/layout/ExtensionFAB';
 
 declare global {
   interface Window {

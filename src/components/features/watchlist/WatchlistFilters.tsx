@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Store, LayoutGrid, ArrowUpDown, Search, X } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { STORES } from '../lib/stores';
-import { CATEGORIES } from '../lib/categories';
+import { cn } from '../../../lib/utils';
+import { STORES } from '../../../lib/stores';
+import { CATEGORIES } from '../../../lib/categories';
 import FilterTrigger from './filters/FilterTrigger';
 import FilterPanel from './filters/FilterPanel';
 import FilterOption from './filters/FilterOption';

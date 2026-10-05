@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Shield, Users, ScrollText, Timer, ChevronLeft, ChevronRight, Search as SearchIcon, BarChart3, ChevronDown, Check } from 'lucide-react';
-import { useAuth } from '../contexts/auth-context';
-import NavHeader from './NavHeader';
+import { useAuth } from '../../contexts/auth-context';
+import NavHeader from '../layout/NavHeader';
 import {
   getAdminStats,
   getAdminUsers,
@@ -11,9 +11,9 @@ import {
   getAdminTrials,
   cleanupExpiredTrials,
   rescoreWatchlist,
-} from '../lib/api';
-import type { AdminStats, AdminUser, AuditLog, TrialUser } from '../types';
-import type { RescoreResult } from '../lib/api';
+} from '../../lib/api';
+import type { AdminStats, AdminUser, AuditLog, TrialUser } from '../../types';
+import type { RescoreResult } from '../../lib/api';
 
 type Tab = 'dashboard' | 'users' | 'audit' | 'trials';
 
