@@ -47,6 +47,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 ### Auth & Accounts
 - JWT + Google OAuth + username/password, guest landing page, self-service password recovery
 - Trial gating — 24h / 5 watchlist items, enforced server-side; rate-limited auth endpoints
+- Google accounts sign in without a password — Settings greys out Change Password, locks email, and allows username edits; username changes are limited to one per 20 minutes per user (email changes one per day)
 - Extension SSO — website hands its token to the Chrome extension, no double sign-in
 
 ### Admin & Mobile
@@ -133,7 +134,7 @@ Offer notes: a product whose only offer is a multi-buy term (no loyalty price/ex
 ## Project Structure
 
 ```
-src/              React SPA (components, contexts, hooks, lib, types)
+src/              React SPA (components/{pages,layout,features,ui,guards}, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, lib/, schema.sql, migrations/)
 public/           Store logo SVGs + favicon.svg + theme-init.js + _headers
 ```

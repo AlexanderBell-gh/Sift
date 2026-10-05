@@ -180,7 +180,7 @@ export default function SettingsPage() {
   return (
     <div className="page-shell">
       <NavHeader />
-      <div className="container settings-top pb-12">
+      <div className="container settings-top pb-24">
         <div className="mb-8">
           <h2 className="page-title">
             Account Settings
