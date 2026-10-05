@@ -33,7 +33,7 @@ const FEATURES = [
   {
     icon: Puzzle,
     title: 'Browser extension',
-    desc: 'Add products straight from any supermarket site on your computer — click the Sift icon and pin it in one click.',
+    desc: "Add products directly from any of the supported UK supermarket's on your computer — click the Sift icon and pin it in one click.",
     Visual: ExtensionVisual,
   },
   {
@@ -106,7 +106,7 @@ export default function LandingPage() {
             <span className="text-gradient block">Every store. Every deal.</span>
           </h1>
           <p>
-            Search 11 UK supermarkets, pin your staples, and shop one smart
+            Search 11 UK supermarkets, pin your staples, and shop from one smart
             list. Free to join — tracking takes seconds.
           </p>
         </div>
