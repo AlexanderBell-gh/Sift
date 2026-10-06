@@ -1,4 +1,4 @@
-import { Search, Check, Bell, MousePointerClick, Tag, Plus } from 'lucide-react';
+import { Search, Check, Bell, Plus, X } from 'lucide-react';
 
 /**
  * Landing card visuals — pure CSS/SVG mockups, zero image weight.
@@ -8,33 +8,68 @@ import { Search, Check, Bell, MousePointerClick, Tag, Plus } from 'lucide-react'
 
 export function SearchVisual() {
   return (
-    <div className="landing-visual landing-visual--search" aria-hidden="true">
-      <div className="lv-chips">
-        <span className="lv-chip lv-chip--pick-a">Tesco</span>
-        <span className="lv-chip lv-chip--pick-b">Asda</span>
-        <span className="lv-chip lv-chip--pick-c">Aldi</span>
-      </div>
-      <div className="lv-searchbar">
-        <Search className="lv-search-icon" />
-        <span className="lv-typed">
-          <span className="lv-word">Sourdough</span>
-        </span>
-        <span className="lv-caret" />
-        <span className="lv-searchbtn">Search</span>
-      </div>
+    <div className="landing-visual landing-visual--search landing-visual--tall" aria-hidden="true">
       <div className="lv-tabs">
-        <span className="lv-tab lv-tab--a">
-          <i className="lv-tab-dot" />
+        <span className="lv-tab lv-tab--active lv-tab--a">
+          <img src="/Tesco_Logo.svg" alt="" className="lv-tab-logo" />
           Tesco
+          <X className="lv-tab-x" />
         </span>
         <span className="lv-tab lv-tab--b">
-          <i className="lv-tab-dot" />
-          Asda
+          <img src="/Sainsbury's_Logo.svg" alt="" className="lv-tab-logo" />
+          Sainsbury's
+          <X className="lv-tab-x" />
         </span>
         <span className="lv-tab lv-tab--c">
-          <i className="lv-tab-dot" />
-          Aldi
+          <img src="/Ocado_Logo.svg" alt="" className="lv-tab-logo" />
+          Ocado
+          <X className="lv-tab-x" />
         </span>
+      </div>
+      <div className="lv-browser">
+        <div className="lv-browser-ui">
+          <div className="lv-chips">
+            <span className="lv-chip lv-chip--pick-a">
+              <img src="/Tesco_Logo.svg" alt="" className="lv-chip-logo" />
+              Tesco
+              <X className="lv-chip-x" />
+            </span>
+            <span className="lv-chip lv-chip--pick-b">
+              <img src="/Sainsbury's_Logo.svg" alt="" className="lv-chip-logo" />
+              Sainsbury's
+              <X className="lv-chip-x" />
+            </span>
+            <span className="lv-chip lv-chip--pick-c">
+              <img src="/Ocado_Logo.svg" alt="" className="lv-chip-logo" />
+              Ocado
+              <X className="lv-chip-x" />
+            </span>
+          </div>
+          <div className="lv-searchbar">
+            <Search className="lv-search-icon" />
+            <span className="lv-typed">
+              <span className="lv-word">Sourdough</span>
+            </span>
+            <span className="lv-caret" />
+            <span className="lv-searchbtn">Search</span>
+          </div>
+        </div>
+        <div className="lv-page">
+          <div className="lv-wltop">
+            <span className="lv-thumb" />
+            <span className="lv-wllines">
+              <span className="lv-line lv-line--long" />
+              <span className="lv-line lv-line--short" />
+            </span>
+          </div>
+          <div className="lv-wltop">
+            <span className="lv-thumb" />
+            <span className="lv-wllines">
+              <span className="lv-line lv-line--long" />
+              <span className="lv-line lv-line--short" />
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -95,10 +130,19 @@ export function ExtensionVisual() {
   return (
     <div className="landing-visual" aria-hidden="true">
       <div className="lv-iconwrap">
-        <span className="lv-sifticon">
-          <Tag className="lv-sifticon-mark" />
+        <span className="lv-floatbtn">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <mask id="lv-float-hole">
+                <rect width="32" height="32" fill="white" />
+                <circle cx="16" cy="9" r="3" fill="black" />
+              </mask>
+            </defs>
+            <g transform="rotate(-10 16 16)">
+              <rect x="6" y="2" width="20" height="28" rx="4" fill="#FFFFFF" mask="url(#lv-float-hole)" />
+            </g>
+          </svg>
         </span>
-        <MousePointerClick className="lv-cursor" />
       </div>
       <div className="lv-popup">
         <div className="lv-popup-top">

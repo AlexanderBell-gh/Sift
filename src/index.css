@@ -1012,8 +1012,41 @@ body {
   gap: 6px;
 }
 
+.lv-browser {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-height: 160px;
+}
+
+.lv-browser-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: lv-browser-ui 6s var(--ease-smooth) infinite;
+}
+
+.lv-page {
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: lv-page-in 6s var(--ease-smooth) infinite;
+}
+
 .landing-visual--search {
   position: relative;
+  justify-content: flex-start;
 }
 
 .lv-typed {
@@ -1046,28 +1079,67 @@ body {
 
 .lv-tabs {
   display: flex;
+  align-items: flex-end;
+  justify-content: center;
   gap: 6px;
+  margin: -12px -12px 0;
+  padding: 10px 12px 0;
+  position: relative;
+  z-index: 1;
 }
 
 .lv-tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: 10px;
   font-weight: 600;
   color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 8px;
+  background: none;
+  border: none;
+  padding: 8px 14px 6px;
   white-space: nowrap;
 }
 
-.lv-tab-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 99px;
-  background: var(--primary);
+.lv-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  transform: perspective(50px) rotateX(12deg);
+  transform-origin: bottom;
+}
+
+.lv-tab > * {
+  position: relative;
+}
+
+.lv-tab--active {
+  color: var(--text);
+  z-index: 1;
+  padding-bottom: 7px;
+}
+
+.lv-tab--active::before {
+  background: var(--surface);
+}
+
+.lv-tab-logo {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.lv-tab-x {
+  width: 12px;
+  height: 12px;
+  opacity: 0.4;
   flex-shrink: 0;
 }
 
@@ -1084,13 +1156,33 @@ body {
 }
 
 .lv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 600;
   color: var(--primary);
-  background: rgba(255, 87, 1, 0.08);
+  background: rgba(255, 87, 1, 0.05);
   border: 1px solid rgba(255, 87, 1, 0.4);
   border-radius: 99px;
-  padding: 4px 10px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.lv-chip-logo {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.lv-chip-x {
+  width: 12px;
+  height: 12px;
+  opacity: 0.4;
+  flex-shrink: 0;
 }
 
 .lv-chip--pick-a {
@@ -1337,31 +1429,23 @@ body {
   padding: 4px 0;
 }
 
-.lv-sifticon {
-  width: 40px;
-  height: 40px;
+.lv-floatbtn {
+  width: 48px;
+  height: 48px;
   border-radius: 99px;
   background: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: lv-float-press 5s var(--ease-smooth) infinite;
 }
 
-.lv-sifticon-mark {
-  width: 20px;
-  height: 20px;
-  color: #fff;
-}
-
-.lv-cursor {
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  color: var(--text);
-  top: -10px;
-  left: calc(50% - 26px);
-  animation: lv-tap-icon 5s var(--ease-smooth) infinite;
+.lv-floatbtn svg {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .lv-popup {
@@ -1533,13 +1617,13 @@ body {
   8% {
     color: var(--primary);
     border-color: rgba(255, 87, 1, 0.4);
-    background: rgba(255, 87, 1, 0.08);
+    background: rgba(255, 87, 1, 0.05);
     transform: scale(1.08);
   }
   12%, 93% {
     color: var(--primary);
     border-color: rgba(255, 87, 1, 0.4);
-    background: rgba(255, 87, 1, 0.08);
+    background: rgba(255, 87, 1, 0.05);
     transform: scale(1);
   }
   97%, 100% {
@@ -1560,13 +1644,13 @@ body {
   16% {
     color: var(--primary);
     border-color: rgba(255, 87, 1, 0.4);
-    background: rgba(255, 87, 1, 0.08);
+    background: rgba(255, 87, 1, 0.05);
     transform: scale(1.08);
   }
   20%, 93% {
     color: var(--primary);
     border-color: rgba(255, 87, 1, 0.4);
-    background: rgba(255, 87, 1, 0.08);
+    background: rgba(255, 87, 1, 0.05);
     transform: scale(1);
   }
   97%, 100% {
@@ -1587,13 +1671,13 @@ body {
   24% {
     color: var(--primary);
     border-color: rgba(255, 87, 1, 0.4);
-    background: rgba(255, 87, 1, 0.08);
+    background: rgba(255, 87, 1, 0.05);
     transform: scale(1.08);
   }
   28%, 93% {
     color: var(--primary);
     border-color: rgba(255, 87, 1, 0.4);
-    background: rgba(255, 87, 1, 0.08);
+    background: rgba(255, 87, 1, 0.05);
     transform: scale(1);
   }
   97%, 100% {
@@ -1605,21 +1689,33 @@ body {
 }
 
 @keyframes tab-pop-a {
-  0%, 61% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  0%, 61% { opacity: 0; transform: translateY(-12px) scale(0.9); }
   64%, 86% { opacity: 1; transform: translateY(0) scale(1); }
-  91%, 100% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  91%, 100% { opacity: 0; transform: translateY(-12px) scale(0.9); }
 }
 
 @keyframes tab-pop-b {
-  0%, 67% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  0%, 67% { opacity: 0; transform: translateY(-12px) scale(0.9); }
   70%, 86% { opacity: 1; transform: translateY(0) scale(1); }
-  91%, 100% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  91%, 100% { opacity: 0; transform: translateY(-12px) scale(0.9); }
 }
 
 @keyframes tab-pop-c {
-  0%, 73% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  0%, 73% { opacity: 0; transform: translateY(-12px) scale(0.9); }
   76%, 86% { opacity: 1; transform: translateY(0) scale(1); }
-  91%, 100% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  91%, 100% { opacity: 0; transform: translateY(-12px) scale(0.9); }
+}
+
+@keyframes lv-page-in {
+  0%, 64% { opacity: 0; transform: translateY(8px); }
+  72%, 88% { opacity: 1; transform: translateY(0); }
+  93%, 100% { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes lv-browser-ui {
+  0%, 60% { opacity: 1; }
+  68%, 92% { opacity: 0; }
+  97%, 100% { opacity: 1; }
 }
 
 @keyframes lv-wl-card {
@@ -1669,11 +1765,10 @@ body {
   100% { opacity: 0; transform: scale(3); }
 }
 
-@keyframes lv-tap-icon {
-  0%, 100% { top: -10px; left: calc(50% - 26px); transform: scale(1); }
-  30% { top: 12px; left: calc(50% + 2px); transform: scale(1); }
-  40% { top: 12px; left: calc(50% + 2px); transform: scale(0.8); }
-  55%, 85% { top: -10px; left: calc(50% - 26px); transform: scale(1); }
+@keyframes lv-float-press {
+  0%, 30% { transform: scale(1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(255, 87, 1, 0); }
+  36%, 38% { transform: scale(0.94); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), 0 0 0 3px rgba(255, 87, 1, 0.12); }
+  44%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(255, 87, 1, 0); }
 }
 
 @keyframes lv-popup-in {
@@ -1684,8 +1779,9 @@ body {
 }
 
 @keyframes lv-popbtn {
-  0%, 58% { opacity: 1; }
-  63%, 100% { opacity: 0; }
+  0%, 54% { opacity: 1; transform: scale(1); }
+  58%, 60% { opacity: 1; transform: scale(0.96); }
+  63%, 100% { opacity: 0; transform: scale(1); }
 }
 
 @keyframes lv-popdone {

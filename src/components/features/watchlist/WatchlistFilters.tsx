@@ -11,8 +11,8 @@ export type OfferStatus = 'all' | 'offers' | 'plain' | 'expired';
 
 const STATUS_OPTIONS: { value: OfferStatus; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'offers', label: 'On offer' },
-  { value: 'plain', label: 'Not on offer' },
+  { value: 'offers', label: 'Offers' },
+  { value: 'plain', label: 'Regular Price' },
   { value: 'expired', label: 'Expired' },
 ];
 
