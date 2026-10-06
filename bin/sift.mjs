@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 const PROD_API = 'https://siftapi.blackmesa.workers.dev';
 const WRANGLER = ['exec', 'wrangler'];
 
-const HELP = `sift — ops CLI (never deploys; CI owns deploys)
+const HELP = `Sift — CLI (never deploys; CI owns deploys)
 
 Usage: pnpm sift <command> [args] [flags]
 Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --json
