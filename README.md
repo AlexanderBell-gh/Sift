@@ -49,6 +49,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 - Trial gating — 24h / 5 watchlist items, enforced server-side; rate-limited auth endpoints
 - Google accounts sign in without a password — Settings greys out Change Password, locks email, and allows username edits; username changes are limited to one per 20 minutes per user (email changes one per day)
 - Extension SSO — website hands its token to the Chrome extension, no double sign-in
+- Privacy, cookie, and about pages (`/privacy`, `/cookies`, `/about`) linked from the landing footer, which also re-opens the cookie notice via Cookie settings
 
 ### Admin & Mobile
 - Dashboard, user management, audit logs, trial management behind an admin-only guard (403 + 404 pages, error boundary)
@@ -75,6 +76,8 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account. Local dev needs `VITE_
 | `pnpm test` | Worker unit tests — `node --test workers/lib/*.test.js`, zero-dep |
 | `pnpm audit --audit-level=high` | Dependency audit (CI gate) |
 | `pnpm sift --help` | Ops CLI: doctor, CI gate, D1 migrate/query, admin reads/writes |
+
+Build code-splits for first paint: the guest landing chunk stays eager while all other routes lazy-load, with React vendored into its own cached chunk.
 
 **CLI:** `pnpm sift doctor` checks toolchain/env/wrangler auth; `pnpm sift gate` mirrors CI locally. `db migrate|query|users` and `admin stats|users|trials|trials-cleanup|rescore|category` wrap wrangler D1 and the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
 

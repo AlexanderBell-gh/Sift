@@ -31,17 +31,17 @@ export function SearchVisual() {
           <div className="lv-chips">
             <span className="lv-chip lv-chip--pick-a">
               <img src="/Tesco_Logo.svg" alt="" className="lv-chip-logo" />
-              Tesco
+              <span className="lv-chip-label">Tesco</span>
               <X className="lv-chip-x" />
             </span>
             <span className="lv-chip lv-chip--pick-b">
               <img src="/Sainsbury's_Logo.svg" alt="" className="lv-chip-logo" />
-              Sainsbury's
+              <span className="lv-chip-label">Sainsbury's</span>
               <X className="lv-chip-x" />
             </span>
             <span className="lv-chip lv-chip--pick-c">
               <img src="/Ocado_Logo.svg" alt="" className="lv-chip-logo" />
-              Ocado
+              <span className="lv-chip-label">Ocado</span>
               <X className="lv-chip-x" />
             </span>
           </div>
@@ -115,12 +115,20 @@ export function PinVisual() {
 
 export function AlertVisual() {
   return (
-    <div className="landing-visual" aria-hidden="true">
+    <div className="landing-visual landing-visual--tall" aria-hidden="true">
       <div className="lv-bellwrap">
         <Bell className="lv-bell" />
         <span className="lv-badge" />
         <span className="lv-ping" />
-        <span className="lv-ping lv-ping--late" />
+      </div>
+      <div className="lv-alertcard">
+        <span className="lv-alertdot" />
+        <span className="lv-alertinfo">
+          <span className="lv-alerttext">Offer ended</span>
+          <span className="lv-line lv-line--long" />
+          <span className="lv-line lv-line--short" />
+        </span>
+        <span className="lv-alerttime">2h</span>
       </div>
     </div>
   );
@@ -172,18 +180,58 @@ export function ExtensionVisual() {
 export function ListVisual() {
   return (
     <div className="landing-visual" aria-hidden="true">
-      <div className="lv-listrow">
-        <span className="lv-qty">×2</span>
-        <span className="lv-line lv-line--long" />
-        <span className="lv-tag">2 for £3</span>
+      <div className="lv-total lv-total--head">
+        <span className="lv-total--was lv-stage-deal">£5.70</span>
+        <span className="lv-roll">
+          <span className="lv-rollcol lv-rollcol--grand">
+            <i className="lv-total--now">£3.60</i>
+            <i className="lv-total--now">£4.50</i>
+          </span>
+        </span>
+        <span className="lv-save lv-stage-deal">Save £1.20</span>
       </div>
-      <div className="lv-listrow">
-        <span className="lv-qty">×1</span>
-        <span className="lv-line lv-line--short" />
+      <div className="lv-shoprow">
+        <span className="lv-thumb lv-thumb--sm" />
+        <span className="lv-shopinfo">
+          <span className="lv-line lv-line--long" />
+          <span className="lv-shopunit">£2.10 each</span>
+          <span className="lv-shopnote">Multibuy applied × 1</span>
+        </span>
+        <span className="lv-stepper">
+          <span className="lv-stepbtn">−</span>
+          <span className="lv-roll">
+            <span className="lv-rollcol lv-rollcol--qty">
+              <i>1</i>
+              <i>2</i>
+            </span>
+          </span>
+          <span className="lv-stepbtn lv-stepbtn--plus">+</span>
+        </span>
+        <span className="lv-linetotal">
+          <span className="lv-roll">
+            <span className="lv-rollcol lv-rollcol--total">
+              <i>£2.10</i>
+              <i>£3.00</i>
+            </span>
+          </span>
+        </span>
       </div>
-      <div className="lv-total">
-        <span className="lv-total--was">£12.40</span>
-        <span className="lv-total--now">£9.80</span>
+      <div className="lv-shoprow lv-shoprow--static">
+        <span className="lv-thumb lv-thumb--sm" />
+        <span className="lv-shopinfo">
+          <span className="lv-line lv-line--short" />
+          <span className="lv-shopunit">£1.50 each</span>
+        </span>
+        <span className="lv-stepper">
+          <span className="lv-stepbtn">−</span>
+          <span className="lv-roll">
+            <span className="lv-rollcol">
+              <i>1</i>
+            </span>
+          </span>
+          <span className="lv-stepbtn">+</span>
+        </span>
+        <span className="lv-linetotal">£1.50</span>
       </div>
     </div>
   );

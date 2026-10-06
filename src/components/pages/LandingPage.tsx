@@ -1,6 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone, Check } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { useRevealRoot } from '../../hooks/useReveal';
 import {
   SearchVisual,
   PinVisual,
@@ -57,17 +58,18 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: '01', title: 'Create your account', desc: 'Sign up free, or start a no-signup trial in one click.' },
-  { n: '02', title: 'Pin your staples', desc: 'Search or use the extension to add the products you actually buy.' },
-  { n: '03', title: 'Shop from one list', desc: 'Add watchlist items in quantities and shop per-store totals with multibuy savings applied — the whole shop in one place.' },
+  { n: '01', title: 'Create your account', desc: 'Sign up free, or start a no-signup trial in one click.', mod: 'landing-step--a' },
+  { n: '02', title: 'Pin your staples', desc: 'Search or use the extension to add the products you actually buy.', mod: 'landing-step--b' },
+  { n: '03', title: 'Shop from one list', desc: 'Add watchlist items in quantities and shop per-store totals with multibuy savings applied — the whole shop in one place.', mod: 'landing-step--c' },
 ];
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { isDark, toggle } = useTheme();
+  const revealRoot = useRevealRoot<HTMLDivElement>();
 
   return (
-    <div className="page-shell">
+    <div className="page-shell" ref={revealRoot}>
       <nav className="nav">
         <div className="container nav-inner">
           <div className="nav-cluster">
@@ -101,11 +103,15 @@ export default function LandingPage() {
 
       <section className="hero">
         <div className="container">
-          <h1>
+          <p className="landing-hero-eyebrow">
+            <span className="landing-hero-dot" aria-hidden="true" />
+            Free UK grocery tracker
+          </p>
+          <h1 className="landing-hero-title">
             One list for the whole shop.
             <span className="text-gradient block">Every store. Every deal.</span>
           </h1>
-          <p>
+          <p className="landing-hero-sub">
             Search 11 UK supermarkets, pin your staples, and shop from one smart
             list. Free to join — tracking takes seconds.
           </p>
@@ -128,15 +134,20 @@ export default function LandingPage() {
       </div>
 
       <section className="container landing-section" aria-labelledby="features-heading">
-        <div className="text-center mb-6">
+        <div className="text-center mb-6" data-reveal>
           <span className="field-label">Why Sift</span>
           <h2 id="features-heading" className="page-title">
             All your groceries. <span className="text-gradient">One place.</span>
           </h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map(f => (
-            <div key={f.title} className="metric-card metric-card--static">
+          {FEATURES.map((f, i) => (
+            <div
+              key={f.title}
+              className="metric-card metric-card--static"
+              data-reveal
+              style={{ transitionDelay: `${i * 80}ms` }}
+            >
               <div className="settings-card-header-icon primary text-accent" aria-hidden="true">
                 <f.icon className="icon-md" />
               </div>
@@ -149,14 +160,15 @@ export default function LandingPage() {
       </section>
 
       <section className="container landing-section" aria-labelledby="steps-heading">
-        <div className="text-center mb-6">
+        <div className="text-center mb-6" data-reveal>
           <span className="field-label">How it works</span>
           <h2 id="steps-heading" className="page-title">Up and running in three steps</h2>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3 landing-steps">
           {STEPS.map(s => (
-            <div key={s.n} className="metric-card metric-card--static">
-              <span className="metric-value">{s.n}</span>
+            <div key={s.n} className={`metric-card metric-card--static landing-step ${s.mod}`}>
+              <span className="landing-step-bar" aria-hidden="true" />
+              <span className="metric-value landing-step-num">{s.n}</span>
               <h3 className="landing-card-title">{s.title}</h3>
               <p className="landing-card-desc">{s.desc}</p>
             </div>
@@ -165,7 +177,7 @@ export default function LandingPage() {
       </section>
 
       <section className="container landing-cta-section">
-        <div className="landing-cta-box">
+        <div className="landing-cta-box" data-reveal>
           <h2 className="page-title landing-cta-title">
             Your whole shop is one sign-in away
           </h2>
@@ -177,17 +189,53 @@ export default function LandingPage() {
               Sign in / Get started
               <LogIn className="icon-sm" />
             </button>
+            <ul className="landing-cta-trust" aria-label="Why join free">
+              <li className="landing-cta-trust--a">
+                <Check className="icon-sm" aria-hidden="true" />
+                Free to join
+              </li>
+              <li className="landing-cta-trust--b">
+                <Check className="icon-sm" aria-hidden="true" />
+                Easy to use
+              </li>
+              <li className="landing-cta-trust--c">
+                <Check className="icon-sm" aria-hidden="true" />
+                Try before Registering
+              </li>
+            </ul>
           </div>
         </div>
       </section>
 
-      <p className="landing-app-strip">
+      <p className="landing-app-strip" data-reveal>
         <Smartphone className="icon-sm" aria-hidden="true" />
         Android app coming soon
       </p>
 
       <footer className="landing-footer">
-        <div className="container">Sift — UK Grocery Tracker</div>
+        <div className="container landing-footer-inner">
+          <p className="landing-footer-brand">Sift — UK Grocery Tracker</p>
+          <nav className="landing-footer-links" aria-label="Legal">
+            <Link to="/privacy">Privacy</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/cookies">Cookies</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/about">About</Link>
+            <span aria-hidden="true">·</span>
+            <button
+              type="button"
+              className="landing-footer-btn"
+              onClick={() => document.dispatchEvent(new CustomEvent('cookie-consent-revoked'))}
+            >
+              Cookie settings
+            </button>
+            <span aria-hidden="true">·</span>
+            <button type="button" className="landing-footer-btn" onClick={() => navigate('/auth')}>
+              Sign in
+            </button>
+          </nav>
+          <p className="landing-footer-copy">© {new Date().getFullYear()} Sift</p>
+        </div>
       </footer>
     </div>
   );

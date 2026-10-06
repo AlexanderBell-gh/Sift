@@ -7,13 +7,14 @@ import ukFrozen from '../data/uk-frozen.json';
 import ukCupboard from '../data/uk-cupboard.json';
 import ukDrinks from '../data/uk-drinks.json';
 import type { SearchResult, WatchlistItem, Alert, AdminStats, AdminUser, AuditLog, TrialUser, User } from '../types';
+import { API_BASE } from './config';
+
+export { API_BASE };
 
 const ukProducts = [
   ...ukDairy, ...ukBakery, ...ukMeatFish, ...ukProduce,
   ...ukFrozen, ...ukCupboard, ...ukDrinks,
 ];
-
-export const API_BASE = import.meta.env.VITE_API_BASE || 'https://siftapi.blackmesa.workers.dev';
 
 export async function updatePassword(token: string, currentPassword: string, newPassword: string): Promise<User> {
   const response = await fetch(`${API_BASE}/api/auth/me`, {

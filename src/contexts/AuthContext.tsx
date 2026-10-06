@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- context object + hook co-located with provider by design */
 import { useState, useEffect, useCallback, useContext, createContext, type ReactNode } from 'react';
 import type { User } from '../types';
-import { API_BASE } from '../lib/api';
+import { API_BASE } from '../lib/config';
 
 export interface AuthContextType {
   user: User | null;

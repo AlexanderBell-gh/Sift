@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { Cookie } from 'lucide-react';
 
@@ -54,10 +55,11 @@ export function CookieConsent() {
           <Cookie className="cookie-banner-icon" />
           <div className="min-w-0">
             <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>
-              This site uses cookies
+              Your privacy choices
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
-              We store an authentication token in your browser to keep you signed in. No tracking or analytics cookies are used.
+              Sift keeps your sign-in and preferences in this browser only — no
+              tracking cookies. See the <Link to="/cookies" className="cookie-banner-link">cookie policy</Link>.
             </p>
           </div>
         </div>
