@@ -43,8 +43,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // React framework code changes rarely — cache it apart from app code.
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom') || id.includes('node_modules/react/')) return 'vendor';
         },
       },
     },
