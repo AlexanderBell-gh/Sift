@@ -3,6 +3,8 @@ allowBuilds:
   sharp: true
   tesseract.js: true
   workerd: true
+overrides:
+  sharp: ^0.35.5
 minimumReleaseAgeExclude:
-  - miniflare@4.20260529.0 || 5.20260926.1-alpha
-  - wrangler@4.96.0 || 4.144.0
+  - miniflare@4.20260529.0 || 5.20260926.1-alpha || 5.20261006.0-alpha
+  - wrangler@4.96.0 || 4.144.0 || 4.148.0
