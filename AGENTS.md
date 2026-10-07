@@ -8,7 +8,7 @@
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | React 19 + TypeScript + Vite 7 + Tailwind v4 |
+| Frontend | React 19 + TypeScript 7 + Vite 8 + Tailwind v4 |
 | Backend | Cloudflare Workers (plain JS, not TS) + D1 (SQLite) |
 | Auth | Custom JWT + Google OAuth + username/password |
 | Build | `tsc -b && vite build` → `dist/` |
@@ -20,7 +20,7 @@
 ```bash
 rtk pnpm run dev          # Vite dev server (port 5173)
 rtk pnpm run build        # tsc -b (type-check) then vite build → dist/
-rtk pnpm run lint         # eslint . (flat config, TS/TSX only)
+rtk pnpm run lint         # oxlint .oxlintrc.json (94 rules, replaces eslint)
 rtk pnpm test             # node --test workers/lib/*.test.js (zero-dep, no framework)
 rtk pnpm sift --help      # ops CLI: doctor, gate, db, admin (never deploys)
 ```

@@ -12,18 +12,20 @@ import {
 
 const YEAR = new Date().getFullYear();
 
+// Width at the 41px strip height, from each SVG viewBox ratio.
+// Reserves exact space so the scrolling track never shifts as logos load.
 const STORE_MARKS = [
-  { id: 'tesco', logo: '/landing/landing_tescos.svg' },
-  { id: 'sainsburys', logo: '/landing/landing_sainsburys.svg' },
-  { id: 'asda', logo: '/landing/landing_asda.svg' },
-  { id: 'morrisons', logo: '/landing/landing_morrisons.svg' },
-  { id: 'marksandspencer', logo: '/landing/landing_mands.svg' },
-  { id: 'aldi', logo: '/landing/landing_aldi.svg' },
-  { id: 'lidl', logo: '/landing/landing_lidl.svg' },
-  { id: 'coop', logo: '/landing/landing_coop.svg' },
-  { id: 'waitrose', logo: '/landing/landing_waitrose.svg' },
-  { id: 'iceland', logo: '/landing/landing_iceland.svg' },
-  { id: 'ocado', logo: '/landing/landing_ocado.svg' },
+  { id: 'tesco', logo: '/landing/landing_tescos.svg', w: 144 },
+  { id: 'sainsburys', logo: '/landing/landing_sainsburys.svg', w: 216 },
+  { id: 'asda', logo: '/landing/landing_asda.svg', w: 139 },
+  { id: 'morrisons', logo: '/landing/landing_morrisons.svg', w: 93 },
+  { id: 'marksandspencer', logo: '/landing/landing_mands.svg', w: 103 },
+  { id: 'aldi', logo: '/landing/landing_aldi.svg', w: 34 },
+  { id: 'lidl', logo: '/landing/landing_lidl.svg', w: 41 },
+  { id: 'coop', logo: '/landing/landing_coop.svg', w: 39 },
+  { id: 'waitrose', logo: '/landing/landing_waitrose.svg', w: 193 },
+  { id: 'iceland', logo: '/landing/landing_iceland.svg', w: 183 },
+  { id: 'ocado', logo: '/landing/landing_ocado.svg', w: 190 },
 ];
 
 const FEATURES = [
@@ -128,6 +130,8 @@ export default function LandingPage() {
                 key={`${store.id}_${i}`}
                 src={store.logo}
                 alt=""
+                width={store.w}
+                height={41}
                 aria-hidden={i >= STORE_MARKS.length ? true : undefined}
               />
             ))}

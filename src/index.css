@@ -1413,16 +1413,14 @@ body {
   max-width: 100%;
   margin: 0 auto;
   padding: 8px 0;
-  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
 
 .stores-marquee .deals-track-wrapper {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
-  -webkit-mask-image: none;
-  mask-image: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
 }
 
 .stores-marquee {
@@ -1435,7 +1433,7 @@ body {
   width: max-content;
   animation: deals-scroll 90s linear infinite;
   padding: 4px 0;
-  filter: grayscale(1);
+  will-change: transform;
 }
 
 .stores-track:hover {
@@ -1449,6 +1447,7 @@ body {
   flex-shrink: 0;
   margin-right: 60px;
   opacity: 0.35;
+  filter: grayscale(1);
 }
 
 @media (max-width: 640px) {
@@ -1464,7 +1463,7 @@ body {
 
 .dark .stores-track img {
   opacity: 0.55;
-  filter: invert(1);
+  filter: grayscale(1) invert(1);
 }
 
 @media (prefers-reduced-motion: reduce) {

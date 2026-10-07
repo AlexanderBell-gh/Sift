@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TypeScript-7-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Cloudflare-Workers_%2B_D1-F38020?logo=cloudflare&logoColor=white" alt="Cloudflare Workers + D1" />
   <img src="https://img.shields.io/badge/pnpm-11-F69220?logo=pnpm&logoColor=white" alt="pnpm 11" />
   <img src="https://img.shields.io/badge/License-MIT-16A34A" alt="MIT license" />
@@ -72,7 +72,7 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account. Local dev needs `VITE_
 |---------|--------------|
 | `pnpm run dev` | Vite dev server (no CSP, HMR works) |
 | `pnpm run build` | `tsc -b` then `vite build` → `dist/` |
-| `pnpm run lint` | ESLint over `src/` |
+| `pnpm run lint` | Oxlint over the repo (`.oxlintrc.json`) |
 | `pnpm test` | Worker unit tests — `node --test workers/lib/*.test.js`, zero-dep |
 | `pnpm audit --audit-level=high` | Dependency audit (CI gate) |
 | `pnpm sift --help` | Ops CLI: doctor, CI gate, D1 migrate/query, admin reads/writes |
