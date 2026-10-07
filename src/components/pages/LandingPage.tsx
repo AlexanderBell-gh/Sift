@@ -10,6 +10,8 @@ import {
   ListVisual,
 } from '../features/landing/LandingVisuals';
 
+const YEAR = new Date().getFullYear();
+
 const STORE_MARKS = [
   { id: 'tesco', logo: '/landing/landing_tescos.svg' },
   { id: 'sainsburys', logo: '/landing/landing_sainsburys.svg' },
@@ -234,7 +236,7 @@ export default function LandingPage() {
               Sign in
             </button>
           </nav>
-          <p className="landing-footer-copy">© {new Date().getFullYear()} Sift</p>
+          <p className="landing-footer-copy">© {YEAR} Sift</p>
         </div>
       </footer>
     </div>

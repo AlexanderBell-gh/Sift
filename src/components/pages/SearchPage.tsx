@@ -174,8 +174,10 @@ export default function SearchPage() {
     }
   }
 
-  const hour = new Date().getHours();
-  const daypart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  const [daypart] = useState(() => {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  });
   const firstName = !user?.isTrial ? user?.username?.split(' ')[0] : undefined;
 
   return (
