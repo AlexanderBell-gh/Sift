@@ -257,7 +257,7 @@ export default function ShoppingListPage() {
                   <div className="shoplist-store-head">
                     <span className="store-card">
                       {storeLogo && (
-                        <img src={storeLogo} alt={store} className="store-logo" />
+                        <img src={storeLogo} alt={store} className="store-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                       )}
                       {store}
                     </span>

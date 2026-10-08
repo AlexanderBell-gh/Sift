@@ -11,17 +11,17 @@ export function SearchVisual() {
     <div className="landing-visual landing-visual--search landing-visual--tall" aria-hidden="true">
       <div className="lv-tabs">
         <span className="lv-tab lv-tab--active lv-tab--a">
-          <img src="/Tesco_Logo.svg" alt="" className="lv-tab-logo" />
+          <img src="/tesco.png" alt="" className="lv-tab-logo" />
           Tesco
           <X className="lv-tab-x" />
         </span>
         <span className="lv-tab lv-tab--b">
-          <img src="/Sainsbury's_Logo.svg" alt="" className="lv-tab-logo" />
+          <img src="/sainsburys.png" alt="" className="lv-tab-logo" />
           Sainsbury's
           <X className="lv-tab-x" />
         </span>
         <span className="lv-tab lv-tab--c">
-          <img src="/Ocado_Logo.svg" alt="" className="lv-tab-logo" />
+          <img src="/ocado.png" alt="" className="lv-tab-logo" />
           Ocado
           <X className="lv-tab-x" />
         </span>
@@ -30,17 +30,17 @@ export function SearchVisual() {
         <div className="lv-browser-ui">
           <div className="lv-chips">
             <span className="lv-chip lv-chip--pick-a">
-              <img src="/Tesco_Logo.svg" alt="" className="lv-chip-logo" />
+              <img src="/tesco.png" alt="" className="lv-chip-logo" />
               <span className="lv-chip-label">Tesco</span>
               <X className="lv-chip-x" />
             </span>
             <span className="lv-chip lv-chip--pick-b">
-              <img src="/Sainsbury's_Logo.svg" alt="" className="lv-chip-logo" />
+              <img src="/sainsburys.png" alt="" className="lv-chip-logo" />
               <span className="lv-chip-label">Sainsbury's</span>
               <X className="lv-chip-x" />
             </span>
             <span className="lv-chip lv-chip--pick-c">
-              <img src="/Ocado_Logo.svg" alt="" className="lv-chip-logo" />
+              <img src="/ocado.png" alt="" className="lv-chip-logo" />
               <span className="lv-chip-label">Ocado</span>
               <X className="lv-chip-x" />
             </span>

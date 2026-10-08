@@ -142,7 +142,7 @@ Offer notes: a product whose only offer is a multi-buy term (no loyalty price/ex
 ```
 src/              React SPA (components/{pages,layout,features,ui,guards}, contexts, hooks, lib, types)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, lib/, schema.sql, migrations/)
-public/           Store logo SVGs + favicon.svg + theme-init.js + _headers
+public/           Store logo PNGs (+ landing/ wordmarks) + favicon.svg + theme-init.js + _headers
 ```
 
 ## License

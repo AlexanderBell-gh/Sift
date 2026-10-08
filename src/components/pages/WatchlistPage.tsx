@@ -4,7 +4,7 @@ import { Search, Plus, Check } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../../lib/api';
-import { STORES } from '../../lib/stores';
+import { STORES, storeLogoFor } from '../../lib/stores';
 import { CATEGORIES } from '../../lib/categories';
 import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
 import type { WatchlistItem } from '../../types';
@@ -269,6 +269,7 @@ export default function WatchlistPage() {
     const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
     const best = sorted[0];
     if (!product || !best) return null;
+    const logo = storeLogoFor(best.store, best.store_logo);
 
     const cardContent = (
       <>
@@ -284,8 +285,8 @@ export default function WatchlistPage() {
             <img src={best.image_url} alt={product.product_name} className="product-card-image" />
           ) : (
             <div className="product-card-logo">
-              {best.store_logo ? (
-                <img src={best.store_logo} alt={best.store} className="product-card-logo-img" />
+              {logo ? (
+                <img src={logo} alt={best.store} className="product-card-logo-img" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
               ) : (
                 <span className="product-card-logo-text">{best.store.slice(0, 2).toUpperCase()}</span>
               )}
@@ -295,8 +296,8 @@ export default function WatchlistPage() {
 
         <div className="product-card-bottom">
           <span className="store-card">
-            {best.store_logo && (
-              <img src={best.store_logo} alt={best.store} className="store-logo" />
+            {logo && (
+              <img src={logo} alt={best.store} className="store-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             )}
             {best.store}
           </span>

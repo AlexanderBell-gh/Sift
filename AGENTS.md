@@ -43,7 +43,7 @@ If either fails, the commit will break CI.
 src/              React SPA — components/{pages,layout,features,ui,guards}/, contexts/, hooks/, lib/, types/, data/
 workers/          Cloudflare Worker API — index.js, auth.js, db.js (all plain JS)
 workers/migrations/   D1 SQL migrations (applied automatically on push to main)
-public/           Static assets — store logo SVGs, favicon, theme-init.js
+public/           Static assets — store logo PNGs, favicon, theme-init.js
 ```
 
 - Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /list, /admin, /settings, /privacy, /cookies, /about — landing stays eager, the rest are `React.lazy` behind one `Suspense` fallback). `/` is conditional (`HomeRoute`): `SearchPage` when signed in, `LandingPage` (`src/components/pages/LandingPage.tsx`) when guest. Scroll reveals via `src/hooks/useReveal.ts` (`useRevealRoot`, `[data-reveal]` → `is-visible`, once each)
@@ -65,7 +65,7 @@ public/           Static assets — store logo SVGs, favicon, theme-init.js
 - **Trial gating** — max 5 watchlist items, 24h expiry, enforced server-side on `POST /api/watchlist`.
 - **Google OAuth** requires `VITE_GOOGLE_CLIENT_ID` (frontend env) and `GOOGLE_CLIENT_ID` (Worker secret). Both must match.
 - **`.env`** is gitignored. Use `.env.example` as template. Local dev needs `VITE_GOOGLE_CLIENT_ID`.
-- **Store logos have two sets** — `public/*_Logo.svg` (favicon-style marks for app chips/cards) vs `public/landing/` (wordmarks for the guest landing marquee). Don't mix them.
+- **Store logos have two sets** — `public/*.png` (favicon-style marks for app chips/cards, resolved via `storeLogoFor` in `src/lib/stores.ts`) vs `public/landing/` (wordmarks for the guest landing marquee). Don't mix them.
 - **ExtensionFAB hides for guests** (no token) and on `/auth`. Don't re-add it to guest surfaces.
 - **Bundle rule** — provider-level code imports `API_BASE` from `src/lib/config.ts`, never `src/lib/api.ts` (fuse.js + catalog JSON ride into the guest chunk otherwise). New routes default to `React.lazy` (landing stays eager); React is vendor-chunked in `vite.config.ts`.
 - **Landing motion** — tiles/steps/CTA run shared 6s loops with staged entrances and hidden-reset exits; hero is one-shot. All motion dies under `prefers-reduced-motion`, leaving composed static states. Keep the loop, or match it.

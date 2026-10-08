@@ -3,6 +3,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getDealOffers, addToWatchlist, getPinnedIds, ApiError, type DealOffer } from '../../../lib/api';
 import { getLoyaltyLabel, getLoyaltyClass } from '../../../lib/utils';
+import { storeLogoFor } from '../../../lib/stores';
 import type { SearchResult } from '../../../types';
 
 const TRIAL_LIMIT = 5;
@@ -65,6 +66,8 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
       .finally(() => setAdding(false));
   }
 
+  const logo = storeLogoFor(deal.store, deal.store_logo);
+
   return (
     <div className="deal-card">
       <a
@@ -81,16 +84,19 @@ function DealCard({ deal, limitReached, onAdded }: { deal: DealOffer; limitReach
           />
         ) : (
           <div className="deal-image-placeholder">
-            <img
-              src={deal.store_logo}
-              alt=""
-              className="deal-logo"
-            />
+            {logo && (
+              <img
+                src={logo}
+                alt=""
+                className="deal-logo"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            )}
           </div>
         )}
         <span className="store-card">
-          {deal.store_logo && (
-            <img src={deal.store_logo} alt={deal.store} className="store-logo" />
+          {logo && (
+            <img src={logo} alt={deal.store} className="store-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           )}
           {deal.store}
         </span>

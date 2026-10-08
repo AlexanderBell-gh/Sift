@@ -3982,6 +3982,11 @@ body {
   object-fit: contain;
 }
 
+/* M&S mark is black-on-transparent: invert it under dark theme. */
+.dark img[src*="mands.png"] {
+  filter: invert(1);
+}
+
 .store-card {
   font-family: var(--font-mono);
   font-size: 10px;
