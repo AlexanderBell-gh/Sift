@@ -60,8 +60,8 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 ## Quickstart
 
 ```bash
-pnpm install
-pnpm run dev          # Vite on :5173
+pnpm sift install
+pnpm sift dev          # Vite on :5173
 ```
 
 Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account. Local dev needs `VITE_GOOGLE_CLIENT_ID` in `.env` (gitignored — see `.env.example`); it must match the Worker's `GOOGLE_CLIENT_ID` secret.
@@ -70,20 +70,21 @@ Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account. Local dev needs `VITE_
 
 | Command | What it does |
 |---------|--------------|
-| `pnpm run dev` | Vite dev server (no CSP, HMR works) |
-| `pnpm run build` | `tsc -b` then `vite build` → `dist/` |
-| `pnpm run lint` | Oxlint over the repo (`.oxlintrc.json`) |
-| `pnpm test` | Worker unit tests — `node --test workers/lib/*.test.js`, zero-dep |
-| `pnpm audit --audit-level=high` | Dependency audit (CI gate) |
-| `pnpm sift --help` | Ops CLI: doctor, CI gate, D1 migrate/query, admin reads/writes |
+| `pnpm sift dev` | Vite dev server (no CSP, HMR works) |
+| `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
+| `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
+| `pnpm sift test [file]` | Worker unit tests — `node --test workers/lib/*.test.js`, zero-dep |
+| `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
+| `pnpm sift preview` | Serve `dist/` locally via vite preview |
+| `pnpm sift --help` | Full CLI: run steps, doctor, gate, db, admin, watchlist reads |
 
 Build code-splits for first paint: the guest landing chunk stays eager while all other routes lazy-load, with React vendored into its own cached chunk.
 
-**CLI:** `pnpm sift doctor` checks toolchain/env/wrangler auth; `pnpm sift gate` mirrors CI locally. `db migrate|query|users` and `admin stats|users|trials|trials-cleanup|rescore|category` wrap wrangler D1 and the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
+**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test, and CI calls the same CLI steps). `db migrate|status|query|users` wraps wrangler D1; `admin stats|users|trials|audit|trials-cleanup|user-role|user-delete|rescore|category|resolve` and `watchlist names|offers` wrap the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
 
 ## Deploy
 
-**Automatic:** push to `main` → GitHub Actions (audit → lint → build → deploy Worker + D1 migrations + Pages). PRs do **not** deploy.
+**Automatic:** push to `main` → GitHub Actions (audit → lint → test → build → deploy Worker + D1 migrations + Pages, all via `pnpm sift`). PRs do **not** deploy.
 
 **Manual:**
 ```bash

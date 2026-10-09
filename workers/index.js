@@ -18,6 +18,7 @@ import {
 import { queryAll, queryOne, execute } from './db.js';
 import { scoreCategory, clampLegacyCategory, TAXONOMY_VERSION } from './lib/category.js';
 import { isValidUsername, isValidPassword, USERNAME_ERROR, PASSWORD_ERROR } from './lib/validate.js';
+import { validateResolveInput, pickBestRow, toInheritedFacts, emptyFacts } from './lib/resolve.js';
 
 
 
@@ -1269,6 +1270,45 @@ async function handleRequest(request, env) {
     } catch (e) {
       console.error('Category score error:', e);
       return errorResponse('Failed to score category', request);
+    }
+  }
+
+  // Phone-app inheritance: { store, name } -> best product-level facts
+  // from all users' watchlist rows (anonymized, never whose row). Authed +
+  // rate-limited. No match returns empty InheritedFacts (200), never 404,
+  // so the app falls back to the thin-row typed-price flow. No schema
+  // migration: reads existing watchlist table only.
+  if (path === '/api/import/resolve' && method === 'POST') {
+    const auth = await requireAuth(request, env);
+    if (!auth?.userId) return auth;
+
+    try {
+      const rl = await checkRateLimit(env, `resolve:${getClientIp(request)}`, 30, 15 * 60 * 1000);
+      if (!rl.ok) return errorResponse('Too many attempts, try again later', request, 429);
+
+      const body = await request.json();
+      const parsed = validateResolveInput(body);
+      if (!parsed.ok) return errorResponse(parsed.error, request);
+
+      // Same-store candidates first (exact + substring); cross-store
+      // fallback covers same product pinned at another store.
+      const like = `%${parsed.name.split(' ').filter(Boolean)[0] || parsed.name}%`;
+      const rows = await queryAll(
+        env,
+        `SELECT product_name, store, image_url, normal_price, loyalty_price,
+                offer_deal, offer_expires_at, category, taxonomy_version,
+                product_url, unit, updated_at
+         FROM watchlist
+         WHERE store = ? OR product_name LIKE ?
+         LIMIT 50`,
+        [parsed.store, like]
+      );
+      const best = pickBestRow(rows, parsed.store, parsed.name);
+      if (!best) return jsonResponse(emptyFacts(), request);
+      return jsonResponse(toInheritedFacts(best), request);
+    } catch (e) {
+      console.error('Import resolve error:', e);
+      return errorResponse('Failed to resolve product', request);
     }
   }
 

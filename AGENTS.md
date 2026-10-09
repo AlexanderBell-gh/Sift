@@ -18,21 +18,24 @@
 ## Commands
 
 ```bash
-rtk pnpm run dev          # Vite dev server (port 5173)
-rtk pnpm run build        # tsc -b (type-check) then vite build → dist/
-rtk pnpm run lint         # oxlint .oxlintrc.json (94 rules, replaces eslint)
-rtk pnpm test             # node --test workers/lib/*.test.js (zero-dep, no framework)
-rtk pnpm sift --help      # ops CLI: doctor, gate, db, admin (never deploys)
+rtk pnpm sift dev         # Vite dev server (port 5173, extra args forwarded)
+rtk pnpm sift build       # tsc -b (type-check) then vite build → dist/
+rtk pnpm sift lint        # oxlint .oxlintrc.json (94 rules, replaces eslint)
+rtk pnpm sift test        # node --test workers/lib/*.test.js (zero-dep, no framework)
+rtk pnpm sift audit       # audit --audit-level=high (CI gate)
+rtk pnpm sift --help      # full ops CLI: run steps, doctor, gate, db, admin, watchlist (never deploys)
 ```
 
-**No test framework exists.** The tests are `workers/lib/category.test.js` (category scorer) + `workers/lib/validate.test.js` (username/password allowlists), run via `pnpm test`. There are no test configs or frontend test files - use `node` not `python3`.
+All commands run through the CLI (`bin/sift.mjs`, extra args forwarded: `pnpm sift test <file>`). CI calls the same CLI steps. Raw `pnpm run X` still works but docs use the CLI.
+
+**No test framework exists.** The tests are `workers/lib/category.test.js` (category scorer) + `workers/lib/validate.test.js` (username/password allowlists) + `workers/lib/resolve.test.js` (import-resolve matching), run via `pnpm sift test`. There are no test configs or frontend test files - use `node` not `python3`.
 
 ## Verify before committing
 
-The CI pipeline runs: **audit → lint → build → deploy**. Match it locally:
+The CI pipeline runs: **audit → lint → test → build → deploy**. Match it locally:
 
 ```bash
-rtk pnpm audit --audit-level=high && pnpm run lint && pnpm run build
+rtk pnpm sift gate
 ```
 
 If either fails, the commit will break CI.

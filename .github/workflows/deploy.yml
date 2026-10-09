@@ -34,13 +34,16 @@ jobs:
         run: pnpm install --ignore-scripts
 
       - name: Audit dependencies
-        run: pnpm audit --audit-level=high
+        run: pnpm sift audit
 
       - name: Lint
-        run: pnpm run lint
+        run: pnpm sift lint
+
+      - name: Worker tests
+        run: pnpm sift test
 
       - name: Build frontend
-        run: pnpm run build
+        run: pnpm sift build
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 

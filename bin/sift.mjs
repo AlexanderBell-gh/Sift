@@ -13,40 +13,68 @@ const HELP = `Sift — CLI (never deploys; CI owns deploys)
 Usage: pnpm sift <command> [args] [flags]
 Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --json
 
-  doctor                          toolchain, env keys, wrangler auth
-  gate                            CI mirror: audit + lint + build + test
-  db migrate [--local|--remote --yes]
-  db query <sql> [--local|--remote]        remote non-SELECT needs --yes
-  db users [--local|--remote]              read-only user list
-  admin stats|users|trials [--search q]     read-only admin reads
-  admin trials-cleanup [--yes]              DELETE expired trials (write)
-  admin rescore [--apply] [--limit n] [--yes]
-  admin category "title" [--brand b] [--store s]
+  Run steps (CI calls these; extra args forwarded):
+    install [args]                  pnpm install
+    dev [args]                      Vite dev server (:5173)
+    build                           tsc -b + vite build → dist/
+    lint [args]                     oxlint over the repo
+    test [file]                     node --test workers/lib/*.test.js
+    audit [args]                    pnpm audit (default --audit-level=high)
+    preview [args]                  vite preview of dist/
+    gate                            CI mirror: audit + lint + build + test
+    doctor                          toolchain, env keys, wrangler auth, secrets, D1
+
+  db (wrangler D1; remote writes need BOTH --remote --yes):
+    db migrate [--local|--remote --yes]
+    db status [--local|--remote]             migration list
+    db query <sql> [--local|--remote] [--json]
+    db users [--search q] [--limit n] [--local|--remote]
+
+  admin (needs SIFT_ADMIN_USER + SIFT_ADMIN_PASS; writes need --yes off-localhost):
+    admin stats|users|trials [--search q] [--json]
+    admin audit [--action a] [--search q] [--page n] [--json]
+    admin trials-cleanup [--yes]              DELETE expired trials (write)
+    admin user-role <id> <admin|user> --yes   change role (write)
+    admin user-delete <id> --yes              delete user (write)
+    admin rescore [--apply] [--limit n] [--yes]
+    admin category "title" [--brand b] [--store s]
+    admin resolve --store s --name n [--json] probe POST /api/import/resolve
+
+  watchlist (read-only debug via admin token):
+    watchlist names|offers [--json]
 
 Env: SIFT_API_BASE, SIFT_ADMIN_USER, SIFT_ADMIN_PASS (never commit).
-Remote writes need BOTH --remote --yes (db) or --yes against a
-non-localhost API (admin). Localhost API counts as local.`;
+Remote writes need BOTH --remote --yes (db) or --yes (admin API).
+Localhost API counts as local.`;
 
 const argv = process.argv.slice(2);
 const flags = { api: process.env.SIFT_API_BASE || PROD_API, local: false, remote: false, yes: false, json: false };
 const rest = [];
+// --flag value and --flag=value both accepted for string flags.
+function takeStringFlag(name) {
+  return (a, i) => {
+    if (a === `--${name}`) { flags[name] = argv[++i.i]; return true; }
+    if (a.startsWith(`--${name}=`)) { flags[name] = a.slice(name.length + 3); return true; }
+    return false;
+  };
+}
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
+  const box = { i };
   if (a === '--api') flags.api = argv[++i];
   else if (a === '--local') flags.local = true;
   else if (a === '--remote') flags.remote = true;
   else if (a === '--yes') flags.yes = true;
   else if (a === '--json') flags.json = true;
   else if (a === '--help' || a === '-h') { console.log(HELP); process.exit(0); }
-  else if (a.startsWith('--brand=')) flags.brand = a.slice(8);
-  else if (a === '--brand') flags.brand = argv[++i];
-  else if (a.startsWith('--store=')) flags.store = a.slice(8);
-  else if (a === '--store') flags.store = argv[++i];
-  else if (a.startsWith('--search=')) flags.search = a.slice(9);
-  else if (a === '--search') flags.search = argv[++i];
-  else if (a.startsWith('--limit=')) flags.limit = a.slice(8);
-  else if (a === '--limit') flags.limit = argv[++i];
   else if (a === '--apply') flags.apply = true;
+  else if (takeStringFlag('brand')(a, box)) i = box.i;
+  else if (takeStringFlag('store')(a, box)) i = box.i;
+  else if (takeStringFlag('search')(a, box)) i = box.i;
+  else if (takeStringFlag('limit')(a, box)) i = box.i;
+  else if (takeStringFlag('action')(a, box)) i = box.i;
+  else if (takeStringFlag('name')(a, box)) i = box.i;
+  else if (takeStringFlag('page')(a, box)) i = box.i;
   else rest.push(a);
 }
 const [cmd, sub, ...args] = rest;
@@ -72,6 +100,21 @@ function runOut(bin, binArgs) {
   return (r.stdout || '').trim();
 }
 
+// ===== Run steps (CI calls these; gate delegates to them) =====
+
+function installStep(passthru) { run('pnpm', ['install', ...passthru]); }
+function devStep(passthru) { run('pnpm', ['run', 'dev', ...passthru]); }
+function buildStep() { run('pnpm', ['run', 'build']); }
+function lintStep(passthru) { run('pnpm', ['run', 'lint', ...passthru]); }
+function testStep(passthru) {
+  if (passthru.length) run('node', ['--test', ...passthru]);
+  else run('pnpm', ['test']);
+}
+function auditStep(passthru) {
+  run('pnpm', ['audit', ...(passthru.length ? passthru : ['--audit-level=high'])]);
+}
+function previewStep(passthru) { run('pnpm', ['run', 'preview', ...passthru]); }
+
 function doctor() {
   let ok = true;
   const check = (name, fn) => {
@@ -89,7 +132,7 @@ function doctor() {
     return process.versions.node;
   });
   check('pnpm', () => runOut('pnpm', ['--version']));
-  check('node_modules', () => { if (!existsSync('node_modules')) throw new Error('missing — run pnpm install'); return 'installed'; });
+  check('node_modules', () => { if (!existsSync('node_modules')) throw new Error('missing — run pnpm sift install'); return 'installed'; });
   check('.env keys', () => {
     const need = readFileSync('.env.example', 'utf8').split('\n')
       .map(l => l.trim()).filter(l => l && !l.startsWith('#') && l.includes('=')).map(l => l.split('=')[0]);
@@ -103,14 +146,26 @@ function doctor() {
     if (/not authenticated/i.test(out)) throw new Error('logged out — run wrangler login');
     return out.split('\n')[0];
   });
+  check('worker secrets', () => {
+    const out = runOut('pnpm', [...WRANGLER, 'secret', 'list', '--config', 'workers/wrangler.toml']);
+    for (const name of ['JWT_SECRET', 'ADMIN_SECRET']) {
+      if (!out.includes(name)) throw new Error(`missing secret: ${name} — see workers/wrangler.toml`);
+    }
+    return 'JWT_SECRET + ADMIN_SECRET present';
+  });
+  check('d1 database', () => {
+    const out = runOut('pnpm', [...WRANGLER, 'd1', 'list']);
+    if (!out.includes('sift')) throw new Error('sift database not found — run wrangler login');
+    return 'sift found';
+  });
   if (!ok) process.exit(1);
 }
 
 function gate() {
-  run('pnpm', ['audit', '--audit-level=high']);
-  run('pnpm', ['run', 'lint']);
-  run('pnpm', ['run', 'build']);
-  run('pnpm', ['test']);
+  auditStep([]);
+  lintStep([]);
+  buildStep();
+  testStep([]);
 }
 
 function wranglerD1(extra) {
@@ -119,27 +174,39 @@ function wranglerD1(extra) {
 }
 
 const READ_SQL = /^\s*(select|with|explain|pragma)\b/i;
+// Quote a string literal for --command SQL (ops CLI only, never user input).
+function sqlQuote(s) {
+  return `'${String(s).replace(/'/g, "''")}'`;
+}
 function dbCmd() {
   if (sub === 'migrate') {
     guardWrite('db');
     const target = flags.remote ? ['--remote'] : ['--local'];
     run('pnpm', [...WRANGLER, 'd1', 'migrations', 'apply', 'sift', ...target, '--config', 'workers/wrangler.toml']);
+  } else if (sub === 'status') {
+    const target = flags.remote ? ['--remote'] : ['--local'];
+    run('pnpm', [...WRANGLER, 'd1', 'migrations', 'list', 'sift', ...target, '--config', 'workers/wrangler.toml']);
   } else if (sub === 'query') {
     const sql = args.join(' ');
     if (!sql) fail('usage: pnpm sift db query <sql> [--local|--remote]');
     guardWrite('db');
     if (flags.remote && !READ_SQL.test(sql) && !flags.yes) fail('remote write needs BOTH --remote --yes');
     if (!flags.remote && !flags.local) flags.local = true;
-    run('pnpm', [...WRANGLER, ...wranglerD1(['--command', sql])]);
+    const extra = flags.json ? ['--json', '--command', sql] : ['--command', sql];
+    run('pnpm', [...WRANGLER, ...wranglerD1(extra)]);
   } else if (sub === 'users') {
     if (!flags.remote && !flags.local) flags.local = true;
+    const limit = Math.min(100, Math.max(1, parseInt(flags.limit) || 50));
+    const where = flags.search
+      ? `WHERE LOWER(username) LIKE ${sqlQuote(`%${flags.search.toLowerCase()}%`)} OR LOWER(email) LIKE ${sqlQuote(`%${flags.search.toLowerCase()}%`)}`
+      : '';
     const out = runOut('pnpm', [...WRANGLER, ...wranglerD1([
       '--json', '--command',
-      'SELECT id, username, email, role, is_trial, trial_expires_at FROM users ORDER BY created_at DESC LIMIT 50',
+      `SELECT id, username, email, role, is_trial, trial_expires_at FROM users ${where} ORDER BY created_at DESC LIMIT ${limit}`,
     ])]);
     const rows = JSON.parse(out)[0]?.results ?? [];
     console.table(rows.map(r => ({ ...r, trial_expires_at: r.trial_expires_at ?? '' })));
-  } else fail(`unknown db subcommand: ${sub} (migrate|query|users)`);
+  } else fail(`unknown db subcommand: ${sub} (migrate|status|query|users)`);
 }
 
 async function api(path, { method = 'GET', body, token } = {}) {
@@ -176,9 +243,30 @@ async function adminCmd() {
     const q = new URLSearchParams({ page: '1', limit: '50', status: 'all' });
     const data = await api(`/api/admin/trials?${q}`, { token: await adminToken() });
     print(flags.json ? data : data.trials ?? data);
+  } else if (sub === 'audit') {
+    const q = new URLSearchParams({
+      page: flags.page || '1', limit: '50',
+      ...(flags.action ? { action: flags.action } : {}),
+      ...(flags.search ? { search: flags.search } : {}),
+    });
+    const data = await api(`/api/admin/audit?${q}`, { token: await adminToken() });
+    print(flags.json ? data : data.logs ?? data);
   } else if (sub === 'trials-cleanup') {
     guardWrite('api');
     print(await api('/api/admin/trials/cleanup', { method: 'DELETE', token: await adminToken() }));
+  } else if (sub === 'user-role') {
+    const [userId, role] = args;
+    if (!userId || (role !== 'admin' && role !== 'user')) fail('usage: pnpm sift admin user-role <id> <admin|user> --yes');
+    guardWrite('api');
+    print(await api(`/api/admin/users/${userId}/role`, { method: 'PUT', token: await adminToken(), body: { role } }));
+  } else if (sub === 'user-delete') {
+    const [userId] = args;
+    if (!userId) fail('usage: pnpm sift admin user-delete <id> --yes');
+    guardWrite('api');
+    const token = await adminToken();
+    const me = await api('/api/auth/me', { token });
+    if (me.id === userId) fail('refusing to delete your own admin account');
+    print(await api(`/api/admin/users/${userId}`, { method: 'DELETE', token }));
   } else if (sub === 'rescore') {
     const apply = !!flags.apply;
     if (apply) guardWrite('api');
@@ -193,14 +281,40 @@ async function adminCmd() {
       method: 'POST', token: await adminToken(),
       body: { title, ...(flags.brand ? { brand: flags.brand } : {}), ...(flags.store ? { store: flags.store } : {}) },
     }));
-  } else fail(`unknown admin subcommand: ${sub} (stats|users|trials|trials-cleanup|rescore|category)`);
+  } else if (sub === 'resolve') {
+    if (!flags.store || !flags.name) fail('usage: pnpm sift admin resolve --store s --name n');
+    print(await api('/api/import/resolve', {
+      method: 'POST', token: await adminToken(),
+      body: { store: flags.store, name: flags.name },
+    }));
+  } else fail(`unknown admin subcommand: ${sub} (stats|users|trials|audit|trials-cleanup|user-role|user-delete|rescore|category|resolve)`);
+}
+
+async function watchlistCmd() {
+  const token = await adminToken();
+  if (sub === 'names') print(await api('/api/watchlist-names', { token }));
+  else if (sub === 'offers') {
+    const data = await api('/api/deal-offers', { token });
+    print(flags.json ? data : data ?? data);
+  }
+  else fail(`unknown watchlist subcommand: ${sub} (names|offers)`);
 }
 
 async function main() {
+  // Run steps take no subcommand: everything after cmd is passthrough.
+  const passthru = [sub, ...args].filter(Boolean);
   if (cmd === 'doctor') doctor();
   else if (cmd === 'gate') gate();
+  else if (cmd === 'install') installStep(passthru);
+  else if (cmd === 'dev') devStep(passthru);
+  else if (cmd === 'build') buildStep();
+  else if (cmd === 'lint') lintStep(passthru);
+  else if (cmd === 'test') testStep(passthru);
+  else if (cmd === 'audit') auditStep(passthru);
+  else if (cmd === 'preview') previewStep(passthru);
   else if (cmd === 'db') dbCmd();
   else if (cmd === 'admin') await adminCmd();
+  else if (cmd === 'watchlist') await watchlistCmd();
   else { console.log(HELP); process.exit(cmd ? 1 : 0); }
 }
 main().catch(e => fail(e.message));
