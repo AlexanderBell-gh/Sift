@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import type { MouseEvent } from 'react';
+import type { MouseEvent, TouchEvent } from 'react';
 import { Search, Plus, Check } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../../lib/api';
 import { STORES, storeLogoFor } from '../../lib/stores';
 import { CATEGORIES } from '../../lib/categories';
-import { formatDate, formatTimeAgo, isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
+import { formatDate, formatTimeAgo, isOfferExpired, formatDealShort, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
 import type { WatchlistItem } from '../../types';
 import NavHeader from '../layout/NavHeader';
+import { Modal } from '../ui/Modal';
 import WatchlistFilters from '../features/watchlist/WatchlistFilters';
 import type { OfferStatus } from '../features/watchlist/WatchlistFilters';
 import WatchlistSkeletonCard from '../features/watchlist/WatchlistSkeletonCard';
@@ -227,7 +228,7 @@ export default function WatchlistPage() {
   const usedCount = useMemo(() => new Set(items.map(i => i.product_id)).size, [items]);
   const trialLimitReached = isTrial && usedCount >= watchlistLimit;
 
-  async function handleRemoveProduct(productId: string, e: MouseEvent) {
+  async function handleRemoveProduct(productId: string, e: { preventDefault(): void; stopPropagation(): void }) {
     e.preventDefault();
     e.stopPropagation();
     if (!token) return;
@@ -242,6 +243,57 @@ export default function WatchlistPage() {
   }
 
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+
+  // Mobile hold-to-remove: long-press a card to remove its product group.
+  // Desktop keeps the ✕ button; timers only start under the 640px breakpoint.
+  const holdRef = useRef<{ timer: number | undefined; productId: string | null; x: number; y: number }>({
+    timer: undefined,
+    productId: null,
+    x: 0,
+    y: 0,
+  });
+  const lastHoldRef = useRef(0);
+  const [pendingRemove, setPendingRemove] = useState<{ productId: string; name: string; store: string } | null>(null);
+
+  function clearHold() {
+    if (holdRef.current.timer !== undefined) {
+      window.clearTimeout(holdRef.current.timer);
+      holdRef.current.timer = undefined;
+    }
+    holdRef.current.productId = null;
+  }
+
+  function startHold(productId: string, e: TouchEvent) {
+    if (!window.matchMedia('(max-width: 640px)').matches) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const group = items.filter(i => i.product_id === productId);
+    const first = group[0];
+    if (!first) return;
+    const pending = {
+      productId,
+      name: first.product_name,
+      store: first.store,
+    };
+    clearHold();
+    holdRef.current.productId = productId;
+    holdRef.current.x = touch.clientX;
+    holdRef.current.y = touch.clientY;
+    holdRef.current.timer = window.setTimeout(() => {
+      lastHoldRef.current = Date.now();
+      setPendingRemove(pending);
+      clearHold();
+    }, 600);
+  }
+
+  function moveHold(e: TouchEvent) {
+    if (holdRef.current.timer === undefined) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    if (Math.hypot(touch.clientX - holdRef.current.x, touch.clientY - holdRef.current.y) > 10) {
+      clearHold();
+    }
+  }
 
   async function handleAddToList(watchlistId: string, e: MouseEvent) {
     e.preventDefault();
@@ -273,84 +325,65 @@ export default function WatchlistPage() {
 
     const cardContent = (
       <>
-        <div className="product-card-top">
-          <button
-            onClick={(e) => handleRemoveProduct(product.product_id, e)}
-            className="product-card-remove"
-            title="Remove"
-          >
-            ✕
-          </button>
+        <div className="product-card-media">
+          {logo && (
+            <span className="product-card-store-logo">
+              <img src={logo} alt={best.store} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            </span>
+          )}
           {best.image_url ? (
-            <img src={best.image_url} alt={product.product_name} className="product-card-image" />
+            <img src={best.image_url} alt="" className="product-card-media-img" />
+          ) : logo ? (
+            <img src={logo} alt="" className="product-card-media-img" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           ) : (
-            <div className="product-card-logo">
-              {logo ? (
-                <img src={logo} alt={best.store} className="product-card-logo-img" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              ) : (
-                <span className="product-card-logo-text">{best.store.slice(0, 2).toUpperCase()}</span>
-              )}
-            </div>
+            <span className="product-card-media-text">{best.store.slice(0, 2).toUpperCase()}</span>
           )}
         </div>
 
-        <div className="product-card-bottom">
-          <span className="store-card">
-            {logo && (
-              <img src={logo} alt={best.store} className="store-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            )}
-            {best.store}
-          </span>
-          <h3>{product.product_name}</h3>
+        <div className="product-card-body">
+          <h3 className="product-card-name">{product.product_name}</h3>
           {best.category && (
             <span className={`product-card-category category-${best.category.toLowerCase().replace(/\s+/g, '-')}`}>{best.category}</span>
           )}
-          {expired ? (
-            <>
-              <div className="product-card-price">
+          <div className="product-card-price">
+            {expired ? (
+              <>
                 <span className="expired-price">
                   £{(best.prices.normal ?? best.prices.loyalty ?? 0).toFixed(2)}
                 </span>
                 {best.prices.normal !== null && best.prices.loyalty !== null && (
                   <span className="was-price">was £{best.prices.loyalty.toFixed(2)}</span>
                 )}
-              </div>
-              {(best.offer_deal || best.prices.loyalty !== null) && (
-                <span className="product-card-loyalty">
-                  <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
-                </span>
-              )}
-              <span className="product-card-offer expired">Offer expired</span>
-            </>
-          ) : (
-            <>
-              <div className="product-card-price">
-                {best.offer_deal ? (
-                  <span className="offer-price">£{(best.prices.normal ?? 0).toFixed(2)}</span>
-                ) : (
-                  <>
-                    {best.prices.normal !== null && best.prices.loyalty !== null && (
-                      <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
-                    )}
-                    <span className="offer-price">
-                      £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
-                    </span>
-                  </>
+              </>
+            ) : best.offer_deal ? (
+              <span className="offer-price">£{(best.prices.normal ?? 0).toFixed(2)}</span>
+            ) : (
+              <>
+                {best.prices.normal !== null && best.prices.loyalty !== null && (
+                  <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
                 )}
-              </div>
-              {(best.offer_deal || best.prices.loyalty !== null) && (
-                <span className="product-card-loyalty">
-                  <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? best.offer_deal : getLoyaltyLabel(best.store)}</span>
+                <span className="offer-price">
+                  £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
                 </span>
-              )}
-              {best.offer_expires_at && (
-                <span className="product-card-offer">
-                  Offer ends {formatDate(best.offer_expires_at)}
-                </span>
-              )}
-            </>
+              </>
+            )}
+          </div>
+          {(best.offer_deal || best.prices.loyalty !== null) && (
+            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? formatDealShort(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
           )}
-          <p>Updated {formatTimeAgo(lastUpdated)}</p>
+          {expired ? (
+            <span className="product-card-offer expired">Offer expired</span>
+          ) : (
+            best.offer_expires_at && (
+              <span className="product-card-offer">
+                Offer ends {formatDate(best.offer_expires_at)}
+              </span>
+            )
+          )}
+          <p className="product-card-updated">Updated {formatTimeAgo(lastUpdated)}</p>
+        </div>
+
+        <div className="product-card-foot">
           <button
             onClick={(e) => handleAddToList(best.id, e)}
             className={`product-card-add${addedIds.has(best.id) ? ' is-added' : ''}`}
@@ -360,12 +393,34 @@ export default function WatchlistPage() {
             {addedIds.has(best.id) ? <Check size={14} /> : <Plus size={14} />}
             {addedIds.has(best.id) ? 'Added' : 'Add to list'}
           </button>
+          <button
+            onClick={(e) => handleRemoveProduct(product.product_id, e)}
+            className="product-card-remove"
+            title="Remove"
+            aria-label={`Remove ${product.product_name} from watchlist`}
+          >
+            ✕
+          </button>
         </div>
       </>
     );
 
     const baseClass = expired ? 'product-card is-expired' : 'product-card';
     const cardClass = highlightedId === best.id ? `${baseClass} is-highlighted` : baseClass;
+    // Suppress the link navigation if a hold-to-remove just fired on this card.
+    function handleCardClickCapture(e: MouseEvent) {
+      if (Date.now() - lastHoldRef.current < 1000) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+    const holdHandlers = {
+      onTouchStart: (e: TouchEvent) => startHold(product.product_id, e),
+      onTouchMove: moveHold,
+      onTouchEnd: clearHold,
+      onTouchCancel: clearHold,
+      onContextMenu: (e: MouseEvent) => e.preventDefault(),
+    };
     return best.product_url ? (
       <a
         key={product.product_id}
@@ -374,11 +429,13 @@ export default function WatchlistPage() {
         target="_blank"
         rel="noopener noreferrer"
         className={cardClass}
+        onClickCapture={handleCardClickCapture}
+        {...holdHandlers}
       >
         {cardContent}
       </a>
     ) : (
-      <div key={product.product_id} id={`watchlist-card-${best.id}`} className={cardClass}>
+      <div key={product.product_id} id={`watchlist-card-${best.id}`} className={cardClass} {...holdHandlers}>
         {cardContent}
       </div>
     );
@@ -386,7 +443,7 @@ export default function WatchlistPage() {
 
   return (
     <div className="page-shell">
-      <NavHeader />
+      <NavHeader staticNav />
 
       <WatchlistFilters
         selectedStores={selectedStores}
@@ -506,6 +563,38 @@ export default function WatchlistPage() {
           <p className="text-sm text-muted watchlist-count">Showing all {currentProducts.length} products</p>
         )}
       </div>
+
+      <Modal
+        isOpen={pendingRemove !== null}
+        onClose={() => setPendingRemove(null)}
+        title="Remove from watchlist"
+      >
+        {pendingRemove && (
+          <>
+            <p className="text-sm">
+              Remove <strong>{pendingRemove.name}</strong>
+              {pendingRemove.store ? ` (${pendingRemove.store})` : ''} from your watchlist?
+            </p>
+            <div className="flex gap-3">
+              <button
+                className="btn-secondary flex-1"
+                onClick={() => setPendingRemove(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-danger flex-1"
+                onClick={(e) => {
+                  handleRemoveProduct(pendingRemove.productId, e);
+                  setPendingRemove(null);
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

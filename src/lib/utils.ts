@@ -75,3 +75,14 @@ export function getLoyaltyClass(store: string): string {
   };
   return classes[store] ?? '';
 }
+
+// Display-only shortener for free-text `offer_deal` (server stores full text).
+// "Meal Deal for £15.00 with Nectar" -> "Meal Deal"
+// "Any 2 for £8 with Clubcard" -> "Any 2 for £8"
+export function formatDealShort(deal: string): string {
+  const withoutLoyalty = deal
+    .replace(/\s+with\s+(?:an?\s+)?(?:nectar|clubcard|loyalty|more\s+card|sparks|lidl\s+plus)(?:\s+card|\+)?\s*$/i, '')
+    .trim();
+  const short = /^meal\s+deal\b/i.test(withoutLoyalty) ? 'Meal Deal' : withoutLoyalty;
+  return short || deal;
+}

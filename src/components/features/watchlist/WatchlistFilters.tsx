@@ -104,21 +104,40 @@ export default function WatchlistFilters({
     };
   }, [openPanel]);
 
-  // Mobile only: hide filter bar on scroll down, reveal on scroll up.
-  // Class-driven (no re-renders); forced visible while a panel is open.
+  // Mobile only: header is static, so the fixed bar docks under it at the
+  // top of the page (top 72) and sticks to the viewport top (top 0) once the
+  // header scrolls off. Hidden on scroll down via top offset (never transform,
+  // which would re-anchor the fixed sheets inside the bar). Class-driven
+  // (no re-renders); forced visible while a panel is open.
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)');
     const bar = barRef.current;
     let lastY = window.scrollY;
     let ticking = false;
+    function place(y: number, hidden: boolean) {
+      if (!bar) return;
+      if (!mq.matches) {
+        bar.classList.remove('is-hidden');
+        bar.style.top = '';
+        return;
+      }
+      if (hidden) {
+        bar.classList.add('is-hidden');
+        bar.style.top = '-60px';
+        return;
+      }
+      bar.classList.remove('is-hidden');
+      bar.style.top = y <= 72 ? '72px' : '0px';
+    }
     function update() {
       ticking = false;
       if (!bar || !mq.matches) {
         bar?.classList.remove('is-hidden');
+        if (bar) bar.style.top = '';
         return;
       }
       if (openPanel !== null) {
-        bar.classList.remove('is-hidden');
+        place(window.scrollY, false);
         lastY = window.scrollY;
         return;
       }
@@ -126,9 +145,9 @@ export default function WatchlistFilters({
       const dy = y - lastY;
       lastY = y;
       if (y <= 120 || dy < -4) {
-        bar.classList.remove('is-hidden');
+        place(y, false);
       } else if (dy > 4) {
-        bar.classList.add('is-hidden');
+        place(y, true);
       }
     }
     function onScroll() {
@@ -148,6 +167,7 @@ export default function WatchlistFilters({
       window.removeEventListener('scroll', onScroll);
       mq.removeEventListener('change', onMqChange);
       bar?.classList.remove('is-hidden');
+      if (bar) bar.style.top = '';
     };
   }, [openPanel]);
 

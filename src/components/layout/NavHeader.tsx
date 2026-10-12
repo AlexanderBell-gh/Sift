@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield, Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,6 +10,8 @@ import MobileTabBar from './MobileTabBar';
 interface NavHeaderProps {
   title?: string;
   showBack?: boolean;
+  /** Mobile only: header scrolls away instead of sticking (watchlist). */
+  staticNav?: boolean;
 }
 
 function formatTrialTime(expiresAt: number): string {
@@ -20,12 +23,13 @@ function formatTrialTime(expiresAt: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function NavHeader({ title = 'Sift', showBack = false }: NavHeaderProps) {
+export default function NavHeader({ title = 'Sift', showBack = false, staticNav = false }: NavHeaderProps) {
   const { token, user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuClosing, setMenuClosing] = useState(false);
+  const menuCloseTimer = useRef<number | undefined>(undefined);
   const [trialCountdown, setTrialCountdown] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(
@@ -37,15 +41,57 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+  useEffect(() => () => window.clearTimeout(menuCloseTimer.current), []);
+
+  function closeMenu() {
+    if (!menuOpen) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setMenuOpen(false);
+      return;
+    }
+    setMenuClosing(true);
+    menuCloseTimer.current = window.setTimeout(() => {
+      setMenuOpen(false);
+      setMenuClosing(false);
+    }, 200);
+  }
+
+  function toggleMenu() {
+    if (menuOpen) {
+      closeMenu();
+      return;
+    }
+    window.clearTimeout(menuCloseTimer.current);
+    setMenuClosing(false);
+    setMenuOpen(true);
+  }
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      const el = e.target as Element;
+      // Menu renders in a body portal (see below), so ref containment does
+      // not cover it: match by class instead.
+      if (el.closest?.('.user-menu-wrapper, .dropdown-menu')) return;
+      closeMenu();
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+  });
+
+  // Mobile sheet: lock body scroll while the account menu is open.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    function apply() {
+      document.body.style.overflow = mq.matches ? 'hidden' : '';
+    }
+    apply();
+    mq.addEventListener('change', apply);
+    return () => {
+      document.body.style.overflow = '';
+      mq.removeEventListener('change', apply);
+    };
+  }, [menuOpen]);
 
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -75,7 +121,7 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
 
   return (
     <>
-    <nav className="nav">
+    <nav className={staticNav ? 'nav nav-static' : 'nav'}>
       <div className="container nav-inner">
         <div className="nav-cluster">
           {showBack && (
@@ -137,8 +183,8 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
           )}
 
           {token ? (
-            <div className="relative" ref={menuRef}>
-              <button onClick={() => setMenuOpen(!menuOpen)} className="user-menu-wrapper">
+            <div className="relative">
+              <button onClick={toggleMenu} className="user-menu-wrapper">
                 {isTrial && <span className="trial-nav-indicator active">TRIAL ACTIVE</span>}
                 <div className="user-avatar">{avatarText}</div>
                 <span className="user-name hidden sm:inline">{displayName}</span>
@@ -147,8 +193,10 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
                 </svg>
               </button>
 
-              {menuOpen && (
-                <div className="dropdown-menu active">
+              {menuOpen && (isMobile ? createPortal(
+                <>
+                <div className={`user-menu-backdrop${menuClosing ? ' is-closing' : ''}`} onClick={closeMenu} aria-hidden="true" />
+                <div className={`dropdown-menu active${menuClosing ? ' is-closing' : ''}`}>
                   {isTrial && (
                     <div className="dropdown-item trial-dropdown-item">
                       <span>⏳ Trial Left:</span>
@@ -156,26 +204,56 @@ export default function NavHeader({ title = 'Sift', showBack = false }: NavHeade
                     </div>
                   )}
                   {!isTrial && user?.role === 'admin' && (
-                    <button onClick={() => { navigate('/admin'); setMenuOpen(false); }} className="dropdown-item">
+                    <button onClick={() => { navigate('/admin'); closeMenu(); }} className="dropdown-item">
                       <Shield className="icon-sm" />
                       Admin Panel
                     </button>
                   )}
-                  <button onClick={() => { navigate('/settings'); setMenuOpen(false); }} className="dropdown-item">
+                  <button onClick={() => { navigate('/settings'); closeMenu(); }} className="dropdown-item">
                     <Settings className="icon-sm" />
                     Account Settings
                   </button>
-                  <button onClick={() => { toggle(); setMenuOpen(false); }} className="dropdown-item">
+                  <button onClick={() => { toggle(); closeMenu(); }} className="dropdown-item">
                     {isDark ? <Sun className="icon-sm" /> : <Moon className="icon-sm" />}
                     {isDark ? 'Light Mode' : 'Dark Mode'}
                   </button>
                   <div className="dropdown-divider" />
-                  <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }} className="dropdown-item sign-out">
+                  <button onClick={() => { logout(); navigate('/'); closeMenu(); }} className="dropdown-item sign-out">
                     <LogOut className="icon-sm" />
                     Sign out
                   </button>
                 </div>
-              )}
+                </>,
+                document.body
+              ) : (
+                <div className={`dropdown-menu active${menuClosing ? ' is-closing' : ''}`}>
+                  {isTrial && (
+                    <div className="dropdown-item trial-dropdown-item">
+                      <span>⏳ Trial Left:</span>
+                      <span className="trial-countdown">{trialCountdown}</span>
+                    </div>
+                  )}
+                  {!isTrial && user?.role === 'admin' && (
+                    <button onClick={() => { navigate('/admin'); closeMenu(); }} className="dropdown-item">
+                      <Shield className="icon-sm" />
+                      Admin Panel
+                    </button>
+                  )}
+                  <button onClick={() => { navigate('/settings'); closeMenu(); }} className="dropdown-item">
+                    <Settings className="icon-sm" />
+                    Account Settings
+                  </button>
+                  <button onClick={() => { toggle(); closeMenu(); }} className="dropdown-item">
+                    {isDark ? <Sun className="icon-sm" /> : <Moon className="icon-sm" />}
+                    {isDark ? 'Light Mode' : 'Dark Mode'}
+                  </button>
+                  <div className="dropdown-divider" />
+                  <button onClick={() => { logout(); navigate('/'); closeMenu(); }} className="dropdown-item sign-out">
+                    <LogOut className="icon-sm" />
+                    Sign out
+                  </button>
+                </div>
+              ))}
             </div>
           ) : (
             <button onClick={() => navigate('/auth')} className="user-menu-wrapper" aria-label="Sign in">
