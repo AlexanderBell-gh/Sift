@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, X } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useBodyLock } from '../../../hooks/useBodyLock';
 import { getAlerts, markAlertRead, markAllAlertsRead, deleteAlert } from '../../../lib/api';
 import { formatTimeAgo } from '../../../lib/utils';
 import type { Alert } from '../../../types';
@@ -155,9 +157,7 @@ export default function AlertBell() {
     }, 200);
   }
   const [loadError, setLoadError] = useState(false);
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
-  );
+  const isMobile = useIsMobile();
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const fetchingRef = useRef(false);
@@ -200,12 +200,8 @@ export default function AlertBell() {
     return () => clearInterval(interval);
   }, [token, open, refreshAlerts]);
 
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+  // Counter-based: survives a filter/account sheet open underneath.
+  useBodyLock(open && isMobile);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -225,13 +221,8 @@ export default function AlertBell() {
     };
   });
 
-  useEffect(() => {
-    if (!open || !isMobile) return;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open, isMobile]);
+  // Counter-based: survives another sheet open underneath.
+  useBodyLock(open && isMobile);
 
   if (!token) return null;
 

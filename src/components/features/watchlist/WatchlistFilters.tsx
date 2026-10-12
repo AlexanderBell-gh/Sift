@@ -3,6 +3,9 @@ import { Store, LayoutGrid, ArrowUpDown, Search, X } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { STORES } from '../../../lib/stores';
 import { CATEGORIES } from '../../../lib/categories';
+import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useBodyLock } from '../../../hooks/useBodyLock';
+import { MOBILE_QUERY } from '../../../hooks/useIsMobile';
 import FilterTrigger from './filters/FilterTrigger';
 import FilterPanel from './filters/FilterPanel';
 import FilterOption from './filters/FilterOption';
@@ -23,6 +26,21 @@ const SORT_OPTIONS = [
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
 ] as const;
+
+// Mobile filter dock geometry. NAV_H must match .nav height (72px);
+// HIDE_TOP slides the 52px bar fully out of view; REVEAL_Y keeps it
+// docked under the static header near page top; DY dead-zones jitter.
+const NAV_H = 72;
+const HIDE_TOP = '-60px';
+const REVEAL_Y = 120;
+const SCROLL_DY = 4;
+
+// Dock offset tracking the static header bottom: at scroll y the header
+// occupies [-y, NAV_H - y], so the bar hugs it with no gap until it
+// scrolls fully off (y >= NAV_H), then sticks at viewport top.
+function dockTop(y: number): string {
+  return `${Math.max(0, NAV_H - y)}px`;
+}
 
 interface WatchlistFiltersProps {
   selectedStores: string[];
@@ -57,6 +75,9 @@ export default function WatchlistFilters({
   const [isClosing, setIsClosing] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number | undefined>(undefined);
+  const isMobile = useIsMobile();
+  // Counter-based: survives the account sheet opening on top.
+  useBodyLock(openPanel !== null && isMobile);
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
@@ -90,27 +111,14 @@ export default function WatchlistFilters({
     };
   });
 
-  useEffect(() => {
-    if (!openPanel) return;
-    const mq = window.matchMedia('(max-width: 640px)');
-    function apply() {
-      document.body.style.overflow = mq.matches ? 'hidden' : '';
-    }
-    apply();
-    mq.addEventListener('change', apply);
-    return () => {
-      document.body.style.overflow = '';
-      mq.removeEventListener('change', apply);
-    };
-  }, [openPanel]);
-
-  // Mobile only: header is static, so the fixed bar docks under it at the
-  // top of the page (top 72) and sticks to the viewport top (top 0) once the
+  // Mobile only: header is static, so the fixed bar tracks the header
+  // bottom (72 - y) near page top and sticks to viewport top (0) once the
   // header scrolls off. Hidden on scroll down via top offset (never transform,
   // which would re-anchor the fixed sheets inside the bar). Class-driven
-  // (no re-renders); forced visible while a panel is open.
+  // (no re-renders); forced visible while a panel is open; only the
+  // hidden toggle animates, sync writes snap via .no-anim.
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
+    const mq = window.matchMedia(MOBILE_QUERY);
     const bar = barRef.current;
     let lastY = window.scrollY;
     let ticking = false;
@@ -123,11 +131,22 @@ export default function WatchlistFilters({
       }
       if (hidden) {
         bar.classList.add('is-hidden');
-        bar.style.top = '-60px';
+        bar.style.top = HIDE_TOP;
         return;
       }
       bar.classList.remove('is-hidden');
-      bar.style.top = y <= 72 ? '72px' : '0px';
+      bar.style.top = dockTop(y);
+    }
+    // Sync write without animation: only scroll-driven hidden toggles
+    // animate (via the CSS transition). Every other write (mount, panel
+    // open/close, breakpoint flip) snaps, so the bar never visibly
+    // slides 0 -> 72 -> 0 on panel close or trails on re-sync.
+    function sync(y: number, hidden: boolean) {
+      if (!bar) return;
+      bar.classList.add('no-anim');
+      place(y, hidden);
+      void bar.offsetHeight;
+      bar.classList.remove('no-anim');
     }
     function update() {
       ticking = false;
@@ -137,16 +156,18 @@ export default function WatchlistFilters({
         return;
       }
       if (openPanel !== null) {
-        place(window.scrollY, false);
+        // Panel open: force visible, snapped (no slide while the sheet
+        // above opens). Scroll is locked, so y is frozen here.
+        sync(window.scrollY, false);
         lastY = window.scrollY;
         return;
       }
       const y = window.scrollY;
       const dy = y - lastY;
       lastY = y;
-      if (y <= 120 || dy < -4) {
+      if (y <= REVEAL_Y || dy < -SCROLL_DY) {
         place(y, false);
-      } else if (dy > 4) {
+      } else if (dy > SCROLL_DY) {
         place(y, true);
       }
     }
@@ -157,17 +178,26 @@ export default function WatchlistFilters({
     }
     function onMqChange() {
       lastY = window.scrollY;
-      update();
+      if (!bar) return;
+      if (!mq.matches) {
+        bar.style.top = '';
+        bar.classList.remove('is-hidden');
+        return;
+      }
+      sync(window.scrollY, false);
     }
     lastY = window.scrollY;
-    update();
+    // Initial position snaps: no entrance slide on page load.
+    if (bar && mq.matches) sync(window.scrollY, false);
+    else update();
     window.addEventListener('scroll', onScroll, { passive: true });
     mq.addEventListener('change', onMqChange);
     return () => {
       window.removeEventListener('scroll', onScroll);
       mq.removeEventListener('change', onMqChange);
-      bar?.classList.remove('is-hidden');
-      if (bar) bar.style.top = '';
+      // No top/class reset here: the re-run update()/sync() owns state.
+      // Resetting to the CSS default flashed the bar 0 -> 72 -> 0 with
+      // transition on every panel open/close.
     };
   }, [openPanel]);
 

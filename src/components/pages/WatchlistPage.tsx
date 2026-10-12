@@ -14,6 +14,7 @@ import WatchlistFilters from '../features/watchlist/WatchlistFilters';
 import type { OfferStatus } from '../features/watchlist/WatchlistFilters';
 import WatchlistSkeletonCard from '../features/watchlist/WatchlistSkeletonCard';
 import { useExtensionInstalled } from '../../hooks/useExtensionInstalled';
+import { MOBILE_QUERY } from '../../hooks/useIsMobile';
 
 const ALL_STORES = STORES.map(s => s.name);
 const ALL_CATEGORIES = [...CATEGORIES];
@@ -228,11 +229,24 @@ export default function WatchlistPage() {
   const usedCount = useMemo(() => new Set(items.map(i => i.product_id)).size, [items]);
   const trialLimitReached = isTrial && usedCount >= watchlistLimit;
 
-  async function handleRemoveProduct(productId: string, e: { preventDefault(): void; stopPropagation(): void }) {
-    e.preventDefault();
-    e.stopPropagation();
+  // Pending inline removals: staged groups stay in items (cards render
+  // dimmed in place with the action slot flipped to Undo) until the user
+  // undoes or a filter/view change or unmount commits them. No timer:
+  // staged state persists. The mirror ref is the synchronous source of
+  // truth (handlers/effects read it); state mirrors it for render.
+  // All writes go mirror-first, so racing commits collapse to one.
+  const [staged, setStaged] = useState<Map<string, WatchlistItem[]>>(new Map());
+  const stagedMirror = useRef(new Map<string, WatchlistItem[]>());
+
+  function syncStagedState() {
+    setStaged(new Map(stagedMirror.current));
+  }
+
+  async function commitStaged(productId: string, group: WatchlistItem[]) {
+    if (!stagedMirror.current.has(productId)) return;
+    stagedMirror.current.delete(productId);
+    syncStagedState();
     if (!token) return;
-    const group = items.filter(i => i.product_id === productId);
     try {
       await Promise.all(group.map(i => removeFromWatchlist(token, i.id)));
       setItems(prev => prev.filter(i => i.product_id !== productId));
@@ -241,6 +255,42 @@ export default function WatchlistPage() {
       setError('Failed to remove item');
     }
   }
+
+  function commitAllStaged() {
+    for (const [productId, group] of Array.from(stagedMirror.current.entries())) {
+      void commitStaged(productId, group);
+    }
+  }
+
+  function handleRemoveProduct(productId: string, e: { preventDefault(): void; stopPropagation(): void }) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!token) return;
+    const group = items.filter(i => i.product_id === productId);
+    if (group.length === 0 || stagedMirror.current.has(productId)) return;
+    // Optimistic: card dims in place, action slot flips to Undo.
+    stagedMirror.current.set(productId, group);
+    syncStagedState();
+  }
+
+  function undoRemoval(productId: string) {
+    if (!stagedMirror.current.has(productId)) return;
+    stagedMirror.current.delete(productId);
+    syncStagedState();
+  }
+
+  // Removed cards never leak across views: any filter/sort/search/status
+  // change commits pending removals first. Unmount flushes too.
+  useEffect(() => {
+    commitAllStaged();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStores, selectedCategories, sortBy, searchQuery, view]);
+  useEffect(() => () => {
+    for (const [productId, group] of Array.from(stagedMirror.current.entries())) {
+      void commitStaged(productId, group);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
@@ -264,7 +314,7 @@ export default function WatchlistPage() {
   }
 
   function startHold(productId: string, e: TouchEvent) {
-    if (!window.matchMedia('(max-width: 640px)').matches) return;
+    if (!window.matchMedia(MOBILE_QUERY).matches) return;
     const touch = e.touches[0];
     if (!touch) return;
     const group = items.filter(i => i.product_id === productId);
@@ -321,11 +371,15 @@ export default function WatchlistPage() {
     const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
     const best = sorted[0];
     if (!product || !best) return null;
+    // Staged removal: full details stay in place, dimmed; the action
+    // slot flips to Undo and persists until undo or commit.
+    const isStaged = staged.has(product.product_id);
     const logo = storeLogoFor(best.store, best.store_logo);
+    const veilClass = isStaged ? ' product-card-removed-veil' : '';
 
     const cardContent = (
       <>
-        <div className="product-card-media">
+        <div className={`product-card-media${veilClass}`}>
           {logo && (
             <span className="product-card-store-logo">
               <img src={logo} alt={best.store} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -340,7 +394,7 @@ export default function WatchlistPage() {
           )}
         </div>
 
-        <div className="product-card-body">
+        <div className={`product-card-body${veilClass}`}>
           <h3 className="product-card-name">{product.product_name}</h3>
           {best.category && (
             <span className={`product-card-category category-${best.category.toLowerCase().replace(/\s+/g, '-')}`}>{best.category}</span>
@@ -389,24 +443,45 @@ export default function WatchlistPage() {
             className={`product-card-add${addedIds.has(best.id) ? ' is-added' : ''}`}
             title="Add to shopping list"
             aria-label={`Add ${product.product_name} to shopping list`}
+            disabled={isStaged}
           >
             {addedIds.has(best.id) ? <Check size={14} /> : <Plus size={14} />}
             {addedIds.has(best.id) ? 'Added' : 'Add to list'}
           </button>
-          <button
-            onClick={(e) => handleRemoveProduct(product.product_id, e)}
-            className="product-card-remove"
-            title="Remove"
-            aria-label={`Remove ${product.product_name} from watchlist`}
-          >
-            ✕
-          </button>
+          {isStaged ? (
+            <button
+              type="button"
+              onClick={() => undoRemoval(product.product_id)}
+              className="product-card-remove is-undo"
+              aria-label={`Undo remove ${product.product_name} from watchlist`}
+            >
+              Undo
+            </button>
+          ) : (
+            <button
+              onClick={(e) => handleRemoveProduct(product.product_id, e)}
+              className="product-card-remove"
+              title="Remove"
+              aria-label={`Remove ${product.product_name} from watchlist`}
+            >
+              ✕
+            </button>
+          )}
         </div>
       </>
     );
 
     const baseClass = expired ? 'product-card is-expired' : 'product-card';
-    const cardClass = highlightedId === best.id ? `${baseClass} is-highlighted` : baseClass;
+    const highlightedClass = highlightedId === best.id ? ' is-highlighted' : '';
+    const cardClass = `${baseClass}${highlightedClass}${isStaged ? ' is-removed' : ''}`;
+    // Staged cards render as a status div (no navigation); Undo announces.
+    if (isStaged) {
+      return (
+        <div key={product.product_id} role="status" className={cardClass}>
+          {cardContent}
+        </div>
+      );
+    }
     // Suppress the link navigation if a hold-to-remove just fired on this card.
     function handleCardClickCapture(e: MouseEvent) {
       if (Date.now() - lastHoldRef.current < 1000) {

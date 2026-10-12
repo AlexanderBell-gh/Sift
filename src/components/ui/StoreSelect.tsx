@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { STORES } from '../../lib/stores';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { useBodyLock } from '../../hooks/useBodyLock';
 
 interface StoreSelectProps {
   selected: Set<string>;
@@ -16,6 +18,9 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
   const [isClosing, setIsClosing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number | undefined>(undefined);
+  const isMobile = useIsMobile();
+  // Counter-based: survives another sheet open underneath.
+  useBodyLock(isOpen && isMobile);
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
@@ -54,20 +59,6 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
       document.removeEventListener('keydown', handleKey);
     };
   });
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const mq = window.matchMedia('(max-width: 640px)');
-    function apply() {
-      document.body.style.overflow = mq.matches ? 'hidden' : '';
-    }
-    apply();
-    mq.addEventListener('change', apply);
-    return () => {
-      document.body.style.overflow = '';
-      mq.removeEventListener('change', apply);
-    };
-  }, [isOpen]);
 
   function toggleStore(id: string) {
     const next = new Set(selected);

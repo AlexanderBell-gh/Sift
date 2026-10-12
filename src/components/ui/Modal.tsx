@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useId, useRef } from 'react';
 import { cn } from '../../lib/utils';
+import { useBodyLock } from '../../hooks/useBodyLock';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -15,6 +16,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  // Counter-based: survives a filter/account sheet open underneath.
+  useBodyLock(isOpen);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -22,11 +25,9 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
 
   useEffect(() => {
     if (!isOpen) return;
-    document.body.style.overflow = 'hidden';
     previouslyFocused.current = document.activeElement as HTMLElement | null;
     dialogRef.current?.focus();
     return () => {
-      document.body.style.overflow = '';
       previouslyFocused.current?.focus?.();
     };
   }, [isOpen]);
@@ -62,8 +63,11 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
 
   if (!isOpen) return null;
 
+  // Layer slot: mobile z-[105] sits above the fixed filter bar (90) so the
+  // remove sheet dims + blurs it, below account/alerts sheets (110/111)
+  // and the tab bar (120). Desktop keeps z-50, untouched.
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-[105] sm:z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={dialogRef}

@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield, Menu, X } from 'lucide-react';
+import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { useBodyLock } from '../../hooks/useBodyLock';
 import AlertBell from '../features/alerts/AlertBell';
 import MobileTabBar from './MobileTabBar';
 
@@ -31,16 +33,10 @@ export default function NavHeader({ title = 'Sift', showBack = false, staticNav 
   const [menuClosing, setMenuClosing] = useState(false);
   const menuCloseTimer = useRef<number | undefined>(undefined);
   const [trialCountdown, setTrialCountdown] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+  const isMobile = useIsMobile();
+  // Account sheet locks scroll on mobile only; counter-based so a filter
+  // panel open underneath keeps its own lock.
+  useBodyLock(menuOpen && isMobile);
   useEffect(() => () => window.clearTimeout(menuCloseTimer.current), []);
 
   function closeMenu() {
@@ -78,31 +74,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, staticNav 
     return () => document.removeEventListener('mousedown', handleClick);
   });
 
-  // Mobile sheet: lock body scroll while the account menu is open.
-  useEffect(() => {
-    if (!menuOpen) return;
-    const mq = window.matchMedia('(max-width: 640px)');
-    function apply() {
-      document.body.style.overflow = mq.matches ? 'hidden' : '';
-    }
-    apply();
-    mq.addEventListener('change', apply);
-    return () => {
-      document.body.style.overflow = '';
-      mq.removeEventListener('change', apply);
-    };
-  }, [menuOpen]);
-
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
-        setMobileMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+  // Account sheet locks scroll via useBodyLock above (mobile only).
 
   useEffect(() => {
     if (!user?.isTrial || user.trialExpiresAt == null) return;
@@ -151,24 +123,6 @@ export default function NavHeader({ title = 'Sift', showBack = false, staticNav 
               </>
             )}
           </div>
-
-          {token && !isMobile && (
-          <div className="mobile-menu-wrap" ref={mobileMenuRef}>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="icon-btn"
-            >
-              {mobileMenuOpen ? <X className="icon-md" /> : <Menu className="icon-md" />}
-            </button>
-            {mobileMenuOpen && (
-              <div className="mobile-menu-pop">
-                <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="dropdown-item">Search</button>
-                <button onClick={() => { navigate('/watchlist'); setMobileMenuOpen(false); }} className="dropdown-item">Watchlist</button>
-                <button onClick={() => { navigate('/list'); setMobileMenuOpen(false); }} className="dropdown-item">Shopping List</button>
-              </div>
-            )}
-          </div>
-          )}
 
           {!isMobile && <AlertBell />}
 

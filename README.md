@@ -31,6 +31,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 
 ### Watchlist
 - Pin any product, on offer or not; infinite scroll (12 per batch, skeletons while appending)
+- Removal stages inline with Undo (no timer); deletion commits on filter change or page leave
 - Status facet inside the Sort & status dropdown: All / On offer / Not on offer / Expired, with counts — combinable with price sorting
 - Worker-owned category taxonomy scores every pin server-side (preview + admin rescore tools)
 - Live trial banner (X of 5 items + progress bar)
