@@ -902,6 +902,12 @@ body {
     flex: 1;
   }
 
+  /* Mobile input is a readOnly sheet trigger: no caret, pointer cursor. */
+  .search-input[readonly] {
+    caret-color: transparent;
+    cursor: pointer;
+  }
+
   .search-input::placeholder {
     font-size: 14px;
   }
@@ -3490,6 +3496,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 12px;
 }
 
@@ -3551,15 +3559,34 @@ body {
   font-size: 14px;
 }
 
-.search-sheet-hint {
-  margin: 8px 2px 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .search-sheet-panel .store-select {
   display: flex;
   margin-bottom: 12px;
+}
+
+/* Sheet chip slider: 3 selected chips exceed the sheet width, so the
+   row scrolls horizontally (swipe-only, bar hidden) instead of
+   wrapping. flex-start keeps left items reachable; chips never shrink. */
+.search-sheet-panel .store-chips-row {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+  scrollbar-width: none;
+  width: 100%;
+  min-width: 0;
+}
+.search-sheet-panel .store-chips-row::-webkit-scrollbar {
+  display: none;
+}
+.search-sheet-panel .store-chip,
+.search-sheet-panel .store-chip-add {
+  flex: none;
+}
+/* No stores yet: the lone Add button stays centered. */
+.search-sheet-panel .store-chip-add:only-child {
+  margin: 0 auto;
 }
 
 .search-sheet-submit {
@@ -3587,6 +3614,13 @@ body {
 
 .search-sheet-list {
   margin-top: 4px;
+  /* Own scroll region: recents/suggestions scroll under the input
+     instead of pushing it out of the sheet (desktop dropdown caps
+     at 336px; same idea here, viewport-scaled). */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  max-height: 36vh;
 }
 
 .search-sheet-backdrop.is-closing {

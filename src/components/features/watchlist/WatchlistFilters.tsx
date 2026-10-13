@@ -30,10 +30,17 @@ const SORT_OPTIONS = [
 // Mobile filter dock geometry. NAV_H must match .nav height (72px);
 // HIDE_TOP slides the 52px bar fully out of view; REVEAL_Y keeps it
 // docked under the static header near page top; DY dead-zones jitter.
+// HIDE_Y adds hysteresis past REVEAL_Y so the bar never toggles at the
+// threshold. GAP_PX must match the CSS content-gap delta (76px visible
+// vs 24px hidden padding on .watchlist-content).
 const NAV_H = 72;
 const HIDE_TOP = '-60px';
 const REVEAL_Y = 120;
 const SCROLL_DY = 4;
+const HIDE_Y = REVEAL_Y + 48;
+const GAP_PX = 52;
+const HIDE_ROOM = 24;
+const SUPPRESS_MS = 250;
 
 // Dock offset tracking the static header bottom: at scroll y the header
 // occupies [-y, NAV_H - y], so the bar hugs it with no gap until it
@@ -122,6 +129,7 @@ export default function WatchlistFilters({
     const bar = barRef.current;
     let lastY = window.scrollY;
     let ticking = false;
+    let suppressUntil = 0;
     function place(y: number, hidden: boolean) {
       if (!bar) return;
       if (!mq.matches) {
@@ -148,6 +156,12 @@ export default function WatchlistFilters({
       void bar.offsetHeight;
       bar.classList.remove('no-anim');
     }
+    // Hiding collapses the content gap by GAP_PX, shrinking the page.
+    // Only hide when room remains past the current position after the
+    // collapse; short lists keep the bar docked instead of bouncing.
+    function canHide(y: number): boolean {
+      return document.documentElement.scrollHeight - window.innerHeight - GAP_PX - y > HIDE_ROOM;
+    }
     function update() {
       ticking = false;
       if (!bar || !mq.matches) {
@@ -165,9 +179,13 @@ export default function WatchlistFilters({
       const y = window.scrollY;
       const dy = y - lastY;
       lastY = y;
+      // Settle window for the content-gap transition: the collapse pulls
+      // scrollY up and that echo must not re-show the bar.
+      if (performance.now() < suppressUntil) return;
       if (y <= REVEAL_Y || dy < -SCROLL_DY) {
         place(y, false);
-      } else if (dy > SCROLL_DY) {
+      } else if (dy > SCROLL_DY && y > HIDE_Y && canHide(y)) {
+        suppressUntil = performance.now() + SUPPRESS_MS;
         place(y, true);
       }
     }

@@ -302,12 +302,17 @@ export default function SearchPage() {
               }}
               onFocus={() => {
                 // Mobile opens the slide-up sheet; inline dropdown stays desktop-only.
+                // The mobile input is readOnly (no keyboard flash): it only triggers the sheet.
                 if (isMobile) {
                   openSheet();
                   return;
                 }
                 showRelevantDropdown();
               }}
+              onClick={() => {
+                if (isMobile) openSheet();
+              }}
+              readOnly={isMobile}
               onKeyDown={handleKeyDown}
               placeholder="Search for butter, oat milk, avocados…"
               className="search-input"
@@ -436,7 +441,7 @@ export default function SearchPage() {
                     }}
                     onFocus={showRelevantDropdown}
                     onKeyDown={handleSheetKeyDown}
-                    placeholder="Search for butter, oat milk, avocados…"
+                    placeholder={selectedStores.size === 0 ? storeHint : 'Search for butter, oat milk, avocados…'}
                     className="search-sheet-input"
                     role="combobox"
                     aria-expanded={sheetDropdownOpen !== null}
@@ -454,7 +459,6 @@ export default function SearchPage() {
                   Search
                 </button>
               </div>
-              <p className="search-sheet-hint" role="status">{storeHint}</p>
             </form>
             {suggestionsOpen && (
               <div
