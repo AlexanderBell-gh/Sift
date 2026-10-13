@@ -84,17 +84,22 @@ export default function WatchlistPage() {
     const offers: WatchlistItem[][] = [];
     const plain: WatchlistItem[][] = [];
     const expired: WatchlistItem[][] = [];
+    const all: WatchlistItem[][] = [];
     for (const group of products) {
       const best = getBest(group);
       if (isOfferExpired(best.offer_expires_at)) {
         expired.push(group);
       } else if (best.is_on_offer) {
         offers.push(group);
+        all.push(group);
       } else {
         plain.push(group);
+        all.push(group);
       }
     }
-    return { offerGroups: offers, plainGroups: plain, expiredProducts: expired, allGroups: [...offers, ...plain] };
+    // All keeps insertion order (newest first): plain items stay where
+    // added instead of sinking below all offers.
+    return { offerGroups: offers, plainGroups: plain, expiredProducts: expired, allGroups: all };
   }, [products]);
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -169,60 +174,62 @@ export default function WatchlistPage() {
     };
   }, [hasMore, currentProducts.length]);
 
-  // Deep-link from alerts (?item=<watchlist_id>): switch to owning tab,
-  // scroll card into view, flash highlight. Param cleared.
-  // State updates deferred to timers: no sync setState in effect body.
+  // Deep-link from alerts (?item=<watchlist_id>): clear filters that could
+  // hide the target, switch to owning tab, highlight the exact
+  // product tile. Param cleared. Scroll runs in a follow-up effect once
+  // the reset filters + view have rendered.
   useEffect(() => {
     if (loading) return;
     const targetId = searchParams.get('item');
     if (!targetId) return;
-    let scrollTimer: number | undefined;
-    let clearTimer: number | undefined;
     const applyTimer = window.setTimeout(() => {
       const target = items.find(i => i.id === targetId);
       if (!target) {
         setSearchParams({}, { replace: true });
         return;
       }
-      // Card renders per product group under cheapest row id: resolve group best.
-      const group = items.filter(i => i.product_id === target.product_id);
-      const best = [...group].sort(
-        (a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity)
-      )[0];
-      if (!best) {
-        setSearchParams({}, { replace: true });
-        return;
-      }
+      // Alert target must stay visible: drop any store/category/search
+      // selection hiding it (e.g. expired row from another store).
+      setSelectedStores(ALL_STORES);
+      setSelectedCategories(ALL_CATEGORIES);
+      setSearchQuery('');
       if (isOfferExpired(target.offer_expires_at)) {
         setView('expired');
-        const idx = expiredProducts.findIndex(g => g[0]?.product_id === target.product_id);
-        if (idx >= visibleCount) setVisibleCount(idx + 1);
       } else if (target.is_on_offer) {
         setView('offers');
-        const idx = offerGroups.findIndex(g => g[0]?.product_id === target.product_id);
-        if (idx >= visibleCount) setVisibleCount(idx + 1);
       } else {
         setView('all');
-        const idx = allGroups.findIndex(g => g[0]?.product_id === target.product_id);
-        if (idx >= visibleCount) setVisibleCount(idx + 1);
       }
-      setHighlightedId(best.id);
+      // Stable per-product anchor: survives cheapest-row (best) drift.
+      setHighlightedId(target.product_id);
       setSearchParams({}, { replace: true });
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      scrollTimer = window.setTimeout(() => {
-        document.getElementById(`watchlist-card-${best.id}`)?.scrollIntoView({
-          behavior: reduceMotion ? 'auto' : 'smooth',
-          block: 'center',
-        });
-      }, 150);
-      clearTimer = window.setTimeout(() => setHighlightedId(null), 3000);
     }, 0);
     return () => {
       window.clearTimeout(applyTimer);
-      window.clearTimeout(scrollTimer);
-      window.clearTimeout(clearTimer);
     };
-  }, [loading, items, allGroups, offerGroups, expiredProducts, visibleCount, searchParams, setSearchParams]);
+  }, [loading, items, searchParams, setSearchParams]);
+
+  // Follow-up: expand paging until the highlighted product tile renders,
+  // then scroll it into view. Highlight persists until navigate away.
+  useEffect(() => {
+    if (loading || !highlightedId) return;
+    const idx = currentProducts.findIndex(g => g[0]?.product_id === highlightedId);
+    if (idx === -1) return;
+    if (idx >= visibleCount) {
+      setVisibleCount(idx + 1);
+      return;
+    }
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const scrollTimer = window.setTimeout(() => {
+      document.getElementById(`watchlist-card-${highlightedId}`)?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'center',
+      });
+    }, 150);
+    return () => {
+      window.clearTimeout(scrollTimer);
+    };
+  }, [loading, highlightedId, currentProducts, visibleCount]);
 
   const isTrial = user?.isTrial === true;
   const watchlistLimit = 5;
@@ -472,7 +479,7 @@ export default function WatchlistPage() {
     );
 
     const baseClass = expired ? 'product-card is-expired' : 'product-card';
-    const highlightedClass = highlightedId === best.id ? ' is-highlighted' : '';
+    const highlightedClass = highlightedId === product.product_id ? ' is-highlighted' : '';
     const cardClass = `${baseClass}${highlightedClass}${isStaged ? ' is-removed' : ''}`;
     // Staged cards render as a status div (no navigation); Undo announces.
     if (isStaged) {
@@ -499,7 +506,7 @@ export default function WatchlistPage() {
     return best.product_url ? (
       <a
         key={product.product_id}
-        id={`watchlist-card-${best.id}`}
+        id={`watchlist-card-${product.product_id}`}
         href={best.product_url}
         target="_blank"
         rel="noopener noreferrer"
@@ -510,7 +517,7 @@ export default function WatchlistPage() {
         {cardContent}
       </a>
     ) : (
-      <div key={product.product_id} id={`watchlist-card-${best.id}`} className={cardClass} {...holdHandlers}>
+      <div key={product.product_id} id={`watchlist-card-${product.product_id}`} className={cardClass} {...holdHandlers}>
         {cardContent}
       </div>
     );
