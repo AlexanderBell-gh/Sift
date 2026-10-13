@@ -25,14 +25,14 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 ## Features
 
 ### Search & Deals
-- 11-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) — query opens each store's results in a new tab, bottom-sheet store picker on mobile
+- 11-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) — query opens each store's results in a new tab; on mobile a slide-up sheet carries the store picker, baked-in Search, recent searches and suggestions
 - Local autocomplete from a ~1,600-item UK grocery dictionary with fuzzy matching, plus a shared catalog of every product ever pinned — names persist even after the item leaves your watchlist; full keyboard support
 - Deals of the Day — de-duplicated on-offer items with one-tap Add to Watchlist (spinner → green Added → pinned)
 
 ### Watchlist
 - Pin any product, on offer or not; infinite scroll (12 per batch, skeletons while appending)
 - Removal stages inline with Undo (no timer); deletion commits on filter change or page leave
-- Status facet inside the Sort & status dropdown: All / On offer / Not on offer / Expired, with counts — combinable with price sorting
+- Status facet inside the Sort & status dropdown: All / Offers / Regular Price / Expired, with counts — combinable with price sorting; All keeps insertion order (newest first)
 - Worker-owned category taxonomy scores every pin server-side (preview + admin rescore tools)
 - Live trial banner (X of 5 items + progress bar)
 
@@ -43,7 +43,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 
 ### Alerts
 - Single-fire offer-expiry alerts via the bell (mark-all-read, swipe-to-dismiss, bottom sheet on mobile)
-- Tap an alert to jump straight to the item on your watchlist
+- Tap an alert to jump straight to the item on your watchlist (filters clear, tile highlighted in the Expired tab)
 
 ### Auth & Accounts
 - JWT + Google OAuth + username/password, guest landing page, self-service password recovery
