@@ -27,7 +27,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 ### Search & Deals
 - 11-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) — query opens each store's results in a new tab; on mobile a slide-up sheet carries the store picker, baked-in Search, recent searches and suggestions
 - Local autocomplete from a ~1,600-item UK grocery dictionary with fuzzy matching, plus a shared catalog of every product ever pinned — names persist even after the item leaves your watchlist; full keyboard support
-- Deals of the Day — de-duplicated on-offer items with one-tap Add to Watchlist (spinner → green Added → pinned)
+- Offers carousels — live on-offer items in two snap rows (Offers + ending in 7 days, exclusive split) with square tiles and one-tap Pin to watchlist (spinner → green Added → pinned); each row shows 8 + a Show-all tile opening the full list in a modal (12 per batch, skeletons while appending)
 
 ### Watchlist
 - Pin any product, on offer or not; infinite scroll (12 per batch, skeletons while appending)
@@ -131,7 +131,7 @@ pnpm exec wrangler d1 migrations apply sift --remote
 
 1. Select up to 3 stores (persisted locally; search stays disabled until one is picked)
 2. Type → autocomplete suggests from the grocery dictionary and the shared pin catalog (debounced, keyboard navigable)
-3. Enter → each store's results open in a new tab; pin what you like via the extension or Deals of the Day
+3. Enter → each store's results open in a new tab; pin what you like via the extension or the Offers carousels
 4. Watchlist tracks prices and offer dates; the 6am UTC cron flips past-expiry rows off-offer and fires one alert each
 5. Shopping list turns pins into per-store totals with multibuy sets applied
 

@@ -1157,8 +1157,8 @@ async function handleRequest(request, env) {
           FROM watchlist
           WHERE is_on_offer = 1
           GROUP BY product_id
-          ORDER BY RANDOM()
-          LIMIT 20`
+          ORDER BY product_id
+          LIMIT 200`
        );
        return jsonResponse(rows.map(r => ({
          product_id: r.product_id,

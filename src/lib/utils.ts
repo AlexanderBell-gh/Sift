@@ -50,6 +50,16 @@ export function isOfferExpired(dateString: string | null): boolean {
 // Duplicated intentionally with workers/index.js isOfferExpired (no shared build across layers).
 // Keep both identical: offers expire end-of-day, so `<=` (not `<`) is correct in both.
 
+// Whole days from today (end-of-day semantics, matching isOfferExpired)
+// to an expiry date. Null when no parseable date.
+export function daysToExpiry(dateString: string | null): number | null {
+  const date = parseDate(dateString);
+  if (!date) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((date.getTime() - today.getTime()) / 86400000);
+}
+
 export function getLoyaltyLabel(store: string): string {
   const labels: Record<string, string> = {
     Tesco: 'Clubcard price',

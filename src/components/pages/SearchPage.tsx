@@ -6,7 +6,7 @@ import { getHistory, addSearch, clearHistory } from '../../lib/searchHistory';
 
 import NavHeader from '../layout/NavHeader';
 import { StoreSelect, MAX_STORES } from '../ui/StoreSelect';
-import { DealSection } from '../features/search/DealSection';
+import { OffersSection } from '../features/search/OffersSection';
 import { STORES } from '../../lib/stores';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -530,7 +530,7 @@ export default function SearchPage() {
         document.body
       )}
 
-      <DealSection />
+      <OffersSection />
     </div>
   );
 }

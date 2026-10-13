@@ -63,11 +63,11 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
 
   if (!isOpen) return null;
 
-  // Layer slot: mobile z-[105] sits above the fixed filter bar (90) so the
-  // remove sheet dims + blurs it, below account/alerts sheets (110/111)
-  // and the tab bar (120). Desktop keeps z-50, untouched.
+  // Layer slot: z-[105] sits above the nav (100) and the fixed filter
+  // bar (90) so the sheet dims + blurs them, below account/alerts
+  // sheets (110/111) and the tab bar (120).
   return (
-    <div className="fixed inset-0 z-[105] sm:z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-[105] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={dialogRef}
