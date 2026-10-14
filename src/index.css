@@ -1,3 +1,21 @@
+/* Index — grep a name to jump (e.g. `grep -n "Watchlist Screen" src/index.css`).
+   Tokens/theme: `@theme`, `.dark` | Base: Container, Icon sizes, Ghost icon button,
+   Page shell, Navigation, Nav inner layout, Mobile bottom tab bar, User Dropdown
+   Search: Hero & Search Screen, Offers carousels, Store selection panel,
+   Watchlist filter bar, Mobile search slide-up sheet, Search Dropdown
+   Watchlist: Watchlist Screen, Watchlist list head
+   Landing: Landing hero entrance, Landing page, Scroll reveals, Landing "How it works" steps,
+   Landing store strip, Landing card visuals | Legal pages
+   Lists: Shopping list | Alerts Dropdown
+   Auth: Auth Screen, Auth Tabs, Auth Form, Auth Submit Button, Auth Error, Auth Promo,
+   Auth Divider, Google Button Wrapper, Auth Footer, Shared Form Classes
+   Settings: Settings Screen | Admin: Admin Screen Layout, Admin dashboard,
+   Admin Metrics Dashboard, Admin Users Dashboard, User Row Cards, Admin Audit Logs,
+   Admin Input Focus States | Shared UI: Screen management, Glass effect, Gradient text,
+   Subtle gradient border, Price display, Category badge, Scrollbar styling,
+   Custom scrollbars, Skeleton loading, Modal slide-up animation, Button press effect,
+   Responsive adjustments, Cookie Consent, Extension FAB */
+
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -149,6 +167,24 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+/* Sheet open while scrolled: overflow:hidden on the root breaks sticky
+   (nav jumps to page top, off-viewport). Pin it fixed for the lock
+   duration instead. Scoped off .nav-static, which scrolls away by design. */
+html.sift-locked .nav:not(.nav-static) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Fixed nav leaves normal flow (72px collapse shifts content up on lock,
+   back down on release). Hold its space with body padding while locked.
+   Scoped via :has to pages with a non-static nav; static-nav pages keep
+   their in-flow header untouched. */
+html.sift-locked:has(.nav:not(.nav-static)) body {
+  padding-top: 72px;
 }
 
 /* Mobile opt-in (watchlist): header scrolls away with the page (products
@@ -546,6 +582,27 @@ body {
   display: none;
 }
 
+/* Desktop edge fades: each side fades only while there is more content
+   that way (track carries .is-scrolled from scrollLeft, .has-more while
+   the end is out of view). Fits-without-overflow shows no fade. Mask is
+   alpha, so it holds in light/dark. Mobile stays edge-to-edge, no fade. */
+@media (min-width: 641px) {
+  .offers-track.has-more {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 80px), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 80px), transparent);
+  }
+
+  .offers-track.is-scrolled:not(.has-more) {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 80px, black);
+    mask-image: linear-gradient(to right, transparent, black 80px, black);
+  }
+
+  .offers-track.is-scrolled.has-more {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 80px, black calc(100% - 80px), transparent);
+  }
+}
+
 .offers-snap {
   scroll-snap-align: start;
   flex-shrink: 0;
@@ -925,6 +982,10 @@ body {
   }
 
   .offers-container {
+    padding: 0;
+  }
+
+  .offers-head {
     padding: 0 12px;
   }
 
@@ -3704,13 +3765,9 @@ body {
 }
 
 .search-sheet-field {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow: hidden;
 }
 
 .search-sheet-field-row {
@@ -3718,6 +3775,15 @@ body {
   align-items: center;
   gap: 8px;
   padding: 0 14px;
+}
+
+.search-sheet-field.is-disabled {
+  opacity: 0.5;
+}
+
+.search-sheet-field.is-disabled:focus-within {
+  border-color: var(--border);
+  box-shadow: none;
 }
 
 .search-sheet-field:focus-within {
@@ -3734,6 +3800,10 @@ body {
   color: var(--text);
   font-size: 16px;
   padding: 14px 0;
+}
+
+.search-sheet-input:disabled {
+  cursor: not-allowed;
 }
 
 .search-sheet-input::placeholder {
@@ -3769,29 +3839,6 @@ body {
 /* No stores yet: the lone Add button stays centered. */
 .search-sheet-panel .store-chip-add:only-child {
   margin: 0 auto;
-}
-
-.search-sheet-submit {
-  width: 100%;
-  min-height: 48px;
-  padding: 12px;
-  border: none;
-  border-top: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--primary);
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.search-sheet-submit:hover {
-  background-color: color-mix(in oklab, var(--primary) 88%, black);
-}
-
-.search-sheet-submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .search-sheet-list {

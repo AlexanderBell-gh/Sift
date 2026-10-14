@@ -14,6 +14,7 @@ let locks = 0;
 let prevHtmlOverflow = '';
 let prevBodyOverflow = '';
 let prevBodyOverscroll = '';
+const LOCK_CLASS = 'sift-locked';
 
 function applyLock() {
   const html = document.documentElement;
@@ -24,6 +25,9 @@ function applyLock() {
     prevBodyOverscroll = body.style.overscrollBehavior;
   }
   locks += 1;
+  // Sticky nav breaks under overflow:hidden ancestors (jumps to page top,
+  // off-viewport when scrolled). Flag the lock so CSS can pin it fixed.
+  html.classList.add(LOCK_CLASS);
   html.style.overflow = 'hidden';
   body.style.overflow = 'hidden';
   body.style.overscrollBehavior = 'none';
@@ -32,6 +36,7 @@ function applyLock() {
 function releaseLock() {
   locks = Math.max(0, locks - 1);
   if (locks > 0) return;
+  document.documentElement.classList.remove(LOCK_CLASS);
   document.documentElement.style.overflow = prevHtmlOverflow;
   document.body.style.overflow = prevBodyOverflow;
   document.body.style.overscrollBehavior = prevBodyOverscroll;

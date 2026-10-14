@@ -179,12 +179,16 @@ export default function SearchPage() {
   }
 
   useEffect(() => {
-    if (!sheetOpen) return;
+    if (!sheetOpen || selectedStores.size === 0) return;
     const t = window.setTimeout(() => sheetInputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
+    // Intentionally sheet-open only: store taps while open must not
+    // re-focus the input (pops the keyboard uninvited).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetOpen]);
 
   function handleSheetSearch() {
+    if (!query.trim() || selectedStores.size === 0) return;
     handleSearch();
     closeSheet();
   }
@@ -243,6 +247,7 @@ export default function SearchPage() {
   const firstName = !user?.isTrial ? user?.username?.split(' ')[0] : undefined;
 
   function showRelevantDropdown() {
+    if (selectedStores.size === 0) return;
     if (query.length < 2 && history.length > 0) {
       setShowHistory(true);
       setShowSuggestions(false);
@@ -428,13 +433,16 @@ export default function SearchPage() {
               role="search"
               aria-label="Search for products"
             >
-              <div className="search-sheet-field">
+              <div className={`search-sheet-field${selectedStores.size === 0 ? ' is-disabled' : ''}`}>
                 <div className="search-sheet-field-row">
                   <Search className="icon-sm opacity-50" aria-hidden="true" />
                   <input
                     ref={sheetInputRef}
                     type="text"
+                    enterKeyHint="search"
                     value={query}
+                    disabled={selectedStores.size === 0}
+                    aria-disabled={selectedStores.size === 0}
                     onChange={(e) => {
                       setQuery(e.target.value);
                       setShowNoMatches(false);
@@ -451,17 +459,9 @@ export default function SearchPage() {
                     aria-activedescendant={activeIndex >= 0 ? `search-option-${activeIndex}` : undefined}
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={!query.trim() || selectedStores.size === 0}
-                  className="search-sheet-submit"
-                  title={selectedStores.size === 0 ? 'Select at least one store to search' : undefined}
-                >
-                  Search
-                </button>
               </div>
             </form>
-            {suggestionsOpen && (
+            {selectedStores.size > 0 && suggestionsOpen && (
               <div
                 id="search-sheet-suggestions"
                 className="search-sheet-list"
@@ -484,14 +484,14 @@ export default function SearchPage() {
                 ))}
               </div>
             )}
-            {showNoMatches && query.length >= 2 && !suggestionsOpen && (
+            {selectedStores.size > 0 && showNoMatches && query.length >= 2 && !suggestionsOpen && (
               <div className="search-sheet-list" role="status">
                 <div className="suggestions-empty">
                   No matching products — press Enter to search anyway.
                 </div>
               </div>
             )}
-            {historyOpen && (
+            {selectedStores.size > 0 && historyOpen && (
               <div
                 id="search-sheet-history"
                 className="search-sheet-list"

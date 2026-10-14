@@ -27,7 +27,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 ### Search & Deals
 - 11-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) — query opens each store's results in a new tab; on mobile a slide-up sheet carries the store picker, baked-in Search, recent searches and suggestions
 - Local autocomplete from a ~1,600-item UK grocery dictionary with fuzzy matching, plus a shared catalog of every product ever pinned — names persist even after the item leaves your watchlist; full keyboard support
-- Offers carousels — live on-offer items plus Popular right now (all pinned products ranked by pin count, `n pins` badge) in two snap rows with square tiles and one-tap Pin to watchlist (spinner → green Added → pinned); each row shows 8 + a Show-all tile opening the full list on the dedicated `/offers` page (12 per batch with skeletons, view + store dropdowns in a filter bar, trial limit shared)
+- Offers carousels — live on-offer items plus Popular right now (all pinned products ranked by pin count, `n pins` badge) in two snap rows with square tiles and one-tap Pin to watchlist (spinner → green Added → pinned); each row shows 8 + a Show-all tile opening the full list on the dedicated `/offers` page (12 per batch with skeletons, view + store dropdowns + product search in a filter bar, trial limit shared)
 
 ### Watchlist
 - Pin any product, on offer or not; infinite scroll (12 per batch, skeletons while appending)

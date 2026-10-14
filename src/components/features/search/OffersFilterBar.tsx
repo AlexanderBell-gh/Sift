@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layers, Store } from 'lucide-react';
+import { Layers, Search, Store, X } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { STORES } from '../../../lib/stores';
 import { useIsMobile } from '../../../hooks/useIsMobile';
@@ -41,10 +41,12 @@ const VIEW_OPTIONS = [
   { value: 'ending', label: 'Ending in 7 days' },
 ] as const;
 
-export default function OffersFilterBar({ view, selectedStores, onStoresChange }: {
+export default function OffersFilterBar({ view, selectedStores, onStoresChange, searchQuery, onSearchChange }: {
   view: OffersView;
   selectedStores: string[];
   onStoresChange: (stores: string[]) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }) {
   const navigate = useNavigate();
   const [openPanel, setOpenPanel] = useState<PanelKey>(null);
@@ -284,6 +286,32 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange }
                   );
                 })}
               </FilterPanel>
+            )}
+          </div>
+          <div className="watchlist-search" role="search">
+            <Search className="watchlist-search-icon" aria-hidden="true" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' && searchQuery) {
+                  onSearchChange('');
+                }
+              }}
+              placeholder="Search products…"
+              aria-label="Search offers"
+              className="watchlist-search-input"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search"
+                className="watchlist-search-clear"
+              >
+                <X size={14} />
+              </button>
             )}
           </div>
         </div>

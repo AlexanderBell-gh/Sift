@@ -1,5 +1,5 @@
-import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -67,11 +67,22 @@ function HomeRoute() {
   return token ? <SearchPage /> : <LandingPage />;
 }
 
+// SPA navigation keeps scroll position — reset to top on every route change
+// (e.g. search -> /offers show-all), including ?view switches.
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname, search]);
+  return null;
+}
+
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <RouteErrorBoundary>
+        <ScrollToTop />
         <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<HomeRoute />} />

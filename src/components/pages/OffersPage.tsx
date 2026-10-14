@@ -281,6 +281,7 @@ export default function OffersPage() {
   const [loading, setLoading] = useState(true);
   const [popularLoading, setPopularLoading] = useState(true);
   const [selectedStores, setSelectedStores] = useState<string[]>(loadStoredStores);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     localStorage.setItem(OFFERS_STORES_KEY, JSON.stringify(selectedStores));
@@ -314,6 +315,8 @@ export default function OffersPage() {
 
   const items = view === 'popular' ? popularDeals : view === 'ending' ? endingSoon : offers;
   const filtered = items.filter((d) => selectedStores.includes(d.store));
+  const q = searchQuery.trim().toLowerCase();
+  const queryFiltered = q ? filtered.filter((d) => d.product_name.toLowerCase().includes(q)) : filtered;
   const title = view === 'popular' ? 'Popular right now' : view === 'ending' ? 'Offers ending in 7 days' : 'All offers';
   const emptyText = view === 'popular' ? 'No popular items right now.' : 'No offers right now.';
   const pageLoading = loading || popularLoading;
@@ -323,24 +326,24 @@ export default function OffersPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <NavHeader staticNav />
-      <OffersFilterBar view={view} selectedStores={selectedStores} onStoresChange={setSelectedStores} />
+      <OffersFilterBar view={view} selectedStores={selectedStores} onStoresChange={setSelectedStores} searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       <main className="container offers-content pb-24">
         {isMobile ? (
           <Link to="/" className="btn-secondary mt-4" aria-label="Back to search">
             <ArrowLeft size={16} aria-hidden="true" />
-            Search
+            Back
           </Link>
         ) : (
           <Link to="/" className="nav-link mt-4 inline-flex items-center gap-1.5" aria-label="Back to search">
             <ArrowLeft size={14} aria-hidden="true" />
-            Search
+            Back
           </Link>
         )}
         <div className="offers-head mt-4">
           <h1 className="offers-title">
             {title}
-            {!pageLoading && filtered.length > 0 && (
-              <span className="offers-count">{filtered.length}</span>
+            {!pageLoading && queryFiltered.length > 0 && (
+              <span className="offers-count">{queryFiltered.length}</span>
             )}
           </h1>
         </div>
@@ -363,8 +366,18 @@ export default function OffersPage() {
                 </button>
               </div>
             </div>
+          ) : queryFiltered.length === 0 ? (
+            <div className="empty-state-box">
+              <p className="empty-state-title">No matches for “{searchQuery.trim()}”</p>
+              <p className="empty-state-desc">Try a different search.</p>
+              <div className="empty-state-cta-wrap">
+                <button type="button" className="btn-secondary" onClick={() => setSearchQuery('')}>
+                  Clear search
+                </button>
+              </div>
+            </div>
           ) : (
-            <OffersGrid viewKey={`${view}|${selectedStores.join(',')}`} items={filtered} limitReached={limitReached} onAdded={handleAdded} />
+            <OffersGrid viewKey={`${view}|${selectedStores.join(',')}|${q}`} items={queryFiltered} limitReached={limitReached} onAdded={handleAdded} />
           )}
         </div>
       </main>

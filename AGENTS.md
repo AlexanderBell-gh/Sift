@@ -12,7 +12,7 @@
 | Backend | Cloudflare Workers (plain JS, not TS) + D1 (SQLite) |
 | Auth | Custom JWT + Google OAuth + username/password |
 | Build | `tsc -b && vite build` → `dist/` |
-| Package mgr | pnpm 11, Node 24+ |
+| Package mgr | pnpm 12, Node 24+ |
 | CI/CD | GitHub Actions → Cloudflare Pages + Worker + D1 migrations |
 
 ## Commands
@@ -49,7 +49,7 @@ workers/migrations/   D1 SQL migrations (applied automatically on push to main)
 public/           Static assets — store logo PNGs, favicon, theme-init.js
 ```
 
-- Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /list, /admin, /settings, /privacy, /cookies, /about — landing stays eager, the rest are `React.lazy` behind one `Suspense` fallback). `/` is conditional (`HomeRoute`): `SearchPage` when signed in, `LandingPage` (`src/components/pages/LandingPage.tsx`) when guest. Scroll reveals via `src/hooks/useReveal.ts` (`useRevealRoot`, `[data-reveal]` → `is-visible`, once each)
+- Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /list, /offers, /admin, /settings, /privacy, /cookies, /about — landing stays eager, the rest are `React.lazy` behind one `Suspense` fallback). `/` is conditional (`HomeRoute`): `SearchPage` when signed in, `LandingPage` (`src/components/pages/LandingPage.tsx`) when guest. Scroll reveals via `src/hooks/useReveal.ts` (`useRevealRoot`, `[data-reveal]` → `is-visible`, once each)
 - Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer) + `workers/lib/validate.js` (username/password allowlists) — both plain JS, both with `*.test.js` coverage
 - DB schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog)
 - Shopping list: `/list` (`src/components/pages/ShoppingListPage.tsx`, account-synced quantities against watchlist rows) + multibuy pricing engine (`src/lib/pricing.ts`, frontend-only — server stores qty, prices read live from watchlist, same-tag sets pool across lines)
@@ -86,7 +86,7 @@ rtk git diff --cached             # staged changes
 
 ## CORS
 
-Allowed origins are hardcoded in `workers/index.js`: `https://siftsearch.pages.dev`, `http://localhost:5173`, `http://localhost:3000`. If adding a new dev port or staging domain, update `ALLOWED_ORIGINS` there.
+Allowed origins are hardcoded in `workers/index.js` (`ALLOWED_ORIGINS`): `https://siftsearch.pages.dev`, `http://localhost:5173`, `http://localhost:3000`, plus LAN `http://192.168.1.70:5173` for on-device dev (DHCP may reassign — update when it changes). If adding a new dev port or staging domain, update `ALLOWED_ORIGINS` there.
 
 ## Frontend Guidelines
 

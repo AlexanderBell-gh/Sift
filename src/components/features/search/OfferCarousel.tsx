@@ -77,7 +77,7 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, vi
         </div>
         <div
           ref={trackRef}
-          className="offers-track"
+          className={`offers-track${canPrev ? ' is-scrolled' : ''}${canNext ? ' has-more' : ''}`}
           role="list"
           aria-label={`${title} carousel`}
           onScroll={updateArrows}
