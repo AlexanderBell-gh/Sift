@@ -1185,6 +1185,45 @@ async function handleRequest(request, env) {
     }
   }
 
+  if (path === '/api/popular' && method === 'GET') {
+    try {
+      const auth = await requireAuth(request, env);
+      if (!auth?.userId) return auth;
+       const rows = await queryAll(
+        env,
+        `SELECT product_id, product_name, store, store_logo, image_url, normal_price, loyalty_price, unit_price, currency, loyalty_type, category, is_on_offer, offer_expires_at, offer_deal, product_url, COUNT(*) as pins
+          FROM watchlist
+          WHERE product_id IS NOT NULL AND product_id != ''
+          GROUP BY product_id
+          ORDER BY pins DESC, product_id
+          LIMIT 200`
+      );
+      return jsonResponse(rows.map(r => ({
+        product_id: r.product_id,
+        product_name: r.product_name,
+        store: r.store,
+        store_logo: r.store_logo,
+        image_url: r.image_url,
+        prices: {
+          normal: r.normal_price,
+          loyalty: r.loyalty_price,
+          unit_price: r.unit_price,
+          currency: r.currency,
+        },
+        loyalty_type: r.loyalty_type,
+        category: r.category,
+        is_on_offer: !!r.is_on_offer,
+        offer_expires_at: r.offer_expires_at,
+        offer_deal: r.offer_deal,
+        product_url: r.product_url,
+        pins: Number(r.pins) || 0,
+      })), request);
+    } catch (e) {
+      console.error('Popular error:', e);
+      return errorResponse('Failed to fetch popular items', request);
+    }
+  }
+
   if (path === '/api/watchlist/ids' && method === 'GET') {
     const auth = await requireAuth(request, env);
     if (!auth?.userId) return auth;

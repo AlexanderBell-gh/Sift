@@ -124,6 +124,11 @@ export function OfferTile({ deal, limitReached, onAdded }: {
             {days <= 7 ? `Ends in ${days}d · ` : ''}{formatDate(deal.offer_expires_at)}
           </span>
         )}
+        {deal.pins != null && (
+          <span className="offer-pins">
+            {deal.pins} pin{deal.pins === 1 ? '' : 's'}
+          </span>
+        )}
       </div>
       {token && (
         <div className="offer-tile-foot">

@@ -5,6 +5,7 @@ import { Loader2, Download, Shield, Key, FileDown, AlertTriangle, Cookie } from 
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import NavHeader from '../layout/NavHeader';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { updatePassword, updateProfile, deleteAccount, getWatchlist } from '../../lib/api';
 import type { WatchlistItem } from '../../types';
 
@@ -17,6 +18,9 @@ export default function SettingsPage() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  // Desktop uses inline confirm; mobile keeps the slide-up sheet.
+  const isMobile = useIsMobile();
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
   const [passwordError, setPasswordError] = useState('');
   const [deleteError, setDeleteError] = useState('');
@@ -388,9 +392,52 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="mt-2">
-              <button className="btn-danger" onClick={() => setIsDeleteModalOpen(true)}>
+              <button
+                className="btn-danger"
+                onClick={() => {
+                  if (isMobile) {
+                    setIsDeleteModalOpen(true);
+                  } else {
+                    setDeleteError('');
+                    setIsConfirming((v) => !v);
+                  }
+                }}
+                aria-expanded={!isMobile ? isConfirming : undefined}
+              >
                 Delete Account
               </button>
+              {!isMobile && isConfirming && (
+                <div className="mt-4 space-y-4">
+                  <p className="settings-hint">
+                    This will permanently delete your account, watchlist, and all associated data. This action cannot be undone.
+                  </p>
+                  {!isTrial && !user?.googleId && (
+                    <Input
+                      label="Password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={deletePassword}
+                      onChange={e => { setDeletePassword(e.target.value); setDeleteError(''); }}
+                      required
+                      error={deleteError}
+                    />
+                  )}
+                  {deleteError && (isTrial || user?.googleId) && (
+                    <div className="alert-error" role="alert">{deleteError}</div>
+                  )}
+                  <div className="flex gap-3">
+                    <button
+                      className="btn-secondary btn-flex"
+                      onClick={() => { setIsConfirming(false); setDeleteError(''); }}
+                    >
+                      Cancel
+                    </button>
+                    <button className="btn-danger btn-flex" onClick={handleDeleteAccount} disabled={isLoading}>
+                      {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Delete Account'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         </div>

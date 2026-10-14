@@ -129,10 +129,18 @@ export interface DealOffer {
   offer_expires_at: string | null;
   offer_deal: string | null;
   product_url: string;
+  pins?: number;
 }
 
 export async function getDealOffers(token: string): Promise<DealOffer[]> {
   const response = await fetch(`${API_BASE}/api/deal-offers`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse<DealOffer[]>(response);
+}
+
+export async function getPopular(token: string): Promise<DealOffer[]> {
+  const response = await fetch(`${API_BASE}/api/popular`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse<DealOffer[]>(response);

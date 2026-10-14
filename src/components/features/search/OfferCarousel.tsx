@@ -1,23 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { DealOffer } from '../../../lib/api';
 import { OfferTile, OfferTileSkeleton } from './OfferTile';
-import { OffersModal } from './OffersModal';
 
 export const CAROUSEL_VISIBLE_COUNT = 8;
 
-export function OfferCarousel({ title, items, loading, limitReached, onAdded, modalTitle }: {
+export function OfferCarousel({ title, items, loading, limitReached, onAdded, view }: {
   title: string;
   items: DealOffer[];
   loading: boolean;
   limitReached: boolean;
   onAdded: () => void;
-  modalTitle: string;
+  view: 'all' | 'ending' | 'popular';
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
 
   const updateArrows = useCallback(() => {
     const track = trackRef.current;
@@ -95,10 +94,9 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, mo
                 </div>
               ))}
               {showAllTile && (
-                <button
-                  type="button"
+                <Link
+                  to={`/offers?view=${view}`}
                   className="offers-show-all"
-                  onClick={() => setModalOpen(true)}
                   aria-label={`Show all ${items.length} ${title.toLowerCase()}`}
                 >
                   <span className="offers-show-all-icon" aria-hidden="true">
@@ -106,21 +104,12 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, mo
                   </span>
                   <span className="offers-show-all-text">Show all</span>
                   <span className="offers-show-all-count">{items.length} items</span>
-                </button>
+                </Link>
               )}
             </>
           )}
         </div>
       </div>
-      <OffersModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={modalTitle}
-        items={items}
-        loading={loading}
-        limitReached={limitReached}
-        onAdded={onAdded}
-      />
     </section>
   );
 }

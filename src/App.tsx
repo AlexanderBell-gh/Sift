@@ -15,6 +15,7 @@ const SearchPage = lazy(() => import('./components/pages/SearchPage'));
 const AuthPage = lazy(() => import('./components/pages/AuthPage'));
 const WatchlistPage = lazy(() => import('./components/pages/WatchlistPage'));
 const ShoppingListPage = lazy(() => import('./components/pages/ShoppingListPage'));
+const OffersPage = lazy(() => import('./components/pages/OffersPage'));
 const AdminPage = lazy(() => import('./components/pages/AdminPage'));
 const SettingsPage = lazy(() => import('./components/pages/SettingsPage'));
 const PrivacyPage = lazy(() =>
@@ -78,6 +79,7 @@ function App() {
           <Route path="/search" element={<Navigate to="/" replace />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
           <Route path="/list" element={<ShoppingListPage />} />
+          <Route path="/offers" element={<OffersPage />} />
           <Route
             path="/admin"
             element={

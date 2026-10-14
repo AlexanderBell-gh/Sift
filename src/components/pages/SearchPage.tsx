@@ -7,6 +7,7 @@ import { getHistory, addSearch, clearHistory } from '../../lib/searchHistory';
 import NavHeader from '../layout/NavHeader';
 import { StoreSelect, MAX_STORES } from '../ui/StoreSelect';
 import { OffersSection } from '../features/search/OffersSection';
+import { PopularSection } from '../features/search/PopularSection';
 import { STORES } from '../../lib/stores';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -531,6 +532,7 @@ export default function SearchPage() {
       )}
 
       <OffersSection />
+      <PopularSection />
     </div>
   );
 }
