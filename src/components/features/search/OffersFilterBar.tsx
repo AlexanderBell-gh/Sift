@@ -39,7 +39,6 @@ export type OffersView = 'all' | 'ending' | 'popular';
 const VIEW_OPTIONS = [
   { value: 'all', label: 'All offers' },
   { value: 'ending', label: 'Ending in 7 days' },
-  { value: 'popular', label: 'Popular right now' },
 ] as const;
 
 export default function OffersFilterBar({ view, selectedStores, onStoresChange }: {
@@ -226,7 +225,7 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange }
     </>
   );
 
-  function selectView(next: 'all' | 'ending' | 'popular') {
+  function selectView(next: 'all' | 'ending') {
     // Content swaps underneath, so close instantly with no exit slide.
     setOpenPanel(null);
     setIsClosing(false);
@@ -238,27 +237,29 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange }
       {openPanel !== null && <div className={cn('filter-panel-backdrop', isClosing && 'is-closing')} onClick={closePanel} />}
       <div className="filter-nav-inner">
         <div className="filter-bar">
-          <div className="filter-group">
-            <FilterTrigger
-              icon={Layers}
-              label={viewLabel}
-              active={false}
-              expanded={openPanel === 'view'}
-              onClick={() => togglePanel('view')}
-            />
-            {openPanel === 'view' && (
-              <FilterPanel title="View" closing={isClosing}>
-                {VIEW_OPTIONS.map(opt => (
-                  <FilterOption
-                    key={opt.value}
-                    selected={view === opt.value}
-                    onClick={() => selectView(opt.value)}
-                    label={opt.label}
-                  />
-                ))}
-              </FilterPanel>
-            )}
-          </div>
+          {view !== 'popular' && (
+            <div className="filter-group">
+              <FilterTrigger
+                icon={Layers}
+                label={viewLabel}
+                active={false}
+                expanded={openPanel === 'view'}
+                onClick={() => togglePanel('view')}
+              />
+              {openPanel === 'view' && (
+                <FilterPanel title="View" closing={isClosing}>
+                  {VIEW_OPTIONS.map(opt => (
+                    <FilterOption
+                      key={opt.value}
+                      selected={view === opt.value}
+                      onClick={() => selectView(opt.value)}
+                      label={opt.label}
+                    />
+                  ))}
+                </FilterPanel>
+              )}
+            </div>
+          )}
           <div className="filter-group">
             <FilterTrigger
               icon={Store}
