@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
-function LegalLayout({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
+function LegalLayout({ title, updated, children }: { title: string; updated?: string; children: React.ReactNode }) {
   return (
     <div className="page-shell">
       <div className="container legal-wrap">
@@ -11,7 +11,7 @@ function LegalLayout({ title, updated, children }: { title: string; updated: str
         </Link>
         <article className="legal-card">
           <h1 className="legal-title">{title}</h1>
-          <p className="legal-updated">Last updated {updated}</p>
+          {updated ? <p className="legal-updated">Last updated {updated}</p> : null}
           {children}
         </article>
       </div>
@@ -42,8 +42,52 @@ export function AboutPage() {
       <h2>Where listings come from</h2>
       <p>
         Product details come from public UK supermarket listings via search
-        and the Sift browser extension. Sift never sees your supermarket
-        logins or payment details.
+        and the Sift browser extension.
+      </p>
+      <h2>Contact</h2>
+      <p>
+        Questions or problems with your account? Email{' '}
+        <a href="mailto:contact@alex-bell.uk">contact@alex-bell.uk</a>.
+      </p>
+    </LegalLayout>
+  );
+}
+
+export function TermsPage() {
+  return (
+    <LegalLayout title="Terms of use" updated="October 2026">
+      <p>
+        Sift is a UK grocery tracker for personal use. By creating an account
+        or starting a trial, you agree to these terms.
+      </p>
+      <h2>Accounts and trials</h2>
+      <p>
+        Trial accounts last 24 hours with a 5-item watchlist limit and expire
+        automatically. Registered accounts are free. Deleting your account
+        and data is covered in the <Link to="/privacy">privacy policy</Link>.
+      </p>
+      <h2>Acceptable use</h2>
+      <p>
+        Use Sift for tracking your own groceries. Don&apos;t misuse the
+        service, attempt to disrupt it, or scrape it at a scale that degrades
+        it for others.
+      </p>
+      <h2>Prices and availability</h2>
+      <p>
+        Prices, availability, and Sift&apos;s independence from supermarkets
+        are described on the <Link to="/about">About page</Link>.
+      </p>
+      <h2>Liability</h2>
+      <p>
+        Sift is provided &ldquo;as is&rdquo;, without warranties. Sift is not
+        liable for pricing errors, missed offers, or expired deals in your
+        list. See the <Link to="/license">MIT License</Link> for the full
+        disclaimer.
+      </p>
+      <h2>Changes</h2>
+      <p>
+        These terms may change; material changes will be noted here with a new
+        update date. Continued use after a change means you accept it.
       </p>
     </LegalLayout>
   );
@@ -67,27 +111,15 @@ export function PrivacyPage() {
       <h2>Your groceries</h2>
       <p>
         Sift stores the products you pin to your watchlist, your shopping-list
-        quantities, and your offer-end alerts. Product details come from public
-        UK supermarket listings. Sift never sees your supermarket logins or
-        payment details.
+        quantities, and your offer-end alerts. Sift never sees your supermarket
+        logins or payment details.
       </p>
       <h2>Stored in your browser</h2>
-      <p>Sift keeps four items in your browser&apos;s local storage:</p>
-      <ul>
-        <li>
-          <code>auth_token</code> — keeps you signed in.
-        </li>
-        <li>
-          <code>sift_theme</code> — remembers your light or dark mode choice.
-        </li>
-        <li>
-          <code>sift-selected-stores</code> — remembers your search store
-          picks.
-        </li>
-        <li>
-          <code>cookie_consent</code> — remembers you saw the cookie notice.
-        </li>
-      </ul>
+      <p>
+        Sift keeps a few items in your browser&apos;s local storage (sign-in
+        session, theme, store picks, cookie notice) — see the{' '}
+        <Link to="/cookies">cookie policy</Link> for the full list.
+      </p>
       <p>
         Clearing your browser storage signs you out and resets these choices.
         See the <Link to="/cookies">cookie policy</Link> for more detail.
@@ -139,6 +171,38 @@ export function CookiesPage() {
         Use the Cookie settings link in the footer to reopen the cookie notice
         at any time. Clearing your browser storage removes all four items and
         signs you out.
+      </p>
+    </LegalLayout>
+  );
+}
+
+// Mirrors the repo LICENSE file (source of truth) — update both together.
+export function LicensePage() {
+  return (
+    <LegalLayout title="MIT License">
+      <p>Copyright (c) 2026 AlexanderBell-gh</p>
+      <p>
+        Permission is hereby granted, free of charge, to any person obtaining
+        a copy of this software and associated documentation files (the
+        &ldquo;Software&rdquo;), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
+      </p>
+      <p>
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
+      </p>
+      <p>
+        THE SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo;, WITHOUT WARRANTY OF ANY
+        KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+        OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+        NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+        BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+        ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+        CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
       </p>
     </LegalLayout>
   );

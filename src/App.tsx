@@ -24,8 +24,14 @@ const PrivacyPage = lazy(() =>
 const CookiesPage = lazy(() =>
   import('./components/pages/LegalPages').then(m => ({ default: m.CookiesPage }))
 );
+const TermsPage = lazy(() =>
+  import('./components/pages/LegalPages').then(m => ({ default: m.TermsPage }))
+);
 const AboutPage = lazy(() =>
   import('./components/pages/LegalPages').then(m => ({ default: m.AboutPage }))
+);
+const LicensePage = lazy(() =>
+  import('./components/pages/LegalPages').then(m => ({ default: m.LicensePage }))
 );
 
 function RouteFallback() {
@@ -102,7 +108,9 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/cookies" element={<CookiesPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/license" element={<LicensePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>

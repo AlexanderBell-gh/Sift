@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone, Check } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
@@ -9,8 +10,6 @@ import {
   ExtensionVisual,
   ListVisual,
 } from '../features/landing/LandingVisuals';
-
-const YEAR = new Date().getFullYear();
 
 // Width at the 41px strip height, from each SVG viewBox ratio.
 // Reserves exact space so the scrolling track never shifts as logos load.
@@ -71,10 +70,23 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { isDark, toggle } = useTheme();
   const revealRoot = useRevealRoot<HTMLDivElement>();
+  const [navSolid, setNavSolid] = useState(false);
+
+  // Transparent nav over the hero, morphs to the solid bar once scrolling
+  // begins. Small threshold so overscroll bounce never flickers it.
+  useEffect(() => {
+    function update() {
+      const solid = window.scrollY > 8;
+      setNavSolid((prev) => (prev === solid ? prev : solid));
+    }
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
 
   return (
     <div className="page-shell" ref={revealRoot}>
-      <nav className="nav">
+      <nav className={`nav nav-landing${navSolid ? ' is-solid' : ''}`}>
         <div className="container nav-inner">
           <div className="nav-cluster">
             <a href="/" className="logo">
@@ -219,15 +231,42 @@ export default function LandingPage() {
       </p>
 
       <footer className="landing-footer">
-        <div className="container landing-footer-inner">
-          <p className="landing-footer-brand">Sift — UK Grocery Tracker</p>
+        <div className="container">
+          <div className="landing-footer-inner">
+          <div className="landing-footer-left">
+            <div className="logo">
+              <div className="logo-mark">
+                <div className="logo-tag"></div>
+                <div className="logo-scan-line"></div>
+              </div>
+              <div className="logo-text">Sift</div>
+            </div>
+            {/* Version mirrors package.json — bump together. */}
+            <p className="landing-footer-meta">
+              <span className="landing-footer-eyebrow">
+                <span className="landing-hero-dot" aria-hidden="true" />
+                Open source
+              </span>
+              <span className="landing-footer-version">v1.0.0</span>
+            </p>
+            <a
+              className="landing-footer-gh"
+              href="https://github.com/AlexanderBell-gh/Sift"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Sift on GitHub"
+            >
+              <svg viewBox="0 0 24 24" className="icon-md" fill="currentColor" aria-hidden="true">
+                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+              </svg>
+            </a>
+          </div>
           <nav className="landing-footer-links" aria-label="Legal">
             <Link to="/privacy">Privacy</Link>
-            <span aria-hidden="true">·</span>
+            <Link to="/terms">Terms</Link>
             <Link to="/cookies">Cookies</Link>
-            <span aria-hidden="true">·</span>
             <Link to="/about">About</Link>
-            <span aria-hidden="true">·</span>
+            <Link to="/license">License</Link>
             <button
               type="button"
               className="landing-footer-btn"
@@ -235,12 +274,12 @@ export default function LandingPage() {
             >
               Cookie settings
             </button>
-            <span aria-hidden="true">·</span>
-            <button type="button" className="landing-footer-btn" onClick={() => navigate('/auth')}>
-              Sign in
-            </button>
           </nav>
-          <p className="landing-footer-copy">© {YEAR} Sift</p>
+          </div>
+          <div className="landing-footer-bottom">
+            <Link to="/license" className="landing-footer-mit">MIT License</Link>
+            <p className="landing-footer-built">Built with <a href="https://react.dev" target="_blank" rel="noreferrer">React</a> + <a href="https://vite.dev" target="_blank" rel="noreferrer">Vite</a> · Deployed on <a href="https://cloudflare.com" target="_blank" rel="noreferrer">Cloudflare</a></p>
+          </div>
         </div>
       </footer>
     </div>

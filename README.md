@@ -50,7 +50,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 - Trial gating — 24h / 5 watchlist items, enforced server-side; rate-limited auth endpoints
 - Google accounts sign in without a password — Settings greys out Change Password, locks email, and allows username edits; username changes are limited to one per 20 minutes per user (email changes one per day)
 - Extension SSO — website hands its token to the Chrome extension, no double sign-in
-- Privacy, cookie, and about pages (`/privacy`, `/cookies`, `/about`) linked from the landing footer, which also re-opens the cookie notice via Cookie settings
+- Privacy, terms, cookie, about, and license pages (`/privacy`, `/terms`, `/cookies`, `/about`, `/license`) linked from the landing footer, which also re-opens the cookie notice via Cookie settings
 
 ### Admin & Mobile
 - Dashboard, user management, audit logs, trial management behind an admin-only guard (403 + 404 pages, error boundary)
