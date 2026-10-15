@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-7-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Cloudflare-Workers_%2B_D1-F38020?logo=cloudflare&logoColor=white" alt="Cloudflare Workers + D1" />
-  <img src="https://img.shields.io/badge/pnpm-11-F69220?logo=pnpm&logoColor=white" alt="pnpm 11" />
+  <img src="https://img.shields.io/badge/pnpm-12-F69220?logo=pnpm&logoColor=white" alt="pnpm 12" />
   <img src="https://img.shields.io/badge/License-MIT-16A34A" alt="MIT license" />
 </p>
 
@@ -65,7 +65,7 @@ pnpm sift install
 pnpm sift dev          # Vite on :5173
 ```
 
-Prerequisites: Node.js 24+, pnpm 11+, Cloudflare account. Local dev needs `VITE_GOOGLE_CLIENT_ID` in `.env` (gitignored — see `.env.example`); it must match the Worker's `GOOGLE_CLIENT_ID` secret.
+Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_GOOGLE_CLIENT_ID` in `.env` (gitignored — see `.env.example`); it must match the Worker's `GOOGLE_CLIENT_ID` secret.
 
 ## Commands
 

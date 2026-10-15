@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield } from 'lucide-react';
+import { LogIn, LogOut, ArrowLeft, Sun, Moon, Settings, Shield, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -126,6 +126,8 @@ export default function NavHeader({ title = 'Sift', showBack = false, staticNav 
 
           {!isMobile && <AlertBell />}
 
+          {token && !isMobile && <span className="nav-divider" aria-hidden="true" />}
+
           {!token && (
           <button
             onClick={toggle}
@@ -138,13 +140,11 @@ export default function NavHeader({ title = 'Sift', showBack = false, staticNav 
 
           {token ? (
             <div className="relative">
-              <button onClick={toggleMenu} className="user-menu-wrapper">
+              <button onClick={toggleMenu} className={`user-menu-wrapper${menuOpen ? ' is-open' : ''}`} aria-haspopup="menu" aria-expanded={menuOpen}>
                 {isTrial && <span className="trial-nav-indicator active">TRIAL ACTIVE</span>}
                 <div className="user-avatar">{avatarText}</div>
                 <span className="user-name hidden sm:inline">{displayName}</span>
-                <svg className={`dropdown-arrow transition-transform duration-150 ${menuOpen ? 'rotate-180' : ''}`} viewBox="0 0 10 10" fill="currentColor" width="8" height="8">
-                  <path d="M5 7L0 2h10z" />
-                </svg>
+                <ChevronDown className={`icon-sm dropdown-arrow transition-transform duration-150 ${menuOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
 
               {menuOpen && (isMobile ? createPortal(

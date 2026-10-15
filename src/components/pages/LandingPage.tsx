@@ -43,7 +43,7 @@ const FEATURES = [
   {
     icon: Bookmark,
     title: 'Pin to your watchlist',
-    desc: 'Save the products you buy, with normal and loyalty prices side by side plus offer end dates and multi-buy terms — one tap into your shopping list.',
+    desc: 'Pin from the extension on any store page, or straight from Offers and Popular right now — loyalty prices, end dates and multi-buy terms tracked, one tap into your shopping list.',
     Visual: PinVisual,
   },
   {
@@ -62,7 +62,7 @@ const FEATURES = [
 
 const STEPS = [
   { n: '01', title: 'Create your account', desc: 'Sign up free, or start a no-signup trial in one click.', mod: 'landing-step--a' },
-  { n: '02', title: 'Pin your staples', desc: 'Search or use the extension to add the products you actually buy.', mod: 'landing-step--b' },
+  { n: '02', title: 'Pin your staples', desc: 'Search, use the extension, or pin straight from Offers and Popular right now.', mod: 'landing-step--b' },
   { n: '03', title: 'Shop from one list', desc: 'Add watchlist items in quantities and shop per-store totals with multibuy savings applied — the whole shop in one place.', mod: 'landing-step--c' },
 ];
 
@@ -120,8 +120,8 @@ export default function LandingPage() {
       <section className="hero">
         <div className="container">
           <p className="landing-hero-eyebrow">
-            <span className="landing-hero-dot" aria-hidden="true" />
-            Free UK grocery tracker
+            <Smartphone className="icon-sm" aria-hidden="true" />
+            Android app coming soon
           </p>
           <h1 className="landing-hero-title">
             One list for the whole shop.
@@ -208,27 +208,22 @@ export default function LandingPage() {
               <LogIn className="icon-sm" />
             </button>
             <ul className="landing-cta-trust" aria-label="Why join free">
-              <li className="landing-cta-trust--a">
+              <li>
                 <Check className="icon-sm" aria-hidden="true" />
                 Free to join
               </li>
-              <li className="landing-cta-trust--b">
+              <li>
                 <Check className="icon-sm" aria-hidden="true" />
                 Easy to use
               </li>
-              <li className="landing-cta-trust--c">
+              <li>
                 <Check className="icon-sm" aria-hidden="true" />
-                Try before Registering
+                Try before you register
               </li>
             </ul>
           </div>
         </div>
       </section>
-
-      <p className="landing-app-strip" data-reveal>
-        <Smartphone className="icon-sm" aria-hidden="true" />
-        Android app coming soon
-      </p>
 
       <footer className="landing-footer">
         <div className="container">
@@ -266,7 +261,6 @@ export default function LandingPage() {
             <Link to="/terms">Terms</Link>
             <Link to="/cookies">Cookies</Link>
             <Link to="/about">About</Link>
-            <Link to="/license">License</Link>
             <button
               type="button"
               className="landing-footer-btn"
