@@ -74,7 +74,7 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift dev` | Vite dev server (no CSP, HMR works) |
 | `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
 | `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
-| `pnpm sift test [file]` | Worker unit tests — `node --test workers/lib/*.test.js`, zero-dep |
+| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
 | `pnpm sift --help` | Full CLI: run steps, doctor, gate, db, admin, watchlist reads |

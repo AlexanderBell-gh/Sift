@@ -21,14 +21,14 @@
 rtk pnpm sift dev         # Vite dev server (port 5173, extra args forwarded)
 rtk pnpm sift build       # tsc -b (type-check) then vite build → dist/
 rtk pnpm sift lint        # oxlint .oxlintrc.json (94 rules, replaces eslint)
-rtk pnpm sift test        # node --test workers/lib/*.test.js (zero-dep, no framework)
+rtk pnpm sift test        # node --test workers/lib/*.test.js src/lib/*.test.ts (zero-dep, no framework)
 rtk pnpm sift audit       # audit --audit-level=high (CI gate)
 rtk pnpm sift --help      # full ops CLI: run steps, doctor, gate, db, admin, watchlist (never deploys)
 ```
 
 All commands run through the CLI (`bin/sift.mjs`, extra args forwarded: `pnpm sift test <file>`). CI calls the same CLI steps. Raw `pnpm run X` still works but docs use the CLI.
 
-**No test framework exists.** The tests are `workers/lib/category.test.js` (category scorer) + `workers/lib/validate.test.js` (username/password allowlists) + `workers/lib/resolve.test.js` (import-resolve matching), run via `pnpm sift test`. There are no test configs or frontend test files - use `node` not `python3`.
+**No test framework exists.** Worker pure logic lives in `workers/lib/category.test.js` (category scorer) + `workers/lib/validate.test.js` (username/password allowlists) + `workers/lib/resolve.test.js` (import-resolve matching); frontend pure logic in `src/lib/pricing.test.ts` (multibuy engine) + `src/lib/utils.test.ts` (date/deal helpers) — all run via `pnpm sift test` (node strips types natively, so keep test files free of enums/namespaces). There are no other test configs or component test files - use `node` not `python3`.
 
 ## Verify before committing
 
@@ -64,6 +64,7 @@ public/           Static assets — store logo PNGs, favicon, theme-init.js
 - **Positioning** — Sift is a UK supermarket grocery tracker (search → watchlist → shopping list), not an offer-only tool. Pins need not be on offer; never write copy that assumes a discount.
 - **Migrations auto-apply on push to main** via CI. To create a new migration, add a numbered `.sql` file to `workers/migrations/` (e.g. `0010_your_change.sql`). Update `workers/schema.sql` to match.
 - **D1 does not enforce FOREIGN KEY cascades.** Delete dependent rows explicitly (e.g. watchlist DELETE also clears `shopping_list` + `alerts` rows).
+- **Staged removals must flush on `pagehide`.** React never runs unmount cleanups on refresh/close-tab, so staged watchlist/shopping-list removals commit through a `pagehide` listener with `keepalive` fetches (`removeFromWatchlist`, `setShoppingListQty` carry it). Never rely on unmount alone for unload paths.
 - **Rate limits** are enforced server-side on auth endpoints. Don't remove them.
 - **Trial gating** — max 5 watchlist items, 24h expiry, enforced server-side on `POST /api/watchlist`.
 - **Google OAuth** requires `VITE_GOOGLE_CLIENT_ID` (frontend env) and `GOOGLE_CLIENT_ID` (Worker secret). Both must match.
