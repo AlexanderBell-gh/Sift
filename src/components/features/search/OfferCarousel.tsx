@@ -45,7 +45,7 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, vi
   const showAllTile = !loading && items.length > CAROUSEL_VISIBLE_COUNT;
 
   return (
-    <section className="offers-section" aria-label={title}>
+    <section className="offers-section" aria-label={title} aria-busy={loading || undefined}>
       <div className="offers-container">
         <div className="offers-head">
           <h2 className="offers-title">
@@ -59,7 +59,7 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, vi
               type="button"
               className="offers-arrow"
               onClick={() => scrollByDir(-1)}
-              disabled={!canPrev}
+              disabled={loading || !canPrev}
               aria-label={`Scroll ${title} left`}
             >
               <ChevronLeft size={18} aria-hidden="true" />
@@ -68,7 +68,7 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, vi
               type="button"
               className="offers-arrow"
               onClick={() => scrollByDir(1)}
-              disabled={!canNext}
+              disabled={loading || !canNext}
               aria-label={`Scroll ${title} right`}
             >
               <ChevronRight size={18} aria-hidden="true" />
@@ -77,14 +77,16 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, vi
         </div>
         <div
           ref={trackRef}
-          className={`offers-track${canPrev ? ' is-scrolled' : ''}${canNext ? ' has-more' : ''}`}
+          className={`offers-track${!loading && canPrev ? ' is-scrolled' : ''}${!loading && canNext ? ' has-more' : ''}`}
           role="list"
-          aria-label={`${title} carousel`}
+          aria-label={loading ? `${title} (loading)` : `${title} carousel`}
           onScroll={updateArrows}
         >
           {loading ? (
             Array.from({ length: CAROUSEL_VISIBLE_COUNT }).map((_, i) => (
-              <OfferTileSkeleton key={i} />
+              <div key={i} className="offers-snap" aria-hidden="true">
+                <OfferTileSkeleton />
+              </div>
             ))
           ) : (
             <>
