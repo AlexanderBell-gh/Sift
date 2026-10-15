@@ -33,7 +33,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 - Pin any product, on offer or not; infinite scroll (12 per batch, skeletons while appending)
 - Removal stages inline with Undo (no timer); deletion commits on filter change or page leave
 - Status facet inside the Sort & status dropdown: All / Offers / Regular Price / Expired, with counts — combinable with price sorting; All keeps insertion order (newest first)
-- Worker-owned category taxonomy scores every pin server-side (preview + admin rescore tools)
+- Worker-owned category taxonomy scores every pin server-side at add time
 - Live trial banner (X of 5 items + progress bar)
 
 ### Shopping List
@@ -81,7 +81,7 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 
 Build code-splits for first paint: the guest landing chunk stays eager while all other routes lazy-load, with React vendored into its own cached chunk.
 
-**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test, and CI calls the same CLI steps). `db migrate|status|query|users` wraps wrangler D1; `admin stats|users|trials|audit|trials-cleanup|user-role|user-delete|rescore|category|resolve` and `watchlist names|offers` wrap the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
+**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test, and CI calls the same CLI steps). `db migrate|status|query|users` wraps wrangler D1; `admin stats|users|trials|audit|trials-cleanup|user-role|user-delete|resolve` and `watchlist names|offers` wrap the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
 
 ## Deploy
 
@@ -122,7 +122,7 @@ pnpm exec wrangler d1 migrations apply sift --remote
 <details>
 <summary><strong>Category taxonomy</strong></summary>
 
-`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). Pipeline: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals. v3 vocab is title-first and singular-only (plural folding double-counted ties); the frozen veto reads leaf/JSON-LD only and `do not refreeze` is treated as freezable-at-home copy. Preview via `POST /api/category/score`, bulk upgrades via `POST /api/admin/watchlist/rescore` (dry-run default), health on the admin dashboard.
+`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). Pipeline: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals. v3 vocab is title-first and singular-only (plural folding double-counted ties); the frozen veto reads leaf/JSON-LD only and `do not refreeze` is treated as freezable-at-home copy. Scoring runs inline on watchlist add; coverage is locked by `workers/lib/category.test.js` (`node --test`).
 
 </details>
 

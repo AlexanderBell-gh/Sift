@@ -16,7 +16,7 @@ import {
   base64UrlDecode,
 } from './auth.js';
 import { queryAll, queryOne, execute } from './db.js';
-import { scoreCategory, clampLegacyCategory, TAXONOMY_VERSION } from './lib/category.js';
+import { scoreCategory, clampLegacyCategory } from './lib/category.js';
 import { isValidUsername, isValidPassword, USERNAME_ERROR, PASSWORD_ERROR } from './lib/validate.js';
 import { validateResolveInput, pickBestRow, toInheritedFacts, emptyFacts } from './lib/resolve.js';
 
@@ -848,14 +848,6 @@ async function handleRequest(request, env) {
     const recentSignups = (await queryOne(env, 'SELECT COUNT(*) as c FROM users WHERE created_at >= ?', [weekAgo]))?.c || 0;
     const trackedStores = (await queryOne(env, 'SELECT COUNT(DISTINCT store) as c FROM watchlist WHERE store IS NOT NULL'))?.c || 0;
 
-    // Taxonomy health for the dashboard card: version histogram, honest-Other
-    // count, and pre-v3 rows awaiting rescore. Aggregate counts only, no PII.
-    const versionRows = await queryAll(env, 'SELECT taxonomy_version as v, COUNT(*) as c FROM watchlist GROUP BY taxonomy_version');
-    const byVersion = {};
-    for (const r of versionRows || []) byVersion[String(r.v ?? 0)] = r.c || 0;
-    const otherCount = (await queryOne(env, "SELECT COUNT(*) as c FROM watchlist WHERE category = 'Other'"))?.c || 0;
-    const staleCount = (await queryOne(env, 'SELECT COUNT(*) as c FROM watchlist WHERE taxonomy_version < 3 OR taxonomy_version IS NULL'))?.c || 0;
-
     return jsonResponse({
       totalUsers: userStats?.total || 0,
       regularUsers: userStats?.regular || 0,
@@ -863,7 +855,6 @@ async function handleRequest(request, env) {
       totalProducts: watchlistCount,
       recentSignups7d: recentSignups,
       trackedStores,
-      taxonomy: { byVersion, otherCount, staleCount, version: TAXONOMY_VERSION },
     }, request);
   }
 
@@ -1283,35 +1274,7 @@ async function handleRequest(request, env) {
     }
   }
 
-  // ===== CATEGORY (phone-app preview + taxonomy upgrades) =====
-
-  // Phone apps score title/brand/store without pinning. Authed so the
-  // unknown-bucket log cannot be probed anonymously.
-  if (path === '/api/category/score' && method === 'POST') {
-    const auth = await requireAuth(request, env);
-    if (!auth?.userId) return auth;
-
-    try {
-      const body = await request.json();
-      const title = typeof body.title === 'string' ? body.title.slice(0, 200) : '';
-      if (!title.trim()) return errorResponse('Title is required', request);
-      const brand = typeof body.brand === 'string' ? body.brand.slice(0, 100) : '';
-      const store = typeof body.store_id === 'string'
-        ? body.store_id
-        : (typeof body.store === 'string' ? body.store : '');
-      const scored = scoreCategory({ title, brand, store_id: store });
-      return jsonResponse({
-        category: scored.category,
-        taxonomy_version: scored.taxonomy_version,
-        low_confidence: scored.low_confidence,
-        reason: scored.reason,
-        scores: scored.scores,
-      }, request);
-    } catch (e) {
-      console.error('Category score error:', e);
-      return errorResponse('Failed to score category', request);
-    }
-  }
+  // ===== IMPORT RESOLVE (phone-app inheritance) =====
 
   // Phone-app inheritance: { store, name } -> best product-level facts
   // from all users' watchlist rows (anonymized, never whose row). Authed +
@@ -1349,82 +1312,6 @@ async function handleRequest(request, env) {
     } catch (e) {
       console.error('Import resolve error:', e);
       return errorResponse('Failed to resolve product', request);
-    }
-  }
-
-  // One-shot taxonomy upgrade for pre-v3 rows. Rows hold no signals, so
-  // rescore uses the stored product name (title-only v3). Non-Other
-  // winners are adopted; Other keeps the stored category (a v2
-  // crumb-scored row stays more accurate than a title-only guess) and
-  // only the version is bumped so reruns converge. dryRun defaults true.
-  if (path === '/api/admin/watchlist/rescore' && method === 'POST') {
-    const admin = await requireAdmin(request, env);
-    if (admin instanceof Response) return admin;
-
-    try {
-      const body = await request.json().catch(() => ({}));
-      const dryRun = body.dryRun !== false;
-      const limit = Math.min(2000, Math.max(1, parseInt(body.limit) || 500));
-      const rows = await queryAll(
-        env,
-        'SELECT id, product_name, category FROM watchlist WHERE taxonomy_version < 3 OR taxonomy_version IS NULL ORDER BY updated_at ASC LIMIT ?',
-        [limit]
-      );
-      let changed = 0;
-      let confirmed = 0;
-      let kept = 0;
-      const sample = [];
-      for (const r of rows || []) {
-        if (!r.product_name) continue;
-        const s = scoreCategory({ title: r.product_name });
-        if (s.category !== 'Other' && s.category !== r.category) {
-          if (!dryRun) {
-            await execute(
-              env,
-              'UPDATE watchlist SET category = ?, taxonomy_version = 3, updated_at = ? WHERE id = ?',
-              [s.category, Date.now(), r.id]
-            );
-          }
-          changed++;
-          if (sample.length < 20) {
-            sample.push({ id: r.id, name: r.product_name, from: r.category, to: s.category });
-          }
-        } else if (s.category === 'Other') {
-          // Title-only signals are thin (rows hold no crumbs/storage): Other
-          // means unclear, not wrong. Keep the stored category and mark the
-          // row current so reruns converge instead of rescanning it forever.
-          if (!dryRun) {
-            await execute(
-              env,
-              'UPDATE watchlist SET taxonomy_version = 3, updated_at = ? WHERE id = ?',
-              [Date.now(), r.id]
-            );
-          }
-          kept++;
-        } else {
-          if (!dryRun) {
-            await execute(
-              env,
-              'UPDATE watchlist SET taxonomy_version = 3, updated_at = ? WHERE id = ?',
-              [Date.now(), r.id]
-            );
-          }
-          confirmed++;
-        }
-      }
-      if (!dryRun) {
-        const adminUser = await getUserById(env, admin.userId);
-        await logAudit(env, {
-          action: 'admin.taxonomy_rescore',
-          adminId: admin.userId,
-          adminUsername: adminUser?.username || 'unknown',
-          details: `rescored to v3: ${changed} changed, ${confirmed} confirmed, ${kept} kept (dryRun false)`,
-        });
-      }
-      return jsonResponse({ dryRun, scanned: (rows || []).length, changed, confirmed, kept, sample }, request);
-    } catch (e) {
-      console.error('Rescore error:', e);
-      return errorResponse('Failed to rescore watchlist', request);
     }
   }
 

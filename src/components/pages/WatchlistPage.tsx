@@ -244,6 +244,9 @@ export default function WatchlistPage() {
   // All writes go mirror-first, so racing commits collapse to one.
   const [staged, setStaged] = useState<Map<string, WatchlistItem[]>>(new Map());
   const stagedMirror = useRef(new Map<string, WatchlistItem[]>());
+  // Latest-token mirror for the pagehide flush (runs outside render cycle).
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
 
   function syncStagedState() {
     setStaged(new Map(stagedMirror.current));
@@ -297,6 +300,25 @@ export default function WatchlistPage() {
       void commitStaged(productId, group);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Refresh/close-tab skips React unmount cleanups entirely, so staged
+  // removals would die with the page and the item would reappear. Flush
+  // them on pagehide; keepalive DELETEs survive unload. Undo and
+  // filter-change commits are unchanged.
+  useEffect(() => {
+    function handlePageHide() {
+      const t = tokenRef.current;
+      if (!t) return;
+      for (const group of Array.from(stagedMirror.current.values())) {
+        for (const item of group) {
+          void removeFromWatchlist(t, item.id).catch(() => {});
+        }
+      }
+      stagedMirror.current.clear();
+    }
+    window.addEventListener('pagehide', handlePageHide);
+    return () => window.removeEventListener('pagehide', handlePageHide);
   }, []);
 
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());

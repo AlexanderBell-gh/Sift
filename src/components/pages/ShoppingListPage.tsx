@@ -117,6 +117,21 @@ export default function ShoppingListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Refresh/close-tab skips React unmount cleanups: flush staged rows on
+  // pagehide with keepalive PUTs, mirroring the watchlist page.
+  useEffect(() => {
+    function handlePageHide() {
+      const t = tokenRef.current;
+      if (!t) return;
+      for (const listId of Array.from(stagedMirror.current)) {
+        stagedMirror.current.delete(listId);
+        void setShoppingListQty(t, listId, 0).catch(() => {});
+      }
+    }
+    window.addEventListener('pagehide', handlePageHide);
+    return () => window.removeEventListener('pagehide', handlePageHide);
+  }, []);
+
   const activeEntries = useMemo(() => {
     return entries.filter(e => !staged.has(e.list_id));
   }, [entries, staged]);

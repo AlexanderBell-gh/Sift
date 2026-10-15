@@ -36,8 +36,6 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     admin trials-cleanup [--yes]              DELETE expired trials (write)
     admin user-role <id> <admin|user> --yes   change role (write)
     admin user-delete <id> --yes              delete user (write)
-    admin rescore [--apply] [--limit n] [--yes]
-    admin category "title" [--brand b] [--store s]
     admin resolve --store s --name n [--json] probe POST /api/import/resolve
 
   watchlist (read-only debug via admin token):
@@ -267,27 +265,13 @@ async function adminCmd() {
     const me = await api('/api/auth/me', { token });
     if (me.id === userId) fail('refusing to delete your own admin account');
     print(await api(`/api/admin/users/${userId}`, { method: 'DELETE', token }));
-  } else if (sub === 'rescore') {
-    const apply = !!flags.apply;
-    if (apply) guardWrite('api');
-    print(await api('/api/admin/watchlist/rescore', {
-      method: 'POST', token: await adminToken(),
-      body: { dryRun: !apply, ...(flags.limit ? { limit: Number(flags.limit) } : {}) },
-    }));
-  } else if (sub === 'category') {
-    const title = args.join(' ');
-    if (!title) fail('usage: pnpm sift admin category "title" [--brand b] [--store s]');
-    print(await api('/api/category/score', {
-      method: 'POST', token: await adminToken(),
-      body: { title, ...(flags.brand ? { brand: flags.brand } : {}), ...(flags.store ? { store: flags.store } : {}) },
-    }));
   } else if (sub === 'resolve') {
     if (!flags.store || !flags.name) fail('usage: pnpm sift admin resolve --store s --name n');
     print(await api('/api/import/resolve', {
       method: 'POST', token: await adminToken(),
       body: { store: flags.store, name: flags.name },
     }));
-  } else fail(`unknown admin subcommand: ${sub} (stats|users|trials|audit|trials-cleanup|user-role|user-delete|rescore|category|resolve)`);
+  } else fail(`unknown admin subcommand: ${sub} (stats|users|trials|audit|trials-cleanup|user-role|user-delete|resolve)`);
 }
 
 async function watchlistCmd() {

@@ -10,10 +10,8 @@ import {
   getAdminAudit,
   getAdminTrials,
   cleanupExpiredTrials,
-  rescoreWatchlist,
 } from '../../lib/api';
 import type { AdminStats, AdminUser, AuditLog, TrialUser } from '../../types';
-import type { RescoreResult } from '../../lib/api';
 
 type Tab = 'dashboard' | 'users' | 'audit' | 'trials';
 
@@ -37,9 +35,6 @@ export default function AdminPage() {
   const [trialsPage, setTrialsPage] = useState(1);
   const [trialsTotalPages, setTrialsTotalPages] = useState(0);
   const [trialsStatus, setTrialsStatus] = useState('all');
-
-  const [rescore, setRescore] = useState<RescoreResult | null>(null);
-  const [rescoring, setRescoring] = useState(false);
 
   const [auditFilter, setAuditFilter] = useState('all');
   const [loadingByTab, setLoadingByTab] = useState<Record<Tab, boolean>>({
@@ -170,26 +165,6 @@ export default function AdminPage() {
     }
   }
 
-  async function handleRescore(dryRun: boolean) {
-    if (!token) return;
-    if (!dryRun && !confirm('Apply taxonomy rescore to all stale rows? Categories will be rewritten (audit-logged).')) return;
-    setRescoring(true);
-    try {
-      const result = await rescoreWatchlist(token, { dryRun });
-      setRescore(result);
-      setError('');
-      if (!dryRun) {
-        // Refresh taxonomy counts after apply.
-        const data = await getAdminStats(token);
-        setStats(data);
-      }
-    } catch {
-      setError('Failed to rescore taxonomy');
-    } finally {
-      setRescoring(false);
-    }
-  }
-
   const navItems: { key: Tab; label: string; icon: typeof Shield }[] = [
     { key: 'dashboard', label: 'Stats Dashboard', icon: BarChart3 },
     { key: 'users', label: 'User Management', icon: Users },
@@ -270,7 +245,6 @@ export default function AdminPage() {
           )}
 
           {tab === 'dashboard' && stats && (
-            <>
             <div className="admin-dash-grid">
               <StatCard label="Total Users" value={stats.totalUsers} />
               <StatCard label="Regular Users" value={stats.regularUsers} />
@@ -279,67 +253,6 @@ export default function AdminPage() {
               <StatCard label="Recent Signups (7d)" value={stats.recentSignups7d} />
               <StatCard label="Tracked Stores" value={stats.trackedStores} />
             </div>
-
-            {stats.taxonomy && (
-              <div className="admin-stack">
-                <div className="admin-heading-row">
-                  <div>
-                    <h2>Watchlist categories</h2>
-                    <p className="admin-subtitle">
-                      {stats.taxonomy.staleCount === 0
-                        ? `Every product is on the current taxonomy (v${stats.taxonomy.version}).`
-                        : `${stats.taxonomy.staleCount} product${stats.taxonomy.staleCount === 1 ? '' : 's'} scored by an older taxonomy. Preview the upgrade, then apply it.`}
-                    </p>
-                  </div>
-                </div>
-                <div className="admin-dash-grid">
-                  <StatCard label="Needs rescore" value={stats.taxonomy.staleCount} />
-                  <StatCard label="Uncategorised" value={stats.taxonomy.otherCount} />
-                </div>
-                <div className="admin-search-row">
-                  <button
-                    onClick={() => handleRescore(true)}
-                    className="btn-secondary"
-                    disabled={rescoring}
-                  >
-                    {rescoring ? 'Scoring…' : 'Preview rescore'}
-                  </button>
-                  <button
-                    onClick={() => handleRescore(false)}
-                    className="btn-danger"
-                    disabled={rescoring || stats.taxonomy.staleCount === 0}
-                  >
-                    Apply rescore
-                  </button>
-                </div>
-                {rescore && (
-                  <p className="admin-meta">
-                    {rescore.dryRun
-                      ? `Preview: scanned ${rescore.scanned}, ${rescore.changed} would change category, ${rescore.confirmed} already correct${rescore.kept > 0 ? `, ${rescore.kept} kept as-is (title unclear, stored category kept)` : ''}.`
-                      : `Applied: scanned ${rescore.scanned}, ${rescore.changed} updated, ${rescore.confirmed} already correct${rescore.kept > 0 ? `, ${rescore.kept} kept as-is` : ''}.`}
-                  </p>
-                )}
-                {rescore && !rescore.dryRun && rescore.changed === 0 && (
-                  <p className="admin-meta">Nothing to update — every scanned row is already correct.</p>
-                )}
-                {rescore && rescore.sample.length > 0 && (
-                  <div className="admin-stack-xs">
-                    {rescore.sample.map(s => (
-                      <div key={s.id} className="audit-log-card">
-                        <span className="audit-tag tag-system">RESCORE</span>
-                        <div className="audit-log-actors">
-                          <span className="audit-log-admin">{s.from ?? '—'}</span>
-                          <span className="audit-log-arrow">→</span>
-                          <span className="audit-log-target">{s.to}</span>
-                        </div>
-                        <span className="audit-log-details">{s.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            </>
           )}
 
           {tab === 'dashboard' && !loadingByTab['dashboard'] && !stats && (

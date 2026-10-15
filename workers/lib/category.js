@@ -110,7 +110,7 @@ const AISLE_TERMS = {
     'bakewell tart', 'carrot cake',
   ],
   'Food Cupboard': [
-    'food cupboard', 'cereal', 'flapjack', 'oat',
+    'food cupboard', 'cereal', 'cornflakes', 'flapjack', 'oat',
     'oat boosts', 'granola', 'muesli', 'porridge', 'pasta', 'rice',
     'flour', 'sugar', 'soup', 'stock', 'sauce', 'ketchup',
     'beans', 'lentils', 'couscous', 'noodle', 'tins', 'canned',

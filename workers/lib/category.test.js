@@ -616,3 +616,38 @@ describe('bakery rescue + scoped frozen veto (30-09-2026)', () => {
     assert.equal(r.category, 'Frozen');
   });
 });
+
+describe('title-only hardening batch 2 (15-10-2026)', () => {
+  const titleCases = [
+    // [title, expected]
+    ['Salted Butter 250g', 'Chilled'],
+    ['Free Range Eggs 10 Pack', 'Chilled'],
+    ['Greek Style Yoghurt 500g', 'Chilled'],
+    ['Pork Sausages 400g', 'Chilled'],
+    ['Beef Mince 500g', 'Chilled'],
+    ['Salmon Fillets 300g', 'Chilled'],
+    ['Cheese Sandwich 200g', 'Chilled'],
+    ['Digestive Biscuits 400g', 'Snacks'],
+    ['Mint Tea 40 Bags', 'Beverages'],
+    ['Ground Coffee 200g', 'Beverages'],
+    ['Red Apples 4 Pack', 'Produce'],
+    ['Carrots 500g', 'Produce'],
+    ['Cherry Tomatoes 250g', 'Produce'],
+    ['Frozen Garden Peas 1kg', 'Frozen'],
+    ['Vanilla Ice Cream 500ml', 'Frozen'],
+    ['Wholemeal Bread 800g', 'Bakery'],
+    ['Lemon Drizzle Cake 400g', 'Bakery'],
+    ['Baked Beans 400g', 'Food Cupboard'],
+    ['Basmati Rice 1kg', 'Food Cupboard'],
+    ['Tinned Tuna Chunks 145g', 'Food Cupboard'],
+    ['Honey Nut Cornflakes 500g', 'Food Cupboard'],
+    ['Antibacterial Surface Cleaner 500ml', 'Other'],
+    ['Kitchen Roll 4 Pack', 'Other'],
+  ];
+  for (const [title, expected] of titleCases) {
+    it(`title-only ${title} -> ${expected}`, () => {
+      const r = scoreCategory(signals({ title }));
+      assert.equal(r.category, expected);
+    });
+  }
+});

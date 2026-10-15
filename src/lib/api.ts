@@ -180,47 +180,9 @@ export async function removeFromWatchlist(token: string, id: string): Promise<vo
   const response = await fetch(`${API_BASE}/api/watchlist/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
-  });
-  return handleResponse(response);
-}
-
-export interface CategoryScore {
-  category: string;
-  taxonomy_version: number;
-  low_confidence: boolean;
-  reason: string;
-  scores: Record<string, number> | null;
-}
-
-export async function scoreCategoryPreview(
-  token: string,
-  input: { title: string; brand?: string; store?: string },
-): Promise<CategoryScore> {
-  const response = await fetch(`${API_BASE}/api/category/score`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(input),
-  });
-  return handleResponse(response);
-}
-
-export interface RescoreResult {
-  dryRun: boolean;
-  scanned: number;
-  changed: number;
-  confirmed: number;
-  kept: number;
-  sample: { id: string; name: string; from: string | null; to: string }[];
-}
-
-export async function rescoreWatchlist(
-  token: string,
-  opts: { dryRun?: boolean; limit?: number } = {},
-): Promise<RescoreResult> {
-  const response = await fetch(`${API_BASE}/api/admin/watchlist/rescore`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ dryRun: opts.dryRun !== false, limit: opts.limit ?? 500 }),
+    // Staged removals flush on pagehide: keepalive lets the DELETE
+    // survive refresh/close-tab unload. Harmless elsewhere.
+    keepalive: true,
   });
   return handleResponse(response);
 }
@@ -253,6 +215,8 @@ export async function setShoppingListQty(token: string, listId: string, quantity
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ quantity }),
+    // Same pagehide-flush rationale as removeFromWatchlist.
+    keepalive: true,
   });
   return handleResponse(response);
 }
