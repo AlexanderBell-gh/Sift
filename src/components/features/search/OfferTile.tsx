@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { addToWatchlist, ApiError, type DealOffer } from '../../../lib/api';
-import { daysToExpiry, formatDate, formatDealShort, getLoyaltyClass, getLoyaltyLabel } from '../../../lib/utils';
+import { daysToExpiry, formatDate, formatDealShort, getLoyaltyClass, getLoyaltyLabel, isOfferExpired } from '../../../lib/utils';
 import { storeLogoFor } from '../../../lib/stores';
 import { PinButton } from './PinButton';
 import type { SearchResult } from '../../../types';
@@ -70,6 +70,10 @@ export function OfferTile({ deal, limitReached, onAdded }: {
 
   const logo = storeLogoFor(deal.store, deal.store_logo);
   const days = daysToExpiry(deal.offer_expires_at);
+  // Popular shows every pinned item, so expired offers reach this tile:
+  // they render as plain regular-price rows (shelf price, no labels),
+  // expired status lives only in the watchlist.
+  const expired = isOfferExpired(deal.offer_expires_at);
 
   return (
     <article className="offer-tile">
@@ -101,7 +105,9 @@ export function OfferTile({ deal, limitReached, onAdded }: {
           {deal.product_name}
         </a>
         <div className="offer-tile-price">
-          {deal.offer_deal ? (
+          {expired ? (
+            <span className="offer-price">£{(deal.prices.normal ?? deal.prices.loyalty ?? 0).toFixed(2)}</span>
+          ) : deal.offer_deal ? (
             <span className="offer-price">£{(deal.prices.normal ?? 0).toFixed(2)}</span>
           ) : (
             <>
@@ -114,14 +120,14 @@ export function OfferTile({ deal, limitReached, onAdded }: {
             </>
           )}
         </div>
-        {(deal.offer_deal || deal.prices.loyalty != null) && (
+        {!expired && (deal.offer_deal || deal.prices.loyalty != null) && (
           <span className={`product-card-loyalty-label ${getLoyaltyClass(deal.store)}`} title={deal.offer_deal ?? undefined}>
             {deal.offer_deal ? formatDealShort(deal.offer_deal) : getLoyaltyLabel(deal.store)}
           </span>
         )}
-        {deal.offer_expires_at && days !== null && days > 0 && (
+        {!expired && deal.offer_expires_at && days !== null && days > 0 && (
           <span className="offer-tile-expiry">
-            {days <= 7 ? `Ends in ${days}d · ` : ''}{formatDate(deal.offer_expires_at)}
+            {days <= 7 ? `Ends in ${days}d · ` : 'Ends '}{formatDate(deal.offer_expires_at)}
           </span>
         )}
         {deal.pins != null && (

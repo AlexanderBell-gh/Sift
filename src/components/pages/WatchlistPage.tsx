@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent, TouchEvent } from 'react';
-import { Search, Plus, Check } from 'lucide-react';
+import { Search, Plus, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../../lib/api';
 import { STORES, storeLogoFor } from '../../lib/stores';
 import { CATEGORIES } from '../../lib/categories';
-import { formatDate, formatTimeAgo, isOfferExpired, formatDealShort, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
+import { formatDate, formatTimeAgo, isOfferExpired, daysToExpiry, formatDealShort, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
 import type { WatchlistItem } from '../../types';
 import NavHeader from '../layout/NavHeader';
 import { Modal } from '../ui/Modal';
@@ -98,7 +98,13 @@ export default function WatchlistPage() {
       }
     }
     // All keeps insertion order (newest first): plain items stay where
-    // added instead of sinking below all offers.
+    // added instead of sinking below all offers. Expired reads
+    // most-recently-ended first; undated rows sink last.
+    expired.sort((a, b) => {
+      const ta = daysToExpiry(getBest(a).offer_expires_at) ?? Number.NEGATIVE_INFINITY;
+      const tb = daysToExpiry(getBest(b).offer_expires_at) ?? Number.NEGATIVE_INFINITY;
+      return tb - ta;
+    });
     return { offerGroups: offers, plainGroups: plain, expiredProducts: expired, allGroups: all };
   }, [products]);
 
@@ -323,6 +329,43 @@ export default function WatchlistPage() {
 
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
+  // Bulk clear of the expired tab: two-tap confirm (4s window, Escape
+  // cancels), mirroring the shopping-list clear pattern. Commits
+  // immediately with rollback on failure; staged rows for cleared
+  // products are dropped so their commits cannot 404 after the fact.
+  const [confirmClearExpired, setConfirmClearExpired] = useState(false);
+  const clearExpiredTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(clearExpiredTimer.current), []);
+
+  async function handleClearExpired() {
+    if (!token) return;
+    if (!confirmClearExpired) {
+      setConfirmClearExpired(true);
+      window.clearTimeout(clearExpiredTimer.current);
+      clearExpiredTimer.current = window.setTimeout(() => setConfirmClearExpired(false), 4000);
+      return;
+    }
+    window.clearTimeout(clearExpiredTimer.current);
+    setConfirmClearExpired(false);
+    const groups = expiredProducts;
+    if (groups.length === 0) return;
+    const ids = new Set(groups.flatMap(g => g.map(i => i.id)));
+    for (const group of groups) {
+      const pid = group[0]?.product_id;
+      if (pid) stagedMirror.current.delete(pid);
+    }
+    syncStagedState();
+    const prev = items;
+    setItems(prevItems => prevItems.filter(i => !ids.has(i.id)));
+    setError('');
+    try {
+      await Promise.all(groups.flatMap(g => g.map(i => removeFromWatchlist(token, i.id))));
+    } catch {
+      setItems(prev);
+      setError('Failed to clear expired items');
+    }
+  }
+
   // Mobile hold-to-remove: long-press a card to remove its product group.
   // Desktop keeps the ✕ button; timers only start under the 640px breakpoint.
   const holdRef = useRef<{ timer: number | undefined; productId: string | null; x: number; y: number }>({
@@ -405,6 +448,8 @@ export default function WatchlistPage() {
     const isStaged = staged.has(product.product_id);
     const logo = storeLogoFor(best.store, best.store_logo);
     const veilClass = isStaged ? ' product-card-removed-veil' : '';
+    const days = daysToExpiry(best.offer_expires_at);
+    const endedAgo = days !== null && days <= 0 ? (days === 0 ? 'today' : `${-days}d ago`) : null;
 
     const cardContent = (
       <>
@@ -455,15 +500,19 @@ export default function WatchlistPage() {
             <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? formatDealShort(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
           )}
           {expired ? (
-            <span className="product-card-offer expired">Offer expired</span>
+            <span className="product-card-offer expired">
+              Offer expired{endedAgo ? ` · Ended ${endedAgo}` : ''}
+            </span>
           ) : (
-            best.offer_expires_at && (
+            best.offer_expires_at && days !== null && days > 0 && (
               <span className="product-card-offer">
-                Offer ends {formatDate(best.offer_expires_at)}
+                {days <= 7 ? `Ends in ${days}d · ` : 'Ends '}{formatDate(best.offer_expires_at)}
               </span>
             )
           )}
-          <p className="product-card-updated">Updated {formatTimeAgo(lastUpdated)}</p>
+          {!expired && (
+            <p className="product-card-updated">Updated {formatTimeAgo(lastUpdated)}</p>
+          )}
         </div>
 
         <div className="product-card-foot">
@@ -642,6 +691,28 @@ export default function WatchlistPage() {
           <div className="empty-state-box">
             <p className="empty-state-title">No items match filters</p>
             <p className="empty-state-desc">Try selecting more stores.</p>
+          </div>
+        )}
+
+        {!loading && view === 'expired' && expiredProducts.length > 0 && (
+          <div className="expired-clear-row">
+            <p className="expired-clear-count" aria-live="polite">
+              {expiredProducts.length} expired
+            </p>
+            <button
+              onClick={handleClearExpired}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' && confirmClearExpired) {
+                  window.clearTimeout(clearExpiredTimer.current);
+                  setConfirmClearExpired(false);
+                }
+              }}
+              aria-live="polite"
+              className={`btn-secondary expired-clear${confirmClearExpired ? ' expired-clear-confirm' : ''}`}
+            >
+              <Trash2 size={14} />
+              {confirmClearExpired ? 'Confirm clear?' : 'Clear expired'}
+            </button>
           </div>
         )}
 

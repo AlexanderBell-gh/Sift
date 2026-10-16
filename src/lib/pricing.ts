@@ -120,7 +120,8 @@ export function lineTotal(
   offerDeal: string | null,
   expired: boolean,
 ): LineTotal {
-  const unitPrice = loyalty ?? normal;
+  // Expired offers price at shelf: the loyalty discount no longer applies.
+  const unitPrice = expired ? (normal ?? loyalty) : (loyalty ?? normal);
   if (unitPrice === null || unitPrice === undefined) {
     return { total: null, unitPrice: null, basis: 'unknown', sets: 0 };
   }

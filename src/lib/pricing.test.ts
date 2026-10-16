@@ -101,6 +101,21 @@ describe('lineTotal', () => {
     assert.deepEqual(r, { total: 12, unitPrice: 4, basis: 'expired', sets: 0 });
   });
 
+  it('expired loyalty offer prices at normal, not the stale discount', () => {
+    const r = lineTotal(2, 5, 4, null, true);
+    assert.deepEqual(r, { total: 10, unitPrice: 5, basis: 'expired', sets: 0 });
+  });
+
+  it('expired multibuy with both prices still prices at normal', () => {
+    const r = lineTotal(3, 4, 3, 'Any 3 for £12', true);
+    assert.deepEqual(r, { total: 12, unitPrice: 4, basis: 'expired', sets: 0 });
+  });
+
+  it('expired with no normal falls back to loyalty', () => {
+    const r = lineTotal(2, null, 4, null, true);
+    assert.deepEqual(r, { total: 8, unitPrice: 4, basis: 'expired', sets: 0 });
+  });
+
   it('no usable price -> unknown, never NaN', () => {
     const r = lineTotal(2, null, null, 'Any 3 for £12', false);
     assert.deepEqual(r, { total: null, unitPrice: null, basis: 'unknown', sets: 0 });
@@ -155,6 +170,11 @@ describe('lineSavings + formatGBP', () => {
     assert.equal(lineSavings(3, 4, priced), 0);
     const deal = lineTotal(3, 5, null, 'Any 3 for £12', false);
     assert.equal(lineSavings(3, 5, deal), 3);
+  });
+
+  it('expired loyalty lines show zero savings against shelf', () => {
+    const priced = lineTotal(2, 5, 4, null, true);
+    assert.equal(lineSavings(2, 5, priced), 0);
   });
 
   it('savings null without a normal or a total', () => {

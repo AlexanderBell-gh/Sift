@@ -71,6 +71,11 @@
 
 html {
   overflow-x: clip;
+  /* Reserve the vertical scrollbar gutter so centered pages (nav +
+     container) stop shifting when short pages gain/lose a scrollbar
+     (e.g. empty vs populated shopping list). Desktop-only effect;
+     mobile keeps overlay bars. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -4889,6 +4894,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-meta {
@@ -4939,6 +4945,42 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 }
 .empty-state-cta {
   padding: 10px 20px;
+}
+
+/* Expired-tab head row: mono count left, two-tap clear right. */
+.expired-clear-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.expired-clear-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0;
+}
+
+.expired-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  flex-shrink: 0;
+}
+
+.expired-clear-confirm {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.expired-clear-confirm:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--danger);
 }
 
 /* Shopping list */
@@ -5043,6 +5085,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   font-weight: 700;
   color: var(--primary);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .shoplist-lines {
@@ -5216,6 +5259,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   min-width: 88px;
   text-align: right;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Loading skeleton — mirrors row anatomy (thumb / info / total). */
@@ -5259,7 +5303,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 
 .shoplist-skeleton-total {
   height: 15px;
-  width: 64px;
+  width: 88px;
   flex-shrink: 0;
 }
 
@@ -6619,11 +6663,26 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 
 @keyframes pricePulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.02); }
 }
 
 .price-changed {
   animation: pricePulse 0.3s var(--ease-spring);
+  will-change: transform;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Anchor the pulse so left-aligned totals grow right and right-aligned
+   totals grow left — no sideways jump on desktop. */
+.metric-value.price-changed {
+  display: inline-block;
+  transform-origin: left center;
+}
+
+.shoplist-store-total.price-changed,
+.shoplist-line-total.price-changed,
+.shoplist-totalbar-total.price-changed {
+  transform-origin: right center;
 }
 
 @media (prefers-reduced-motion: reduce) {
