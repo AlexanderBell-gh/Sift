@@ -650,4 +650,15 @@ describe('title-only hardening batch 2 (15-10-2026)', () => {
       assert.equal(r.category, expected);
     });
   }
+
+  it('Spicy Mango Salad -> Chilled', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Produce'],
+      breadcrumb_leaf: 'Prepared Salads',
+      title: 'Spicy Mango Salad',
+      brand: 'HEALTH (Aldi',
+      store_id: 'aldi',
+    }));
+    assert.equal(r.category, 'Chilled');
+  });
 });

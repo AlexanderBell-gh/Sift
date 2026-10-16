@@ -262,6 +262,8 @@ const STORE_AISLE_ALIASES = [
   { store: 'waitrose', leaf: 'high protein', category: 'Chilled' },
   { store: 'iceland', leaf: 'high protein', category: 'Chilled' },
   { store: 'ocado', leaf: 'high protein', category: 'Chilled' },
+  // tuner: 'Spicy Mango Salad -> Chilled' (2026-10-16)
+  { store: 'aldi', leaf: 'prepared salads', category: 'Chilled' },
 ];
 
 // Brand defaults. Empty by design: the locked Graze flapjack cases land in

@@ -74,7 +74,7 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift dev` | Vite dev server (no CSP, HMR works) |
 | `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
 | `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
-| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep |
+| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (187 tests; DEV-only `/dev/tests` page runs the same files in-browser, adds cases to disk, tunes the scorer) |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
 | `pnpm sift --help` | Full CLI: run steps, doctor, gate, db, admin, watchlist reads |
@@ -122,7 +122,7 @@ pnpm exec wrangler d1 migrations apply sift --remote
 <details>
 <summary><strong>Category taxonomy</strong></summary>
 
-`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). Pipeline: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals. v3 vocab is title-first and singular-only (plural folding double-counted ties); the frozen veto reads leaf/JSON-LD only and `do not refreeze` is treated as freezable-at-home copy. Scoring runs inline on watchlist add; coverage is locked by `workers/lib/category.test.js` (`node --test`).
+`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). Pipeline: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals. v3 vocab is title-first and singular-only (plural folding double-counted ties); the frozen veto reads leaf/JSON-LD only and `do not refreeze` is treated as freezable-at-home copy. Scoring runs inline on watchlist add; coverage is locked by `workers/lib/category.test.js` (`node --test`, plus the DEV-only `/dev/tests` tuner that proposes alias/keyword fixes with the full suite as guard).
 
 </details>
 
