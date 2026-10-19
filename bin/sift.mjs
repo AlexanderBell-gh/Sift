@@ -4,6 +4,7 @@
 // nothing extra. Admin commands log in per run from env, nothing on disk.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { CANONICAL_CATEGORIES } from '../workers/lib/category.lexicon.js';
 
 const PROD_API = 'https://siftapi.blackmesa.workers.dev';
 const WRANGLER = ['exec', 'wrangler'];
@@ -19,6 +20,7 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     build                           tsc -b + vite build → dist/
     lint [args]                     oxlint over the repo
     test [file]                     node --test workers/lib/*.test.js
+    eval                            corpus eval + threshold gate
     audit [args]                    pnpm audit (default --audit-level=high)
     preview [args]                  vite preview of dist/
     gate                            CI mirror: audit + lint + build + test
@@ -29,6 +31,11 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     db status [--local|--remote]             migration list
     db query <sql> [--local|--remote] [--json]
     db users [--search q] [--limit n] [--local|--remote]
+
+  category (manual override; writes need --remote --yes off-local):
+    category set "<product name>" <category>  set a manual category
+    category clear "<product name>"           drop a manual category
+    category list [--json]                    show manual categories
 
   admin (needs SIFT_ADMIN_USER + SIFT_ADMIN_PASS; writes need --yes off-localhost):
     admin stats|users|trials [--search q] [--json]
@@ -111,6 +118,9 @@ function testStep(passthru) {
 function auditStep(passthru) {
   run('pnpm', ['audit', ...(passthru.length ? passthru : ['--audit-level=high'])]);
 }
+function evalStep() {
+  run('node', ['workers/lib/category.eval.mjs', '--gate']);
+}
 function previewStep(passthru) { run('pnpm', ['run', 'preview', ...passthru]); }
 
 function doctor() {
@@ -164,6 +174,7 @@ function gate() {
   lintStep([]);
   buildStep();
   testStep([]);
+  evalStep();
 }
 
 function wranglerD1(extra) {
@@ -284,6 +295,54 @@ async function watchlistCmd() {
   else fail(`unknown watchlist subcommand: ${sub} (names|offers)`);
 }
 
+// Manual category override. The name is matched exactly (case-insensitive)
+// against product_catalog, so the escape hatch is global: one correction
+// fixes the shelf for every user who pins that product.
+function categoryCmd() {
+  if (sub === 'list') {
+    if (!flags.remote && !flags.local) flags.local = true;
+    const out = runOut('pnpm', [...WRANGLER, ...wranglerD1([
+      '--json', '--command',
+      `SELECT name, category, category_updated_at FROM product_catalog
+       WHERE category IS NOT NULL ORDER BY name COLLATE NOCASE`,
+    ])]);
+    const rows = JSON.parse(out)[0]?.results ?? [];
+    if (flags.json) { console.log(JSON.stringify(rows, null, 2)); return; }
+    console.table(rows.map((row) => ({
+      ...row,
+      category_updated_at: row.category_updated_at
+        ? new Date(row.category_updated_at).toISOString().slice(0, 19).replace('T', ' ')
+        : '',
+    })));
+  } else if (sub === 'set') {
+    const [name, category] = args;
+    if (!name || !category) fail('usage: pnpm sift category set "<product name>" <category>');
+    const hit = CANONICAL_CATEGORIES.find(
+      (c) => c.toLowerCase() === String(category).trim().toLowerCase(),
+    );
+    if (!hit) fail(`unknown category "${category}" (${CANONICAL_CATEGORIES.join(', ')})`);
+    guardWrite('db');
+    const now = Date.now();
+    run('pnpm', [...WRANGLER, ...wranglerD1(['--command',
+      `INSERT INTO product_catalog (name, first_seen_at, last_seen_at, category, category_updated_at)
+       VALUES (${sqlQuote(name)}, ${now}, ${now}, ${sqlQuote(hit)}, ${now})
+       ON CONFLICT(name) DO UPDATE SET
+         category = excluded.category,
+         category_updated_at = excluded.category_updated_at`,
+    ])]);
+    console.log(`set ${hit} for ${name}`);
+  } else if (sub === 'clear') {
+    const [name] = args;
+    if (!name) fail('usage: pnpm sift category clear "<product name>"');
+    guardWrite('db');
+    run('pnpm', [...WRANGLER, ...wranglerD1(['--command',
+      `UPDATE product_catalog SET category = NULL, category_updated_at = NULL
+       WHERE name = ${sqlQuote(name)}`,
+    ])]);
+    console.log(`cleared ${name}`);
+  } else fail(`unknown category subcommand: ${sub} (set|clear|list)`);
+}
+
 async function main() {
   // Run steps take no subcommand: everything after cmd is passthrough.
   const passthru = [sub, ...args].filter(Boolean);
@@ -295,8 +354,10 @@ async function main() {
   else if (cmd === 'lint') lintStep(passthru);
   else if (cmd === 'test') testStep(passthru);
   else if (cmd === 'audit') auditStep(passthru);
+  else if (cmd === 'eval') evalStep();
   else if (cmd === 'preview') previewStep(passthru);
   else if (cmd === 'db') dbCmd();
+  else if (cmd === 'category') categoryCmd();
   else if (cmd === 'admin') await adminCmd();
   else if (cmd === 'watchlist') await watchlistCmd();
   else { console.log(HELP); process.exit(cmd ? 1 : 0); }

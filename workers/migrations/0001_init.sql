@@ -1,0 +1,132 @@
+-- Full schema. Executable truth: this replaces the old 0001-0009 chain,
+-- which could not build a database from scratch (users and watchlist were
+-- created by a hand-applied schema.sql, and 0001 was an ALTER on top of
+-- that assumption).
+--
+-- Every statement is idempotent: on the live database the tables already
+-- exist, so this is a no-op there. It only builds a fresh local database.
+--
+-- product_catalog gains its manual-category columns in 0002, so a fresh
+-- database needs both files.
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  google_id TEXT UNIQUE,
+  email TEXT UNIQUE NOT NULL,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK(role IN ('admin','user')) DEFAULT 'user',
+  is_trial INTEGER NOT NULL DEFAULT 0,
+  trial_expires_at INTEGER,
+  search_count INTEGER NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'GBP',
+  default_store TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_trial_expires ON users(trial_expires_at) WHERE is_trial = 1;
+
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key TEXT PRIMARY KEY,
+  count INTEGER NOT NULL,
+  reset_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_at);
+
+CREATE TABLE IF NOT EXISTS watchlist (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  store TEXT NOT NULL,
+  store_logo TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+  unit TEXT,
+  normal_price REAL,
+  loyalty_price REAL,
+  unit_price REAL,
+  currency TEXT NOT NULL DEFAULT 'GBP',
+  loyalty_type TEXT,
+  offer_expires_at TEXT,
+  offer_deal TEXT,
+  product_url TEXT NOT NULL DEFAULT '',
+  is_on_offer INTEGER NOT NULL DEFAULT 0,
+  category TEXT,
+  taxonomy_version INTEGER NOT NULL DEFAULT 0,
+  notes TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
+
+-- The unique index is canonical. The older non-unique index of the same
+-- name shape was created by a hand-applied schema.sql and is redundant.
+DROP INDEX IF EXISTS idx_watchlist_user_product;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product_unique
+  ON watchlist(user_id, product_id);
+
+CREATE TABLE IF NOT EXISTS product_catalog (
+  name TEXT PRIMARY KEY COLLATE NOCASE,
+  first_seen_at INTEGER NOT NULL,
+  last_seen_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS shopping_list (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  watchlist_id TEXT NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (watchlist_id) REFERENCES watchlist(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_shopping_list_user ON shopping_list(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_shopping_list_user_item ON shopping_list(user_id, watchlist_id);
+
+CREATE TABLE IF NOT EXISTS alerts (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  watchlist_id TEXT NOT NULL,
+  type TEXT NOT NULL CHECK(type IN ('price_drop','offer_expiry','offer_created')),
+  message TEXT NOT NULL,
+  old_price REAL,
+  new_price REAL,
+  triggered_at INTEGER NOT NULL,
+  read INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (watchlist_id) REFERENCES watchlist(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerts_user ON alerts(user_id, read, triggered_at);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id TEXT PRIMARY KEY,
+  action TEXT NOT NULL,
+  admin_id TEXT NOT NULL,
+  admin_username TEXT NOT NULL,
+  target_user_id TEXT,
+  target_username TEXT,
+  details TEXT,
+  timestamp INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL,
+  token_sha256 TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  used INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token_sha256);

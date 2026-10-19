@@ -16,7 +16,7 @@ import {
   base64UrlDecode,
 } from './auth.js';
 import { queryAll, queryOne, execute } from './db.js';
-import { scoreCategory, clampLegacyCategory } from './lib/category.js';
+import { scoreCategory, CANONICAL_CATEGORIES } from './lib/category.js';
 import { isValidUsername, isValidPassword, USERNAME_ERROR, PASSWORD_ERROR } from './lib/validate.js';
 import { validateResolveInput, pickBestRow, toInheritedFacts, emptyFacts } from './lib/resolve.js';
 
@@ -199,6 +199,31 @@ function hashString(str) {
     hash |= 0;
   }
   return Math.abs(hash).toString(36);
+}
+
+// Manual category override, set through `pnpm sift category set`. The name
+// is matched case-insensitively (product_catalog is COLLATE NOCASE) and the
+// override is global: one correction fixes the shelf for every user.
+async function lookupCategoryOverride(env, name) {
+  const trimmed = typeof name === 'string' ? name.trim() : '';
+  if (!trimmed) return null;
+  try {
+    const row = await queryOne(
+      env,
+      'SELECT category FROM product_catalog WHERE name = ? AND category IS NOT NULL LIMIT 1',
+      [trimmed],
+    );
+    if (!row || !row.category) return null;
+    const hit = CANONICAL_CATEGORIES.find(
+      (c) => c.toLowerCase() === String(row.category).trim().toLowerCase(),
+    );
+    return hit || null;
+  } catch (e) {
+    // The category column lands with migration 0002. Until it exists the
+    // scorer simply runs without an override.
+    console.error('Category override lookup failed:', e);
+    return null;
+  }
 }
 
 function trialLimitReason(user, now = Date.now()) {
@@ -1353,62 +1378,40 @@ async function handleRequest(request, env) {
       const now = Date.now();
       const id = `wl_${now}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Category: worker owns taxonomy. New extensions send category_signals
-      // (scored here); phone app sends title/brand/store only (same path,
-      // title-first). Old clients send only a legacy guess (clamped,
-      // version 0, with a name-scored fallback when the guess is
-      // missing/Other).
-      let finalCategory;
-      let taxonomyVersion;
-      const categorySignals = result.category_signals;
-      const hasUsableSignals = categorySignals && typeof categorySignals === 'object' && !!(
-        (Array.isArray(categorySignals.breadcrumb_raw) && categorySignals.breadcrumb_raw.length > 0) ||
-        categorySignals.breadcrumb_leaf ||
-        categorySignals.title ||
-        categorySignals.brand ||
-        categorySignals.jsonld_category
-      );
-      if (hasUsableSignals) {
-        const scored = scoreCategory(categorySignals);
-        finalCategory = scored.category;
-        taxonomyVersion = scored.taxonomy_version;
-        if (scored.low_confidence || scored.category === 'Other') {
-          console.log('Category unknown-bucket:', JSON.stringify({
-            title: categorySignals.title || null,
-            leaf: categorySignals.breadcrumb_leaf || null,
-            winner: scored.category,
-            reason: scored.reason,
-            taxonomy_version: scored.taxonomy_version,
-            storage: !!categorySignals.storage_text,
-          }));
-        } else if (scored.reason === 'frozen-veto' || scored.reason === 'storage-frozen' || scored.reason === 'non-food') {
-          // Confident veto exits are logged too: a wrong force (29-09-2026
-          // freezable-at-home bakery) is otherwise invisible — the bucket
-          // above only sees low-confidence/Other rows.
-          console.log('Category veto:', JSON.stringify({
-            title: categorySignals.title || null,
-            leaf: categorySignals.breadcrumb_leaf || null,
-            winner: scored.category,
-            reason: scored.reason,
-            taxonomy_version: scored.taxonomy_version,
-            storage: !!categorySignals.storage_text,
-          }));
-        }
-      } else {
-        // Legacy rows and title-only backfill keep version 0 and are never
-        // forced into a possibly-wrong category — except when the legacy
-        // guess is missing/Other: then the product name alone is scored and
-        // adopted only for a non-Other winner (Tesco loose Bananas case,
-        // 24-09-2026). Genuine unknowns still land Other.
-        finalCategory = clampLegacyCategory(result.category);
-        taxonomyVersion = 0;
-        if ((!result.category || finalCategory === 'Other') && result.name) {
-          const nameScored = scoreCategory({ title: result.name });
-          if (nameScored.category && nameScored.category !== 'Other') {
-            finalCategory = nameScored.category;
-            taxonomyVersion = nameScored.taxonomy_version;
-          }
-        }
+      // Category: worker owns taxonomy, one scoring path for every client.
+      // The extension sends category_signals; the phone app sends
+      // title/brand/store only; older clients send neither, in which case
+      // the product name alone is scored. A manual override set through
+      // `pnpm sift category set` wins before any rule.
+      const categorySignals = result.category_signals && typeof result.category_signals === 'object'
+        ? result.category_signals
+        : null;
+      const signals = categorySignals ? { ...categorySignals } : {};
+      if (!signals.title && result.name) signals.title = result.name;
+
+      const override = await lookupCategoryOverride(env, result.name);
+      const scored = scoreCategory(signals, { override });
+      const finalCategory = scored.category;
+      const taxonomyVersion = scored.taxonomy_version;
+
+      // One structured line per scored add, plus a second line for rows that
+      // matched nothing, so misses stay visible without scanning everything.
+      console.log('Category scored:', JSON.stringify({
+        title: signals.title || null,
+        leaf: signals.breadcrumb_leaf || null,
+        category: finalCategory,
+        reason: scored.reason,
+        votes: scored.votes || [],
+        taxonomy_version: taxonomyVersion,
+        storage: !!signals.storage_text,
+        override: override || null,
+      }));
+      if (scored.reason === 'below-floor') {
+        console.log('Category unknown:', JSON.stringify({
+          title: signals.title || null,
+          leaf: signals.breadcrumb_leaf || null,
+          taxonomy_version: taxonomyVersion,
+        }));
       }
 
       await execute(

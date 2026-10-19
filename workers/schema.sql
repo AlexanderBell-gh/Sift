@@ -1,3 +1,8 @@
+-- Human reference for the live schema.
+--
+-- Executable truth: workers/migrations/0001_init.sql (+ 0002_catalog_category.sql).
+-- This file mirrors the end state of both migrations. Keep the two in sync.
+
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   google_id TEXT UNIQUE,
@@ -50,12 +55,20 @@ CREATE TABLE IF NOT EXISTS watchlist (
 );
 
 CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product ON watchlist(user_id, product_id);
 
+-- The unique index is canonical. The older non-unique index was created by
+-- a hand-applied schema.sql and is redundant.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product_unique
+  ON watchlist(user_id, product_id);
+
+-- Persistent product pool for search autocomplete (names only), plus the
+-- manual category override set through `pnpm sift category set`.
 CREATE TABLE IF NOT EXISTS product_catalog (
   name TEXT PRIMARY KEY COLLATE NOCASE,
   first_seen_at INTEGER NOT NULL,
-  last_seen_at INTEGER NOT NULL
+  last_seen_at INTEGER NOT NULL,
+  category TEXT,
+  category_updated_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS shopping_list (

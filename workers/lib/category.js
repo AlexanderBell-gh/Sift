@@ -5,534 +5,325 @@
 // floor on product name alone.
 // Plain JS (worker runtime + node --test compatible). No dependencies.
 //
-// Signal contract (from extension `result.category_signals`, phone sends
-// a subset):
-//   { breadcrumb_raw[], breadcrumb_leaf, title, brand, store | store_id,
-//     url_path, jsonld_category, storage_text }
-// Legacy clients send only `result.category`; that path uses
-// clampLegacyCategory() and stores taxonomy_version 0.
+// Signal contract:
+//   { title, brand?, store?, store_id?, breadcrumb_raw?, breadcrumb_leaf?,
+//     storage_text? }
+//
+// Six rules, first hit wins:
+//   1. manual   - product_catalog override from the CLI
+//   2. non-food - household / personal-care markers force Other
+//   3. frozen   - frozen in title, leaf, department or storage text
+//   4. ambient  - tinned / canned / jarred is Food Cupboard
+//   5. leaf     - curated store-agnostic leaf map
+//   6. title    - corpus phrase table, then keyword tier; ties fall back to
+//                 the fixed priority, or to the derived department
+//   7. other    - nothing matched, Other with low_confidence
+//
+// The lexicon is split in two:
+//   category.lexicon.js   curated (hand written)
+//   category.phrases.js   generated from src/data/uk-*.json
+// Both are imported here; nothing is learned at runtime.
 
-export const TAXONOMY_VERSION = 3;
+import { PHRASES, DERIVED_KEYWORDS } from './category.phrases.js';
+import {
+  CANONICAL_CATEGORIES, NON_FOOD, AMBIENT, DEPARTMENTS, DEPARTMENT_IGNORE,
+  LEAF_MAP, KEYWORD_OVERRIDES, PRIORITY, normalise,
+} from './category.lexicon.js';
 
-export const CANONICAL_CATEGORIES = [
-  'Chilled',
-  'Snacks',
-  'Beverages',
-  'Produce',
-  'Frozen',
-  'Bakery',
-  'Food Cupboard',
-  'Other',
-];
+export { CANONICAL_CATEGORIES, normalise };
 
-// Fixed tie-break priority. Never resolve ties by table order.
-const PRIORITY = [
-  'Frozen',
-  'Produce',
-  'Bakery',
-  'Food Cupboard',
-  'Snacks',
-  'Beverages',
-  'Chilled',
-  'Other',
-];
+// v3 already shipped. Do not restart at 1.
+export const TAXONOMY_VERSION = 4;
 
-// Breadcrumb vocabulary + title-first corpus terms (v3: mined from
-// src/data/*.json, 1,607 names, so phone titles score without crumbs).
-// Title guesses are scored against the same table but only when the
-// breadcrumb is weak or absent, and flavour modifiers are stripped from
-// titles first.
-const AISLE_TERMS = {
-  Chilled: [
-    'chilled', 'dairy', 'milk', 'skimmed', 'semi', 'semi-skimmed', 'yogurt', 'yoghurt', 'skyr',
-    'kefir', 'cheese', 'cheddar', 'mozzarella', 'feta', 'brie', 'stilton',
-    'gouda', 'halloumi', 'paneer',
-    'butter', 'cream', 'eggs', 'bacon', 'sausage', 'ham',
-    'chicken', 'chicken breast', 'poultry', 'turkey', 'duck', 'beef',
-    'pork', 'lamb', 'mince', 'steak', 'meatballs', 'kebab', 'shawarma',
-    'prawn', 'shrimp', 'salmon', 'tuna', 'trout', 'fish',
-    'salmon, tuna & trout',
-    'cod', 'haddock', 'sea bass',
-    'pork pie',
-    'hummus', 'houmous', 'dip', 'coleslaw', 'quiche', 'tofu',
-    'falafel', 'sandwich', 'sushi', 'deli',
-    'ready meal', 'grain bowl',
-    // NOTE: 'high protein' deliberately absent (removed 24-09-2026). As a
-    // title claim it is marketing, not freshness (Huel noodles scored
-    // Chilled on the claim alone). Real chilled high-protein aisles are
-    // covered by 'ready meal'/'grain bowl' plus the STORE_AISLE_ALIASES
-    // 'high protein' leaf backstop below.
-  ],
-  Snacks: [
-    'snacks', 'crisps', 'chocolate', 'cookie', 'biscuit',
-    'nuts', 'popcorn', 'crackers', 'sweets', 'candy',
-    'cereal bar', 'pretzel', 'nachos',
-    'olives', 'cashews', 'almonds', 'peanuts', 'pistachios',
-    'trail mix', 'rice cakes',
-  ],
-  Beverages: [
-    'beverages', 'drinks', 'juice', 'cola', 'coke', 'coca', 'pepsi',
-    'coffee', 'tea', 'water', 'squash', 'beer', 'wine', 'soda',
-    'smoothie', 'gin', 'vodka', 'whisky', 'whiskey', 'rum', 'prosecco',
-    'champagne', 'cider', 'lager', 'ale', 'stout', 'energy', 'tonic',
-    'lemonade', 'cordial', 'kombucha', 'orange juice', 'apple juice',
-  ],
-  Produce: [
-    'produce', 'fresh produce', 'fruit', 'vegetable', 'salad',
-    'apple', 'banana', 'pepper', 'carrot',
-    'kiwi', 'potato', 'onion', 'tomato',
-    'broccoli', 'cucumber', 'lettuce', 'orange',
-    'grapes', 'lemons', 'limes', 'avocado',
-    'mango', 'pineapple', 'melon', 'watermelon', 'pear', 'plum',
-    'peach', 'nectarine', 'cherry',
-    'apricot', 'pomegranate', 'passion fruit',
-    'aubergine', 'courgette', 'chilli', 'garlic', 'ginger', 'mushroom',
-    'celery', 'kale', 'spinach', 'rocket', 'leek',
-    'parsnip', 'beetroot', 'radish',
-    // NOTE: singulars only (29-09-2026). sameWord() folds plurals, and each
-    // duplicate let one token score twice, forging ties the fixed priority
-    // then resolved wrongly (tomatoes past 'chopped tomatoes', peppers past
-    // 'snacks'+'crisps' on Sunbites). Exceptions: 'lemons'/'limes' need both
-    // (EXACT_ONLY skips the fold); 'tomatoes' was already absent likewise.
-  ],
-  Frozen: [
-    'frozen', 'peas', 'sweetcorn', 'ice cream', 'pizza', 'pie',
-    'nugget', 'waffle', 'fish fingers',
-    'hash browns', 'scampi', 'lollies', 'sorbet',
-  ],
-  Bakery: [
-    'bakery', 'bread', 'baguette', 'croissant', 'roll', 'bun',
-    'cake', 'loaf', 'loaves', 'pastry',
-    'tortilla', 'naan', 'muffin', 'bagel',
-    'brioche', 'scone', 'doughnuts',
-    'donut', 'wrap', 'pitta', 'ciabatta', 'focaccia',
-    'crumpet', 'hot cross buns', 'sourdough', 'bakewell',
-    'bakewell tart', 'carrot cake',
-  ],
-  'Food Cupboard': [
-    'food cupboard', 'cereal', 'cornflakes', 'flapjack', 'oat',
-    'oat boosts', 'granola', 'muesli', 'porridge', 'pasta', 'rice',
-    'flour', 'sugar', 'soup', 'stock', 'sauce', 'ketchup',
-    'beans', 'lentils', 'couscous', 'noodle', 'tins', 'canned',
-    'tinned', 'dried', 'oil', 'salt', 'vinegar', 'spice',
-    'herbs', 'curry', 'honey', 'jam', 'marmalade', 'syrup',
-    'peanut butter', 'spaghetti', 'fusilli', 'penne', 'macaroni',
-    'lasagne', 'tagliatelle', 'chickpea', 'chopped tomatoes',
-    'passata', 'tomato passata', 'coconut milk', 'gravy', 'stuffing',
-  ],
-  Other: [],
+const DEFAULT_LEXICON = {
+  phrases: PHRASES,
+  derived: DERIVED_KEYWORDS,
+  nonFood: NON_FOOD,
+  ambient: AMBIENT,
+  departments: DEPARTMENTS,
+  departmentIgnore: DEPARTMENT_IGNORE,
+  leafMap: LEAF_MAP,
+  keywordOverrides: KEYWORD_OVERRIDES,
+  priority: PRIORITY,
 };
 
-// Flavour words always stripped from titles before scoring. A blueberry
-// flapjack is not chilled produce; modifiers alone must never decide.
-// v3: potato removed from this set (real produce titles such as
-// 'White Potatoes' must score Produce; the bare 'Sweet Potato' case is
-// handled by TITLE_STRIPPED_PHRASES below, and the chicken-shawarma case
-// is covered by the protein veto). Singular lemon/lime stay stripped
-// (flavour words never decide); plural lemons/limes score Produce.
-// Carb staples are NOT in this set: they strip only when real meat is
-// present (see STAPLE_CARBS below), so meat-free noodles/pasta can still score Food
-// Cupboard while 'chicken noodles' scores on the protein.
-const TITLE_MODIFIERS = new Set([
-  'berry', 'berries', 'blueberry', 'blueberries', 'strawberry',
-  'strawberries', 'raspberry', 'raspberries', 'blackberry', 'blackberries',
-  'lemon', 'lime', 'toffee', 'vanilla', 'caramel',
-]);
-
-// Multi-word title phrases stripped before scoring (title path only).
-// 'sweet potato' alone must stay Other (locked), while plain potatoes
-// score Produce and chicken+potato meals score on the protein.
-const TITLE_STRIPPED_PHRASES = ['sweet potatoes', 'sweet potato'];
-
-// Keywords matching the exact token only (no plural fold, no substring).
-// Citrus: singular lemon/lime are flavour words (stripped as modifiers),
-// plural lemons/limes are produce. The fold must not reunite them.
-const EXACT_ONLY = new Set(['lemons', 'limes']);
-
-// Quantity tokens carry no category signal ('400g', '2 Pints', '5 Pack',
-// '4x100g', possessive fragments). Stripped in every scoring path.
-const QUANTITY_UNITS = new Set([
-  'g', 'kg', 'mg', 'ml', 'l', 'litre', 'litres', 'ltr', 'pint', 'pints',
-  'pack', 'packs', 'oz', 'fl', 'cl',
-]);
-
-// Staple carbs: stripped from the title path only when the product carries
-// real meat (chicken noodles -> protein wins). Without meat they stay and
-// score Food Cupboard (Huel High Protein Noodles -> cupboard, 24-09-2026).
-const STAPLE_CARBS = new Set(['noodles', 'noodle', 'pasta', 'rice']);
-
-// Personal-care and household markers force Other before scoring.
-// 'roll' is deliberately absent (bakery rolls); the phrases cover paper.
-const NON_FOOD_SIGNALS = [
-  'wash', 'soap', 'antibacterial', 'shampoo', 'conditioner', 'detergent',
-  'bleach', 'cleaner', 'lotion', 'toothpaste', 'deodorant', 'nappies',
-  'washing powder',
-  'toilet', 'toilet roll', 'kitchen roll', 'tissue', 'tissues',
-  'wipe', 'wipes',
-];
-
-// Dry-goods markers veto Chilled and Produce (flavoured flapjacks, oat bars).
-const DRY_GOODS_MARKERS = [
-  'flapjack', 'flapjacks', 'oat boosts', 'granola', 'muesli', 'porridge',
-  'cereal bar', 'cereal bars',
-];
-
-// Tinned/canned markers veto Chilled and Produce (tinned tomatoes are
-// cupboard, not produce). Bakery is never vetoed (tinned sourdough stays
-// Bakery). Same dairy exemption as the dry-goods veto.
-const TINNED_MARKERS = ['tinned', 'canned'];
-
-// Dairy context exempts a row from the dry-goods veto (locked: Oat Milk is
-// Chilled, not Food Cupboard).
-const DAIRY_SIGNALS = [
-  'milk', 'yogurt', 'yoghurt', 'cheese', 'butter', 'cream', 'dairy',
-];
-
-// Fresh-protein markers (v2, title-first for crumb-less stores). A strong
-// meat/meal signal with no ambient cues vetoes Food Cupboard and Produce and
-// confirms Chilled (PROTEIN_CONFIRM_POINTS meets the floor exactly).
-const FRESH_PROTEIN_MARKERS = [
-  'chicken', 'chicken breast', 'turkey', 'duck', 'beef', 'pork', 'lamb',
-  'prawn', 'prawns', 'shrimp', 'mince', 'steak', 'meatballs', 'kebab',
-  'shawarma', 'high protein', 'ready meal', 'ready meals', 'grain bowl',
-];
-
-// Ambient meal exemptions: protein-adjacent words marking shelf-stable goods.
-// Block the fresh-protein veto so soups, stocks and flavour-only snacks stay
-// out of Chilled. Staple carbs (noodles/pasta) included: a shelf-stable
-// instant-noodle pot carrying a 'high protein' marketing claim must not
-// confirm Chilled (Huel Black Edition case, 24-09-2026).
-const AMBIENT_MEAL_EXEMPTIONS = [
-  'soup', 'stock', 'crisps', 'flavour', 'flavor', 'tinned', 'canned',
-  'long life', 'uht', 'baby food',
-  'noodle', 'noodles', 'pasta', 'pizza', 'nugget', 'nuggets',
-];
-
-// Real-meat markers for the staple-strip decision. Claim phrases ('high
-// protein', 'ready meal', 'grain bowl') are excluded: a marketing claim is
-// not meat, and must not trigger the strip (else Huel noodles lose their
-// only cupboard signal).
-const MEAT_MARKERS = FRESH_PROTEIN_MARKERS.filter(
-  (m) => !['high protein', 'ready meal', 'ready meals', 'grain bowl'].includes(m)
-);
-
-// Storage keep-condition markers (v2 Option A, extension `storage_text`).
-// Sold-frozen only: 'keep frozen', 'store frozen', '-18' (matched
-// separately as a substring). 'Do not refreeze' is deliberately absent:
-// fresh freezable-at-home bakery carries it alongside defrost instructions
-// ('freeze as soon as possible after purchase', 29-09-2026 scones/sourdough
-// cases) and must score on its title, not force Frozen.
-const STORAGE_FROZEN_MARKERS = [
-  'keep frozen', 'store frozen',
-];
-const STORAGE_AMBIENT_MARKERS = [
-  'cool dry place', 'cool dry', 'ambient', 'do not refrigerate',
-  'no refrigeration', 'store cupboard', 'long life', 'uht',
-];
-const STORAGE_CHILLED_MARKERS = [
-  'refrigerate', 'refrigerated', 'refrigeration', 'chilled', 'fridge',
-  'use by', 'eat within', 'keep cool', 'serve chilled',
-];
-
-// Small per-store aisle alias table. Leaf exact match adds leaf-weight
-// points to the mapped category. Extension point for observed crumbs.
-// v3: covers all 11 phone-app stores (was 4); same two leaves.
-const STORE_AISLE_ALIASES = [
-  { store: 'tesco', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'sainsburys', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'asda', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'morrisons', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'marksandspencer', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'aldi', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'lidl', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'coop', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'waitrose', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'iceland', leaf: 'flapjacks', category: 'Food Cupboard' },
-  { store: 'ocado', leaf: 'flapjacks', category: 'Food Cupboard' },
-  // Bare 'High Protein' aisle is chilled floor space (backstop for the
-  // 'high protein' term removal, 24-09-2026).
-  { store: 'tesco', leaf: 'high protein', category: 'Chilled' },
-  { store: 'sainsburys', leaf: 'high protein', category: 'Chilled' },
-  { store: 'asda', leaf: 'high protein', category: 'Chilled' },
-  { store: 'morrisons', leaf: 'high protein', category: 'Chilled' },
-  { store: 'marksandspencer', leaf: 'high protein', category: 'Chilled' },
-  { store: 'aldi', leaf: 'high protein', category: 'Chilled' },
-  { store: 'lidl', leaf: 'high protein', category: 'Chilled' },
-  { store: 'coop', leaf: 'high protein', category: 'Chilled' },
-  { store: 'waitrose', leaf: 'high protein', category: 'Chilled' },
-  { store: 'iceland', leaf: 'high protein', category: 'Chilled' },
-  { store: 'ocado', leaf: 'high protein', category: 'Chilled' },
-  // tuner: 'Spicy Mango Salad -> Chilled' (2026-10-16)
-  { store: 'aldi', leaf: 'prepared salads', category: 'Chilled' },
-];
-
-// Brand defaults. Empty by design: the locked Graze flapjack cases land in
-// Food Cupboard via aisle terms, and per-brand tuning is deferred until the
-// unknown-bucket log shows real misses. Shape: { brand, category, unlessBreadcrumb }.
-const BRAND_DEFAULTS = [];
-
-// Scoring: exact multi-word phrase 3, exact single token 1.5 (a single
-// distinctive title word clears the floor alone: phone sends title only),
-// stem-equal 1.5, substring (keyword 5+ chars) 0.5. Totals below FLOOR
-// resolve to Other.
-const PHRASE_POINTS = 3;
-const TOKEN_POINTS = 1.5;
-const SUBSTRING_POINTS = 0.5;
-const FLOOR = 1.5;
-const LEAF_WEIGHT = 1;
-const CONTEXT_WEIGHT = 0.5;
-const PROTEIN_CONFIRM_POINTS = 0.5;
-const STORAGE_CHILLED_POINTS = 1;
-
-function tokenize(text) {
-  return String(text || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s&]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean);
+export function tokenise(text) {
+  const norm = normalise(text);
+  return norm ? norm.split(' ') : [];
 }
 
 // Plural-insensitive single-token equality: pie/pies, waffle/waffles,
-// cherry/cherries. Avoids naive stemming ('waffles' is not 'waffl').
-function sameWord(token, keyword) {
+// cherry/cherries, leaf/leaves. Avoids naive stemming ('waffles' is not
+// 'waffl').
+export function sameWord(token, keyword) {
   if (token === keyword) return true;
   if (token === `${keyword}s` || keyword === `${token}s`) return true;
   if (token === `${keyword}es` || keyword === `${token}es`) return true;
   if (keyword.endsWith('y') && token === `${keyword.slice(0, -1)}ies`) return true;
   if (token.endsWith('y') && keyword === `${token.slice(0, -1)}ies`) return true;
+  if (keyword.endsWith('fe') && token === `${keyword.slice(0, -2)}ves`) return true;
+  if (keyword.endsWith('f') && token === `${keyword.slice(0, -1)}ves`) return true;
   return false;
 }
 
-function stripQuantityTokens(tokens) {
-  return tokens.filter((t) => {
-    if (/^\d/.test(t)) return false;
-    if (QUANTITY_UNITS.has(t)) return false;
-    if (t.length <= 1) return false;
-    return true;
-  });
+function singularise(word) {
+  if (word.endsWith('ies') && word.length > 4) return `${word.slice(0, -3)}y`;
+  if (word.endsWith('es') && word.length > 3) return word.slice(0, -2);
+  if (word.endsWith('s') && !word.endsWith('ss') && word.length > 2) return word.slice(0, -1);
+  return word;
 }
 
+function pluralise(word) {
+  if (word.endsWith('y') && !/[aeiou]y$/.test(word)) return `${word.slice(0, -1)}ies`;
+  if (word.endsWith('s')) return word;
+  return `${word}s`;
+}
+
+// Crumbs arrive as 'Back to Food & Drink' style strings on some stores.
 function cleanCrumb(text) {
   return String(text || '').replace(/^back to\s+/i, '').trim();
 }
 
-function blankScores() {
-  const scores = {};
-  for (const c of CANONICAL_CATEGORIES) scores[c] = 0;
-  return scores;
-}
+// One matcher per lexicon object. Cached so a hot path does not rebuild the
+// phrase index on every call.
+const matcherCache = new WeakMap();
 
-// Score one text against AISLE_TERMS at the given weight. Phrases match on
-// the full token stream; single tokens match exactly or on plural stem,
-// else substring. Quantities never score. stripStaples=false keeps staple
-// carbs (meat-free title path).
-function scoreText(text, weight, stripModifiers, stripStaples = true) {
-  let raw = String(text || '');
-  if (stripModifiers) {
-    for (const phrase of TITLE_STRIPPED_PHRASES) {
-      raw = raw.replace(new RegExp(phrase.replace(/ /g, '\\s+'), 'gi'), ' ');
+function buildMatcher(lexicon) {
+  const phraseIndex = new Map();
+  for (const [name, category] of Object.entries(lexicon.phrases)) {
+    const tokens = name.split(' ').filter(Boolean);
+    if (!tokens.length) continue;
+    const head = tokens[0];
+    if (!phraseIndex.has(head)) phraseIndex.set(head, []);
+    phraseIndex.get(head).push({ tokens, category });
+  }
+  for (const list of phraseIndex.values()) {
+    list.sort((a, b) => b.tokens.length - a.tokens.length);
+  }
+
+  // Hand tier wins over the derived tier.
+  const keywords = new Map();
+  for (const [category, tokens] of Object.entries(lexicon.derived || {})) {
+    for (const token of tokens) {
+      if (!keywords.has(token)) keywords.set(token, category);
     }
   }
-  const tokens = (() => {
-    const t = stripQuantityTokens(tokenize(raw));
-    return t;
-  })();
-  let kept = tokens;
-  if (stripModifiers) {
-    const filtered = tokens.filter((t) => !TITLE_MODIFIERS.has(t));
-    // Modifier strip must never erase the product ('Lemons' is produce,
-    // not nothing): restore when nothing survives.
-    if (filtered.length > 0) kept = filtered;
+  for (const [token, category] of Object.entries(lexicon.keywordOverrides || {})) {
+    keywords.set(token, category);
   }
-  if (stripModifiers && stripStaples) kept = kept.filter((t) => !STAPLE_CARBS.has(t));
-  if (kept.length === 0 || weight === 0) return blankScores();
-  const scores = blankScores();
-  const joined = kept.join(' ');
 
-  for (const [category, terms] of Object.entries(AISLE_TERMS)) {
-    for (const term of terms) {
-      const termTokens = tokenize(term);
-      if (termTokens.length > 1) {
-        if (joined.includes(termTokens.join(' '))) scores[category] += PHRASE_POINTS * weight;
-      } else if (termTokens.length === 1) {
-        const kw = termTokens[0];
-        if (EXACT_ONLY.has(kw)) {
-          if (kept.includes(kw)) scores[category] += TOKEN_POINTS * weight;
-        } else if (kept.some((t) => sameWord(t, kw))) {
-          scores[category] += TOKEN_POINTS * weight;
-        } else if (kw.length >= 5 && kept.some((t) => t.includes(kw) || kw.includes(t))) {
-          scores[category] += SUBSTRING_POINTS * weight;
+  const leafMap = new Map();
+  for (const [leaf, category] of Object.entries(lexicon.leafMap)) {
+    leafMap.set(normalise(leaf), category);
+  }
+
+  const departments = new Map();
+  for (const [name, category] of Object.entries(lexicon.departments)) {
+    departments.set(normalise(name), category);
+  }
+  const departmentIgnore = new Set(
+    Array.from(lexicon.departmentIgnore || []).map((name) => normalise(name)),
+  );
+
+  return {
+    phraseIndex,
+    keywords,
+    leafMap,
+    departments,
+    departmentIgnore,
+    nonFood: buildMarkerIndex(lexicon.nonFood || []),
+    ambient: new Set(lexicon.ambient || []),
+    priority: lexicon.priority || PRIORITY,
+  };
+}
+
+// Marker phrases ('kitchen roll', 'bin bags') are indexed by their first
+// word so a title only has to be walked once.
+function buildMarkerIndex(entries) {
+  const index = new Map();
+  for (const entry of entries) {
+    const tokens = normalise(entry).split(' ').filter(Boolean);
+    if (!tokens.length) continue;
+    const head = tokens[0];
+    if (!index.has(head)) index.set(head, []);
+    index.get(head).push(tokens);
+  }
+  return index;
+}
+
+function getMatcher(lexicon) {
+  let matcher = matcherCache.get(lexicon);
+  if (!matcher) {
+    matcher = buildMatcher(lexicon);
+    matcherCache.set(lexicon, matcher);
+  }
+  return matcher;
+}
+
+// First crumb that names a department. Crumbs that name a department but
+// carry no shelf signal ('Fresh Food', 'Groceries') are skipped and the scan
+// continues.
+export function deriveDepartment(crumbs, matcher) {
+  for (const crumb of crumbs) {
+    const norm = normalise(cleanCrumb(crumb));
+    if (!norm) continue;
+    if (matcher.departmentIgnore.has(norm)) continue;
+    if (matcher.departments.has(norm)) return matcher.departments.get(norm);
+  }
+  return null;
+}
+
+// A marker phrase is present when a contiguous run of title words matches
+// it, with a plural fold on the last word.
+function hasMarker(tokens, index) {
+  for (let i = 0; i < tokens.length; i++) {
+    for (const head of [tokens[i], singularise(tokens[i])]) {
+      const candidates = index.get(head);
+      if (!candidates) continue;
+      for (const marker of candidates) {
+        let hit = true;
+        for (let j = 0; j < marker.length; j++) {
+          if (i + j >= tokens.length || !sameWord(tokens[i + j], marker[j])) { hit = false; break; }
         }
+        if (hit) return true;
       }
     }
   }
-  return scores;
+  return false;
 }
 
-function addScores(into, extra) {
-  for (const c of CANONICAL_CATEGORIES) into[c] += extra[c] || 0;
-  return into;
-}
-
-function bestCategory(scores, vetoed) {
-  let winner = 'Other';
-  let best = -Infinity;
-  for (const c of PRIORITY) {
-    const s = vetoed.has(c) ? -Infinity : scores[c] || 0;
-    if (s > best) {
-      best = s;
-      winner = c;
+// Longest known product name contained in the title wins. Longer beats
+// shorter ('frozen chicken nuggets' over 'chicken nuggets'), so a specific
+// product always outranks the family it belongs to.
+function matchPhrase(tokens, phraseIndex) {
+  let best = null;
+  for (let i = 0; i < tokens.length; i++) {
+    const candidates = phraseIndex.get(tokens[i]);
+    if (!candidates) continue;
+    for (const candidate of candidates) {
+      const len = candidate.tokens.length;
+      if (i + len > tokens.length) continue;
+      let hit = true;
+      for (let j = 0; j < len; j++) {
+        if (!sameWord(tokens[i + j], candidate.tokens[j])) { hit = false; break; }
+      }
+      if (!hit) continue;
+      if (!best || len > best.len) best = { len, category: candidate.category, start: i };
     }
   }
-  return { winner, best };
+  return best;
 }
 
-function hasMarker(combinedTokens, combinedJoined, markers) {
-  return markers.some((m) => {
-    const mt = tokenize(m);
-    if (mt.length > 1) return combinedJoined.includes(mt.join(' '));
-    return combinedTokens.includes(mt[0]);
-  });
+// Leaf lookup: exact, then plural fold, then the first two words of the leaf.
+function matchLeaf(leaf, leafMap) {
+  const norm = normalise(leaf);
+  if (!norm) return null;
+  const words = norm.split(' ');
+  const candidates = [norm, singularise(norm), pluralise(norm)];
+  if (words.length > 2) {
+    const head = words.slice(0, 2).join(' ');
+    candidates.push(head, singularise(head), pluralise(head));
+  }
+  for (const candidate of candidates) {
+    if (leafMap.has(candidate)) return leafMap.get(candidate);
+  }
+  return null;
 }
 
-export function clampLegacyCategory(value) {
-  const v = String(value || '').trim().toLowerCase();
-  const hit = CANONICAL_CATEGORIES.find((c) => c.toLowerCase() === v);
-  return hit || 'Other';
-}
-
-export function scoreCategory(signals = {}) {
-  const rawCrumbs = Array.isArray(signals.breadcrumb_raw) ? signals.breadcrumb_raw : [];
-  const leaf = cleanCrumb(signals.breadcrumb_leaf || rawCrumbs[rawCrumbs.length - 1] || '');
-  const pathText = rawCrumbs.map(cleanCrumb).join(' ');
-  const title = String(signals.title || '');
-  const jsonld = String(signals.jsonld_category || '');
-  const urlWords = String(signals.url_path || '').replace(/[/_.\-]+/g, ' ');
-  const store = String(signals.store_id || signals.store || '').toLowerCase();
-
-  const combinedJoined = [title, leaf, pathText, jsonld, urlWords].join(' ').toLowerCase();
-  const combinedTokens = tokenize(combinedJoined);
-
-  // Veto layer before scoring. Frozen force is scoped (30-09-2026): only
-  // title, leaf or JSON-LD carry it. A noisy mid-trail 'frozen' crumb
-  // (Sainsbury's nav contamination) no longer overrides a confident
-  // bakery leaf plus title; it still scores Frozen context points below.
-  const titleVetoTokens = stripQuantityTokens(tokenize(title));
-  const leafVetoTokens = stripQuantityTokens(tokenize(leaf));
-  const jsonldVetoTokens = stripQuantityTokens(tokenize(jsonld));
-  if (
-    titleVetoTokens.includes('frozen') ||
-    leafVetoTokens.includes('frozen') ||
-    jsonldVetoTokens.includes('frozen')
-  ) {
-    return { category: 'Frozen', taxonomy_version: TAXONOMY_VERSION, scores: null, low_confidence: false, reason: 'frozen-veto' };
-  }
-
-  const vetoed = new Set();
-
-  // Storage layer (v2 Option A): semantic keep-condition text from the
-  // extension. Scored separately from combined text so storage copy such as
-  // 'wash before use' can never trip the non-food veto.
-  const storageText = String(signals.storage_text || '');
-  const storageJoined = storageText.toLowerCase();
-  const storageTokens = tokenize(storageText);
-  if (hasMarker(storageTokens, storageJoined, STORAGE_FROZEN_MARKERS) || storageJoined.includes('-18')) {
-    return { category: 'Frozen', taxonomy_version: TAXONOMY_VERSION, scores: null, low_confidence: false, reason: 'storage-frozen' };
-  }
-  const storageAmbient = hasMarker(storageTokens, storageJoined, STORAGE_AMBIENT_MARKERS);
-  if (storageAmbient) {
-    // Cupboard-stable does not mean not-produce: bananas, potatoes and
-    // onions keep honestly in a cool dry place (Tesco bananas case,
-    // 24-09-2026 — vetoing Produce zeroed a 1.5 Produce score into Other).
-    // Veto Chilled only; nothing chilled is cupboard-stable.
-    vetoed.add('Chilled');
-  }
-  const storageChilled = !storageAmbient && hasMarker(storageTokens, storageJoined, STORAGE_CHILLED_MARKERS);
-
-  if (hasMarker(combinedTokens, combinedJoined, NON_FOOD_SIGNALS)) {
-    return { category: 'Other', taxonomy_version: TAXONOMY_VERSION, scores: null, low_confidence: false, reason: 'non-food' };
-  }
-
-  const hasDairy = hasMarker(combinedTokens, combinedJoined, DAIRY_SIGNALS);
-  if (!hasDairy && hasMarker(combinedTokens, combinedJoined, DRY_GOODS_MARKERS)) {
-    vetoed.add('Chilled');
-    vetoed.add('Produce');
-  }
-  if (!hasDairy && hasMarker(combinedTokens, combinedJoined, TINNED_MARKERS)) {
-    vetoed.add('Chilled');
-    vetoed.add('Produce');
-  }
-
-  // Fresh-protein confirmation: strong meat/meal signal, no ambient cues.
-  // Vetoes ambient/veg categories and confirms Chilled. Single-protein
-  // titles now clear the floor at exactly 1.5 (low confidence, logged).
-  const hasAmbientMeal = storageAmbient || hasMarker(combinedTokens, combinedJoined, AMBIENT_MEAL_EXEMPTIONS);
-  const proteinConfirm = !hasAmbientMeal && hasMarker(combinedTokens, combinedJoined, FRESH_PROTEIN_MARKERS);
-  if (proteinConfirm) {
-    vetoed.add('Food Cupboard');
-    vetoed.add('Produce');
-  }
-
-  // Breadcrumb first: leaf full weight, path plus JSON-LD plus URL half weight.
-  const crumbScores = blankScores();
-  addScores(crumbScores, scoreText(leaf, LEAF_WEIGHT, false));
-  addScores(crumbScores, scoreText(`${pathText} ${jsonld} ${urlWords}`, CONTEXT_WEIGHT, false));
-  if (proteinConfirm) crumbScores.Chilled += PROTEIN_CONFIRM_POINTS;
-  if (storageChilled) crumbScores.Chilled += STORAGE_CHILLED_POINTS;
-
-  // Small alias table: exact leaf match is a confident aisle signal.
-  const leafNorm = leaf.toLowerCase();
-  for (const alias of STORE_AISLE_ALIASES) {
-    if (alias.leaf === leafNorm && (!alias.store || store.includes(alias.store))) {
-      crumbScores[alias.category] += PHRASE_POINTS * LEAF_WEIGHT;
-    }
-  }
-
-  const crumbBest = bestCategory(crumbScores, vetoed);
-  if (crumbBest.best >= FLOOR) {
-    // Confident breadcrumb: title may agree but must not demote it.
-    return {
-      category: crumbBest.winner,
-      taxonomy_version: TAXONOMY_VERSION,
-      scores: crumbScores,
-      low_confidence: false,
-      reason: 'breadcrumb',
-    };
-  }
-
-  // Weak or absent breadcrumb (phone path): title decides at full weight.
-  // Staple carbs survive only without real meat (Huel noodles keep them,
-  // chicken noodles strip to the protein). Brand scores at half weight:
-  // drinks brands (Pepsi, Tropicana) carry signal, never override.
-  const totals = { ...crumbScores };
-  const titleTokens = tokenize(title);
-  const hasMeat = hasMarker(titleTokens, titleTokens.join(' '), MEAT_MARKERS);
-  addScores(totals, scoreText(title, 1, true, hasMeat));
-  addScores(totals, scoreText(String(signals.brand || ''), CONTEXT_WEIGHT, false));
-
-  // Brand defaults apply only when the breadcrumb is weak (never override it).
-  const brand = String(signals.brand || '').toLowerCase();
-  for (const def of BRAND_DEFAULTS) {
-    if (brand && brand.includes(def.brand) && !vetoed.has(def.category)) {
-      totals[def.category] += TOKEN_POINTS;
-    }
-  }
-
-  const final = bestCategory(totals, vetoed);
-  if (final.best >= FLOOR) {
-    return {
-      category: final.winner,
-      taxonomy_version: TAXONOMY_VERSION,
-      scores: totals,
-      low_confidence: true,
-      reason: 'title',
-    };
-  }
+function result(category, reason, lowConfidence, extra = {}) {
   return {
-    category: 'Other',
+    category,
     taxonomy_version: TAXONOMY_VERSION,
-    scores: totals,
-    low_confidence: true,
-    reason: 'below-floor',
+    low_confidence: !!lowConfidence,
+    reason,
+    ...extra,
   };
 }
+
+// Score one product. `opts.override` is a canonical category from the
+// manual CLI path and wins before every rule. `opts.lexicon` swaps the
+// lexicon (the eval uses it to score a held-out corpus).
+export function scoreCategory(signals = {}, opts = {}) {
+  const lexicon = opts.lexicon || DEFAULT_LEXICON;
+  const matcher = getMatcher(lexicon);
+
+  const override = opts.override ? String(opts.override) : '';
+  if (override && CANONICAL_CATEGORIES.includes(override)) {
+    return result(override, 'manual', false, { votes: [override] });
+  }
+
+  const title = String(signals.title || '');
+  const rawCrumbs = Array.isArray(signals.breadcrumb_raw) ? signals.breadcrumb_raw : [];
+  const leaf = cleanCrumb(
+    signals.breadcrumb_leaf || (rawCrumbs.length ? rawCrumbs[rawCrumbs.length - 1] : ''),
+  );
+  const titleTokens = tokenise(title);
+  const leafTokens = tokenise(leaf);
+
+  // 2. Non-food. Household and personal-care goods are not groceries.
+  if (hasMarker(titleTokens, matcher.nonFood) || hasMarker(leafTokens, matcher.nonFood)) {
+    return result('Other', 'non-food', false, { votes: ['Other'] });
+  }
+
+  const department = deriveDepartment(rawCrumbs, matcher);
+
+  // 3. Frozen. Defrost and freezable-at-home copy never forces Frozen.
+  const storage = String(signals.storage_text || '').toLowerCase();
+  if (
+    titleTokens.includes('frozen') ||
+    leafTokens.includes('frozen') ||
+    department === 'Frozen' ||
+    storage.includes('keep frozen') ||
+    storage.includes('store frozen') ||
+    storage.includes('-18')
+  ) {
+    return result('Frozen', 'frozen', false, { votes: ['Frozen'] });
+  }
+
+  // 4. Ambient. A tin or a jar is a cupboard good whatever else it says.
+  if (titleTokens.some((token) => matcher.ambient.has(token))) {
+    return result('Food Cupboard', 'ambient', false, { votes: ['Food Cupboard'] });
+  }
+
+  // 5. Leaf map.
+  const leafCategory = matchLeaf(leaf, matcher.leafMap);
+  if (leafCategory) {
+    return result(leafCategory, 'leaf', false, { votes: [leafCategory] });
+  }
+
+  // 6. Title vote. The phrase match masks its own tokens so a phrase never
+  // fights its own words ('peanut butter' does not also vote 'butter').
+  const votes = new Set();
+  const masked = new Set();
+  const phrase = matchPhrase(titleTokens, matcher.phraseIndex);
+  if (phrase) {
+    votes.add(phrase.category);
+    for (let i = phrase.start; i < phrase.start + phrase.len; i++) masked.add(i);
+  }
+  for (let i = 0; i < titleTokens.length; i++) {
+    if (masked.has(i)) continue;
+    const token = titleTokens[i];
+    let category = matcher.keywords.get(token);
+    if (!category) category = matcher.keywords.get(singularise(token));
+    if (!category) category = matcher.keywords.get(pluralise(token));
+    if (category) votes.add(category);
+  }
+
+  if (!votes.size) {
+    return result('Other', 'below-floor', true, { votes: [] });
+  }
+  if (votes.size === 1) {
+    const only = [...votes][0];
+    return result(only, 'title', false, { votes: [only] });
+  }
+
+  // A tie. The derived department breaks it when it names one of the
+  // categories that voted; otherwise the fixed priority decides.
+  if (department && department !== 'Other' && votes.has(department)) {
+    return result(department, 'title+department', false, { votes: [...votes] });
+  }
+  const winner = matcher.priority.find((category) => votes.has(category)) || 'Other';
+  return result(winner, 'title', false, { votes: [...votes] });
+}
+
+export { DEFAULT_LEXICON };

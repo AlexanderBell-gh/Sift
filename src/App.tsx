@@ -18,9 +18,6 @@ const ShoppingListPage = lazy(() => import('./components/pages/ShoppingListPage'
 const OffersPage = lazy(() => import('./components/pages/OffersPage'));
 const AdminPage = lazy(() => import('./components/pages/AdminPage'));
 const SettingsPage = lazy(() => import('./components/pages/SettingsPage'));
-// Dev-only: test runner page. Route mounts only under `vite dev`, so this
-// chunk is never fetched in prod.
-const DevTestsPage = lazy(() => import('./components/pages/DevTestsPage'));
 const PrivacyPage = lazy(() =>
   import('./components/pages/LegalPages').then(m => ({ default: m.PrivacyPage }))
 );
@@ -109,7 +106,6 @@ function App() {
             }
           />
           <Route path="/settings" element={<SettingsPage />} />
-          {import.meta.env.DEV && <Route path="/dev/tests" element={<DevTestsPage />} />}
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/cookies" element={<CookiesPage />} />
           <Route path="/terms" element={<TermsPage />} />

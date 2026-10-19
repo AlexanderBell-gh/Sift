@@ -1,6 +1,5 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
-import { devTestsWriter } from './vite-plugin-dev-tests'
 
 function cspMeta(): Plugin {
   // Keep in sync with public/_headers (real header, enforced by Pages).
@@ -37,17 +36,7 @@ function cspMeta(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), cspMeta(), devTestsWriter()],
-  resolve: {
-    // Dev test page only: lets the browser import the same *.test.js/ts
-    // files `node --test` runs by shimming 'node:test' (describe/it
-    // collector) and 'node:assert/strict' (equal/notEqual/deepEqual/ok).
-    // node --test and CI never touch Vite, so they are unaffected.
-    alias: [
-      { find: /^node:test$/, replacement: '/src/lib/dev-test-shims/node-test.ts' },
-      { find: /^node:assert\/strict$/, replacement: '/src/lib/dev-test-shims/node-assert.ts' },
-    ],
-  },
+  plugins: [react(), cspMeta()],
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

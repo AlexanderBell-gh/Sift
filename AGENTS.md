@@ -22,23 +22,25 @@ rtk pnpm sift dev         # Vite dev server (port 5173, extra args forwarded)
 rtk pnpm sift build       # tsc -b (type-check) then vite build → dist/
 rtk pnpm sift lint        # oxlint .oxlintrc.json (94 rules, replaces eslint)
 rtk pnpm sift test        # node --test workers/lib/*.test.js src/lib/*.test.ts (zero-dep, no framework)
+rtk pnpm sift eval        # category corpus eval + threshold gate (workers/lib/category.eval.mjs)
 rtk pnpm sift audit       # audit --audit-level=high (CI gate)
+rtk pnpm sift category set|clear|list   # manual category override (D1)
 rtk pnpm sift --help      # full ops CLI: run steps, doctor, gate, db, admin, watchlist (never deploys)
 ```
 
 All commands run through the CLI (`bin/sift.mjs`, extra args forwarded: `pnpm sift test <file>`). CI calls the same CLI steps. Raw `pnpm run X` still works but docs use the CLI.
 
-**No test framework exists.** Worker pure logic lives in `workers/lib/category.test.js` (category scorer) + `workers/lib/validate.test.js` (username/password allowlists) + `workers/lib/resolve.test.js` (import-resolve matching); frontend pure logic in `src/lib/pricing.test.ts` (multibuy engine) + `src/lib/utils.test.ts` (date/deal helpers) — all run via `pnpm sift test` (node strips types natively, so keep test files free of enums/namespaces). There are no other test configs or component test files - use `node` not `python3`.
+**No test framework exists.** Worker pure logic lives in `workers/lib/category.test.js` (category scorer) + `workers/lib/validate.test.js` (username/password allowlists) + `workers/lib/resolve.test.js` (import-resolve matching); frontend pure logic in `src/lib/pricing.test.ts` (multibuy engine) + `src/lib/utils.test.ts` (date/deal helpers) — all run via `pnpm sift test` (node strips types natively, so keep test files free of enums/namespaces). There are no other test configs or component test files - use `node` not `python3`. The category scorer additionally has an offline corpus eval (`pnpm sift eval`) that gates on per-category accuracy.
 
 ## Verify before committing
 
-The CI pipeline runs: **audit → lint → test → build → deploy**. Match it locally:
+The CI pipeline runs: **audit → lint → test → eval → build → migrate → worker → pages**. Match it locally:
 
 ```bash
 rtk pnpm sift gate
 ```
 
-If either fails, the commit will break CI.
+`gate` = audit + lint + build + test + eval. If it fails, the commit will break CI.
 
 ## Repository structure
 
@@ -50,8 +52,8 @@ public/           Static assets — store logo PNGs, favicon, theme-init.js
 ```
 
 - Frontend entry: `src/main.tsx` → `src/App.tsx` (React Router with routes: /, /auth, /search, /watchlist, /list, /offers, /admin, /settings, /privacy, /terms, /cookies, /about, /license — landing stays eager, the rest are `React.lazy` behind one `Suspense` fallback). `/` is conditional (`HomeRoute`): `SearchPage` when signed in, `LandingPage` (`src/components/pages/LandingPage.tsx`) when guest. Scroll reveals via `src/hooks/useReveal.ts` (`useRevealRoot`, `[data-reveal]` → `is-visible`, once each)
-- Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (category scorer) + `workers/lib/validate.js` (username/password allowlists) — both plain JS, both with `*.test.js` coverage
-- DB schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog)
+- Worker entry: `workers/index.js` — single-file API with all routes. `workers/auth.js` (JWT/password helpers), `workers/db.js` (D1 query wrappers), `workers/lib/category.js` (scorer) + `workers/lib/category.lexicon.js` (curated lexicon) + `workers/lib/category.phrases.js` (generated phrase table) + `workers/lib/validate.js` (username/password allowlists) — all plain JS, all with `*.test.js` coverage
+- DB schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog); executable truth is `workers/migrations/0001_init.sql` + `0002_catalog_category.sql`
 - Shopping list: `/list` (`src/components/pages/ShoppingListPage.tsx`, account-synced quantities against watchlist rows) + multibuy pricing engine (`src/lib/pricing.ts`, frontend-only — server stores qty, prices read live from watchlist, same-tag sets pool across lines)
 
 ## Key gotchas
@@ -60,10 +62,13 @@ public/           Static assets — store logo PNGs, favicon, theme-init.js
 - **CSP is injected at build time** by a Vite plugin in `vite.config.ts` (`cspMeta()`) **and** enforced as a real header via `public/_headers` (copied to `dist/`, enforced by Pages). Keep both in sync (cross-referenced in each file). Dev server omits it so HMR works.
 - **`isOfferExpired` is duplicated** — once in `workers/index.js` and once in `src/lib/utils.ts`. Both must stay identical. No shared build across layers.
 - **Validation rules are mirrored, not shared** — `workers/lib/validate.js` (server truth) is duplicated as inline regexes in `src/components/pages/AuthPage.tsx` and `src/components/pages/SettingsPage.tsx`. Keep regexes and error messages identical in all three places; do not import worker code into the frontend (or vice versa).
-- **Category enum is mirrored, not shared** — `CANONICAL_CATEGORIES` in `workers/lib/category.js` (server truth) is duplicated in `src/lib/categories.ts`. Keep identical; both files import from their own copy (no shared build). Frontend components import from `src/lib/categories.ts`, never hardcode the list.
-- **Dev test page (`/dev/tests`, DEV-only, never prod).** Runs the same 5 test files in-browser: `vite.config.ts` aliases `node:test` → `src/lib/dev-test-shims/node-test.ts` (describe/it collector) and `node:assert/strict` → `node-assert.ts` (equal/notEqual/deepEqual/ok), so `node --test`/CI are untouched. Page (`DevTestsPage.tsx`, lazy) + registry (`dev-test-runner.ts`). Case writes go through serve-only endpoints in `vite-plugin-dev-tests.ts` (suites/append, 5-file allowlist, dupe + blocklist guards, dry-run) and scorer fixes through `vite-plugin-dev-tune.ts` (tune: alias/keyword candidates tried in temp copies with the full suite as guard, first clean win; apply-fix re-verifies then writes). Never statically import worker code into `src/` (breaks `tsc` — use `/* @vite-ignore */` dynamic imports).
+- **Category enum is mirrored, not shared** — `CANONICAL_CATEGORIES` in `workers/lib/category.lexicon.js` (server truth, re-exported from `workers/lib/category.js`) is duplicated in `src/lib/categories.ts`. Keep identical; both files import from their own copy (no shared build). Frontend components import from `src/lib/categories.ts`, never hardcode the list.
+- **Category lexicon is generated, do not hand-edit** — `workers/lib/category.phrases.js` is built from `src/data/uk-*.json` + `workers/lib/category.lexicon.js` by `node workers/lib/category.phrases.build.mjs`. Edit the curated lexicon file, rebuild, commit both. `pnpm sift eval` fails if the generated file is stale, so the corpus and the lexicon cannot drift.
+- **`pnpm sift eval` is a gate** — the corpus eval (`workers/lib/category.eval.mjs`) asserts a per-category accuracy floor from `workers/lib/category.thresholds.json` (fit suite 100%, holdout suite ~88%). Floors are a ratchet: never lower them. `pnpm sift gate` and CI both run it.
+- **No in-browser test surface** — the `/dev/tests` page, its node:test/node:assert shims, the dev test writer plugin and the scorer tuner are all deleted. `node --test` and `pnpm sift eval` are the whole test surface. Never statically import worker code into `src/` (breaks `tsc` — use `/* @vite-ignore */` dynamic imports).
 - **Positioning** — Sift is a UK supermarket grocery tracker (search → watchlist → shopping list), not an offer-only tool. Pins need not be on offer; never write copy that assumes a discount.
-- **Migrations auto-apply on push to main** via CI. To create a new migration, add a numbered `.sql` file to `workers/migrations/` (e.g. `0010_your_change.sql`). Update `workers/schema.sql` to match.
+- **Migrations auto-apply on push to main** via CI, in the order migrations → worker → pages. The chain is two files (`0001_init.sql` builds a full database from scratch, `0002_catalog_category.sql` adds the manual-override columns). To add a migration, add a numbered `.sql` file to `workers/migrations/` and update `workers/schema.sql` to match.
+- **Manual category override is CLI-only** — `pnpm sift category set "<product name>" <category>` writes `product_catalog.category`, which the worker reads before scoring. Global by name, case-insensitive. Remote writes need `--remote --yes`. No UI, no per-user override.
 - **D1 does not enforce FOREIGN KEY cascades.** Delete dependent rows explicitly (e.g. watchlist DELETE also clears `shopping_list` + `alerts` rows).
 - **Staged removals must flush on `pagehide`.** React never runs unmount cleanups on refresh/close-tab, so staged watchlist/shopping-list removals commit through a `pagehide` listener with `keepalive` fetches (`removeFromWatchlist`, `setShoppingListQty` carry it). Never rely on unmount alone for unload paths.
 - **Rate limits** are enforced server-side on auth endpoints. Don't remove them.

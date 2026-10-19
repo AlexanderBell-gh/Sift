@@ -1,0 +1,27 @@
+{
+  "fit": {
+    "overall": 0.99,
+    "perCategory": {
+      "Bakery": 0.99,
+      "Beverages": 0.99,
+      "Chilled": 0.99,
+      "Food Cupboard": 0.99,
+      "Frozen": 0.99,
+      "Other": 0.99,
+      "Produce": 0.99,
+      "Snacks": 0.99
+    }
+  },
+  "holdout": {
+    "overall": 0.85,
+    "perCategory": {
+      "Bakery": 0.86,
+      "Beverages": 0.8,
+      "Chilled": 0.85,
+      "Food Cupboard": 0.87,
+      "Frozen": 0.84,
+      "Produce": 0.94,
+      "Snacks": 0.8
+    }
+  }
+}

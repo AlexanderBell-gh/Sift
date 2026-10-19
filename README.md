@@ -74,18 +74,19 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift dev` | Vite dev server (no CSP, HMR works) |
 | `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
 | `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
-| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (187 tests; DEV-only `/dev/tests` page runs the same files in-browser, adds cases to disk, tunes the scorer) |
+| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (168 tests) |
+| `pnpm sift eval` | Category corpus eval — scores 1,573 offline product names and fails below the per-category accuracy floor |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
-| `pnpm sift --help` | Full CLI: run steps, doctor, gate, db, admin, watchlist reads |
+| `pnpm sift --help` | Full CLI: run steps, doctor, gate, eval, db, category, admin, watchlist reads |
 
 Build code-splits for first paint: the guest landing chunk stays eager while all other routes lazy-load, with React vendored into its own cached chunk.
 
-**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test, and CI calls the same CLI steps). `db migrate|status|query|users` wraps wrangler D1; `admin stats|users|trials|audit|trials-cleanup|user-role|user-delete|resolve` and `watchlist names|offers` wrap the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
+**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test → eval, and CI calls the same CLI steps). `db migrate|status|query|users` wraps wrangler D1; `category set|clear|list` manages manual category overrides; `admin stats|users|trials|audit|trials-cleanup|user-role|user-delete|resolve` and `watchlist names|offers` wrap the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
 
 ## Deploy
 
-**Automatic:** push to `main` → GitHub Actions (audit → lint → test → build → deploy Worker + D1 migrations + Pages, all via `pnpm sift`). PRs do **not** deploy.
+**Automatic:** push to `main` → GitHub Actions (audit → lint → test → eval → build → D1 migrations → deploy Worker → deploy Pages, all via `pnpm sift`). PRs do **not** deploy.
 
 **Manual:**
 ```bash
@@ -122,7 +123,13 @@ pnpm exec wrangler d1 migrations apply sift --remote
 <details>
 <summary><strong>Category taxonomy</strong></summary>
 
-`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). Pipeline: vetoes → leaf-first weighting → confidence floor → fixed-priority ties, plus fresh-protein confirmation and storage-text signals. v3 vocab is title-first and singular-only (plural folding double-counted ties); the frozen veto reads leaf/JSON-LD only and `do not refreeze` is treated as freezable-at-home copy. Scoring runs inline on watchlist add; coverage is locked by `workers/lib/category.test.js` (`node --test`, plus the DEV-only `/dev/tests` tuner that proposes alias/keyword fixes with the full suite as guard).
+`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). It is title-first: the same title scores the same shelf at every store, and a client that sends nothing but a name still gets the right answer.
+
+Seven rules, first hit wins: manual override → non-food → frozen → ambient (a tin or a jar is a cupboard good) → leaf map → title vote → `Other`. The title vote matches the longest known product name in the title first and masks its own tokens (`peanut butter` never also votes `butter`), then falls back to a keyword tier. Ties resolve by a fixed priority, or by the derived breadcrumb department when it names one of the shelves that voted.
+
+The vocabulary is data, not code. `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json` plus the curated `workers/lib/category.lexicon.js`, and `pnpm sift eval` scores 1,573 names against it — failing the build when a shelf drops below its accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule.
+
+Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (106 curated cases) and the corpus eval.
 
 </details>
 
