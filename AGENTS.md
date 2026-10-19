@@ -99,16 +99,16 @@ Visual source of truth is `DESIGN.md` (`/home/wsl/Repositories/markdowns/sift-ma
 ### Multi-Doc Conclusion Protocol
 Whenever the user says **"lets finish up and update the docs"**, you MUST perform the following documentation updates before stopping:
 
-1. **Update MEMORY.md:**
-   * Insert a reverse-chronological entry directly under the `## Session History` header.
-   * Location: `/home/wsl/Repositories/markdowns/sift-markdowns/MEMORY.md`
+1. **Update RECENT.md:**
+   * Insert a reverse-chronological entry directly under the `## Sessions` header.
+   * Keep the file at or under 70 lines — trim the oldest entries when adding a new one.
+   * Location: `/home/wsl/Repositories/markdowns/sift-markdowns/RECENT.md`
    
  ### **Format:**
      ### 📝 [DD-MM-YYYY] @ [UK HH:MM 24-hr] | [Short Session Title]
      * **Changes:** [One-sentence summary of what was accomplished].
      * **Impacted Files:** `[file_1.ext]`, `[file_2.ext]`.
-     * **Left Off At:** [One-sentence summary of outstanding next steps].
-
+     
 2. **Update ARCHITECTURE.md:**
    * Review the current architectural state, tech stack details, or data flows.
    * Update any outdated sections to reflect the exact state of the codebase at the end of this session. Keep it under ~200 lines.
@@ -123,4 +123,4 @@ Whenever the user says **"lets finish up and update the docs"**, you MUST perfor
    * Location: `/home/wsl/Repositories/Sift/AGENTS.md`
 
 5. **Commit Message**
-   * Once docs are upto date suggest a quick commit message with either `feat:`, `polish:` etc
+   * Once docs are updated suggest a quick commit message with either `chore:`, `feat:` or `polish:` etc
