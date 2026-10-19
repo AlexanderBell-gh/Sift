@@ -101,17 +101,12 @@ Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, plus Worker secrets `A
 <details>
 <summary><strong>Database & migrations</strong></summary>
 
-Schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog). Migrations in `workers/migrations/` auto-apply on push:
+Schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog). `product_catalog` is the persistent pool of pinned product names that feeds search autocomplete; it survives a watchlist removal and also holds the manual category override. Migrations in `workers/migrations/` auto-apply on push to `main`, before the worker deploy:
 
-- `0001_offer_deal` — `offer_deal` column
-- `0002_password_resets` — reset tokens
-- `0003_watchlist_unique` — `UNIQUE(user_id, product_id)` index
-- `0004_password_reset_lookup` — `token_sha256` column + index
-- `0005_alert_types` — `alerts.type` widened to `price_drop` / `offer_expiry` / `offer_created`
-- `0006_watchlist_taxonomy` — `taxonomy_version` column
-- `0007_rate_limits` — `rate_limits` table (pruned by the daily cron)
-- `0008_shopping_list` — `shopping_list` table for `/list`
-- `0009_product_catalog` — `product_catalog` table; persistent autocomplete pool (fed on watchlist add, kept on remove)
+- `0001_init` — the full schema; builds a database from scratch and drops the redundant `idx_watchlist_user_product` (the unique `idx_watchlist_user_product_unique` is canonical)
+- `0002_catalog_category` — `product_catalog.category` + `category_updated_at`, the manual category override
+
+The old nine-file chain (`0001_offer_deal` … `0009_product_catalog`) was squashed: it could not build a database from scratch, because `users` and `watchlist` came from a hand-applied `schema.sql` and `0001` was an `ALTER` on top of that. `schema.sql` is the human reference for the end state; `0001_init.sql` is the executable truth.
 
 ```bash
 pnpm exec wrangler d1 execute sift --remote --file=workers/schema.sql
