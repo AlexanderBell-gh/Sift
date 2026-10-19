@@ -179,6 +179,9 @@ export const PHRASE_OVERRIDES = {
   // Non-grocery baking kit.
   'baking tray': 'Other',
   'cake cases': 'Other',
+  // Flapjacks are cereal bars, but the locked case puts them in the food
+  // cupboard (Graze flapjacks). Overrides the corpus bakery label.
+  'flapjack': 'Food Cupboard',
 };
 
 // Names the corpus does not carry that the scorer must still get right.
@@ -198,6 +201,10 @@ export const PHRASE_ADDITIONS = {
   'lentil soup': 'Food Cupboard',
   'minestrone soup': 'Food Cupboard',
   'coffee beans': 'Beverages',
+  'almond milk': 'Chilled',
+  'soya milk': 'Chilled',
+  'soy milk': 'Chilled',
+  'rice milk': 'Chilled',
   'dried fruit': 'Food Cupboard',
   'bay leaves': 'Food Cupboard',
   'lemon sole': 'Chilled',
@@ -229,6 +236,16 @@ export const STOP_TOKENS = new Set([
   'cooked', 'uncooked', 'raw', 'ready', 'served', 'serve', 'eat', 'drink',
   'cooking', 'eating', 'baking', 'spread', 'spoonable',
   'first', 'second', 'third', 'fourth', 'x', 'up', 'new', 'old',
+  // Product form words: they name a shape, never a shelf. Without this,
+  // 'shortbread fingers' inherits 'fingers' from 'fish fingers' and lands
+  // in the freezer.
+  'finger', 'fingers', 'chunk', 'chunks', 'slice', 'slices', 'fillet',
+  'fillets', 'piece', 'pieces', 'bar', 'bars', 'bag', 'bags', 'box',
+  'boxes', 'tub', 'tubs', 'pot', 'pots', 'block', 'blocks', 'bite',
+  'bites', 'stick', 'sticks', 'strip', 'strips', 'squeeze', 'pouch',
+  'pouches', 'tin', 'tins', 'jar', 'jars', 'bottle', 'bottles', 'sleeve',
+  'tray', 'trays', 'bundle', 'bundles', 'multipack', 'portion', 'portions',
+  'serving', 'servings', 'pack', 'packs', 'sachet', 'sachets', 'scoop',
 ]);
 
 // Hand-set keyword tier. The derived tier covers the long tail; these
@@ -236,61 +253,9 @@ export const STOP_TOKENS = new Set([
 // files) or cannot see (no corpus name contains them). Normalised token ->
 // category. These beat the derived tier.
 export const KEYWORD_OVERRIDES = {
-  // Produce words that collide with another shelf's corpus names.
-  'tomato': 'Produce',
-  'apple': 'Produce',
-  'lemon': 'Produce',
-  'lime': 'Produce',
-  'strawberry': 'Produce',
-  'raspberry': 'Produce',
-  'blueberry': 'Produce',
-  'blackberry': 'Produce',
-  'cranberry': 'Produce',
-  'ginger': 'Produce',
-  'garlic': 'Produce',
-  'onion': 'Produce',
-  'mushroom': 'Produce',
-  'potato': 'Produce',
-  'peach': 'Produce',
-  'melon': 'Produce',
-  'pineapple': 'Produce',
-  'orange': 'Produce',
-  'grape': 'Produce',
-  'plum': 'Produce',
-  'cherry': 'Produce',
-  'mango': 'Produce',
-  'avocado': 'Produce',
-  'banana': 'Produce',
-  'broccoli': 'Produce',
-  'carrot': 'Produce',
-  'spinach': 'Produce',
-  'lettuce': 'Produce',
-  'cucumber': 'Produce',
-  'herb': 'Produce',
-  'basil': 'Produce',
-  'mint': 'Produce',
-  'parsley': 'Produce',
-  'rosemary': 'Produce',
-  'thyme': 'Produce',
-  'sage': 'Produce',
-  'dill': 'Produce',
-  'chive': 'Produce',
-  'leek': 'Produce',
-  'celery': 'Produce',
-  'aubergine': 'Produce',
-  'courgette': 'Produce',
-  'cauliflower': 'Produce',
-  'parsnip': 'Produce',
-  'beetroot': 'Produce',
-  'radish': 'Produce',
-  'kale': 'Produce',
-  'cabbage': 'Produce',
-  'sweetcorn': 'Produce',
-  'peas': 'Produce',
-  'fruit': 'Produce',
-  'salad': 'Produce',
-  'veg': 'Produce',
-  'vegetable': 'Produce',
+  // Produce words live in WEAK_KEYWORDS: a fruit name says produce only
+  // when the title says nothing else ('apple & cinnamon granola' is a
+  // cereal, not a fruit).
   // Cupboard words that collide.
   'rice': 'Food Cupboard',
   'flour': 'Food Cupboard',
@@ -468,6 +433,91 @@ export const KEYWORD_OVERRIDES = {
 // Ambient markers: shelf-stable goods that are sold in a tin or jar. A title
 // carrying one of these is Food Cupboard, whatever else the title mentions.
 export const AMBIENT = ['tinned', 'canned', 'jarred'];
+
+// Weaker keywords: flavour and ingredient words that name a shelf only on
+// their own. A title that also names a product ('apple & cinnamon granola')
+// must not be pulled onto the fruit shelf by the fruit word. These vote only
+// when nothing stronger did.
+export const WEAK_KEYWORDS = {
+  // Produce: fruit, vegetables and herbs. They name a shelf only when the
+  // title says nothing else.
+  apple: 'Produce',
+  orange: 'Produce',
+  lemon: 'Produce',
+  lime: 'Produce',
+  strawberry: 'Produce',
+  raspberry: 'Produce',
+  blueberry: 'Produce',
+  blackberry: 'Produce',
+  cranberry: 'Produce',
+  cherry: 'Produce',
+  peach: 'Produce',
+  plum: 'Produce',
+  mango: 'Produce',
+  pineapple: 'Produce',
+  melon: 'Produce',
+  banana: 'Produce',
+  avocado: 'Produce',
+  pear: 'Produce',
+  fig: 'Produce',
+  date: 'Produce',
+  kiwi: 'Produce',
+  grape: 'Produce',
+  apricot: 'Produce',
+  nectarine: 'Produce',
+  coconut: 'Produce',
+  tomato: 'Produce',
+  ginger: 'Produce',
+  garlic: 'Produce',
+  onion: 'Produce',
+  mushroom: 'Produce',
+  potato: 'Produce',
+  broccoli: 'Produce',
+  carrot: 'Produce',
+  spinach: 'Produce',
+  lettuce: 'Produce',
+  cucumber: 'Produce',
+  herb: 'Produce',
+  basil: 'Produce',
+  mint: 'Produce',
+  parsley: 'Produce',
+  rosemary: 'Produce',
+  thyme: 'Produce',
+  sage: 'Produce',
+  dill: 'Produce',
+  chive: 'Produce',
+  leek: 'Produce',
+  celery: 'Produce',
+  aubergine: 'Produce',
+  courgette: 'Produce',
+  cauliflower: 'Produce',
+  parsnip: 'Produce',
+  beetroot: 'Produce',
+  radish: 'Produce',
+  kale: 'Produce',
+  cabbage: 'Produce',
+  sweetcorn: 'Produce',
+  peas: 'Produce',
+  fruit: 'Produce',
+  salad: 'Produce',
+  veg: 'Produce',
+  vegetable: 'Produce',
+  // Flavour and ingredient words. They say which product, never which
+  // shelf on their own.
+  cinnamon: 'Food Cupboard',
+  vanilla: 'Food Cupboard',
+  caramel: 'Food Cupboard',
+  gingerbread: 'Bakery',
+  mustard: 'Food Cupboard',
+  horseradish: 'Food Cupboard',
+  nutmeg: 'Food Cupboard',
+  paprika: 'Food Cupboard',
+  turmeric: 'Food Cupboard',
+  cumin: 'Food Cupboard',
+  oregano: 'Food Cupboard',
+  bay: 'Produce',
+  dried: 'Food Cupboard',
+};
 
 // Personal-care and household markers. Force Other before scoring.
 // Multi-word entries match a contiguous run of title words.

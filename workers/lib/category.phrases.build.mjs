@@ -73,14 +73,18 @@ export function loadCorpus() {
   return names;
 }
 
-// A token is a keyword for a category when it is distinctive: it appears in
-// the names of that category and in no name of any other category.
+// A token is a keyword for a category when the corpus is consistent about
+// it. Two tiers come out of that:
 //
-// A token that shows up under two shelves is ambiguous. It only earns a
-// keyword when one shelf is clearly ahead (a margin of at least two names):
-// 'chilli' is Produce four times over and a spice once, so it is Produce;
-// 'bay' is Produce once and a spice once, so it stays out and the scorer
-// answers Other rather than guessing.
+//   strong - the token names exactly one shelf. It votes on its own.
+//   weak   - the token shows up under two or more shelves, so it only
+//            names a shelf when the title says nothing else. 'apple' is
+//            produce, but 'apple & cinnamon granola' is a cereal.
+//
+// A weak token is assigned to the shelf that uses it most, and only when
+// one shelf leads by at least two names. 'bay' is produce once and a spice
+// once: no clear winner, so it stays out entirely and the scorer answers
+// Other rather than guessing.
 export function deriveKeywords(names) {
   const counts = new Map(); // token -> Map(category -> count)
   for (const entry of names.values()) {
@@ -94,19 +98,22 @@ export function deriveKeywords(names) {
       perCategory.set(entry.label, (perCategory.get(entry.label) || 0) + 1);
     }
   }
-  const out = {};
+  const strong = {};
+  const weak = {};
   for (const [token, perCategory] of counts) {
     if (KEYWORD_OVERRIDES[token]) continue; // hand tier owns this token
     const ranked = [...perCategory.entries()].sort((a, b) => b[1] - a[1]);
     const [category, top] = ranked[0];
     const second = ranked[1] ? ranked[1][1] : 0;
-    const unique = ranked.length === 1;
-    const clearMajority = top >= 2 && top - second >= 2;
-    if (!unique && !clearMajority) continue;
-    (out[category] ||= []).push(token);
+    if (ranked.length === 1) {
+      (strong[category] ||= []).push(token);
+    } else if (top >= 2 && top - second >= 2) {
+      (weak[category] ||= []).push(token);
+    }
   }
-  for (const list of Object.values(out)) list.sort();
-  return out;
+  for (const list of Object.values(strong)) list.sort();
+  for (const list of Object.values(weak)) list.sort();
+  return { strong, weak };
 }
 
 export function buildPhrases(names, { exclude = new Set() } = {}) {
@@ -138,9 +145,18 @@ function serialise(phrases, derived, holdout) {
   }
   lines.push('};');
   lines.push('');
+  lines.push('// Tokens the corpus uses for exactly one shelf. They vote on their own.');
   lines.push('export const DERIVED_KEYWORDS = {');
-  for (const category of Object.keys(derived).sort()) {
-    lines.push(`  ${JSON.stringify(category)}: ${JSON.stringify(derived[category])},`);
+  for (const category of Object.keys(derived.strong).sort()) {
+    lines.push(`  ${JSON.stringify(category)}: ${JSON.stringify(derived.strong[category])},`);
+  }
+  lines.push('};');
+  lines.push('');
+  lines.push('// Tokens the corpus uses for several shelves. They only decide when');
+  lines.push('// nothing stronger voted.');
+  lines.push('export const DERIVED_WEAK = {');
+  for (const category of Object.keys(derived.weak).sort()) {
+    lines.push(`  ${JSON.stringify(category)}: ${JSON.stringify(derived.weak[category])},`);
   }
   lines.push('};');
   lines.push('');
@@ -165,9 +181,9 @@ function main() {
   for (const [category, count] of Object.entries(perCategory).sort()) {
     console.log(`  ${category}: ${count}`);
   }
-  for (const [category, list] of Object.entries(derived).sort()) {
-    console.log(`  keywords ${category}: ${list.length}`);
-  }
+  const strong = Object.values(derived.strong).reduce((n, l) => n + l.length, 0);
+  const weak = Object.values(derived.weak).reduce((n, l) => n + l.length, 0);
+  console.log(`keywords: ${strong} strong, ${weak} weak`);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

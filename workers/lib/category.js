@@ -24,10 +24,10 @@
 //   category.phrases.js   generated from src/data/uk-*.json
 // Both are imported here; nothing is learned at runtime.
 
-import { PHRASES, DERIVED_KEYWORDS } from './category.phrases.js';
+import { PHRASES, DERIVED_KEYWORDS, DERIVED_WEAK } from './category.phrases.js';
 import {
   CANONICAL_CATEGORIES, NON_FOOD, AMBIENT, DEPARTMENTS, DEPARTMENT_IGNORE,
-  LEAF_MAP, KEYWORD_OVERRIDES, PRIORITY, normalise,
+  LEAF_MAP, KEYWORD_OVERRIDES, WEAK_KEYWORDS, PRIORITY, normalise,
 } from './category.lexicon.js';
 
 export { CANONICAL_CATEGORIES, normalise };
@@ -38,6 +38,8 @@ export const TAXONOMY_VERSION = 4;
 const DEFAULT_LEXICON = {
   phrases: PHRASES,
   derived: DERIVED_KEYWORDS,
+  derivedWeak: DERIVED_WEAK,
+  weak: WEAK_KEYWORDS,
   nonFood: NON_FOOD,
   ambient: AMBIENT,
   departments: DEPARTMENTS,
@@ -101,15 +103,44 @@ function buildMatcher(lexicon) {
     list.sort((a, b) => b.tokens.length - a.tokens.length);
   }
 
-  // Hand tier wins over the derived tier.
+  // Keyword tier. Three levels, strongest wins:
+  //   hand   - curated, always strong
+  //   unique - a token the corpus only uses for one shelf, strong
+  //   shared - a token the corpus uses for several shelves, weak: it only
+  //            decides when nothing stronger voted ('apple' must not pull
+  //            'apple & cinnamon granola' onto the fruit shelf)
   const keywords = new Map();
   for (const [category, tokens] of Object.entries(lexicon.derived || {})) {
     for (const token of tokens) {
-      if (!keywords.has(token)) keywords.set(token, category);
+      if (!keywords.has(token)) keywords.set(token, { category, weak: false });
     }
   }
+  for (const [category, tokens] of Object.entries(lexicon.derivedWeak || {})) {
+    for (const token of tokens) {
+      if (!keywords.has(token)) keywords.set(token, { category, weak: true });
+    }
+  }
+  for (const [token, category] of Object.entries(lexicon.weak || {})) {
+    if (!keywords.has(token)) keywords.set(token, { category, weak: true });
+  }
   for (const [token, category] of Object.entries(lexicon.keywordOverrides || {})) {
-    keywords.set(token, category);
+    keywords.set(token, { category, weak: false });
+  }
+
+  // Index by first letter so a plural fold is a short scan, not a sweep.
+  const keywordHeads = new Map();
+  for (const [token, entry] of keywords) {
+    const head = token[0];
+    if (!keywordHeads.has(head)) keywordHeads.set(head, []);
+    keywordHeads.get(head).push([token, entry]);
+  }
+
+  // One-word product names that are flavour words. A bare match on one of
+  // these is an ingredient, not a product.
+  const weakPhrases = new Set();
+  for (const token of Object.keys(lexicon.weak || {})) weakPhrases.add(token);
+  for (const [category, tokens] of Object.entries(lexicon.derivedWeak || {})) {
+    for (const token of tokens) weakPhrases.add(token);
   }
 
   const leafMap = new Map();
@@ -128,6 +159,8 @@ function buildMatcher(lexicon) {
   return {
     phraseIndex,
     keywords,
+    keywordHeads,
+    weakPhrases,
     leafMap,
     departments,
     departmentIgnore,
@@ -135,6 +168,19 @@ function buildMatcher(lexicon) {
     ambient: new Set(lexicon.ambient || []),
     priority: lexicon.priority || PRIORITY,
   };
+}
+
+// Keyword lookup with a plural fold: 'oranges' finds 'orange', 'chips'
+// finds 'chip'. A short scan over the tokens that share a first letter.
+function lookupKeyword(token, matcher) {
+  const exact = matcher.keywords.get(token);
+  if (exact) return exact;
+  const candidates = matcher.keywordHeads.get(token[0]);
+  if (!candidates) return null;
+  for (const [word, entry] of candidates) {
+    if (sameWord(token, word)) return entry;
+  }
+  return null;
 }
 
 // Marker phrases ('kitchen roll', 'bin bags') are indexed by their first
@@ -195,7 +241,11 @@ function hasMarker(tokens, index) {
 // Longest known product name contained in the title wins. Longer beats
 // shorter ('frozen chicken nuggets' over 'chicken nuggets'), so a specific
 // product always outranks the family it belongs to.
-function matchPhrase(tokens, phraseIndex) {
+//
+// A one-word name that is a flavour word ('lemon', 'cinnamon') is a weak
+// match: it names an ingredient, not a product. 'Tesco Lemon Juice' is a
+// drink, not a lemon.
+function matchPhrase(tokens, phraseIndex, weakPhrases) {
   let best = null;
   for (let i = 0; i < tokens.length; i++) {
     const candidates = phraseIndex.get(tokens[i]);
@@ -208,7 +258,14 @@ function matchPhrase(tokens, phraseIndex) {
         if (!sameWord(tokens[i + j], candidate.tokens[j])) { hit = false; break; }
       }
       if (!hit) continue;
-      if (!best || len > best.len) best = { len, category: candidate.category, start: i };
+      if (!best || len > best.len) {
+        best = {
+          len,
+          category: candidate.category,
+          start: i,
+          weak: len === 1 && weakPhrases.has(candidate.tokens[0]),
+        };
+      }
     }
   }
   return best;
@@ -293,22 +350,24 @@ export function scoreCategory(signals = {}, opts = {}) {
 
   // 6. Title vote. The phrase match masks its own tokens so a phrase never
   // fights its own words ('peanut butter' does not also vote 'butter').
-  const votes = new Set();
+  // Strong votes decide; weak votes (flavour words) only decide when no
+  // strong vote landed.
+  const strong = new Set();
+  const weak = new Set();
   const masked = new Set();
-  const phrase = matchPhrase(titleTokens, matcher.phraseIndex);
+  const phrase = matchPhrase(titleTokens, matcher.phraseIndex, matcher.weakPhrases);
   if (phrase) {
-    votes.add(phrase.category);
+    (phrase.weak ? weak : strong).add(phrase.category);
     for (let i = phrase.start; i < phrase.start + phrase.len; i++) masked.add(i);
   }
   for (let i = 0; i < titleTokens.length; i++) {
     if (masked.has(i)) continue;
-    const token = titleTokens[i];
-    let category = matcher.keywords.get(token);
-    if (!category) category = matcher.keywords.get(singularise(token));
-    if (!category) category = matcher.keywords.get(pluralise(token));
-    if (category) votes.add(category);
+    const entry = lookupKeyword(titleTokens[i], matcher);
+    if (!entry) continue;
+    (entry.weak ? weak : strong).add(entry.category);
   }
 
+  const votes = strong.size ? strong : weak;
   if (!votes.size) {
     return result('Other', 'below-floor', true, { votes: [] });
   }

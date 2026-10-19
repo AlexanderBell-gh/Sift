@@ -13,12 +13,12 @@
     }
   },
   "holdout": {
-    "overall": 0.85,
+    "overall": 0.91,
     "perCategory": {
-      "Bakery": 0.86,
-      "Beverages": 0.8,
-      "Chilled": 0.85,
-      "Food Cupboard": 0.87,
+      "Bakery": 0.98,
+      "Beverages": 0.9,
+      "Chilled": 0.94,
+      "Food Cupboard": 0.91,
       "Frozen": 0.84,
       "Produce": 0.94,
       "Snacks": 0.8
