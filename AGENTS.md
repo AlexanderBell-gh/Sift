@@ -17,6 +17,8 @@
 
 ## Commands
 
+> **Rule**: Always use `rtk` infront of any commands you use
+
 ```bash
 rtk pnpm sift dev         # Vite dev server (port 5173, extra args forwarded)
 rtk pnpm sift build       # tsc -b (type-check) then vite build → dist/
@@ -63,8 +65,8 @@ public/           Static assets — store logo PNGs, favicon, theme-init.js
 - **`isOfferExpired` is duplicated** — once in `workers/index.js` and once in `src/lib/utils.ts`. Both must stay identical. No shared build across layers.
 - **Validation rules are mirrored, not shared** — `workers/lib/validate.js` (server truth) is duplicated as inline regexes in `src/components/pages/AuthPage.tsx` and `src/components/pages/SettingsPage.tsx`. Keep regexes and error messages identical in all three places; do not import worker code into the frontend (or vice versa).
 - **Category enum is mirrored, not shared** — `CANONICAL_CATEGORIES` in `workers/lib/category.lexicon.js` (server truth, re-exported from `workers/lib/category.js`) is duplicated in `src/lib/categories.ts`. Keep identical; both files import from their own copy (no shared build). Frontend components import from `src/lib/categories.ts`, never hardcode the list.
-- **Category lexicon is generated, do not hand-edit** — `workers/lib/category.phrases.js` is built from `src/data/uk-*.json` + `workers/lib/category.lexicon.js` by `node workers/lib/category.phrases.build.mjs`. Edit the curated lexicon file, rebuild, commit both. `pnpm sift eval` fails if the generated file is stale, so the corpus and the lexicon cannot drift.
-- **`pnpm sift eval` is a gate** — the corpus eval (`workers/lib/category.eval.mjs`) asserts a per-category accuracy floor from `workers/lib/category.thresholds.json` (fit suite 100%, holdout suite ~94%). Floors are a ratchet: never lower them. `pnpm sift gate` and CI both run it.
+- **Category lexicon is generated, do not hand-edit** — `workers/lib/category.phrases.js` is built from `src/data/uk-*.json` + `workers/lib/category.lexicon.js` by `node workers/lib/category.phrases.build.mjs`. Edit the curated lexicon file, rebuild, commit both. `pnpm sift eval` fails when the phrase table is stale, so corpus and lexicon cannot drift. The keyword tier and holdout list are not compared yet (CATEGORY.md, Implementation review item 4).
+- **`pnpm sift eval` is a gate** — the corpus eval (`workers/lib/category.eval.mjs`) asserts a per-category accuracy floor from `workers/lib/category.thresholds.json` (fit suite 100%). The holdout suite reports 94% but leaks: the keyword tier is derived from the full corpus, so held-out names still train it; the leak-free score is 70.3%. Floors are a ratchet, with one sanctioned re-baseline when that leak is fixed (CATEGORY.md, Implementation review item 1). `pnpm sift gate` and CI both run it.
 - **Category votes come in two strengths** — a strong vote names one shelf (a matched product name, or a keyword the corpus only uses for that shelf); a weak vote is a flavour word (`apple`, `lemon`, `cinnamon`) or a word the corpus uses for several shelves. Weak votes only decide when no strong vote landed. Keep that split: without it `apple & cinnamon granola` lands on produce.
 - **No in-browser test surface** — the `/dev/tests` page, its node:test/node:assert shims, the dev test writer plugin and the scorer tuner are all deleted. `node --test` and `pnpm sift eval` are the whole test surface. Never statically import worker code into `src/` (breaks `tsc` — use `/* @vite-ignore */` dynamic imports).
 - **Positioning** — Sift is a UK supermarket grocery tracker (search → watchlist → shopping list), not an offer-only tool. Pins need not be on offer; never write copy that assumes a discount.

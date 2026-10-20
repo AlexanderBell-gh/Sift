@@ -109,9 +109,13 @@ Schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shoppi
 The old nine-file chain (`0001_offer_deal` … `0009_product_catalog`) was squashed: it could not build a database from scratch, because `users` and `watchlist` came from a hand-applied `schema.sql` and `0001` was an `ALTER` on top of that. `schema.sql` is the human reference for the end state; `0001_init.sql` is the executable truth.
 
 ```bash
-pnpm exec wrangler d1 execute sift --remote --file=workers/schema.sql
+# Fresh database: migrations are the only setup step.
 pnpm exec wrangler d1 migrations apply sift --remote
 ```
+
+`schema.sql` is reference only. Do not execute it before migrations: on a
+fresh database it already creates `product_catalog.category`, and
+`0002_catalog_category` then fails with a duplicate column.
 
 </details>
 
