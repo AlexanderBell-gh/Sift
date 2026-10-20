@@ -74,7 +74,7 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift dev` | Vite dev server (no CSP, HMR works) |
 | `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
 | `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
-| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (189 tests) |
+| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (198 tests) |
 | `pnpm sift eval` | Category eval — 1,581 corpus names plus 108 hand-labelled prod products, gated on per-category accuracy |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
@@ -132,7 +132,7 @@ Eight rules, first hit wins: manual override → non-food → frozen → ambient
 
 The vocabulary is data, not code. `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json` plus the curated `workers/lib/category.lexicon.js`. `pnpm sift eval` runs three suites — the 1,581-name corpus (fit), a 237-name holdout scored by the keyword tier alone, and the 108 products pinned in prod before the wipe, hand-labelled by shelf (live) — and fails below the per-category accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule.
 
-Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (127 curated cases) and the three eval suites.
+Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (134 curated cases) and the three eval suites (fit 100%, honest holdout 79.0%, live 84.3%).
 
 </details>
 

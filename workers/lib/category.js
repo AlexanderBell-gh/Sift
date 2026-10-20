@@ -34,9 +34,10 @@ import {
 
 export { CANONICAL_CATEGORIES, normalise };
 
-// v3, v4 and v5 already shipped. Do not restart at 1. v6 promotes the derived
-// department to a rule after the leaf map and scans crumbs deepest-first.
-export const TAXONOMY_VERSION = 6;
+// v3-v6 already shipped. Do not restart at 1. v7 fixes title-only misses from
+// the v6 probe: ready-meal dish names, Bakewell as a flavour, and multi-word
+// weak phrases ('sweet potato').
+export const TAXONOMY_VERSION = 7;
 
 const DEFAULT_LEXICON = {
   phrases: PHRASES,
@@ -269,11 +270,14 @@ function matchPhrase(tokens, phraseIndex, weakPhrases) {
       }
       if (!hit) continue;
       if (!best || len > best.len) {
+        // A one-word flavour name is weak; so is any multi-word name listed in
+        // WEAK_KEYWORDS ('sweet potato' on a ready-meal title).
+        const name = candidate.tokens.join(' ');
         best = {
           len,
           category: candidate.category,
           start: i,
-          weak: len === 1 && weakPhrases.has(candidate.tokens[0]),
+          weak: weakPhrases.has(name) || (len === 1 && weakPhrases.has(candidate.tokens[0])),
         };
       }
     }

@@ -30,8 +30,8 @@ describe('taxonomy', () => {
     assert.equal(CANONICAL_CATEGORIES[7], 'Other');
   });
 
-  it('ships taxonomy version 6', () => {
-    assert.equal(TAXONOMY_VERSION, 6);
+  it('ships taxonomy version 7', () => {
+    assert.equal(TAXONOMY_VERSION, 7);
   });
 
   it('every score carries a reason and the current version', () => {
@@ -422,6 +422,31 @@ describe('review regressions (20-10-2026)', () => {
     for (const title of ['Lasagne', 'Garlic Bread', 'Tiramisu', 'Gateau', 'Sorbet', 'Arctic Roll']) {
       assert.equal(scoreCategory(signals({ title })).category, 'Frozen', title);
     }
+  });
+});
+
+describe('v6 probe regressions (20-10-2026)', () => {
+  const cases = [
+    ["Sainsbury's Onion Bhaji x4 200g", 'Chilled'],
+    ["Sainsbury's Indian Chicken Korma Ready Meal Main For 2 400g", 'Chilled'],
+    ["Sainsbury's Indian Chicken Jalfrezi Ready Meal Main For 2 400g", 'Chilled'],
+    ['Graze Oat Boosts 3 x 40g Cherry Bakewell Flapjacks', 'Food Cupboard'],
+    ['Hide Peri Peri Chicken with Roasted Sweet Potato 380g', 'Chilled'],
+    [
+      "Sainsbury's 300g Small But Mighty Teriyaki Chicken with Wholewheat Noodles & Edamame",
+      'Chilled',
+    ],
+    ['Huel Black Edition Katsu Curry Flavour High Protein Noodles - 100g', 'Food Cupboard'],
+    ['Huel Black Edition Spicy Korean Noodles High Protein Noodles 102g', 'Food Cupboard'],
+  ];
+  for (const [title, expected] of cases) {
+    it(`${title} -> ${expected}`, () => {
+      assert.equal(scoreCategory(signals({ title })).category, expected);
+    });
+  }
+
+  it('a frozen dish title still hits the frozen rule first', () => {
+    assert.equal(scoreCategory(signals({ title: 'Frozen Chicken Korma' })).category, 'Frozen');
   });
 });
 

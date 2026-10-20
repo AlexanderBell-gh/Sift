@@ -132,6 +132,13 @@ export const PHRASE_OVERRIDES = {
   'tomato passata': 'Food Cupboard',
   // Coleslaw is a chilled pot.
   'coleslaw': 'Chilled',
+  // Ready-meal dish names that the frozen corpus also carries. A bare title is
+  // the chilled ready meal; a title that says 'Frozen ...' still hits the
+  // frozen rule first. 'chicken tikka masala' stays Frozen by locked decision.
+  'onion bhajis': 'Chilled',
+  'chicken korma': 'Chilled',
+  'prawn korma': 'Chilled',
+  'chicken jalfrezi': 'Chilled',
   // Orange juice is a drink.
   'waitrose essential orange juice': 'Beverages',
   // Nut spread is a cupboard jar.
@@ -226,6 +233,8 @@ export const PHRASE_ADDITIONS = {
   'oat bar': 'Snacks',
   // High-protein ready meals carry no shelf noun. The phrase is the shelf.
   'high protein': 'Chilled',
+  // ...but a protein-claim noodle pot is an ambient cupboard product.
+  'high protein noodles': 'Food Cupboard',
   // Supergrain pouches sit with the ambient grains, not in produce.
   'supergrain bowl': 'Food Cupboard',
   // Chocolate gifts are snacks, not eggs.
@@ -274,6 +283,9 @@ export const STOP_TOKENS = new Set([
   // Adjectives and format nouns that the derivation filed under one shelf by
   // accident ('flavoured' water, 'ripened' bananas, cereal 'flakes').
   'flavoured', 'flavored', 'ripened', 'flake', 'flakes',
+  'wholewheat', 'wholegrain',
+  // Nutrient adjective: 'high protein' is a claim, not a shelf.
+  'high',
 ]);
 
 // Hand-set keyword tier. The derived tier covers the long tail; these
@@ -541,6 +553,10 @@ export const WEAK_KEYWORDS = {
   peas: 'Produce',
   chilli: 'Produce',
   pumpkin: 'Produce',
+  edamame: 'Produce',
+  // A multi-word weak phrase: 'sweet potato' is produce on its own, but in a
+  // ready-meal title the protein must outvote the side.
+  'sweet potato': 'Produce',
   fruit: 'Produce',
   salad: 'Produce',
   veg: 'Produce',
@@ -574,7 +590,13 @@ export const WEAK_KEYWORDS = {
   fajita: 'Food Cupboard',
   curry: 'Food Cupboard',
   spice: 'Food Cupboard',
+  teriyaki: 'Food Cupboard',
+  noodle: 'Food Cupboard',
+  noodles: 'Food Cupboard',
   wraps: 'Bakery',
+  // Bakewell is a flavour, not a bake: 'cherry bakewell flapjacks' are the
+  // flapjack shelf, not bakery.
+  bakewell: 'Bakery',
   mustard: 'Food Cupboard',
   horseradish: 'Food Cupboard',
   nutmeg: 'Food Cupboard',
