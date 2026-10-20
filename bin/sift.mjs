@@ -31,6 +31,7 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     db status [--local|--remote]             migration list
     db query <sql> [--local|--remote] [--json]
     db users [--search q] [--limit n] [--local|--remote]
+    db wipe-watchlist [--local|--remote --yes]  wipe shopping_list, alerts, watchlist
 
   category (manual override; writes need --remote --yes off-local):
     category set "<product name>" <category>  set a manual category
@@ -187,6 +188,40 @@ const READ_SQL = /^\s*(select|with|explain|pragma)\b/i;
 function sqlQuote(s) {
   return `'${String(s).replace(/'/g, "''")}'`;
 }
+// One JSON round-trip to wrangler for a read-only count query.
+function d1Rows(sql) {
+  const out = runOut('pnpm', [...WRANGLER, ...wranglerD1(['--json', '--command', sql])]);
+  return JSON.parse(out)[0]?.results ?? [];
+}
+function tableCounts(tables) {
+  const sql = `SELECT ${tables.map((t) => `(SELECT COUNT(*) FROM ${t}) AS ${t}`).join(', ')}`;
+  return d1Rows(sql)[0] ?? {};
+}
+function formatCounts(counts) {
+  return Object.entries(counts).map(([table, count]) => `${table}=${count}`).join(' ');
+}
+
+// One-time clean slate after the taxonomy rebuild. D1 enforces no cascade, so
+// dependent rows go first: shopping_list and alerts point at watchlist rows.
+// users, product_catalog, audit_logs, rate_limits and password_resets survive.
+function wipeWatchlist() {
+  guardWrite('db');
+  const target = flags.remote ? 'remote' : 'local';
+  const wipeOrder = ['shopping_list', 'alerts', 'watchlist'];
+  const kept = ['users', 'product_catalog', 'audit_logs', 'rate_limits', 'password_resets'];
+
+  console.log(`wipe-watchlist (${target})`);
+  console.log(`before: ${formatCounts(tableCounts([...wipeOrder, ...kept]))}`);
+  for (const table of wipeOrder) {
+    run('pnpm', [...WRANGLER, ...wranglerD1(['--command', `DELETE FROM ${table}`])]);
+    console.log(`deleted ${table}`);
+  }
+  const after = tableCounts([...wipeOrder, ...kept]);
+  console.log(`after:  ${formatCounts(after)}`);
+  const remaining = wipeOrder.filter((table) => after[table] !== 0);
+  if (remaining.length) fail(`wipe incomplete: ${remaining.join(', ')} not empty`);
+}
+
 function dbCmd() {
   if (sub === 'migrate') {
     guardWrite('db');
@@ -215,7 +250,9 @@ function dbCmd() {
     ])]);
     const rows = JSON.parse(out)[0]?.results ?? [];
     console.table(rows.map(r => ({ ...r, trial_expires_at: r.trial_expires_at ?? '' })));
-  } else fail(`unknown db subcommand: ${sub} (migrate|status|query|users)`);
+  } else if (sub === 'wipe-watchlist') {
+    wipeWatchlist();
+  } else fail(`unknown db subcommand: ${sub} (migrate|status|query|users|wipe-watchlist)`);
 }
 
 async function api(path, { method = 'GET', body, token } = {}) {

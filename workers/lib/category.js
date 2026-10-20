@@ -9,15 +9,16 @@
 //   { title, brand?, store?, store_id?, breadcrumb_raw?, breadcrumb_leaf?,
 //     storage_text? }
 //
-// Six rules, first hit wins:
-//   1. manual   - product_catalog override from the CLI
-//   2. non-food - household / personal-care markers force Other
-//   3. frozen   - frozen in title, leaf, department or storage text
-//   4. ambient  - tinned / canned / jarred is Food Cupboard
-//   5. leaf     - curated store-agnostic leaf map
-//   6. title    - corpus phrase table, then keyword tier; ties fall back to
-//                 the fixed priority, or to the derived department
-//   7. other    - nothing matched, Other with low_confidence
+// Eight rules, first hit wins:
+//   1. manual     - product_catalog override from the CLI
+//   2. non-food   - household / personal-care markers force Other
+//   3. frozen     - frozen in title, leaf, department or storage text
+//   4. ambient    - tinned / canned / jarred is Food Cupboard
+//   5. leaf       - curated store-agnostic leaf map
+//   6. department - deepest known shelf crumb decides
+//   7. title      - corpus phrase table, then keyword tier; ties fall back
+//                   to the fixed priority
+//   8. other      - nothing matched, Other with low_confidence
 //
 // The lexicon is split in two:
 //   category.lexicon.js   curated (hand written)
@@ -33,10 +34,9 @@ import {
 
 export { CANONICAL_CATEGORIES, normalise };
 
-// v3 and v4 already shipped. Do not restart at 1. v5 changes scoring
-// behaviour: curated weak words beat derived strong hits, the ambient rule
-// exempts bread, and the ready-meal compounds vote.
-export const TAXONOMY_VERSION = 5;
+// v3, v4 and v5 already shipped. Do not restart at 1. v6 promotes the derived
+// department to a rule after the leaf map and scans crumbs deepest-first.
+export const TAXONOMY_VERSION = 6;
 
 const DEFAULT_LEXICON = {
   phrases: PHRASES,
@@ -214,12 +214,14 @@ function getMatcher(lexicon) {
   return matcher;
 }
 
-// First crumb that names a department. Crumbs that name a department but
+// Deepest crumb that names a department. Breadcrumbs run root-first, so the
+// specific shelf is the last crumb; scanning backwards stops a root 'Food &
+// Drink' from shadowing a leaf 'Cereals'. Crumbs that name a department but
 // carry no shelf signal ('Fresh Food', 'Groceries') are skipped and the scan
 // continues.
 export function deriveDepartment(crumbs, matcher) {
-  for (const crumb of crumbs) {
-    const norm = normalise(cleanCrumb(crumb));
+  for (let i = crumbs.length - 1; i >= 0; i--) {
+    const norm = normalise(cleanCrumb(crumbs[i]));
     if (!norm) continue;
     if (matcher.departmentIgnore.has(norm)) continue;
     if (matcher.departments.has(norm)) return matcher.departments.get(norm);
@@ -359,7 +361,14 @@ export function scoreCategory(signals = {}, opts = {}) {
     return result(leafCategory, 'leaf', false, { votes: [leafCategory] });
   }
 
-  // 6. Title vote. The phrase match masks its own tokens so a phrase never
+  // 6. Department. The crumb is explicit shelf metadata, but the leaf is more
+  // specific, so the department rule sits behind the leaf map. Non-food,
+  // frozen and ambient have already won above.
+  if (department) {
+    return result(department, 'department', false, { votes: [department] });
+  }
+
+  // 7. Title vote. The phrase match masks its own tokens so a phrase never
   // fights its own words ('peanut butter' does not also vote 'butter').
   // Strong votes decide; weak votes (flavour words) only decide when no
   // strong vote landed.
@@ -387,11 +396,9 @@ export function scoreCategory(signals = {}, opts = {}) {
     return result(only, 'title', false, { votes: [only] });
   }
 
-  // A tie. The derived department breaks it when it names one of the
-  // categories that voted; otherwise the fixed priority decides.
-  if (department && department !== 'Other' && votes.has(department)) {
-    return result(department, 'title+department', false, { votes: [...votes] });
-  }
+  // A tie between title votes goes to the fixed priority. The department
+  // never breaks a title tie any more: it decided before the title vote ran,
+  // so a tie here is a title-only signal.
   const winner = matcher.priority.find((category) => votes.has(category)) || 'Other';
   return result(winner, 'title', false, { votes: [...votes] });
 }

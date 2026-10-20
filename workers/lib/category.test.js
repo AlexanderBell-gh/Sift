@@ -30,8 +30,8 @@ describe('taxonomy', () => {
     assert.equal(CANONICAL_CATEGORIES[7], 'Other');
   });
 
-  it('ships taxonomy version 5', () => {
-    assert.equal(TAXONOMY_VERSION, 5);
+  it('ships taxonomy version 6', () => {
+    assert.equal(TAXONOMY_VERSION, 6);
   });
 
   it('every score carries a reason and the current version', () => {
@@ -246,23 +246,89 @@ describe('honest fallback', () => {
 });
 
 describe('department', () => {
-  it('breaks a title tie when it names one of the shelves that voted', () => {
-    const plain = scoreCategory(signals({ title: 'Chicken Noodles 60g' }));
-    assert.equal(plain.category, 'Food Cupboard');
-    const withDepartment = scoreCategory(signals({
-      title: 'Chicken Noodles 60g',
-      breadcrumb_raw: ['Chilled', 'Soup'],
-    }));
-    assert.equal(withDepartment.category, 'Chilled');
-    assert.equal(withDepartment.reason, 'title+department');
-  });
+  // 'Widget 42' matches no title rule, so only the crumb can decide the shelf.
+  const unknown = 'Widget 42';
+  const aliases = [
+    ['Bakery & Cakes', 'Bakery'],
+    ['Fruit & Veg', 'Produce'],
+    ['Dairy, Eggs & Chilled', 'Chilled'],
+    ['Crisps & Snacks', 'Snacks'],
+    ['Drinks', 'Beverages'],
+    ['Cupboard', 'Food Cupboard'],
+  ];
 
-  it('is ignored when it carries no shelf signal', () => {
+  for (const [crumb, category] of aliases) {
+    it(`"${crumb}" decides ${category}`, () => {
+      const r = scoreCategory(signals({
+        title: unknown,
+        breadcrumb_raw: ['Groceries', crumb],
+      }));
+      assert.equal(r.category, category);
+      assert.equal(r.reason, 'department');
+      assert.deepEqual(r.votes, [category]);
+    });
+  }
+
+  it('scans deepest-first, so a leaf shelf beats a root shelf', () => {
     const r = scoreCategory(signals({
-      title: 'Chicken Noodles 60g',
-      breadcrumb_raw: ['Fresh Food', 'Soup'],
+      title: unknown,
+      breadcrumb_raw: ['Chilled', 'Food Cupboard'],
     }));
     assert.equal(r.category, 'Food Cupboard');
+    assert.equal(r.reason, 'department');
+  });
+
+  it('decides ahead of the title vote', () => {
+    // Title alone is Chilled via the oat milk compound.
+    assert.equal(scoreCategory(signals({ title: 'Oat Milk 1L' })).category, 'Chilled');
+    const r = scoreCategory(signals({
+      title: 'Oat Milk 1L',
+      breadcrumb_raw: ['Food & Drink', 'Food Cupboard', 'Cereals'],
+    }));
+    assert.equal(r.category, 'Food Cupboard');
+    assert.equal(r.reason, 'department');
+  });
+
+  it('skips broad parent crumbs', () => {
+    const r = scoreCategory(signals({
+      title: unknown,
+      breadcrumb_raw: ['Fresh Food', 'Groceries'],
+    }));
+    assert.equal(r.category, 'Other');
+    assert.equal(r.reason, 'below-floor');
+  });
+
+  it('keeps the leaf map ahead of the department', () => {
+    const r = scoreCategory(signals({
+      title: unknown,
+      breadcrumb_raw: ['Groceries', 'Snacks'],
+      breadcrumb_leaf: 'Flapjacks',
+    }));
+    assert.equal(r.category, 'Food Cupboard');
+    assert.equal(r.reason, 'leaf');
+  });
+
+  it('never outranks the hard rules', () => {
+    const nonFood = scoreCategory(signals({
+      title: 'Kitchen Roll 4 Pack',
+      breadcrumb_raw: ['Groceries', 'Chilled'],
+    }));
+    assert.equal(nonFood.category, 'Other');
+    assert.equal(nonFood.reason, 'non-food');
+
+    const frozen = scoreCategory(signals({
+      title: unknown,
+      breadcrumb_raw: ['Bakery & Cakes', 'Frozen'],
+    }));
+    assert.equal(frozen.category, 'Frozen');
+    assert.equal(frozen.reason, 'frozen');
+
+    const ambient = scoreCategory(signals({
+      title: 'Tinned Tomatoes 400g',
+      breadcrumb_raw: ['Groceries', 'Fruit & Veg'],
+    }));
+    assert.equal(ambient.category, 'Food Cupboard');
+    assert.equal(ambient.reason, 'ambient');
   });
 });
 

@@ -7,7 +7,7 @@
 //
 // The scorer never reads src/data/uk-*.json at runtime: the corpus is
 // distilled into category.phrases.js (name -> category) plus a derived
-// keyword tier. Regenerate with: pnpm sift category build-lexicon
+// keyword tier. Regenerate with: node workers/lib/category.phrases.build.mjs
 
 // The 8 canonical categories. Mirrored in src/lib/categories.ts (no shared
 // build across layers: keep identical).
@@ -256,6 +256,8 @@ export const STOP_TOKENS = new Set([
   'sun', 'bio', 'protein',
   // Format, origin and cuisine words. They describe a product, never a shelf.
   'loose', 'scottish', 'peri', 'welsh', 'irish',
+  'indian', 'chinese', 'italian', 'mexican', 'thai', 'japanese', 'korean',
+  'greek', 'french', 'spanish', 'moroccan', 'caribbean', 'american',
   'cooked', 'uncooked', 'raw', 'ready', 'served', 'serve', 'eat', 'drink',
   'cooking', 'eating', 'baking', 'spread', 'spoonable',
   'first', 'second', 'third', 'fourth', 'x', 'up', 'new', 'old',
@@ -269,6 +271,9 @@ export const STOP_TOKENS = new Set([
   'pouches', 'tin', 'tins', 'jar', 'jars', 'bottle', 'bottles', 'sleeve',
   'tray', 'trays', 'bundle', 'bundles', 'multipack', 'portion', 'portions',
   'serving', 'servings', 'pack', 'packs', 'sachet', 'sachets', 'scoop',
+  // Adjectives and format nouns that the derivation filed under one shelf by
+  // accident ('flavoured' water, 'ripened' bananas, cereal 'flakes').
+  'flavoured', 'flavored', 'ripened', 'flake', 'flakes',
 ]);
 
 // Hand-set keyword tier. The derived tier covers the long tail; these
@@ -293,7 +298,6 @@ export const KEYWORD_OVERRIDES = {
   'honey': 'Food Cupboard',
   'syrup': 'Food Cupboard',
   'vinegar': 'Food Cupboard',
-  'spice': 'Food Cupboard',
   'cereal': 'Food Cupboard',
   'porridge': 'Food Cupboard',
   'granola': 'Food Cupboard',
@@ -535,6 +539,8 @@ export const WEAK_KEYWORDS = {
   cabbage: 'Produce',
   sweetcorn: 'Produce',
   peas: 'Produce',
+  chilli: 'Produce',
+  pumpkin: 'Produce',
   fruit: 'Produce',
   salad: 'Produce',
   veg: 'Produce',
@@ -561,6 +567,14 @@ export const WEAK_KEYWORDS = {
   // A sauce name that also appears in ready-meal titles. On its own it is a
   // cupboard jar; with 'high protein' the phrase decides.
   bolognese: 'Food Cupboard',
+  // Dish and format words. A ready meal names a protein ('chicken katsu
+  // bowl') or a sauce ('curry sauce'); the format word alone must not outvote
+  // it. 'wraps' are bakery only when the title names nothing else.
+  bowl: 'Food Cupboard',
+  fajita: 'Food Cupboard',
+  curry: 'Food Cupboard',
+  spice: 'Food Cupboard',
+  wraps: 'Bakery',
   mustard: 'Food Cupboard',
   horseradish: 'Food Cupboard',
   nutmeg: 'Food Cupboard',
@@ -594,21 +608,48 @@ export const NON_FOOD = [
   'lipstick', 'suncream', 'aftershave',
 ];
 
-// Known departments, derived from the first crumb that normalises to one.
-// 'Frozen' forces Frozen; 'Chilled' breaks a title-vote tie only.
+// Known departments, derived from the deepest crumb that normalises to one.
+// Every canonical shelf is mapped, plus the store-specific aliases that show
+// up in breadcrumbs. 'Frozen' still forces Frozen before this map runs; once
+// the leaf map has had its say, a known department decides the shelf.
 export const DEPARTMENTS = {
   'frozen': 'Frozen',
-  'dairy eggs & chilled': 'Chilled',
-  'dairy': 'Chilled',
+  'bakery': 'Bakery',
+  'bakery & cakes': 'Bakery',
+  'bread & bakery': 'Bakery',
+  'produce': 'Produce',
+  'fruit & veg': 'Produce',
+  'fruit and veg': 'Produce',
+  'fruit & vegetables': 'Produce',
+  'fresh fruit & vegetables': 'Produce',
   'chilled': 'Chilled',
   'chilled food': 'Chilled',
+  'chilled & fresh': 'Chilled',
+  'dairy': 'Chilled',
+  'dairy & eggs': 'Chilled',
+  'dairy eggs & chilled': 'Chilled',
+  'dairy, eggs & chilled': 'Chilled',
+  'snacks': 'Snacks',
+  'crisps & snacks': 'Snacks',
+  'biscuits & snacks': 'Snacks',
+  'beverages': 'Beverages',
+  'drinks': 'Beverages',
+  'soft drinks': 'Beverages',
+  'beer wine & spirits': 'Beverages',
+  'beer, wine & spirits': 'Beverages',
+  'food cupboard': 'Food Cupboard',
+  'cupboard': 'Food Cupboard',
+  'ambient': 'Food Cupboard',
+  'tins packets & jars': 'Food Cupboard',
+  'tins, packets & jars': 'Food Cupboard',
 };
 
 // Crumbs that name a department but carry no shelf signal. Scanning skips
-// them and keeps looking for a department that does.
+// them and keeps looking deeper for a department that does. Canonical shelf
+// names must never appear here: they are the strongest signal a crumb carries.
 export const DEPARTMENT_IGNORE = new Set([
   'fresh food', 'groceries', 'food', 'food & drink', 'home', 'offers',
-  'special offers', 'new', 'food cupboard', 'beverages', 'drinks',
+  'special offers', 'new',
 ]);
 
 // Store-agnostic leaf map. Exact match, then plural fold, then head match

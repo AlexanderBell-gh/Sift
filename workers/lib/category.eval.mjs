@@ -14,6 +14,10 @@
 //            entries (DUP_BASE, PHRASE_OVERRIDES, PHRASE_ADDITIONS) stay in
 //            the holdout lexicon: they are hand rules, not corpus learning.
 //            This is the number that means something.
+//   live     the 108 products that were pinned in prod before the 19-10-2026
+//            wipe, hand-labelled by shelf. Scored with the shipped lexicon,
+//            title only. Independent of the corpus, so it catches a label the
+//            corpus itself gets wrong.
 //
 // The corpus is the training set, so the fit suite is close to circular by
 // construction. The curated cases in workers/lib/category.test.js are the
@@ -36,6 +40,7 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const THRESHOLDS_FILE = join(HERE, 'category.thresholds.json');
+const LIVE_FILE = join(HERE, 'category.live-holdout.json');
 
 const MAX_MISSES_SHOWN = 40;
 
@@ -68,6 +73,18 @@ function buildHoldoutLexicon() {
     derived: derived.strong,
     derivedWeak: derived.weak,
   };
+}
+
+// The prod watchlist export, hand-labelled by shelf. It is not derived from
+// the corpus, so it is the one suite that can catch a wrong corpus label.
+// Scored with the shipped lexicon: this is the product-level check, not a
+// keyword-tier generalisation score.
+function loadLive() {
+  const fixture = JSON.parse(readFileSync(LIVE_FILE, 'utf8'));
+  return (fixture.entries || []).map((entry) => ({
+    name: entry.name,
+    expected: entry.expected,
+  }));
 }
 
 function runSuite(label, entries, lexicon) {
@@ -221,9 +238,11 @@ function main() {
     return holdoutSet.has(name) && !CURATED_NAMES.has(name);
   });
   const holdout = runSuite('holdout', holdoutEntries, buildHoldoutLexicon());
+  const live = runSuite('live', loadLive(), DEFAULT_LEXICON);
 
   report(fit);
   report(holdout);
+  report(live);
 
   if (!process.argv.includes('--gate')) return;
 
@@ -231,6 +250,7 @@ function main() {
   const failures = [
     ...gate(fit, thresholds, 'fit'),
     ...gate(holdout, thresholds, 'holdout'),
+    ...gate(live, thresholds, 'live'),
   ];
   if (failures.length) {
     console.error('\nEVAL GATE FAILED');

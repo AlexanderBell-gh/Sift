@@ -21,8 +21,15 @@
       "Food Cupboard": 0.889,
       "Frozen": 0.647,
       "Produce": 0.842,
-      "Snacks": 0.551,
-      "Other": 0.98
+      "Snacks": 0.551
+    }
+  },
+  "live": {
+    "overall": 0.758,
+    "perCategory": {
+      "Chilled": 0.634,
+      "Food Cupboard": 0.903,
+      "Snacks": 0.826
     }
   }
 }
