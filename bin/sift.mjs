@@ -19,11 +19,11 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     dev [args]                      Vite dev server (:5173)
     build                           tsc -b + vite build → dist/
     lint [args]                     oxlint over the repo
-    test [file]                     node --test workers/lib/*.test.js
+    test [file]                     node --test workers/lib/*.test.js src/lib/*.test.ts
     eval                            corpus eval + threshold gate
     audit [args]                    pnpm audit (default --audit-level=high)
     preview [args]                  vite preview of dist/
-    gate                            CI mirror: audit + lint + build + test
+    gate                            CI mirror: audit + lint + build + test + eval
     doctor                          toolchain, env keys, wrangler auth, secrets, D1
 
   db (wrangler D1; remote writes need BOTH --remote --yes):

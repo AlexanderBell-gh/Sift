@@ -74,8 +74,8 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift dev` | Vite dev server (no CSP, HMR works) |
 | `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
 | `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
-| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (168 tests) |
-| `pnpm sift eval` | Category corpus eval — scores 1,576 offline product names and fails below the per-category accuracy floor |
+| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (180 tests) |
+| `pnpm sift eval` | Category corpus eval — scores 1,581 offline product names and fails below the per-category accuracy floor |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
 | `pnpm sift --help` | Full CLI: run steps, doctor, gate, eval, db, category, admin, watchlist reads |
@@ -124,11 +124,11 @@ fresh database it already creates `product_catalog.category`, and
 
 `workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). It is title-first: the same title scores the same shelf at every store, and a client that sends nothing but a name still gets the right answer.
 
-Seven rules, first hit wins: manual override → non-food → frozen → ambient (a tin or a jar is a cupboard good) → leaf map → title vote → `Other`. The title vote matches the longest known product name in the title first and masks its own tokens (`peanut butter` never also votes `butter`), then falls back to a keyword tier. Flavour words vote weakly: `apple & cinnamon granola` is a cereal, not a fruit. Ties resolve by a fixed priority, or by the derived breadcrumb department when it names one of the shelves that voted.
+Seven rules, first hit wins: manual override → non-food → frozen → ambient (a tin or a jar is a cupboard good, unless the title describes a loaf) → leaf map → title vote → `Other`. The title vote matches the longest known product name in the title first and masks its own tokens (`peanut butter` never also votes `butter`), then falls back to a keyword tier. Flavour words vote weakly: `apple & cinnamon granola` is a cereal, not a fruit, and a curated weak word outranks a corpus-derived strong hit. Ties resolve by a fixed priority, or by the derived breadcrumb department when it names one of the shelves that voted.
 
-The vocabulary is data, not code. `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json` plus the curated `workers/lib/category.lexicon.js`, and `pnpm sift eval` scores 1,576 names against it — failing the build when a shelf drops below its accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule.
+The vocabulary is data, not code. `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json` plus the curated `workers/lib/category.lexicon.js`, and `pnpm sift eval` scores 1,581 names against it — failing the build when a shelf drops below its accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule.
 
-Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (106 curated cases) and the corpus eval.
+Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (118 curated cases) and the corpus eval.
 
 </details>
 

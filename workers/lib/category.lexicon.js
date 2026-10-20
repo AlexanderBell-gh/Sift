@@ -138,6 +138,9 @@ export const PHRASE_OVERRIDES = {
   'nutella': 'Food Cupboard',
   'nutella hazelnut': 'Food Cupboard',
   'peanut butter': 'Food Cupboard',
+  // A bare 'Mushrooms' is the fresh shelf; the frozen file also carries it,
+  // and the frozen rule still catches 'Frozen Mushrooms' from the title.
+  'mushrooms': 'Produce',
   // Tinned fish is a cupboard tin, not a fresh fillet.
   'tuna chunks in brine': 'Food Cupboard',
   'tuna chunks in spring water': 'Food Cupboard',
@@ -210,13 +213,27 @@ export const PHRASE_ADDITIONS = {
   'lemon sole': 'Chilled',
   'fruit bread': 'Bakery',
   'blackcurrant squash': 'Beverages',
-  'iced coffee': 'Food Cupboard',
+  'iced coffee': 'Beverages',
   'peanut butter': 'Food Cupboard',
   'coconut milk': 'Food Cupboard',
   'hot chocolate': 'Beverages',
   'ice cream': 'Frozen',
   'frozen yoghurt': 'Frozen',
   'frozen yogurt': 'Frozen',
+  // Bar formats. The corpus carries the flavour nouns but not the compound, so
+  // 'protein' and 'oat' win the vote for the shelves they come from.
+  'protein bar': 'Snacks',
+  'oat bar': 'Snacks',
+  // High-protein ready meals carry no shelf noun. The phrase is the shelf.
+  'high protein': 'Chilled',
+  // Supergrain pouches sit with the ambient grains, not in produce.
+  'supergrain bowl': 'Food Cupboard',
+  // Chocolate gifts are snacks, not eggs.
+  'easter egg': 'Snacks',
+  // A named bake the corpus does not carry; 'sponge' alone names no shelf.
+  'victoria sponge': 'Bakery',
+  // Brand compound: the brand word carries no shelf signal on its own.
+  'sun bites': 'Snacks',
 };
 
 // Tokens the derivation must never treat as a category keyword. Filler,
@@ -232,7 +249,13 @@ export const STOP_TOKENS = new Set([
   'classic', 'original', 'traditional', 'homemade', 'artisan', 'premium',
   'regular', 'standard', 'deluxe', 'finest', 'essential', 'collection',
   'taste', 'difference', 'selected', 'choice', 'special', 'extra',
-  'free', 'range', 'organic', 'natural', 'British', 'fresh', 'frozen',
+  'free', 'range', 'organic', 'natural', 'british', 'fresh', 'frozen',
+  // Brand tokens that are also ordinary words in the corpus ('Sun' Bites,
+  // 'Bio&Me'), and nutrient words that name no shelf. Left as keywords, they
+  // outvote the real shelf noun.
+  'sun', 'bio', 'protein',
+  // Format, origin and cuisine words. They describe a product, never a shelf.
+  'loose', 'scottish', 'peri', 'welsh', 'irish',
   'cooked', 'uncooked', 'raw', 'ready', 'served', 'serve', 'eat', 'drink',
   'cooking', 'eating', 'baking', 'spread', 'spoonable',
   'first', 'second', 'third', 'fourth', 'x', 'up', 'new', 'old',
@@ -281,6 +304,10 @@ export const KEYWORD_OVERRIDES = {
   'noodle': 'Food Cupboard',
   'couscous': 'Food Cupboard',
   'quinoa': 'Food Cupboard',
+  'orzo': 'Food Cupboard',
+  'gnocchi': 'Food Cupboard',
+  'polenta': 'Food Cupboard',
+  'chickpea': 'Food Cupboard',
   'tinned': 'Food Cupboard',
   'canned': 'Food Cupboard',
   'jarred': 'Food Cupboard',
@@ -434,6 +461,16 @@ export const KEYWORD_OVERRIDES = {
 // carrying one of these is Food Cupboard, whatever else the title mentions.
 export const AMBIENT = ['tinned', 'canned', 'jarred'];
 
+// ...unless the marker describes a bread. 'White Tinned Sourdough Bread' names
+// the bake, not a tin, and the shelf is Bakery. Only these product nouns
+// switch the rule off; 'Tinned Tomatoes' still goes to the cupboard.
+export const AMBIENT_EXEMPT = new Set([
+  'bread', 'loaf', 'loaves', 'sourdough', 'baguette', 'baguettes', 'bun',
+  'buns', 'roll', 'rolls', 'crumpet', 'crumpets', 'bagel', 'bagels', 'naan',
+  'pitta', 'pitas', 'brioche', 'ciabatta', 'focaccia', 'croissant',
+  'croissants', 'bloomer', 'wrap', 'wraps',
+]);
+
 // Weaker keywords: flavour and ingredient words that name a shelf only on
 // their own. A title that also names a product ('apple & cinnamon granola')
 // must not be pulled onto the fruit shelf by the fruit word. These vote only
@@ -508,6 +545,22 @@ export const WEAK_KEYWORDS = {
   vanilla: 'Food Cupboard',
   caramel: 'Food Cupboard',
   gingerbread: 'Bakery',
+  // Cooking adjectives: they describe how a product was made ('golden yolk',
+  // 'roast turkey'), so the shelf noun decides. The corpus files them under
+  // the food cupboard, which made them strong on their own.
+  golden: 'Food Cupboard',
+  roast: 'Food Cupboard',
+  roasted: 'Food Cupboard',
+  // Colour and nationality adjectives. 'brown rice' is a grain, 'brown
+  // sugar' a cupboard good; the noun decides. 'danish pastries' are bakery
+  // even though the frozen file also carries them.
+  brown: 'Food Cupboard',
+  danish: 'Bakery',
+  // Cereal format word. 'Cocoa Pops' is a cereal, not a frozen lolly.
+  pops: 'Food Cupboard',
+  // A sauce name that also appears in ready-meal titles. On its own it is a
+  // cupboard jar; with 'high protein' the phrase decides.
+  bolognese: 'Food Cupboard',
   mustard: 'Food Cupboard',
   horseradish: 'Food Cupboard',
   nutmeg: 'Food Cupboard',
@@ -521,15 +574,21 @@ export const WEAK_KEYWORDS = {
 
 // Personal-care and household markers. Force Other before scoring.
 // Multi-word entries match a contiguous run of title words.
+// Bare words that also describe food stay out: 'sponge' is a cake, 'foil' is
+// a wrapping, and 'candle' can name a food brand. Markers name the product
+// ('cleaning sponge', 'kitchen foil', 'scented candle'), so a food title that
+// happens to contain the bare word still reaches the title vote.
 export const NON_FOOD = [
   'wash', 'soap', 'antibacterial', 'shampoo', 'conditioner', 'detergent',
   'bleach', 'cleaner', 'lotion', 'toothpaste', 'deodorant', 'nappies',
   'washing powder', 'fabric softener', 'toilet roll', 'toilet paper',
+  'toilet cleaner', 'toilet duck',
   'kitchen roll', 'kitchen towel', 'paper towel', 'tissue', 'tissues',
-  'wipe', 'wipes', 'foil', 'cling film', 'clingfilm', 'bin bag', 'bin bags',
-  'battery', 'batteries', 'candle', 'candles', 'light bulb', 'light bulbs',
+  'wipe', 'wipes', 'kitchen foil', 'cling film', 'clingfilm', 'bin bag',
+  'bin bags', 'battery', 'batteries', 'scented candle', 'scented candles',
+  'light bulb', 'light bulbs',
   'pet food', 'cat food', 'dog food', 'kitten litter', 'cat litter',
-  'sponge', 'disinfectant', 'sanitiser', 'sanitizer', 'paracetamol',
+  'cleaning sponge', 'disinfectant', 'sanitiser', 'sanitizer', 'paracetamol',
   'plaster', 'plasters', 'tampon', 'tampons', 'razor', 'razors', 'shaving',
   'aftershave', 'moisturiser', 'moisturizer', 'sunscreen', 'makeup',
   'lipstick', 'suncream', 'aftershave',

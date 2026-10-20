@@ -1383,7 +1383,9 @@ async function handleRequest(request, env) {
       // title/brand/store only; older clients send neither, in which case
       // the product name alone is scored. A manual override set through
       // `pnpm sift category set` wins before any rule.
-      const categorySignals = result.category_signals && typeof result.category_signals === 'object'
+      const categorySignals = result.category_signals
+        && typeof result.category_signals === 'object'
+        && !Array.isArray(result.category_signals)
         ? result.category_signals
         : null;
       const signals = categorySignals ? { ...categorySignals } : {};

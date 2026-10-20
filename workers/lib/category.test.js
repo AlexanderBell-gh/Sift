@@ -2,7 +2,7 @@
 // Run: node --test workers/lib/category.test.js
 //
 // The corpus suite (workers/lib/category.eval.mjs) measures the scorer over
-// 1,572 offline product names. These cases are the independent check: they
+// 1,581 offline product names. These cases are the independent check: they
 // are hand-written, they cover the locked regressions, and they pin the
 // behaviour of every rule.
 import { describe, it } from 'node:test';
@@ -30,8 +30,8 @@ describe('taxonomy', () => {
     assert.equal(CANONICAL_CATEGORIES[7], 'Other');
   });
 
-  it('ships taxonomy version 4', () => {
-    assert.equal(TAXONOMY_VERSION, 4);
+  it('ships taxonomy version 5', () => {
+    assert.equal(TAXONOMY_VERSION, 5);
   });
 
   it('every score carries a reason and the current version', () => {
@@ -263,6 +263,99 @@ describe('department', () => {
       breadcrumb_raw: ['Fresh Food', 'Soup'],
     }));
     assert.equal(r.category, 'Food Cupboard');
+  });
+});
+
+describe('review regressions (20-10-2026)', () => {
+  it('a bare Mushrooms is produce, not the frozen file label', () => {
+    assert.equal(scoreCategory(signals({ title: 'Mushrooms' })).category, 'Produce');
+    assert.equal(scoreCategory(signals({ title: 'Frozen Mushrooms' })).category, 'Frozen');
+  });
+
+  it('tea and coffee live on the drinks shelf', () => {
+    for (const title of ['Yorkshire Tea', 'Waitrose Essential Tea Bags', 'Lyons Tea']) {
+      assert.equal(scoreCategory(signals({ title })).category, 'Beverages', title);
+    }
+    assert.equal(scoreCategory(signals({ title: 'Iced Coffee' })).category, 'Beverages');
+  });
+
+  it('bare household words do not make food non-food', () => {
+    assert.equal(scoreCategory(signals({ title: 'Sponge Cake' })).category, 'Bakery');
+    assert.equal(scoreCategory(signals({ title: 'Victoria Sponge' })).category, 'Bakery');
+    assert.notEqual(scoreCategory(signals({ title: 'Sponge Pudding' })).category, 'Other');
+    assert.equal(scoreCategory(signals({ title: 'Foil Wrapped Easter Egg' })).category, 'Snacks');
+  });
+
+  it('household markers still catch the product', () => {
+    for (const title of [
+      'Toilet Duck', 'Toilet Cleaner', 'Cleaning Sponge', 'Kitchen Foil',
+      'Scented Candle',
+    ]) {
+      assert.equal(scoreCategory(signals({ title })).category, 'Other', title);
+    }
+  });
+
+  it('cooking adjectives and flavours never outvote the shelf noun', () => {
+    assert.equal(scoreCategory(signals({ title: "Sainsbury's Golden Yolk Eggs" })).category, 'Chilled');
+    assert.equal(scoreCategory(signals({ title: 'Tesco Finest Roast Turkey Breast' })).category, 'Chilled');
+    assert.equal(
+      scoreCategory(signals({ title: 'Porchetta with Rosemary & Sage Crisps' })).category,
+      'Snacks',
+    );
+  });
+
+  it('bar and chip compounds name the snack shelf', () => {
+    assert.equal(scoreCategory(signals({ title: 'Tortilla Chips' })).category, 'Snacks');
+    assert.equal(scoreCategory(signals({ title: 'Tortilla Chips Chilli' })).category, 'Snacks');
+    assert.equal(scoreCategory(signals({ title: 'Pitta Chips' })).category, 'Snacks');
+    assert.equal(
+      scoreCategory(signals({ title: 'Bio&Me Protein Oat Bar Blueberry' })).category,
+      'Snacks',
+    );
+  });
+
+  it('brand words carry no shelf signal', () => {
+    assert.equal(scoreCategory(signals({ title: 'Sun Bites Sweet Chilli' })).category, 'Snacks');
+  });
+
+  it('Hot Chocolate is a drink', () => {
+    assert.equal(scoreCategory(signals({ title: 'Hot Chocolate' })).category, 'Beverages');
+  });
+
+  it('high-protein ready meals are chilled', () => {
+    assert.equal(
+      scoreCategory(signals({ title: "Sainsbury's 400g High Protein Bolognese" })).category,
+      'Chilled',
+    );
+    assert.equal(
+      scoreCategory(signals({ title: "Sainsbury's 400g High Protein Peri Peri Chicken" })).category,
+      'Chilled',
+    );
+    assert.equal(scoreCategory(signals({ title: 'Peri Peri Sauce' })).category, 'Food Cupboard');
+  });
+
+  it('tinned bread is bakery, tinned tomatoes are cupboard', () => {
+    assert.equal(
+      scoreCategory(signals({ title: "Sainsbury's White Tinned Sourdough Bread" })).category,
+      'Bakery',
+    );
+    assert.equal(scoreCategory(signals({ title: 'Tinned Tomatoes 400g' })).category, 'Food Cupboard');
+  });
+
+  it('a supergrain bowl is a cupboard grain pot', () => {
+    assert.equal(
+      scoreCategory(signals({ title: 'Merchant Gourmet Italian Supergrain Bowl' })).category,
+      'Food Cupboard',
+    );
+  });
+
+  it('bare freezer names stay frozen: the title cannot tell fresh from frozen', () => {
+    // Locked decision: a bare name from uk-frozen.json is the freezer version.
+    // 'Frozen ...' in the title always forces Frozen; fresh variants need a
+    // leaf or a compound phrase.
+    for (const title of ['Lasagne', 'Garlic Bread', 'Tiramisu', 'Gateau', 'Sorbet', 'Arctic Roll']) {
+      assert.equal(scoreCategory(signals({ title })).category, 'Frozen', title);
+    }
   });
 });
 

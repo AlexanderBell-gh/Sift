@@ -26,14 +26,17 @@
 
 import { PHRASES, DERIVED_KEYWORDS, DERIVED_WEAK } from './category.phrases.js';
 import {
-  CANONICAL_CATEGORIES, NON_FOOD, AMBIENT, DEPARTMENTS, DEPARTMENT_IGNORE,
-  LEAF_MAP, KEYWORD_OVERRIDES, WEAK_KEYWORDS, PRIORITY, normalise,
+  CANONICAL_CATEGORIES, NON_FOOD, AMBIENT, AMBIENT_EXEMPT, DEPARTMENTS,
+  DEPARTMENT_IGNORE, LEAF_MAP, KEYWORD_OVERRIDES, WEAK_KEYWORDS, PRIORITY,
+  normalise,
 } from './category.lexicon.js';
 
 export { CANONICAL_CATEGORIES, normalise };
 
-// v3 already shipped. Do not restart at 1.
-export const TAXONOMY_VERSION = 4;
+// v3 and v4 already shipped. Do not restart at 1. v5 changes scoring
+// behaviour: curated weak words beat derived strong hits, the ambient rule
+// exempts bread, and the ready-meal compounds vote.
+export const TAXONOMY_VERSION = 5;
 
 const DEFAULT_LEXICON = {
   phrases: PHRASES,
@@ -42,6 +45,7 @@ const DEFAULT_LEXICON = {
   weak: WEAK_KEYWORDS,
   nonFood: NON_FOOD,
   ambient: AMBIENT,
+  ambientExempt: AMBIENT_EXEMPT,
   departments: DEPARTMENTS,
   departmentIgnore: DEPARTMENT_IGNORE,
   leafMap: LEAF_MAP,
@@ -120,8 +124,11 @@ function buildMatcher(lexicon) {
       if (!keywords.has(token)) keywords.set(token, { category, weak: true });
     }
   }
+  // Curated weak words win over a derived strong hit: the derivation only sees
+  // shelf consistency ("rosemary" is only ever filed under produce), not that
+  // the word is a flavour. Demoting it is a hand judgement.
   for (const [token, category] of Object.entries(lexicon.weak || {})) {
-    if (!keywords.has(token)) keywords.set(token, { category, weak: true });
+    keywords.set(token, { category, weak: true });
   }
   for (const [token, category] of Object.entries(lexicon.keywordOverrides || {})) {
     keywords.set(token, { category, weak: false });
@@ -166,6 +173,7 @@ function buildMatcher(lexicon) {
     departmentIgnore,
     nonFood: buildMarkerIndex(lexicon.nonFood || []),
     ambient: new Set(lexicon.ambient || []),
+    ambientExempt: new Set(lexicon.ambientExempt || []),
     priority: lexicon.priority || PRIORITY,
   };
 }
@@ -337,8 +345,11 @@ export function scoreCategory(signals = {}, opts = {}) {
     return result('Frozen', 'frozen', false, { votes: ['Frozen'] });
   }
 
-  // 4. Ambient. A tin or a jar is a cupboard good whatever else it says.
-  if (titleTokens.some((token) => matcher.ambient.has(token))) {
+  // 4. Ambient. A tin or a jar is a cupboard good whatever else it says,
+  // except when the marker describes a bread ('white tinned sourdough').
+  const ambient = titleTokens.some((token) => matcher.ambient.has(token));
+  const bakeryTitle = titleTokens.some((token) => matcher.ambientExempt.has(token));
+  if (ambient && !bakeryTitle) {
     return result('Food Cupboard', 'ambient', false, { votes: ['Food Cupboard'] });
   }
 

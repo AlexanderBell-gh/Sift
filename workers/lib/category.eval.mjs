@@ -8,9 +8,12 @@
 //   fit      every corpus name, scored with the shipped lexicon. Catches a
 //            corrupted lexicon or a broken matcher.
 //   holdout  a deterministic slice of the corpus held out of the generated
-//            phrase table, so it is scored by the keyword tier alone. This
-//            is the number that means something: it measures the scorer on
-//            products it has never seen.
+//            phrase table, so it is scored by the keyword tier alone. The
+//            tiers are derived from the non-held-out names only, otherwise
+//            each held-out product trains the tier that scores it. Curated
+//            entries (DUP_BASE, PHRASE_OVERRIDES, PHRASE_ADDITIONS) stay in
+//            the holdout lexicon: they are hand rules, not corpus learning.
+//            This is the number that means something.
 //
 // The corpus is the training set, so the fit suite is close to circular by
 // construction. The curated cases in workers/lib/category.test.js are the
@@ -20,23 +23,51 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { scoreCategory, DEFAULT_LEXICON, CANONICAL_CATEGORIES } from './category.js';
-import { PHRASES, HOLDOUT } from './category.phrases.js';
-import { loadCorpus } from './category.phrases.build.mjs';
-import { normalise } from './category.lexicon.js';
+import { scoreCategory, DEFAULT_LEXICON } from './category.js';
+import {
+  PHRASES, DERIVED_KEYWORDS, DERIVED_WEAK, HOLDOUT,
+} from './category.phrases.js';
+import {
+  loadCorpus, deriveKeywords, buildPhrases, holdoutNames,
+} from './category.phrases.build.mjs';
+import {
+  normalise, DUP_BASE, PHRASE_OVERRIDES, PHRASE_ADDITIONS,
+} from './category.lexicon.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const THRESHOLDS_FILE = join(HERE, 'category.thresholds.json');
 
 const MAX_MISSES_SHOWN = 40;
 
+// Names the curated lexicon owns. They are hand rules, not corpus learning, so
+// the holdout suite keeps them: holding out a curated fix would measure the
+// keyword tier on a name the scorer is meant to handle explicitly.
+const CURATED_NAMES = new Set([
+  ...Object.keys(DUP_BASE),
+  ...Object.keys(PHRASE_OVERRIDES),
+  ...Object.keys(PHRASE_ADDITIONS),
+].map(normalise));
+
+// The honest holdout lexicon. A held-out name loses its corpus phrase AND its
+// contribution to the keyword tiers: deriving the tiers from the full corpus
+// would let every held-out product train the tier that scores it.
 function buildHoldoutLexicon() {
   const held = new Set(HOLDOUT);
   const phrases = {};
   for (const [name, category] of Object.entries(PHRASES)) {
-    if (!held.has(name)) phrases[name] = category;
+    if (!held.has(name) || CURATED_NAMES.has(name)) phrases[name] = category;
   }
-  return { ...DEFAULT_LEXICON, phrases };
+  const training = new Map();
+  for (const [name, entry] of loadCorpus()) {
+    if (!held.has(name) || CURATED_NAMES.has(name)) training.set(name, entry);
+  }
+  const derived = deriveKeywords(training);
+  return {
+    ...DEFAULT_LEXICON,
+    phrases,
+    derived: derived.strong,
+    derivedWeak: derived.weak,
+  };
 }
 
 function runSuite(label, entries, lexicon) {
@@ -104,20 +135,49 @@ function report(suite) {
   return perCategory;
 }
 
-function checkDrift() {
-  const expected = loadCorpus();
-  const built = {};
-  for (const [name, entry] of expected) built[name] = entry.label;
-  const expectedKeys = Object.keys(built).sort();
-  const actualKeys = Object.keys(PHRASES).sort();
+function comparePhrases(expected, actual) {
   const drift = [];
+  const expectedKeys = Object.keys(expected).sort();
+  const actualKeys = Object.keys(actual).sort();
   for (const key of expectedKeys) {
-    if (built[key] !== PHRASES[key]) drift.push(`${key}: ${PHRASES[key]} -> ${built[key]}`);
+    if (expected[key] !== actual[key]) drift.push(`${key}: ${actual[key]} -> ${expected[key]}`);
   }
   for (const key of actualKeys) {
-    if (!(key in built)) drift.push(`${key}: extra in category.phrases.js`);
+    if (!(key in expected)) drift.push(`${key}: extra in category.phrases.js`);
   }
   return drift;
+}
+
+// Category -> token list. A set change in either direction is drift.
+function compareTiers(label, expected, actual) {
+  const drift = [];
+  const categories = new Set([...Object.keys(expected), ...Object.keys(actual)]);
+  for (const category of categories) {
+    const want = (expected[category] || []).join(',');
+    const got = (actual[category] || []).join(',');
+    if (want !== got) drift.push(`${label}[${category}]: differs from generator output`);
+  }
+  return drift;
+}
+
+function compareHoldout(expected, actual) {
+  const want = expected.join('\n');
+  const got = [...actual].sort().join('\n');
+  return want === got ? [] : ['HOLDOUT: differs from generator output'];
+}
+
+// Every export in category.phrases.js is regenerated in memory and compared.
+// A change to the corpus, STOP_TOKENS or the derivation fails the gate until
+// the generated file is rebuilt, not just a change to PHRASES.
+function checkDrift() {
+  const names = loadCorpus();
+  const derived = deriveKeywords(names);
+  return [
+    ...comparePhrases(buildPhrases(names), PHRASES),
+    ...compareTiers('DERIVED_KEYWORDS', derived.strong, DERIVED_KEYWORDS),
+    ...compareTiers('DERIVED_WEAK', derived.weak, DERIVED_WEAK),
+    ...compareHoldout(holdoutNames(names), HOLDOUT),
+  ];
 }
 
 function gate(suite, thresholds, label) {
@@ -154,7 +214,12 @@ function main() {
 
   const fit = runSuite('fit', entries, DEFAULT_LEXICON);
   const holdoutSet = new Set(HOLDOUT);
-  const holdoutEntries = entries.filter((entry) => holdoutSet.has(normalise(entry.name)));
+  // Curated names stay in the holdout lexicon, so scoring them would count a
+  // hand rule as a keyword-tier success. They belong to the curated suite.
+  const holdoutEntries = entries.filter((entry) => {
+    const name = normalise(entry.name);
+    return holdoutSet.has(name) && !CURATED_NAMES.has(name);
+  });
   const holdout = runSuite('holdout', holdoutEntries, buildHoldoutLexicon());
 
   report(fit);
