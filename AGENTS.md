@@ -96,9 +96,25 @@ rtk git diff --cached             # staged changes
 
 Allowed origins are hardcoded in `workers/index.js` (`ALLOWED_ORIGINS`): `https://siftsearch.pages.dev`, `http://localhost:5173`, `http://localhost:3000`, plus LAN `http://192.168.1.70:5173` for on-device dev (DHCP may reassign — update when it changes). If adding a new dev port or staging domain, update `ALLOWED_ORIGINS` there.
 
-## Frontend Guidelines
+## Code Longevity & Quality Standards
 
-Visual source of truth is `DESIGN.md` (`/home/wsl/Repositories/markdowns/sift-markdowns/DESIGN.md`) — tokens, type scale, motion, breakpoints, implementation constraints. Read it before touching any component, style, or layout code. Reuse documented tokens/classes only; never invent values. `DESIGN.md` wins on conflict.
+You are not merely a code generator; you are a dedicated co-architect. Your primary objective is the long-term health, maintainability, and production readiness of this
+codebase. Every single line of code you produce must strictly adhere to these standards.
+
+#### Core Philosophy
+
+- Maintainability: Code is read far more often than written. Prioritise clarity, explicit naming, and human readability above all else.
+- Evolution: Adhere to the "Boy Scout Rule." You must proactively identify and gently refactor any technical debt or suboptimal patterns within the context of your
+  changes.
+- Future-Proof Design: Anticipate future requirements. Design interfaces that are open for extension but closed for modification.
+
+#### Mandatory Best Practices
+
+1. Defensive Programming: Always handle all edge cases, null/undefined checks, and asynchronous rejections. Never assume valid input.
+2. Strict Typing & Architecture: Follow the repository's established architectural patterns religiously. Shortcuts (like any) are forbidden.
+3. Intentful Documentation: Use highly descriptive names. Comment why a specific, non-obvious approach was chosen, not what the code does.
+4. Testability by Design: Code must be modular and decoupled. If a component is difficult to unit test, it is too complex and must be broken down.
+5. Dependency Minimization: Evaluate the necessity of every import. Avoid introducing external dependencies for minor, implementable utilities.
 
 ## Session Lifecycle Rules
 
