@@ -87,8 +87,12 @@ function pluralise(word) {
 }
 
 // Crumbs arrive as 'Back to Food & Drink' style strings on some stores.
+// Sainsbury's also repeats the text ('GranolaGranola'), which would defeat
+// every leaf lookup, so collapse an exact doubled crumb to one copy.
 function cleanCrumb(text) {
-  return String(text || '').replace(/^back to\s+/i, '').trim();
+  const cleaned = String(text || '').replace(/^back to\s+/i, '').trim();
+  const half = cleaned.slice(0, cleaned.length / 2);
+  return half && half === cleaned.slice(cleaned.length / 2) ? half : cleaned;
 }
 
 // One matcher per lexicon object. Cached so a hot path does not rebuild the

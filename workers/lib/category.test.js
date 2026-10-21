@@ -450,6 +450,36 @@ describe('v6 probe regressions (20-10-2026)', () => {
   });
 });
 
+describe('v7 probe regressions (21-10-2026)', () => {
+  it("Sainsbury's doubled crumb halves before the leaf lookup", () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Food Cupboard', 'Cereals', 'FlapjacksFlapjacks'],
+      breadcrumb_leaf: 'FlapjacksFlapjacks',
+      title: 'Golden Syrup Squares 4pk',
+    }));
+    assert.equal(r.category, 'Food Cupboard');
+    assert.equal(r.reason, 'leaf');
+  });
+
+  // Real probe leaves: the leaf is more specific than the parent crumb.
+  const cases = [
+    ['Mixed Nuts', 'Pecorino and Truffle Roasted Nut Medley', 'Snacks'],
+    ['Seeds, Nuts & Dried Fruits', 'Cashew Nuts', 'Snacks'],
+    ['Granola', 'Alpen Clusters 400g Chocolate & Berry Granola Breakfast Cereal', 'Food Cupboard'],
+  ];
+  for (const [leaf, title, expected] of cases) {
+    it(`probe leaf "${leaf}" beats a Food Cupboard crumb`, () => {
+      const r = scoreCategory(signals({
+        breadcrumb_raw: ['Food Cupboard', leaf],
+        breadcrumb_leaf: leaf,
+        title,
+      }));
+      assert.equal(r.category, expected);
+      assert.equal(r.reason, 'leaf');
+    });
+  }
+});
+
 describe('manual override', () => {
   it('wins before every rule', () => {
     const r = scoreCategory(signals({ title: 'Semi-Skimmed Milk 2L' }), { override: 'Snacks' });
