@@ -26,7 +26,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 
 ### Search & Deals
 - 11-store search (Tesco, Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado) — query opens each store's results in a new tab; on mobile a slide-up sheet carries the store picker, baked-in Search, recent searches and suggestions
-- Local autocomplete from a ~1,600-item UK grocery dictionary with fuzzy matching, plus a shared catalog of every product ever pinned — names persist even after the item leaves your watchlist; full keyboard support
+- Local autocomplete from the bundled UK grocery dictionary in `src/data/uk-*.json`, with fuzzy matching, plus a shared catalog of every product ever pinned — names persist even after the item leaves your watchlist; full keyboard support
 - Offers carousels — live on-offer items plus Popular right now (all pinned products ranked by pin count, `n pins` badge) in two snap rows with square tiles and one-tap Pin to watchlist (spinner → green Added → pinned); each row shows 8 + a Show-all tile opening the full list on the dedicated `/offers` page (12 per batch with skeletons, view + store dropdowns + product search in a filter bar, trial limit shared)
 
 ### Watchlist
@@ -74,8 +74,8 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift dev` | Vite dev server (no CSP, HMR works) |
 | `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
 | `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
-| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep (198 tests) |
-| `pnpm sift eval` | Category eval — 1,581 corpus names plus 108 hand-labelled prod products, gated on per-category accuracy |
+| `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep |
+| `pnpm sift eval` | Category eval — fit corpus, holdout and live prod suites, gated on per-category accuracy |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
 | `pnpm sift --help` | Full CLI: run steps, doctor, gate, eval, db, category, admin, watchlist reads |
@@ -130,9 +130,9 @@ fresh database it already creates `product_catalog.category`, and
 
 Eight rules, first hit wins: manual override → non-food → frozen → ambient (a tin or a jar is a cupboard good, unless the title describes a loaf) → leaf map → department → title vote → `Other`. The department rule reads breadcrumbs deepest-first and maps all eight shelves plus store aliases (`Bakery & Cakes`, `Fruit & Veg`, `Crisps & Snacks`, …); non-food, frozen and ambient still beat it, and the leaf map is more specific. The title vote matches the longest known product name in the title first and masks its own tokens (`peanut butter` never also votes `butter`), then falls back to a keyword tier. Flavour words vote weakly: `apple & cinnamon granola` is a cereal, not a fruit, and a curated weak word outranks a corpus-derived strong hit. Ties resolve by a fixed priority.
 
-The vocabulary is data, not code. `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json` plus the curated `workers/lib/category.lexicon.js`. `pnpm sift eval` runs three suites — the 1,581-name corpus (fit), a 237-name holdout scored by the keyword tier alone, and the 108 products pinned in prod before the wipe, hand-labelled by shelf (live) — and fails below the per-category accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule.
+The vocabulary is data, not code. `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json` plus the curated `workers/lib/category.lexicon.js`. `pnpm sift eval` runs three suites — the fit corpus, a holdout scored by the keyword tier alone (curated names stay in the lexicon but are excluded from scoring, so a hand rule cannot read as a keyword-tier hit), and the products pinned in prod before the wipe, hand-labelled by shelf (live) — and fails below the per-category accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule.
 
-Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (134 curated cases) and the three eval suites (fit 100%, honest holdout 79.0%, live 84.3%).
+Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (curated cases) plus the three eval suites.
 
 </details>
 
