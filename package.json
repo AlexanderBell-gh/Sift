@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --test workers/lib/*.test.js src/lib/*.test.ts",
+    "test": "node --test --test-reporter=dot workers/lib/*.test.js src/lib/*.test.ts",
     "preview": "vite preview",
     "sift": "node bin/sift.mjs"
   },

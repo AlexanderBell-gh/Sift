@@ -23,6 +23,8 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     test [file]                     node --test workers/lib/*.test.js src/lib/*.test.ts
     eval                            corpus eval + threshold gate
     audit [args]                    pnpm audit (default --audit-level=high)
+    outdated [args]                 pnpm outdated (newer versions available)
+    up|upgrade [args]               pnpm update (upgrade within the ranges)
     preview [args]                  vite preview of dist/
     gate                            CI mirror: audit + lint + build + test + eval
     doctor                          toolchain, env keys, wrangler auth, secrets, D1
@@ -40,20 +42,11 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     category list [--json]                    show manual categories
     category learn [--remote|--local] [--json]  propose vocabulary from harvest labels
 
-  admin (needs SIFT_ADMIN_USER + SIFT_ADMIN_PASS; writes need --yes off-localhost):
-    admin stats|users|trials [--search q] [--json]
-    admin audit [--action a] [--search q] [--page n] [--json]
-    admin trials-cleanup [--yes]              DELETE expired trials (write)
-    admin user-role <id> <admin|user> --yes   change role (write)
-    admin user-delete <id> --yes              delete user (write)
-    admin resolve --store s --name n [--json] probe POST /api/import/resolve
-
   watchlist (read-only debug via admin token):
     watchlist names|offers [--json]
 
 Env: SIFT_API_BASE, SIFT_ADMIN_USER, SIFT_ADMIN_PASS (never commit).
-Remote writes need BOTH --remote --yes (db) or --yes (admin API).
-Localhost API counts as local.`;
+Remote writes need BOTH --remote --yes (db).`;
 
 const argv = process.argv.slice(2);
 const flags = { api: process.env.SIFT_API_BASE || PROD_API, local: false, remote: false, yes: false, json: false };
@@ -77,26 +70,17 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--help' || a === '-h') { console.log(HELP); process.exit(0); }
   else if (a === '--apply') flags.apply = true;
   else if (takeStringFlag('brand')(a, box)) i = box.i;
-  else if (takeStringFlag('store')(a, box)) i = box.i;
   else if (takeStringFlag('search')(a, box)) i = box.i;
   else if (takeStringFlag('limit')(a, box)) i = box.i;
-  else if (takeStringFlag('action')(a, box)) i = box.i;
-  else if (takeStringFlag('name')(a, box)) i = box.i;
-  else if (takeStringFlag('page')(a, box)) i = box.i;
   else rest.push(a);
 }
 const [cmd, sub, ...args] = rest;
 
 function fail(msg) { console.error(`sift: ${msg}`); process.exit(1); }
-function isLocalApi() {
-  try { const h = new URL(flags.api).hostname; return h === 'localhost' || h === '127.0.0.1'; }
-  catch { return false; }
-}
-// Remote writes need the double flag. Local targets proceed freely.
-function guardWrite(kind) {
-  const remote = kind === 'api' ? !isLocalApi() : flags.remote;
-  if (remote && !flags.yes) fail('remote write needs BOTH --remote --yes (db) or --yes (admin API)');
-  if (kind === 'db' && !flags.remote && !flags.local) flags.local = true;
+// Remote DB writes need the double flag. Local targets proceed freely.
+function guardWrite() {
+  if (flags.remote && !flags.yes) fail('remote write needs BOTH --remote --yes');
+  if (!flags.remote && !flags.local) flags.local = true;
 }
 function run(bin, binArgs, opts = {}) {
   const r = spawnSync(bin, binArgs, { stdio: 'inherit', shell: false, ...opts });
@@ -121,10 +105,16 @@ function testStep(passthru) {
 function auditStep(passthru) {
   run('pnpm', ['audit', ...(passthru.length ? passthru : ['--audit-level=high'])]);
 }
-function evalStep() {
-  run('node', ['workers/lib/category.eval.mjs', '--gate']);
+function evalStep(passthru = []) {
+  run('node', ['workers/lib/category.eval.mjs', '--gate', ...passthru]);
 }
 function previewStep(passthru) { run('pnpm', ['run', 'preview', ...passthru]); }
+function outdatedStep(passthru) {
+  // pnpm exits 1 when it finds newer versions: a result, not a failure.
+  const r = spawnSync('pnpm', ['outdated', ...passthru], { stdio: 'inherit', shell: false });
+  if (r.status !== 0 && r.status !== 1) process.exit(r.status ?? 1);
+}
+function upgradeStep(passthru) { run('pnpm', ['update', ...passthru]); }
 
 function doctor() {
   let ok = true;
@@ -173,11 +163,17 @@ function doctor() {
 }
 
 function gate() {
-  auditStep([]);
-  lintStep([]);
-  buildStep();
-  testStep([]);
-  evalStep();
+  const steps = [
+    ['audit', () => auditStep([])],
+    ['lint', () => lintStep([])],
+    ['build', buildStep],
+    ['test', () => testStep([])],
+    ['eval', () => evalStep(['--quiet'])],
+  ];
+  for (const [name, step] of steps) {
+    console.log(`\n== ${name} ==`);
+    step();
+  }
 }
 
 function wranglerD1(extra) {
@@ -207,7 +203,7 @@ function formatCounts(counts) {
 // dependent rows go first: shopping_list and alerts point at watchlist rows.
 // users, product_catalog, audit_logs, rate_limits and password_resets survive.
 function wipeWatchlist() {
-  guardWrite('db');
+  guardWrite();
   const target = flags.remote ? 'remote' : 'local';
   const wipeOrder = ['shopping_list', 'alerts', 'watchlist'];
   const kept = ['users', 'product_catalog', 'audit_logs', 'rate_limits', 'password_resets'];
@@ -226,7 +222,7 @@ function wipeWatchlist() {
 
 function dbCmd() {
   if (sub === 'migrate') {
-    guardWrite('db');
+    guardWrite();
     const target = flags.remote ? ['--remote'] : ['--local'];
     run('pnpm', [...WRANGLER, 'd1', 'migrations', 'apply', 'sift', ...target, '--config', 'workers/wrangler.toml']);
   } else if (sub === 'status') {
@@ -235,7 +231,7 @@ function dbCmd() {
   } else if (sub === 'query') {
     const sql = args.join(' ');
     if (!sql) fail('usage: pnpm sift db query <sql> [--local|--remote]');
-    guardWrite('db');
+    guardWrite();
     if (flags.remote && !READ_SQL.test(sql) && !flags.yes) fail('remote write needs BOTH --remote --yes');
     if (!flags.remote && !flags.local) flags.local = true;
     const extra = flags.json ? ['--json', '--command', sql] : ['--command', sql];
@@ -281,49 +277,6 @@ function print(data) {
   else console.log(JSON.stringify(data, null, 2));
 }
 
-async function adminCmd() {
-  if (sub === 'stats') print(await api('/api/admin/stats', { token: await adminToken() }));
-  else if (sub === 'users') {
-    const q = new URLSearchParams({ page: '1', limit: '50', ...(flags.search ? { search: flags.search } : {}) });
-    const data = await api(`/api/admin/users?${q}`, { token: await adminToken() });
-    print(flags.json ? data : data.users ?? data);
-  } else if (sub === 'trials') {
-    const q = new URLSearchParams({ page: '1', limit: '50', status: 'all' });
-    const data = await api(`/api/admin/trials?${q}`, { token: await adminToken() });
-    print(flags.json ? data : data.trials ?? data);
-  } else if (sub === 'audit') {
-    const q = new URLSearchParams({
-      page: flags.page || '1', limit: '50',
-      ...(flags.action ? { action: flags.action } : {}),
-      ...(flags.search ? { search: flags.search } : {}),
-    });
-    const data = await api(`/api/admin/audit?${q}`, { token: await adminToken() });
-    print(flags.json ? data : data.logs ?? data);
-  } else if (sub === 'trials-cleanup') {
-    guardWrite('api');
-    print(await api('/api/admin/trials/cleanup', { method: 'DELETE', token: await adminToken() }));
-  } else if (sub === 'user-role') {
-    const [userId, role] = args;
-    if (!userId || (role !== 'admin' && role !== 'user')) fail('usage: pnpm sift admin user-role <id> <admin|user> --yes');
-    guardWrite('api');
-    print(await api(`/api/admin/users/${userId}/role`, { method: 'PUT', token: await adminToken(), body: { role } }));
-  } else if (sub === 'user-delete') {
-    const [userId] = args;
-    if (!userId) fail('usage: pnpm sift admin user-delete <id> --yes');
-    guardWrite('api');
-    const token = await adminToken();
-    const me = await api('/api/auth/me', { token });
-    if (me.id === userId) fail('refusing to delete your own admin account');
-    print(await api(`/api/admin/users/${userId}`, { method: 'DELETE', token }));
-  } else if (sub === 'resolve') {
-    if (!flags.store || !flags.name) fail('usage: pnpm sift admin resolve --store s --name n');
-    print(await api('/api/import/resolve', {
-      method: 'POST', token: await adminToken(),
-      body: { store: flags.store, name: flags.name },
-    }));
-  } else fail(`unknown admin subcommand: ${sub} (stats|users|trials|audit|trials-cleanup|user-role|user-delete|resolve)`);
-}
-
 async function watchlistCmd() {
   const token = await adminToken();
   if (sub === 'names') print(await api('/api/watchlist-names', { token }));
@@ -360,7 +313,7 @@ function categoryCmd() {
       (c) => c.toLowerCase() === String(category).trim().toLowerCase(),
     );
     if (!hit) fail(`unknown category "${category}" (${CANONICAL_CATEGORIES.join(', ')})`);
-    guardWrite('db');
+    guardWrite();
     const now = Date.now();
     run('pnpm', [...WRANGLER, ...wranglerD1(['--command',
       `INSERT INTO product_catalog (name, first_seen_at, last_seen_at, category, category_updated_at)
@@ -373,7 +326,7 @@ function categoryCmd() {
   } else if (sub === 'clear') {
     const [name] = args;
     if (!name) fail('usage: pnpm sift category clear "<product name>"');
-    guardWrite('db');
+    guardWrite();
     run('pnpm', [...WRANGLER, ...wranglerD1(['--command',
       `UPDATE product_catalog SET category = NULL, category_updated_at = NULL
        WHERE name = ${sqlQuote(name)}`,
@@ -405,11 +358,12 @@ async function main() {
   else if (cmd === 'lint') lintStep(passthru);
   else if (cmd === 'test') testStep(passthru);
   else if (cmd === 'audit') auditStep(passthru);
+  else if (cmd === 'outdated') outdatedStep(passthru);
+  else if (cmd === 'up' || cmd === 'upgrade') upgradeStep(passthru);
   else if (cmd === 'eval') evalStep();
   else if (cmd === 'preview') previewStep(passthru);
   else if (cmd === 'db') dbCmd();
   else if (cmd === 'category') categoryCmd();
-  else if (cmd === 'admin') await adminCmd();
   else if (cmd === 'watchlist') await watchlistCmd();
   else { console.log(HELP); process.exit(cmd ? 1 : 0); }
 }

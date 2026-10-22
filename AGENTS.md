@@ -54,7 +54,7 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 ## Security
 
 - Parameterised SQL only, through `workers/db.js` wrappers.
-- No secrets in code: Worker secrets are `ADMIN_SECRET`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`; admin CLI reads `SIFT_ADMIN_USER` / `SIFT_ADMIN_PASS`.
+- No secrets in code: Worker secrets are `ADMIN_SECRET`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`; the CLI's read-only `watchlist` commands read `SIFT_ADMIN_USER` / `SIFT_ADMIN_PASS`.
 - CSP is enforced twice — `<meta>` from `cspMeta()` in `vite.config.ts` and the header in `public/_headers`; keep both identical (dev omits it for HMR).
 - No `dangerouslySetInnerHTML`; CSV export stays formula-injection safe.
 - Rate limits and trial gating (5 items, 24h, server-side on `POST /api/watchlist`) are security controls — never remove or move them client-side.

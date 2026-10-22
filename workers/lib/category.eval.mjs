@@ -143,6 +143,12 @@ function report(suite) {
   return perCategory;
 }
 
+// Gate-pass one-liner. The full report is for `pnpm sift eval` and for a
+// failing gate; a green gate only needs the number against its floor.
+function summary(suite) {
+  console.log(`${suite.label.padEnd(8)}${percent(suite.accuracy).padStart(7)}  (${suite.correct}/${suite.total})`);
+}
+
 function comparePhrases(expected, actual) {
   const drift = [];
   const expectedKeys = Object.keys(expected).sort();
@@ -231,18 +237,27 @@ function main() {
   const holdout = runSuite('holdout', holdoutEntries, buildHoldoutLexicon());
   const live = runSuite('live', loadLive(), DEFAULT_LEXICON);
 
-  report(fit);
-  report(holdout);
-  report(live);
+  const suites = [fit, holdout, live];
+  const gateMode = process.argv.includes('--gate');
+  const thresholds = gateMode ? JSON.parse(readFileSync(THRESHOLDS_FILE, 'utf8')) : null;
+  const failures = gateMode
+    ? [
+      ...gate(fit, thresholds, 'fit'),
+      ...gate(holdout, thresholds, 'holdout'),
+      ...gate(live, thresholds, 'live'),
+    ]
+    : [];
 
-  if (!process.argv.includes('--gate')) return;
+  // A failing gate gets the full report; misses and confusion are the fix.
+  // `--quiet` (the CLI gate) prints one line per suite when it passes.
+  const detailed = failures.length > 0 || !process.argv.includes('--quiet');
+  for (const suite of suites) {
+    if (detailed) report(suite);
+    else summary(suite);
+  }
 
-  const thresholds = JSON.parse(readFileSync(THRESHOLDS_FILE, 'utf8'));
-  const failures = [
-    ...gate(fit, thresholds, 'fit'),
-    ...gate(holdout, thresholds, 'holdout'),
-    ...gate(live, thresholds, 'live'),
-  ];
+  if (!gateMode) return;
+
   if (failures.length) {
     console.error('\nEVAL GATE FAILED');
     for (const failure of failures) console.error(`  ${failure}`);
