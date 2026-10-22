@@ -2,24 +2,18 @@
 
 ## Session rules
 
-- **@caveman** and **@ponytail** at `full` intensity, all session, until told otherwise.
-- **Prefix every shell command with `rtk`** — e.g. `rtk git log -5`.
-- **Only use these git commands**: `status`, `log`, `diff`, `diff --cached`, `show`, `blame`. **Never use**: `commit`, `push`, `reset`, `rebase` or `amend`.
+- **On startup skills**: `@caveman` and `/ponytail` both at `full` intensity, all session, until told otherwise.
+- **Prefix every shell command with:** `rtk` — e.g. `rtk git log -5`.
+- **Only use read-only git commands**: `status`, `log`, `diff`, `diff --cached`, `show`, `blame`. **Never use**: `commit`, `push`, `reset`, `rebase` or `amend`.
 - **Never touch**: `.env`, Worker secrets, `.github/workflows/`, the CORS allowlist, applied migrations (add a numbered `.sql`), category floors, or the generated `category.phrases.js`.
-- **No destructive D1/admin** without explicit confirmation — remote writes need `--remote --yes` (db) or `--yes` (admin). Watchlist wipe and category overrides are CLI-only, never migrations or UI.
+- **No destructive D1 writes** without explicit confirmation — remote writes need `--remote --yes` (db). Watchlist wipe and category overrides are CLI-only, never migrations or UI.
 
-## Setup commands
-
+## CLI commands
 ```
-rtk pnpm sift install     # install dependencies (Node 24+, pnpm 12)
-rtk pnpm sift dev         # Vite dev server, port 5173, extra args forwarded
+rtk pnpm sift --help      # ops CLI: run steps, doctor, gate, db, category, watchlist reads
 rtk pnpm sift build       # tsc -b (type-check) then vite build -> dist/
-rtk pnpm sift lint        # oxlint, .oxlintrc.json (94 rules, replaces eslint)
+rtk pnpm sift gate        # ci mirror: audit + lint + build + test + eval
 rtk pnpm sift test [file] # node --test, zero-dep, no framework
-rtk pnpm sift eval        # category corpus eval + threshold gate
-rtk pnpm sift audit       # audit --audit-level=high (CI gate)
-rtk pnpm sift preview     # serve dist/ locally
-rtk pnpm sift --help      # ops CLI: run steps, doctor, gate, db, category, admin, watchlist
 ```
 
 Every step runs through `bin/sift.mjs`, extra args forwarded (`rtk pnpm sift test workers/lib/resolve.test.js`), and CI calls the same steps. Dev needs `VITE_GOOGLE_CLIENT_ID` in `.env` (gitignored, see `.env.example`), matching the Worker's `GOOGLE_CLIENT_ID` secret.
@@ -41,7 +35,7 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 `src/` React SPA (`components/{pages,layout,features,ui,guards}`, `contexts`, `hooks`, `lib`, `types`, `data`) · `workers/` `index.js` (all routes), `auth.js`, `db.js`, `lib/category.js` + lexicon/phrases, `lib/validate.js`, `schema.sql`, `migrations/` · `public/` logos, wordmarks, `theme-init.js`, `_headers` · `bin/sift.mjs` ops CLI.
 
 - **Routes**: `/` is `HomeRoute` (`SearchPage` signed in, `LandingPage` guest); `/watchlist`, `/list`, `/offers`, `/admin`, `/settings`, `/auth` and legal pages are `React.lazy` behind one `Suspense`; `/search` redirects to `/`.
-- **Schema**: `schema.sql` is the human reference (8 tables); `0001_init.sql` is the executable truth and auto-applies on push to `main` (migrations → worker → pages). They are identical since the 22-10-2026 rebuild; a new change takes the next number, and an applied file is never edited (wrangler tracks by name, so an edit never re-runs).
+- **Schema**: `schema.sql` is the human reference (8 tables); `0001_init.sql` is the executable truth and auto-applies on push to `main` (migrations → worker → pages). They are identical apart from the header comment since the 22-10-2026 rebuild; a new change takes the next number, and an applied file is never edited (wrangler tracks by name, so an edit never re-runs).
 - **Scoring** runs inline on watchlist add, first hit wins: manual override → non-food → frozen → ambient → leaf map → department breadcrumbs → title vote → `Other`. Strong votes name one shelf and outrank weak flavour words; a curated weak vocabulary entry outranks a derived strong keyword. The same add writes the crumb label into `product_catalog`; `pnpm sift category learn` proposes vocabulary from those labels, a human commits, and the eval stays the arbiter.
 - **Shopping list** (`/list`) stores quantities only; prices read live from watchlist rows, and multibuy logic is frontend-only in `src/lib/pricing.ts`.
 
@@ -58,16 +52,11 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 - CSP is enforced twice — `<meta>` from `cspMeta()` in `vite.config.ts` and the header in `public/_headers`; keep both identical (dev omits it for HMR).
 - No `dangerouslySetInnerHTML`; CSV export stays formula-injection safe.
 - Rate limits and trial gating (5 items, 24h, server-side on `POST /api/watchlist`) are security controls — never remove or move them client-side.
-- No PII in logs or `audit_logs`. D1 has no cascades: clear dependents explicitly, `shopping_list` → `alerts` → `watchlist`.
+- No PII in logs or `audit_logs`. D1 enforces foreign keys: `shopping_list` and `alerts` cascade from `watchlist`, and the CLI still clears dependents first (`shopping_list` → `alerts` → `watchlist`) so the order never depends on that.
 - CORS origins live in `ALLOWED_ORIGINS` in `workers/index.js` (Pages, `localhost:5173`/`:3000`, LAN `192.168.1.70:5173`).
 
 ## Docs (user-triggered)
 
-- On **"finish up and update docs"** update `RECENT.md`, `ARCHITECTURE.md` (fix anything stale, ~250 lines), `README.md` only for new features / `.env` keys / commands, and `AGENTS.md` for sweeping changes only. Location: `/home/wsl/Repositories/markdowns/sift-markdowns/`
-
-## Pre-commit checklist
-
-1. `rtk pnpm sift gate` passes, and `rtk git status` / `rtk git diff` show no `.env`, `dist/`, secrets or stray files.
-2. Schema change? Numbered migration added **and** `schema.sql` updated.
-3. Category data change? `category.phrases.js` rebuilt and committed with the lexicon.
-4. **Stop here.** Never commit; report the change and suggest a commit message (`feat:`, `fix:`, `chore:`, `polish:`).
+- On **"finish up and update docs"** update `RECENT.md`, `ARCHITECTURE.md` (fix anything stale, ~250 lines), `README.md` only for new features / `.env` keys / commands, and `AGENTS.md` keep lean & for sweeping changes only. 
+- Location: `RECENT.md` + `ARCHITECTURE.md` in `/home/wsl/Repositories/markdowns/sift-markdowns/`; `README.md` in the repo root.
+- **Stop after here.** Never commit; report the change and suggest a commit message (`feat:`, `fix:`, `chore:`, `polish:`).

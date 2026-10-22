@@ -199,8 +199,9 @@ function formatCounts(counts) {
   return Object.entries(counts).map(([table, count]) => `${table}=${count}`).join(' ');
 }
 
-// One-time clean slate after the taxonomy rebuild. D1 enforces no cascade, so
-// dependent rows go first: shopping_list and alerts point at watchlist rows.
+// One-time clean slate after the taxonomy rebuild. shopping_list and alerts
+// cascade from watchlist, but dependent rows go first so the order never
+// depends on that.
 // users, product_catalog, audit_logs, rate_limits and password_resets survive.
 function wipeWatchlist() {
   guardWrite();

@@ -78,7 +78,7 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift eval` | Category eval — fit corpus, holdout and live prod suites, gated on per-category accuracy |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
-| `pnpm sift --help` | Full CLI: run steps, doctor, gate, eval, db, category, admin, watchlist reads |
+| `pnpm sift --help` | Full CLI: run steps, doctor, gate, eval, db, category, watchlist reads |
 
 Build code-splits for first paint: the guest landing chunk stays eager while all other routes lazy-load, with React vendored into its own cached chunk.
 
@@ -112,7 +112,7 @@ The database was rebuilt from empty on 22-10-2026 and the old `0001`–`0009` ch
 pnpm exec wrangler d1 migrations apply sift --remote
 
 # Clean slate for watchlist-derived data (users, catalog and logs survive).
-# D1 enforces no cascades; the command deletes shopping_list -> alerts -> watchlist.
+# D1 enforces foreign keys; the command still deletes shopping_list -> alerts -> watchlist.
 pnpm sift db wipe-watchlist --remote --yes
 ```
 
