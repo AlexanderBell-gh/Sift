@@ -1446,15 +1446,17 @@ async function handleRequest(request, env) {
         ]
       );
 
-      // Persistent search pool: names survive watchlist DELETE.
+      // Persistent search pool: names survive watchlist DELETE. The label
+      // columns are the harvest log for `pnpm sift category learn`: first
+      // insert wins, ON CONFLICT only refreshes last_seen_at.
       const catalogName = typeof result.name === 'string' ? result.name.trim() : '';
       if (catalogName) {
         await execute(
           env,
-          `INSERT INTO product_catalog (name, first_seen_at, last_seen_at)
-           VALUES (?, ?, ?)
+          `INSERT INTO product_catalog (name, first_seen_at, last_seen_at, leaf, department, category_reason)
+           VALUES (?, ?, ?, ?, ?, ?)
            ON CONFLICT(name) DO UPDATE SET last_seen_at = excluded.last_seen_at`,
-          [catalogName, now, now]
+          [catalogName, now, now, scored.leaf || null, scored.department || null, scored.reason]
         );
       }
 
@@ -1481,6 +1483,11 @@ async function handleRequest(request, env) {
           is_on_offer: !!row.is_on_offer,
           category: row.category,
           taxonomy_version: row.taxonomy_version ?? 0,
+          // The phone's capture flow reads these two: low_confidence drives
+          // its "check this one" state, category_reason names the rule that
+          // decided.
+          low_confidence: scored.low_confidence,
+          category_reason: scored.reason,
           notes: row.notes,
           created_at: row.created_at,
           updated_at: row.updated_at,

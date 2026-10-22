@@ -82,7 +82,7 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 
 Build code-splits for first paint: the guest landing chunk stays eager while all other routes lazy-load, with React vendored into its own cached chunk.
 
-**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test → eval, and CI calls the same CLI steps). `db migrate|status|query|users|wipe-watchlist` wraps wrangler D1; `category set|clear|list` manages manual category overrides; `admin stats|users|trials|audit|trials-cleanup|user-role|user-delete|resolve` and `watchlist names|offers` wrap the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
+**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test → eval, and CI calls the same CLI steps). `db migrate|status|query|users|wipe-watchlist` wraps wrangler D1; `category set|clear|list` manages manual category overrides and `category learn [--remote]` prints vocabulary candidates from harvested labels; `admin stats|users|trials|audit|trials-cleanup|user-role|user-delete|resolve` and `watchlist names|offers` wrap the admin API. Admin commands need `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes` (db) or `--yes` (admin); reads are always allowed. The CLI never deploys — pushes to `main` do that.
 
 ## Deploy
 
@@ -101,12 +101,11 @@ Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, plus Worker secrets `A
 <details>
 <summary><strong>Database & migrations</strong></summary>
 
-Schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog). `product_catalog` is the persistent pool of pinned product names that feeds search autocomplete; it survives a watchlist removal and also holds the manual category override. Migrations in `workers/migrations/` auto-apply on push to `main`, before the worker deploy:
+Schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog). `product_catalog` is the persistent pool of pinned product names that feeds search autocomplete, holds the manual category override, and logs the harvest labels (`leaf`, `department`, `category_reason`) for `pnpm sift category learn`. Migrations in `workers/migrations/` auto-apply on push to `main`, before the worker deploy:
 
-- `0001_init` — the full schema; builds a database from scratch and drops the redundant `idx_watchlist_user_product` (the unique `idx_watchlist_user_product_unique` is canonical)
-- `0002_catalog_category` — `product_catalog.category` + `category_updated_at`, the manual category override
+- `0001_init` — the full schema; builds a database from scratch
 
-The old nine-file chain (`0001_offer_deal` … `0009_product_catalog`) was squashed: it could not build a database from scratch, because `users` and `watchlist` came from a hand-applied `schema.sql` and `0001` was an `ALTER` on top of that. `schema.sql` is the human reference for the end state; `0001_init.sql` is the executable truth.
+The database was rebuilt from empty on 22-10-2026 and the old `0001`–`0009` chain plus `0002_catalog_category` was squashed into `0001_init.sql`. `schema.sql` is the human reference; the two files are identical. Adding a migration: give it the next number and never edit a file a live database has recorded (wrangler tracks migrations by name, so an edit never re-runs) — a migration may only be folded while it is unapplied everywhere.
 
 ```bash
 # Fresh database: migrations are the only setup step.
@@ -117,9 +116,9 @@ pnpm exec wrangler d1 migrations apply sift --remote
 pnpm sift db wipe-watchlist --remote --yes
 ```
 
-`schema.sql` is reference only. Do not execute it before migrations: on a
-fresh database it already creates `product_catalog.category`, and
-`0002_catalog_category` then fails with a duplicate column.
+`schema.sql` is reference only. Do not execute it before migrations: `0001_init.sql`
+already creates every table, so the two would collide.
+
 
 </details>
 
@@ -130,7 +129,7 @@ fresh database it already creates `product_catalog.category`, and
 
 Eight rules, first hit wins: manual override → non-food → frozen → ambient (a tin or a jar is a cupboard good, unless the title describes a loaf) → leaf map → department → title vote → `Other`. The department rule reads breadcrumbs deepest-first and maps all eight shelves plus store aliases (`Bakery & Cakes`, `Fruit & Veg`, `Crisps & Snacks`, …); non-food, frozen and ambient still beat it, and the leaf map is more specific. The title vote matches the longest known product name in the title first and masks its own tokens (`peanut butter` never also votes `butter`), then falls back to a keyword tier. Flavour words vote weakly: `apple & cinnamon granola` is a cereal, not a fruit, and a curated weak word outranks a corpus-derived strong hit. Ties resolve by a fixed priority.
 
-The vocabulary is data, not code. `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json` plus the curated `workers/lib/category.lexicon.js`. `pnpm sift eval` runs three suites — the fit corpus, a holdout scored by the keyword tier alone (curated names stay in the lexicon but are excluded from scoring, so a hand rule cannot read as a keyword-tier hit), and the products pinned in prod before the wipe, hand-labelled by shelf (live) — and fails below the per-category accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule.
+The vocabulary is data, not code. `workers/lib/category.lexicon.js` holds one `VOCABULARY` table — key → `{ category, strength }`, where strength is `phrase`, `strong`, `weak` or `stop` — and `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json`. `pnpm sift eval` runs three suites — the fit corpus, a holdout scored by the keyword tier alone (curated names stay in the lexicon but are excluded from scoring, so a hand rule cannot read as a keyword-tier hit), and the products pinned in prod before the wipe, hand-labelled by shelf (live) — and fails below the per-category accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule. `pnpm sift category learn` reads the labels the worker writes to `product_catalog` and prints copy-pasteable lexicon lines; proposing is automatic, committing is human and eval-gated, and nothing is learned while scoring.
 
 Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (curated cases) plus the three eval suites.
 

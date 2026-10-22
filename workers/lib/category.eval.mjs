@@ -11,7 +11,7 @@
 //            phrase table, so it is scored by the keyword tier alone. The
 //            tiers are derived from the non-held-out names only, otherwise
 //            each held-out product trains the tier that scores it. Curated
-//            entries (DUP_BASE, PHRASE_OVERRIDES, PHRASE_ADDITIONS) stay in
+//            entries (DUP_BASE plus the vocabulary's phrase rows) stay in
 //            the holdout lexicon: they are hand rules, not corpus learning.
 //            This is the number that means something.
 //   live     the 108 products that were pinned in prod before the 19-10-2026
@@ -35,7 +35,7 @@ import {
   loadCorpus, deriveKeywords, buildPhrases, holdoutNames,
 } from './category.phrases.build.mjs';
 import {
-  normalise, DUP_BASE, PHRASE_OVERRIDES, PHRASE_ADDITIONS,
+  normalise, CURATED_NAMES,
 } from './category.lexicon.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -43,15 +43,6 @@ const THRESHOLDS_FILE = join(HERE, 'category.thresholds.json');
 const LIVE_FILE = join(HERE, 'category.live-holdout.json');
 
 const MAX_MISSES_SHOWN = 40;
-
-// Names the curated lexicon owns. They are hand rules, not corpus learning, so
-// the holdout suite keeps them: holding out a curated fix would measure the
-// keyword tier on a name the scorer is meant to handle explicitly.
-const CURATED_NAMES = new Set([
-  ...Object.keys(DUP_BASE),
-  ...Object.keys(PHRASE_OVERRIDES),
-  ...Object.keys(PHRASE_ADDITIONS),
-].map(normalise));
 
 // The honest holdout lexicon. A held-out name loses its corpus phrase AND its
 // contribution to the keyword tiers: deriving the tiers from the full corpus

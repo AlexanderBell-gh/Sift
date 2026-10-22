@@ -5,6 +5,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { CANONICAL_CATEGORIES } from '../workers/lib/category.lexicon.js';
+import { propose, formatProposals } from '../workers/lib/category.learn.js';
 
 const PROD_API = 'https://siftapi.blackmesa.workers.dev';
 const WRANGLER = ['exec', 'wrangler'];
@@ -33,10 +34,11 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     db users [--search q] [--limit n] [--local|--remote]
     db wipe-watchlist [--local|--remote --yes]  wipe shopping_list, alerts, watchlist
 
-  category (manual override; writes need --remote --yes off-local):
+  category (manual override + harvest; writes need --remote --yes off-local):
     category set "<product name>" <category>  set a manual category
     category clear "<product name>"           drop a manual category
     category list [--json]                    show manual categories
+    category learn [--remote|--local] [--json]  propose vocabulary from harvest labels
 
   admin (needs SIFT_ADMIN_USER + SIFT_ADMIN_PASS; writes need --yes off-localhost):
     admin stats|users|trials [--search q] [--json]
@@ -377,7 +379,19 @@ function categoryCmd() {
        WHERE name = ${sqlQuote(name)}`,
     ])]);
     console.log(`cleared ${name}`);
-  } else fail(`unknown category subcommand: ${sub} (set|clear|list)`);
+  } else if (sub === 'learn') {
+    if (!flags.remote && !flags.local) flags.local = true;
+    const rows = d1Rows(
+      'SELECT name, leaf, department, category_reason FROM product_catalog WHERE department IS NOT NULL',
+    );
+    const proposals = propose(rows);
+    if (flags.json) { console.log(JSON.stringify(proposals, null, 2)); return; }
+    if (!proposals.leaves.length && !proposals.tokens.length) {
+      console.log('no candidates: no catalog row carries a label yet');
+      return;
+    }
+    console.log(formatProposals(proposals));
+  } else fail(`unknown category subcommand: ${sub} (set|clear|list|learn)`);
 }
 
 async function main() {

@@ -18,8 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import {
-  CORPUS_FILES, DUP_BASE, PHRASE_OVERRIDES, PHRASE_ADDITIONS, STOP_TOKENS,
-  KEYWORD_OVERRIDES, HOLDOUT_MODULUS, normalise,
+  CORPUS_FILES, DUP_BASE, VOCABULARY, HOLDOUT_MODULUS, normalise,
 } from './category.lexicon.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -58,17 +57,14 @@ export function loadCorpus() {
       names.set(key, { label: category, raw: row.name, file });
     }
   }
-  for (const [rawKey, category] of Object.entries(PHRASE_OVERRIDES)) {
+  // Curated phrase entries: a corpus name filed under the right shelf, or a
+  // name the corpus does not carry. One table, applied in file order.
+  for (const [rawKey, entry] of Object.entries(VOCABULARY)) {
+    if (entry.strength !== 'phrase') continue;
     const key = normalise(rawKey);
-    const entry = names.get(key);
-    if (entry) entry.label = category;
-    else names.set(key, { label: category, raw: rawKey, file: 'override' });
-  }
-  for (const [rawKey, category] of Object.entries(PHRASE_ADDITIONS)) {
-    const key = normalise(rawKey);
-    const entry = names.get(key);
-    if (entry) entry.label = category;
-    else names.set(key, { label: category, raw: rawKey, file: 'addition' });
+    const existing = names.get(key);
+    if (existing) existing.label = entry.category;
+    else names.set(key, { label: entry.category, raw: rawKey, file: 'phrase' });
   }
   return names;
 }
@@ -92,7 +88,11 @@ export function deriveKeywords(names) {
     for (const token of tokens(entry.raw)) {
       if (seen.has(token)) continue;
       seen.add(token);
-      if (STOP_TOKENS.has(token)) continue;
+      const curated = VOCABULARY[token];
+      // Stop and strong tokens never become a derived tier: the stop list is
+      // filler, the strong list is hand-owned. Weak and phrase keys stay
+      // derivable: a phrase names a whole product, not a token.
+      if (curated && (curated.strength === 'stop' || curated.strength === 'strong')) continue;
       if (!counts.has(token)) counts.set(token, new Map());
       const perCategory = counts.get(token);
       perCategory.set(entry.label, (perCategory.get(entry.label) || 0) + 1);
@@ -101,7 +101,6 @@ export function deriveKeywords(names) {
   const strong = {};
   const weak = {};
   for (const [token, perCategory] of counts) {
-    if (KEYWORD_OVERRIDES[token]) continue; // hand tier owns this token
     const ranked = [...perCategory.entries()].sort((a, b) => b[1] - a[1]);
     const [category, top] = ranked[0];
     const second = ranked[1] ? ranked[1][1] : 0;

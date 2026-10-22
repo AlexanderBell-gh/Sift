@@ -1,13 +1,12 @@
--- Full schema. Executable truth: this replaces the old 0001-0009 chain,
--- which could not build a database from scratch (users and watchlist were
--- created by a hand-applied schema.sql, and 0001 was an ALTER on top of
--- that assumption).
+-- Full schema. Executable truth: one file builds a database from scratch.
 --
--- Every statement is idempotent: on the live database the tables already
--- exist, so this is a no-op there. It only builds a fresh local database.
+-- The 2026-10-22 squash folded the old 0001-0009 chain + 0002_catalog_category
+-- into this file after the live database was rebuilt from empty. Every
+-- statement is idempotent, so re-applying against a partial database is safe.
 --
--- product_catalog gains its manual-category columns in 0002, so a fresh
--- database needs both files.
+-- New schema changes add the next number; this file never changes again while
+-- a database that recorded it is live (wrangler tracks migrations by name, so
+-- an edit would never re-run).
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
@@ -62,16 +61,22 @@ CREATE TABLE IF NOT EXISTS watchlist (
 
 CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
 
--- The unique index is canonical. The older non-unique index of the same
--- name shape was created by a hand-applied schema.sql and is redundant.
-DROP INDEX IF EXISTS idx_watchlist_user_product;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product_unique
   ON watchlist(user_id, product_id);
 
+-- Persistent product pool for search autocomplete (names only), the manual
+-- category override set through `pnpm sift category set`, and the harvest log
+-- read by `pnpm sift category learn`. First insert wins: ON CONFLICT leaves
+-- the label columns alone.
 CREATE TABLE IF NOT EXISTS product_catalog (
   name TEXT PRIMARY KEY COLLATE NOCASE,
   first_seen_at INTEGER NOT NULL,
-  last_seen_at INTEGER NOT NULL
+  last_seen_at INTEGER NOT NULL,
+  category TEXT,
+  category_updated_at INTEGER,
+  leaf TEXT,
+  department TEXT,
+  category_reason TEXT
 );
 
 CREATE TABLE IF NOT EXISTS shopping_list (

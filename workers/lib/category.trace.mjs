@@ -11,7 +11,7 @@
 
 import { scoreCategory, DEFAULT_LEXICON, normalise } from './category.js';
 import { PHRASES, HOLDOUT } from './category.phrases.js';
-import { DUP_BASE, PHRASE_OVERRIDES, PHRASE_ADDITIONS } from './category.lexicon.js';
+import { CURATED_NAMES } from './category.lexicon.js';
 
 const argv = process.argv.slice(2);
 let title = '';
@@ -28,17 +28,12 @@ for (let i = 0; i < argv.length; i++) {
 
 // Curated names are hand rules, not corpus learning: the eval keeps them in
 // the holdout lexicon, so the trace keeps them too.
-const curated = new Set([
-  ...Object.keys(DUP_BASE),
-  ...Object.keys(PHRASE_OVERRIDES),
-  ...Object.keys(PHRASE_ADDITIONS),
-].map(normalise));
 const held = new Set(HOLDOUT);
 let lexicon = DEFAULT_LEXICON;
 if (holdout) {
   const phrases = {};
   for (const [name, category] of Object.entries(PHRASES)) {
-    if (!held.has(name) || curated.has(name)) phrases[name] = category;
+    if (!held.has(name) || CURATED_NAMES.has(name)) phrases[name] = category;
   }
   lexicon = { ...DEFAULT_LEXICON, phrases };
 }

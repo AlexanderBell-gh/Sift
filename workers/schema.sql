@@ -1,7 +1,9 @@
 -- Human reference for the live schema.
 --
--- Executable truth: workers/migrations/0001_init.sql (+ 0002_catalog_category.sql).
--- This file mirrors the end state of both migrations. Keep the two in sync.
+-- Executable truth: workers/migrations/0001_init.sql. This file mirrors it —
+-- keep the two identical. New schema changes add the next migration number;
+-- 0001 never changes again while a database that recorded it is live
+-- (wrangler tracks migrations by name, so an edit would never re-run).
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
@@ -56,19 +58,22 @@ CREATE TABLE IF NOT EXISTS watchlist (
 
 CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
 
--- The unique index is canonical. The older non-unique index was created by
--- a hand-applied schema.sql and is redundant.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product_unique
   ON watchlist(user_id, product_id);
 
--- Persistent product pool for search autocomplete (names only), plus the
--- manual category override set through `pnpm sift category set`.
+-- Persistent product pool for search autocomplete (names only), the manual
+-- category override set through `pnpm sift category set`, and the harvest log
+-- read by `pnpm sift category learn`. First insert wins: ON CONFLICT leaves
+-- the label columns alone.
 CREATE TABLE IF NOT EXISTS product_catalog (
   name TEXT PRIMARY KEY COLLATE NOCASE,
   first_seen_at INTEGER NOT NULL,
   last_seen_at INTEGER NOT NULL,
   category TEXT,
-  category_updated_at INTEGER
+  category_updated_at INTEGER,
+  leaf TEXT,
+  department TEXT,
+  category_reason TEXT
 );
 
 CREATE TABLE IF NOT EXISTS shopping_list (

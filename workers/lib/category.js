@@ -28,7 +28,7 @@
 import { PHRASES, DERIVED_KEYWORDS, DERIVED_WEAK } from './category.phrases.js';
 import {
   CANONICAL_CATEGORIES, NON_FOOD, AMBIENT, AMBIENT_EXEMPT, DEPARTMENTS,
-  DEPARTMENT_IGNORE, LEAF_MAP, KEYWORD_OVERRIDES, WEAK_KEYWORDS, PRIORITY,
+  DEPARTMENT_IGNORE, LEAF_MAP, VOCABULARY, PRIORITY,
   normalise,
 } from './category.lexicon.js';
 
@@ -43,14 +43,13 @@ const DEFAULT_LEXICON = {
   phrases: PHRASES,
   derived: DERIVED_KEYWORDS,
   derivedWeak: DERIVED_WEAK,
-  weak: WEAK_KEYWORDS,
   nonFood: NON_FOOD,
   ambient: AMBIENT,
   ambientExempt: AMBIENT_EXEMPT,
   departments: DEPARTMENTS,
   departmentIgnore: DEPARTMENT_IGNORE,
   leafMap: LEAF_MAP,
-  keywordOverrides: KEYWORD_OVERRIDES,
+  vocabulary: VOCABULARY,
   priority: PRIORITY,
 };
 
@@ -131,11 +130,18 @@ function buildMatcher(lexicon) {
   }
   // Curated weak words win over a derived strong hit: the derivation only sees
   // shelf consistency ("rosemary" is only ever filed under produce), not that
-  // the word is a flavour. Demoting it is a hand judgement.
-  for (const [token, category] of Object.entries(lexicon.weak || {})) {
+  // the word is a flavour. Demoting it is a hand judgement. Curated strong
+  // words win over everything.
+  const curatedWeak = [];
+  const curatedStrong = [];
+  for (const [token, entry] of Object.entries(lexicon.vocabulary || {})) {
+    if (entry.strength === 'weak') curatedWeak.push([token, entry.category]);
+    else if (entry.strength === 'strong') curatedStrong.push([token, entry.category]);
+  }
+  for (const [token, category] of curatedWeak) {
     keywords.set(token, { category, weak: true });
   }
-  for (const [token, category] of Object.entries(lexicon.keywordOverrides || {})) {
+  for (const [token, category] of curatedStrong) {
     keywords.set(token, { category, weak: false });
   }
 
@@ -150,7 +156,9 @@ function buildMatcher(lexicon) {
   // One-word product names that are flavour words. A bare match on one of
   // these is an ingredient, not a product.
   const weakPhrases = new Set();
-  for (const token of Object.keys(lexicon.weak || {})) weakPhrases.add(token);
+  for (const [token, entry] of Object.entries(lexicon.vocabulary || {})) {
+    if (entry.strength === 'weak') weakPhrases.add(token);
+  }
   for (const [category, tokens] of Object.entries(lexicon.derivedWeak || {})) {
     for (const token of tokens) weakPhrases.add(token);
   }
@@ -274,8 +282,8 @@ function matchPhrase(tokens, phraseIndex, weakPhrases) {
       }
       if (!hit) continue;
       if (!best || len > best.len) {
-        // A one-word flavour name is weak; so is any multi-word name listed in
-        // WEAK_KEYWORDS ('sweet potato' on a ready-meal title).
+        // A one-word flavour name is weak; so is any multi-word name listed as
+        // weak in the vocabulary ('sweet potato' on a ready-meal title).
         const name = candidate.tokens.join(' ');
         best = {
           len,
@@ -315,9 +323,20 @@ function result(category, reason, lowConfidence, extra = {}) {
   };
 }
 
+// What the shipped LEAF_MAP says about a crumb, folds included. The learn
+// command uses it as the disagreement guard: a harvest leaf that the leaf map
+// already answers differently is rejected, which is what keeps a product sold
+// on two shelves from poisoning the vocabulary.
+export function leafAnswer(leaf) {
+  return matchLeaf(leaf, getMatcher(DEFAULT_LEXICON).leafMap) || null;
+}
+
 // Score one product. `opts.override` is a canonical category from the
 // manual CLI path and wins before every rule. `opts.lexicon` swaps the
 // lexicon (the eval uses it to score a held-out corpus).
+// Returns `{ category, taxonomy_version, low_confidence, reason, leaf,
+// department, votes }`: `leaf` and `department` are the crumb label the
+// worker persists for harvest, never a scoring input.
 export function scoreCategory(signals = {}, opts = {}) {
   const lexicon = opts.lexicon || DEFAULT_LEXICON;
   const matcher = getMatcher(lexicon);
@@ -334,13 +353,17 @@ export function scoreCategory(signals = {}, opts = {}) {
   );
   const titleTokens = tokenise(title);
   const leafTokens = tokenise(leaf);
+  const department = deriveDepartment(rawCrumbs, matcher);
+
+  // The crumb label travels with every result: the worker writes it to
+  // product_catalog and `pnpm sift category learn` turns it into candidates.
+  // It never influences scoring.
+  const label = { leaf, department };
 
   // 2. Non-food. Household and personal-care goods are not groceries.
   if (hasMarker(titleTokens, matcher.nonFood) || hasMarker(leafTokens, matcher.nonFood)) {
-    return result('Other', 'non-food', false, { votes: ['Other'] });
+    return result('Other', 'non-food', false, { votes: ['Other'], ...label });
   }
-
-  const department = deriveDepartment(rawCrumbs, matcher);
 
   // 3. Frozen. Defrost and freezable-at-home copy never forces Frozen.
   const storage = String(signals.storage_text || '').toLowerCase();
@@ -352,7 +375,7 @@ export function scoreCategory(signals = {}, opts = {}) {
     storage.includes('store frozen') ||
     storage.includes('-18')
   ) {
-    return result('Frozen', 'frozen', false, { votes: ['Frozen'] });
+    return result('Frozen', 'frozen', false, { votes: ['Frozen'], ...label });
   }
 
   // 4. Ambient. A tin or a jar is a cupboard good whatever else it says,
@@ -360,20 +383,20 @@ export function scoreCategory(signals = {}, opts = {}) {
   const ambient = titleTokens.some((token) => matcher.ambient.has(token));
   const bakeryTitle = titleTokens.some((token) => matcher.ambientExempt.has(token));
   if (ambient && !bakeryTitle) {
-    return result('Food Cupboard', 'ambient', false, { votes: ['Food Cupboard'] });
+    return result('Food Cupboard', 'ambient', false, { votes: ['Food Cupboard'], ...label });
   }
 
   // 5. Leaf map.
   const leafCategory = matchLeaf(leaf, matcher.leafMap);
   if (leafCategory) {
-    return result(leafCategory, 'leaf', false, { votes: [leafCategory] });
+    return result(leafCategory, 'leaf', false, { votes: [leafCategory], ...label });
   }
 
   // 6. Department. The crumb is explicit shelf metadata, but the leaf is more
   // specific, so the department rule sits behind the leaf map. Non-food,
   // frozen and ambient have already won above.
   if (department) {
-    return result(department, 'department', false, { votes: [department] });
+    return result(department, 'department', false, { votes: [department], ...label });
   }
 
   // 7. Title vote. The phrase match masks its own tokens so a phrase never
@@ -397,18 +420,18 @@ export function scoreCategory(signals = {}, opts = {}) {
 
   const votes = strong.size ? strong : weak;
   if (!votes.size) {
-    return result('Other', 'below-floor', true, { votes: [] });
+    return result('Other', 'below-floor', true, { votes: [], ...label });
   }
   if (votes.size === 1) {
     const only = [...votes][0];
-    return result(only, 'title', false, { votes: [only] });
+    return result(only, 'title', false, { votes: [only], ...label });
   }
 
   // A tie between title votes goes to the fixed priority. The department
   // never breaks a title tie any more: it decided before the title vote ran,
   // so a tie here is a title-only signal.
   const winner = matcher.priority.find((category) => votes.has(category)) || 'Other';
-  return result(winner, 'title', false, { votes: [...votes] });
+  return result(winner, 'title', false, { votes: [...votes], ...label });
 }
 
 export { DEFAULT_LEXICON };

@@ -39,6 +39,30 @@ describe('taxonomy', () => {
     assert.equal(r.taxonomy_version, TAXONOMY_VERSION);
     assert.ok(r.reason);
   });
+
+  it('carries the crumb label without letting it decide the shelf', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_raw: ['Fresh Food', 'Bakery'],
+      breadcrumb_leaf: 'Bakery',
+      title: 'Sourdough Loaf',
+    }));
+    assert.equal(r.leaf, 'Bakery');
+    assert.equal(r.department, 'Bakery');
+  });
+
+  it('carries no crumb label on a title-only add', () => {
+    const r = scoreCategory(signals({ title: 'Semi-Skimmed Milk 2L' }));
+    assert.equal(r.leaf, '');
+    assert.equal(r.department, null);
+  });
+
+  it('collapses a doubled crumb before labelling it', () => {
+    const r = scoreCategory(signals({
+      breadcrumb_leaf: 'GranolaGranola',
+      title: 'Granola 500g',
+    }));
+    assert.equal(r.leaf, 'Granola');
+  });
 });
 
 describe('locked regressions', () => {

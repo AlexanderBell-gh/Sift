@@ -41,8 +41,8 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 `src/` React SPA (`components/{pages,layout,features,ui,guards}`, `contexts`, `hooks`, `lib`, `types`, `data`) · `workers/` `index.js` (all routes), `auth.js`, `db.js`, `lib/category.js` + lexicon/phrases, `lib/validate.js`, `schema.sql`, `migrations/` · `public/` logos, wordmarks, `theme-init.js`, `_headers` · `bin/sift.mjs` ops CLI.
 
 - **Routes**: `/` is `HomeRoute` (`SearchPage` signed in, `LandingPage` guest); `/watchlist`, `/list`, `/offers`, `/admin`, `/settings`, `/auth` and legal pages are `React.lazy` behind one `Suspense`; `/search` redirects to `/`.
-- **Schema**: `schema.sql` is the human reference (8 tables); `0001_init.sql` + `0002_catalog_category.sql` are the executable truth and auto-apply on push to `main` (migrations → worker → pages).
-- **Scoring** runs inline on watchlist add, first hit wins: manual override → non-food → frozen → ambient → leaf map → department breadcrumbs → title vote → `Other`. Strong votes name one shelf and outrank weak flavour words; a curated `WEAK_KEYWORDS` entry outranks a derived strong keyword.
+- **Schema**: `schema.sql` is the human reference (8 tables); `0001_init.sql` is the executable truth and auto-applies on push to `main` (migrations → worker → pages). They are identical since the 22-10-2026 rebuild; a new change takes the next number, and an applied file is never edited (wrangler tracks by name, so an edit never re-runs).
+- **Scoring** runs inline on watchlist add, first hit wins: manual override → non-food → frozen → ambient → leaf map → department breadcrumbs → title vote → `Other`. Strong votes name one shelf and outrank weak flavour words; a curated weak vocabulary entry outranks a derived strong keyword. The same add writes the crumb label into `product_catalog`; `pnpm sift category learn` proposes vocabulary from those labels, a human commits, and the eval stays the arbiter.
 - **Shopping list** (`/list`) stores quantities only; prices read live from watchlist rows, and multibuy logic is frontend-only in `src/lib/pricing.ts`.
 
 ## Testing & quality gates
