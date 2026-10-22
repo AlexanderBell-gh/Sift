@@ -1,7 +1,5 @@
 # AGENTS.md
 
-Sift is a UK supermarket grocery tracker: pick up to 3 stores, search once, pin products to a watchlist, then shop them from one multibuy-aware list. It is a grocery tracker, not an offer-only tool — pins need not be on offer, so never write copy that assumes a discount.
-
 ## Session rules
 
 - **@caveman** and **@ponytail** at `full` intensity, all session, until told otherwise.
