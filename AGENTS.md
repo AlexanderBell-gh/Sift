@@ -2,7 +2,7 @@
 
 ## Session rules
 
-- **On startup skills**: `@caveman` and `/ponytail` both at `full` intensity, all session, until told otherwise.
+- **On startup skills**: `@ponytail` and `@caveman` both at `full` intensity, all session, until told otherwise.
 - **Prefix every shell command with:** `rtk` — e.g. `rtk git log -5`.
 - **Only use read-only git commands**: `status`, `log`, `diff`, `diff --cached`, `show`, `blame`. **Never use**: `commit`, `push`, `reset`, `rebase` or `amend`.
 - **Never touch**: `.env`, Worker secrets, `.github/workflows/`, the CORS allowlist, applied migrations (add a numbered `.sql`), category floors, or the generated `category.phrases.js`.
