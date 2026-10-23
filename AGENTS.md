@@ -10,7 +10,7 @@
 
 ## CLI commands
 ```
-rtk pnpm sift --help      # ops CLI: run steps, doctor, gate, db, category, watchlist reads
+rtk pnpm sift --help      # ops CLI: run steps, doctor, gate, eval, db, category, watchlist reads
 rtk pnpm sift build       # tsc -b (type-check) then vite build -> dist/
 rtk pnpm sift gate        # ci mirror: audit + lint + build + test + eval
 rtk pnpm sift test [file] # node --test, zero-dep, no framework
@@ -36,13 +36,13 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 
 - **Routes**: `/` is `HomeRoute` (`SearchPage` signed in, `LandingPage` guest); `/watchlist`, `/list`, `/offers`, `/admin`, `/settings`, `/auth` and legal pages are `React.lazy` behind one `Suspense`; `/search` redirects to `/`.
 - **Schema**: `schema.sql` is the human reference (8 tables); `0001_init.sql` is the executable truth and auto-applies on push to `main` (migrations → worker → pages). They are identical apart from the header comment since the 22-10-2026 rebuild; a new change takes the next number, and an applied file is never edited (wrangler tracks by name, so an edit never re-runs).
-- **Scoring** runs inline on watchlist add, first hit wins: manual override → non-food → frozen → ambient → leaf map → department breadcrumbs → title vote → `Other`. Strong votes name one shelf and outrank weak flavour words; a curated weak vocabulary entry outranks a derived strong keyword. The same add writes the crumb label into `product_catalog`; `pnpm sift category learn` proposes vocabulary from those labels, a human commits, and the eval stays the arbiter.
+- **Scoring** runs inline on watchlist add, first hit wins: manual override → non-food → frozen → ambient → leaf map → department breadcrumbs → title vote → brand fallback → `Other`. Strong votes name one shelf and outrank weak flavour words; a curated weak vocabulary entry outranks a derived strong keyword; the brand table answers only when no title vote landed and never overrides a phrase. The same add writes the crumb label into `product_catalog`; `pnpm sift category learn` proposes vocabulary from those labels, a human commits, and the eval stays the arbiter.
 - **Shopping list** (`/list`) stores quantities only; prices read live from watchlist rows, and multibuy logic is frontend-only in `src/lib/pricing.ts`.
 
 ## Testing & quality gates
 
 - No test framework: `test` runs `node --test` over the pure-logic files in `workers/lib/` and `src/lib/`. New logic gets a `*.test.js` / `*.test.ts` beside it; no coverage tooling — don't invent thresholds.
-- `eval` gates scorer accuracy across the fit, holdout and live suites; floors live in `category.thresholds.json` (fit measured−1, others measured−2) and never drop.
+- `eval` gates scorer accuracy across the fit, holdout and live suites; floors live in `category.thresholds.json`, ratchet up after a measured gain and never drop.
 - `gate` = audit + lint + build + test + eval. CI runs audit → lint → test → eval → build → migrate → worker → pages; PRs never deploy.
 
 ## Security
