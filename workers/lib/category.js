@@ -428,7 +428,8 @@ export function scoreCategory(signals = {}, opts = {}) {
   const votes = strong.size ? strong : weak;
   if (!votes.size) {
     // A brand is a fallback: it answers only when the title named no shelf, so
-    // it can never outvote a product phrase ('Heinz Cream of Tomato Soup').
+    // it can never outvote a product phrase ('Cream of Tomato Soup' stays
+    // Chilled even when the client sends brand 'Heinz').
     const brand = matcher.brands.get(normalise(signals.brand || ''))
       || titleTokens.map((token) => matcher.brands.get(token)).find(Boolean);
     if (brand) return result(brand, 'brand', false, { votes: [brand], ...label });

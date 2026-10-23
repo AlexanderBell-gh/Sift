@@ -774,9 +774,10 @@ export const VOCABULARY = {
 };
 
 // Brand -> shelf, used only when the title names no shelf at all. A brand is a
-// fallback hint, never a vote: 'Heinz Cream of Tomato Soup' must stay Chilled
-// because the product phrase outranks the brand. Every client sends the brand,
-// and the title usually carries it too, so the title scan comes first.
+// fallback hint, never a vote: 'Cream of Tomato Soup' stays Chilled even when
+// the client sends brand 'Heinz', because the product phrase outranks it. Every
+// client sends the brand, and the title usually carries it too, so the title
+// scan comes first.
 // Keys are normalised before use; add one only when the brand names one shelf.
 export const BRANDS = {
   // Drinks.
