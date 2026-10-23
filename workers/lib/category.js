@@ -28,16 +28,16 @@
 import { PHRASES, DERIVED_KEYWORDS, DERIVED_WEAK } from './category.phrases.js';
 import {
   CANONICAL_CATEGORIES, NON_FOOD, AMBIENT, AMBIENT_EXEMPT, DEPARTMENTS,
-  DEPARTMENT_IGNORE, LEAF_MAP, VOCABULARY, PRIORITY,
+  DEPARTMENT_IGNORE, LEAF_MAP, VOCABULARY, PRIORITY, BRANDS,
   normalise,
 } from './category.lexicon.js';
 
 export { CANONICAL_CATEGORIES, normalise };
 
-// v3-v6 already shipped. Do not restart at 1. v7 fixes title-only misses from
-// the v6 probe: ready-meal dish names, Bakewell as a flavour, and multi-word
-// weak phrases ('sweet potato').
-export const TAXONOMY_VERSION = 7;
+// v3-v7 already shipped. Do not restart at 1. v8 fixes title-only misses from
+// the v7 probe: bare brand names and salty snack compounds the corpus files as
+// ingredients ('sea salt').
+export const TAXONOMY_VERSION = 8;
 
 const DEFAULT_LEXICON = {
   phrases: PHRASES,
@@ -51,6 +51,7 @@ const DEFAULT_LEXICON = {
   leafMap: LEAF_MAP,
   vocabulary: VOCABULARY,
   priority: PRIORITY,
+  brands: BRANDS,
 };
 
 export function tokenise(text) {
@@ -176,6 +177,11 @@ function buildMatcher(lexicon) {
     Array.from(lexicon.departmentIgnore || []).map((name) => normalise(name)),
   );
 
+  const brands = new Map();
+  for (const [brand, category] of Object.entries(lexicon.brands || {})) {
+    brands.set(normalise(brand), category);
+  }
+
   return {
     phraseIndex,
     keywords,
@@ -184,6 +190,7 @@ function buildMatcher(lexicon) {
     leafMap,
     departments,
     departmentIgnore,
+    brands,
     nonFood: buildMarkerIndex(lexicon.nonFood || []),
     ambient: new Set(lexicon.ambient || []),
     ambientExempt: new Set(lexicon.ambientExempt || []),
@@ -420,6 +427,11 @@ export function scoreCategory(signals = {}, opts = {}) {
 
   const votes = strong.size ? strong : weak;
   if (!votes.size) {
+    // A brand is a fallback: it answers only when the title named no shelf, so
+    // it can never outvote a product phrase ('Heinz Cream of Tomato Soup').
+    const brand = matcher.brands.get(normalise(signals.brand || ''))
+      || titleTokens.map((token) => matcher.brands.get(token)).find(Boolean);
+    if (brand) return result(brand, 'brand', false, { votes: [brand], ...label });
     return result('Other', 'below-floor', true, { votes: [], ...label });
   }
   if (votes.size === 1) {

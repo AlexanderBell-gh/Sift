@@ -30,8 +30,8 @@ describe('taxonomy', () => {
     assert.equal(CANONICAL_CATEGORIES[7], 'Other');
   });
 
-  it('ships taxonomy version 7', () => {
-    assert.equal(TAXONOMY_VERSION, 7);
+  it('ships taxonomy version 8', () => {
+    assert.equal(TAXONOMY_VERSION, 8);
   });
 
   it('every score carries a reason and the current version', () => {
@@ -502,6 +502,39 @@ describe('v7 probe regressions (21-10-2026)', () => {
       assert.equal(r.reason, 'leaf');
     });
   }
+});
+
+describe('v8 regressions (23-10-2026)', () => {
+  const snackCases = [
+    ['Sea Salt & Vinegar Crisps', 'Snacks'],
+    ['Salt & Vinegar Crisps', 'Snacks'],
+    ['Sea Salt Crisps', 'Snacks'],
+    ['Sea Salt Popcorn', 'Snacks'],
+    ['Olive Oil Crisps', 'Snacks'],
+    ['Tomato Ketchup Crisps', 'Snacks'],
+    ['Salt & Pepper Cashews', 'Snacks'],
+  ];
+  for (const [title, expected] of snackCases) {
+    it(`${title} -> ${expected}`, () => {
+      assert.equal(scoreCategory(signals({ title })).category, expected);
+    });
+  }
+
+  it('a bare brand falls back to its shelf on a title with no signal', () => {
+    const r = scoreCategory(signals({ title: 'Widget 42', brand: 'Snickers' }));
+    assert.equal(r.category, 'Snacks');
+    assert.equal(r.reason, 'brand');
+  });
+
+  it('scans the title for a brand when the client sends no brand', () => {
+    assert.equal(scoreCategory(signals({ title: 'Snickers' })).category, 'Snacks');
+  });
+
+  it('a brand never outvotes a product phrase', () => {
+    const r = scoreCategory(signals({ title: 'Cream of Tomato Soup', brand: 'Heinz' }));
+    assert.equal(r.category, 'Chilled');
+    assert.equal(r.reason, 'title');
+  });
 });
 
 describe('manual override', () => {

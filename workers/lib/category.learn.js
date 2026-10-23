@@ -81,9 +81,11 @@ export function formatProposals({ leaves = [], tokens = [] } = {}) {
     lines.push(`  '${entry.leaf}': '${entry.category}', // seen ${entry.count}`);
   }
   lines.push('');
-  lines.push(`// token candidates (${tokens.length}) -> VOCABULARY (strong or weak)`);
+  lines.push(`// token candidates (${tokens.length}) -> VOCABULARY (review strong or weak)`);
   for (const entry of tokens) {
-    lines.push(`  '${entry.token}': '${entry.category}', // ${entry.count} names`);
+    lines.push(
+      `  '${entry.token}': { category: '${entry.category}', strength: 'strong' }, // ${entry.count} names`,
+    );
   }
   return lines.join('\n');
 }

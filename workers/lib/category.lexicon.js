@@ -253,6 +253,18 @@ export const VOCABULARY = {
   'victoria sponge': { category: 'Bakery', strength: 'phrase' },
   // Brand compound: the brand word carries no shelf signal on its own.
   'sun bites': { category: 'Snacks', strength: 'phrase' },
+  // Monster Munch is a crisp, not the energy drink the brand also names.
+  'monster munch': { category: 'Snacks', strength: 'phrase' },
+  // Snack formats the corpus files as ingredients. Without the compound, a
+  // strong cupboard word ('salt', 'oil', 'vinegar') outvotes the format noun
+  // and the tie-break sends the snack to the cupboard.
+  'sea salt vinegar crisps': { category: 'Snacks', strength: 'phrase' },
+  'salt vinegar crisps': { category: 'Snacks', strength: 'phrase' },
+  'sea salt crisps': { category: 'Snacks', strength: 'phrase' },
+  'sea salt popcorn': { category: 'Snacks', strength: 'phrase' },
+  'olive oil crisps': { category: 'Snacks', strength: 'phrase' },
+  'tomato ketchup crisps': { category: 'Snacks', strength: 'phrase' },
+  'salt pepper cashews': { category: 'Snacks', strength: 'phrase' },
 
   // ----- strong: one shelf, votes alone -----
 
@@ -260,7 +272,7 @@ export const VOCABULARY = {
   // entries fix tokens the derivation cannot decide (ambiguous across corpus
   // files) or cannot see (no corpus name contains them). Normalised token ->
   // category. These beat the derived tier.
-  // Produce words live in WEAK_KEYWORDS: a fruit name says produce only
+  // Produce words live in the weak tier: a fruit name says produce only
   // when the title says nothing else ('apple & cinnamon granola' is a
   // cereal, not a fruit).
   // Cupboard words that collide.
@@ -291,9 +303,11 @@ export const VOCABULARY = {
   'gnocchi': { category: 'Food Cupboard', strength: 'strong' },
   'polenta': { category: 'Food Cupboard', strength: 'strong' },
   'chickpea': { category: 'Food Cupboard', strength: 'strong' },
-  'tinned': { category: 'Food Cupboard', strength: 'strong' },
-  'canned': { category: 'Food Cupboard', strength: 'strong' },
-  'jarred': { category: 'Food Cupboard', strength: 'strong' },
+  // Ambient markers are handled by the AMBIENT rule before the title vote, so
+  // they stay out of both the keyword and derived tiers.
+  'tinned': { strength: 'stop' },
+  'canned': { strength: 'stop' },
+  'jarred': { strength: 'stop' },
   'seasoning': { category: 'Food Cupboard', strength: 'strong' },
   'sauce': { category: 'Food Cupboard', strength: 'strong' },
   'dressing': { category: 'Food Cupboard', strength: 'strong' },
@@ -757,6 +771,73 @@ export const VOCABULARY = {
   'cumin': { category: 'Food Cupboard', strength: 'weak' },
   'oregano': { category: 'Food Cupboard', strength: 'weak' },
   'bay': { category: 'Produce', strength: 'weak' },
+};
+
+// Brand -> shelf, used only when the title names no shelf at all. A brand is a
+// fallback hint, never a vote: 'Heinz Cream of Tomato Soup' must stay Chilled
+// because the product phrase outranks the brand. Every client sends the brand,
+// and the title usually carries it too, so the title scan comes first.
+// Keys are normalised before use; add one only when the brand names one shelf.
+export const BRANDS = {
+  // Drinks.
+  'aperol': 'Beverages',
+  'baileys': 'Beverages',
+  'evian': 'Beverages',
+  'fanta': 'Beverages',
+  'lucozade': 'Beverages',
+  'milo': 'Beverages',
+  'monster': 'Beverages',
+  'pepsi': 'Beverages',
+  'pimm': 'Beverages',
+  'ribena': 'Beverages',
+  'robinsons': 'Beverages',
+  'schweppes': 'Beverages',
+  'sprite': 'Beverages',
+  'vimto': 'Beverages',
+  'volvic': 'Beverages',
+  'voss': 'Beverages',
+  // Snacks.
+  'bounty': 'Snacks',
+  'cadbury': 'Snacks',
+  'doritos': 'Snacks',
+  'galaxy': 'Snacks',
+  'grenade': 'Snacks',
+  'haribo': 'Snacks',
+  'kinder': 'Snacks',
+  'maltesers': 'Snacks',
+  'mars': 'Snacks',
+  'pringles': 'Snacks',
+  'ryvita': 'Snacks',
+  'snickers': 'Snacks',
+  'twiglets': 'Snacks',
+  'twix': 'Snacks',
+  'walkers': 'Snacks',
+  // Chilled.
+  'actimel': 'Chilled',
+  'babybel': 'Chilled',
+  'lurpak': 'Chilled',
+  'philadelphia': 'Chilled',
+  'vitasoy': 'Chilled',
+  // Food cupboard.
+  'batchelors': 'Food Cupboard',
+  'bisto': 'Food Cupboard',
+  'dolmio': 'Food Cupboard',
+  'heinz': 'Food Cupboard',
+  'hellmann': 'Food Cupboard',
+  'homepride': 'Food Cupboard',
+  'kellogg': 'Food Cupboard',
+  'marmite': 'Food Cupboard',
+  'oxo': 'Food Cupboard',
+  // Bakery.
+  'hovis': 'Bakery',
+  'kingsmill': 'Bakery',
+  'warburtons': 'Bakery',
+  // Frozen. The multi-word keys can only match the brand field.
+  'goodfellas': 'Frozen',
+  'Birds Eye': 'Frozen',
+  'Chicago Town': 'Frozen',
+  "Aunt Bessie's": 'Frozen',
+  "Ben & Jerry's": 'Frozen',
 };
 
 // Ambient markers: shelf-stable goods that are sold in a tin or jar. A title

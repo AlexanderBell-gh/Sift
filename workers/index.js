@@ -1447,15 +1447,21 @@ async function handleRequest(request, env) {
       );
 
       // Persistent search pool: names survive watchlist DELETE. The label
-      // columns are the harvest log for `pnpm sift category learn`: first
-      // insert wins, ON CONFLICT only refreshes last_seen_at.
+      // columns are the harvest log for `pnpm sift category learn`: the latest
+      // non-null crumb label wins, so a phone add (no crumbs) cannot erase what
+      // an extension add carried. The manual override (`category`) is never
+      // touched here.
       const catalogName = typeof result.name === 'string' ? result.name.trim() : '';
       if (catalogName) {
         await execute(
           env,
           `INSERT INTO product_catalog (name, first_seen_at, last_seen_at, leaf, department, category_reason)
            VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(name) DO UPDATE SET last_seen_at = excluded.last_seen_at`,
+           ON CONFLICT(name) DO UPDATE SET
+             last_seen_at = excluded.last_seen_at,
+             leaf = COALESCE(excluded.leaf, leaf),
+             department = COALESCE(excluded.department, department),
+             category_reason = excluded.category_reason`,
           [catalogName, now, now, scored.leaf || null, scored.department || null, scored.reason]
         );
       }

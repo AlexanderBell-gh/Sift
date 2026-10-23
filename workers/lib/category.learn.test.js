@@ -97,6 +97,6 @@ describe('learn proposals', () => {
     ]));
     assert.match(text, /leaf candidates \(1\)/);
     assert.match(text, /'plant based': 'Chilled', \/\/ seen 2/);
-    assert.match(text, /'seitan': 'Chilled', \/\/ 2 names/);
+    assert.match(text, /'seitan': \{ category: 'Chilled', strength: 'strong' \}, \/\/ 2 names/);
   });
 });

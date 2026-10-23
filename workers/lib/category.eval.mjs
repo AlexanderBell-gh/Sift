@@ -13,6 +13,8 @@
 //            each held-out product trains the tier that scores it. Curated
 //            entries (DUP_BASE plus the vocabulary's phrase rows) stay in
 //            the holdout lexicon: they are hand rules, not corpus learning.
+//            They are then left out of the measured slice, and the count is
+//            printed beside the score, so it never claims to cover them.
 //            This is the number that means something.
 //   live     the 108 products that were pinned in prod before the 19-10-2026
 //            wipe, hand-labelled by shelf. Scored with the shipped lexicon,
@@ -78,7 +80,7 @@ function loadLive() {
   }));
 }
 
-function runSuite(label, entries, lexicon) {
+function runSuite(label, entries, lexicon, excluded = 0) {
   const perCategory = new Map();
   const confusion = new Map();
   const misses = [];
@@ -106,6 +108,7 @@ function runSuite(label, entries, lexicon) {
     perCategory,
     confusion,
     misses,
+    excluded,
   };
 }
 
@@ -123,6 +126,9 @@ function report(suite) {
     console.log(
       `  ${category.padEnd(14)} ${percent(acc).padStart(7)}  (${bucket.correct}/${bucket.total})`,
     );
+  }
+  if (suite.excluded) {
+    console.log(`  excluded: ${suite.excluded} curated names, not measured (hand rules)`);
   }
   const confused = [...suite.confusion.entries()].sort((a, b) => b[1] - a[1]);
   if (confused.length) {
@@ -146,7 +152,8 @@ function report(suite) {
 // Gate-pass one-liner. The full report is for `pnpm sift eval` and for a
 // failing gate; a green gate only needs the number against its floor.
 function summary(suite) {
-  console.log(`${suite.label.padEnd(8)}${percent(suite.accuracy).padStart(7)}  (${suite.correct}/${suite.total})`);
+  const excluded = suite.excluded ? `  ${suite.excluded} curated excluded` : '';
+  console.log(`${suite.label.padEnd(8)}${percent(suite.accuracy).padStart(7)}  (${suite.correct}/${suite.total})${excluded}`);
 }
 
 function comparePhrases(expected, actual) {
@@ -181,7 +188,7 @@ function compareHoldout(expected, actual) {
 }
 
 // Every export in category.phrases.js is regenerated in memory and compared.
-// A change to the corpus, STOP_TOKENS or the derivation fails the gate until
+// A change to the corpus, the vocabulary or the derivation fails the gate until
 // the generated file is rebuilt, not just a change to PHRASES.
 function checkDrift() {
   const names = loadCorpus();
@@ -234,7 +241,12 @@ function main() {
     const name = normalise(entry.name);
     return holdoutSet.has(name) && !CURATED_NAMES.has(name);
   });
-  const holdout = runSuite('holdout', holdoutEntries, buildHoldoutLexicon());
+  const holdout = runSuite(
+    'holdout',
+    holdoutEntries,
+    buildHoldoutLexicon(),
+    HOLDOUT.filter((name) => CURATED_NAMES.has(name)).length,
+  );
   const live = runSuite('live', loadLive(), DEFAULT_LEXICON);
 
   const suites = [fit, holdout, live];

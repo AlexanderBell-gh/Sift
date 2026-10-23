@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Trace one title through the scorer. Debug aid for the seven-rule path.
+// Trace one title through the scorer. Debug aid for the eight-rule path.
 //
 //   node workers/lib/category.trace.mjs "Bay Leaves"
 //   node workers/lib/category.trace.mjs "Oat Milk" --leaf "Milk Alternatives"
@@ -39,34 +39,31 @@ if (holdout) {
 }
 
 const tokens = normalise(title).split(' ').filter(Boolean);
+const titleKey = normalise(title);
 console.log(`title: ${JSON.stringify(title)}`);
 if (leaf) console.log(`leaf: ${JSON.stringify(leaf)}`);
 if (crumbs.length) console.log(`crumbs: ${JSON.stringify(crumbs)}`);
 if (holdout) console.log('lexicon: holdout (corpus names removed, keyword-tier view)');
 console.log(`tokens: ${tokens.join(' | ')}`);
 
+// One vocabulary table: a token carries its own strength.
+const tierOf = (tier, token) => Object.entries(tier)
+  .find(([, list]) => list.includes(token))?.[0] || '-';
 for (const token of tokens) {
-  const hand = DEFAULT_LEXICON.keywordOverrides[token];
-  const weak = DEFAULT_LEXICON.weak[token];
-  const derived = Object.entries(DEFAULT_LEXICON.derived)
-    .find(([, list]) => list.includes(token))?.[0];
-  const derivedWeak = Object.entries(DEFAULT_LEXICON.derivedWeak)
-    .find(([, list]) => list.includes(token))?.[0];
-  const phrase = PHRASES[token];
-  let phraseLabel = '-';
-  if (phrase) {
-    phraseLabel = holdout && held.has(token) && !curated.has(token)
-      ? `${phrase} HELD OUT`
-      : phrase;
-  }
+  const entry = DEFAULT_LEXICON.vocabulary[token];
+  const curatedLabel = entry ? `${entry.strength}/${entry.category || '-'}` : '-';
   console.log(
     `  ${token.padEnd(14)}`
-    + ` hand=${(hand || '-').padEnd(14)}`
-    + ` weak=${(weak || '-').padEnd(14)}`
-    + ` derived=${(derived || '-').padEnd(14)}`
-    + ` derivedWeak=${(derivedWeak || '-').padEnd(14)}`
-    + ` phrase=${phraseLabel}`,
+    + ` curated=${curatedLabel.padEnd(22)}`
+    + ` derived=${tierOf(DEFAULT_LEXICON.derived, token).padEnd(14)}`
+    + ` derivedWeak=${tierOf(DEFAULT_LEXICON.derivedWeak, token).padEnd(14)}`,
   );
+}
+
+// A phrase is a full product name, not a token.
+const phraseHit = lexicon.phrases[titleKey];
+if (phraseHit) {
+  console.log(`phrase: ${phraseHit}${CURATED_NAMES.has(titleKey) ? ' (curated)' : ''}`);
 }
 
 const signals = { title };
