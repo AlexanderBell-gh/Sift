@@ -3,7 +3,7 @@
 export const CATEGORIES = [
   'Chilled',
   'Snacks',
-  'Beverages',
+  'Drinks',
   'Produce',
   'Frozen',
   'Bakery',

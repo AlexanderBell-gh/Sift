@@ -4,8 +4,7 @@
 // nothing extra. Admin commands log in per run from env, nothing on disk.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { CANONICAL_CATEGORIES } from '../workers/lib/category.lexicon.js';
-import { propose, formatProposals } from '../workers/lib/category.learn.js';
+import { CANONICAL_CATEGORIES, normaliseTitle } from '../workers/lib/category.js';
 
 const PROD_API = 'https://siftapi.blackmesa.workers.dev';
 const WRANGLER = ['exec', 'wrangler'];
@@ -36,11 +35,10 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
     db users [--search q] [--limit n] [--local|--remote]
     db wipe-watchlist [--local|--remote --yes]  wipe shopping_list, alerts, watchlist
 
-  category (manual override + harvest; writes need --remote --yes off-local):
+  category (manual correction = product_knowledge; writes need --remote --yes off-local):
     category set "<product name>" <category>  set a manual category
     category clear "<product name>"           drop a manual category
     category list [--json]                    show manual categories
-    category learn [--remote|--local] [--json]  propose vocabulary from harvest labels
 
   watchlist (read-only debug via admin token):
     watchlist names|offers [--json]
@@ -202,12 +200,13 @@ function formatCounts(counts) {
 // One-time clean slate after the taxonomy rebuild. shopping_list and alerts
 // cascade from watchlist, but dependent rows go first so the order never
 // depends on that.
-// users, product_catalog, audit_logs, rate_limits and password_resets survive.
+// users, product_catalog, product_knowledge, audit_logs, rate_limits and
+// password_resets survive.
 function wipeWatchlist() {
   guardWrite();
   const target = flags.remote ? 'remote' : 'local';
   const wipeOrder = ['shopping_list', 'alerts', 'watchlist'];
-  const kept = ['users', 'product_catalog', 'audit_logs', 'rate_limits', 'password_resets'];
+  const kept = ['users', 'product_catalog', 'product_knowledge', 'audit_logs', 'rate_limits', 'password_resets'];
 
   console.log(`wipe-watchlist (${target})`);
   console.log(`before: ${formatCounts(tableCounts([...wipeOrder, ...kept]))}`);
@@ -232,7 +231,6 @@ function dbCmd() {
   } else if (sub === 'query') {
     const sql = args.join(' ');
     if (!sql) fail('usage: pnpm sift db query <sql> [--local|--remote]');
-    guardWrite();
     if (flags.remote && !READ_SQL.test(sql) && !flags.yes) fail('remote write needs BOTH --remote --yes');
     if (!flags.remote && !flags.local) flags.local = true;
     const extra = flags.json ? ['--json', '--command', sql] : ['--command', sql];
@@ -288,28 +286,29 @@ async function watchlistCmd() {
   else fail(`unknown watchlist subcommand: ${sub} (names|offers)`);
 }
 
-// Manual category override. The name is matched exactly (case-insensitive)
-// against product_catalog, so the escape hatch is global: one correction
-// fixes the shelf for every user who pins that product.
+// Manual category correction. The title is size-stripped to the same id the
+// knowledge memory uses, so one CLI write fixes the shelf for every size.
 function categoryCmd() {
   if (sub === 'list') {
     if (!flags.remote && !flags.local) flags.local = true;
     const out = runOut('pnpm', [...WRANGLER, ...wranglerD1([
       '--json', '--command',
-      `SELECT name, category, category_updated_at FROM product_catalog
-       WHERE category IS NOT NULL ORDER BY name COLLATE NOCASE`,
+      `SELECT original_title, category, hit_count, updated_at FROM product_knowledge
+       WHERE source = 'user_correction' ORDER BY original_title COLLATE NOCASE`,
     ])]);
     const rows = JSON.parse(out)[0]?.results ?? [];
     if (flags.json) { console.log(JSON.stringify(rows, null, 2)); return; }
     console.table(rows.map((row) => ({
       ...row,
-      category_updated_at: row.category_updated_at
-        ? new Date(row.category_updated_at).toISOString().slice(0, 19).replace('T', ' ')
+      updated_at: row.updated_at
+        ? new Date(row.updated_at).toISOString().slice(0, 19).replace('T', ' ')
         : '',
     })));
   } else if (sub === 'set') {
     const [name, category] = args;
     if (!name || !category) fail('usage: pnpm sift category set "<product name>" <category>');
+    const id = normaliseTitle(name);
+    if (!id) fail('product name is empty');
     const hit = CANONICAL_CATEGORIES.find(
       (c) => c.toLowerCase() === String(category).trim().toLowerCase(),
     );
@@ -317,35 +316,26 @@ function categoryCmd() {
     guardWrite();
     const now = Date.now();
     run('pnpm', [...WRANGLER, ...wranglerD1(['--command',
-      `INSERT INTO product_catalog (name, first_seen_at, last_seen_at, category, category_updated_at)
-       VALUES (${sqlQuote(name)}, ${now}, ${now}, ${sqlQuote(hit)}, ${now})
-       ON CONFLICT(name) DO UPDATE SET
+      `INSERT INTO product_knowledge (id, original_title, category, source, hit_count, updated_at)
+       VALUES (${sqlQuote(id)}, ${sqlQuote(name)}, ${sqlQuote(hit)}, 'user_correction', 1, ${now})
+       ON CONFLICT(id) DO UPDATE SET
+         original_title = excluded.original_title,
          category = excluded.category,
-         category_updated_at = excluded.category_updated_at`,
+         source = 'user_correction',
+         updated_at = excluded.updated_at`,
     ])]);
-    console.log(`set ${hit} for ${name}`);
+    console.log(`set ${hit} for ${name} (${id})`);
   } else if (sub === 'clear') {
     const [name] = args;
     if (!name) fail('usage: pnpm sift category clear "<product name>"');
+    const id = normaliseTitle(name);
+    if (!id) fail('product name is empty');
     guardWrite();
     run('pnpm', [...WRANGLER, ...wranglerD1(['--command',
-      `UPDATE product_catalog SET category = NULL, category_updated_at = NULL
-       WHERE name = ${sqlQuote(name)}`,
+      `DELETE FROM product_knowledge WHERE id = ${sqlQuote(id)} AND source = 'user_correction'`,
     ])]);
-    console.log(`cleared ${name}`);
-  } else if (sub === 'learn') {
-    if (!flags.remote && !flags.local) flags.local = true;
-    const rows = d1Rows(
-      'SELECT name, leaf, department, category_reason FROM product_catalog WHERE department IS NOT NULL',
-    );
-    const proposals = propose(rows);
-    if (flags.json) { console.log(JSON.stringify(proposals, null, 2)); return; }
-    if (!proposals.leaves.length && !proposals.tokens.length) {
-      console.log('no candidates: no catalog row carries a label yet');
-      return;
-    }
-    console.log(formatProposals(proposals));
-  } else fail(`unknown category subcommand: ${sub} (set|clear|list|learn)`);
+    console.log(`cleared ${name} (${id})`);
+  } else fail(`unknown category subcommand: ${sub} (set|clear|list)`);
 }
 
 async function main() {

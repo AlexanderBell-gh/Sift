@@ -4608,7 +4608,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 
 .category-chilled { background: rgba(2, 132, 199, 0.12); color: #0284c7; }
 .category-snacks { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
-.category-beverages { background: rgba(8, 145, 178, 0.12); color: #0891b2; }
+.category-drinks { background: rgba(8, 145, 178, 0.12); color: #0891b2; }
 .category-produce { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
 .category-frozen { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
 .category-bakery { background: rgba(217, 119, 6, 0.12); color: #d97706; }
@@ -6702,7 +6702,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 
 .badge-dairy { @apply bg-blue-500/5 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-400/20; }
 .badge-snacks { @apply bg-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-400/20; }
-.badge-beverages { @apply bg-violet-500/5 text-violet-600 dark:text-violet-400 border-violet-200/50 dark:border-violet-400/20; }
+.badge-drinks { @apply bg-violet-500/5 text-violet-600 dark:text-violet-400 border-violet-200/50 dark:border-violet-400/20; }
 .badge-produce { @apply bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-400/20; }
 .badge-meat { @apply bg-red-500/5 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-400/20; }
 .badge-frozen { @apply bg-cyan-500/5 text-cyan-600 dark:text-cyan-400 border-cyan-200/50 dark:border-cyan-400/20; }

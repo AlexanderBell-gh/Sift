@@ -20,7 +20,6 @@ function row(overrides) {
     offer_deal: null,
     offer_expires_at: null,
     category: 'Chilled',
-    taxonomy_version: 3,
     product_url: 'https://example.com/p',
     unit: null,
     updated_at: 100,
@@ -108,7 +107,6 @@ describe('facts shape', () => {
       offer_deal: null,
       offer_expires_at: null,
       category: null,
-      taxonomy_version: 0,
       product_url: '',
       unit: null,
     });
@@ -118,7 +116,6 @@ describe('facts shape', () => {
     const f = toInheritedFacts(row({ image_url: 'https://img', normal_price: 2.5 }));
     assert.equal(f.image_url, 'https://img');
     assert.equal(f.normal_price, 2.5);
-    assert.equal(f.taxonomy_version, 3);
     assert.deepEqual(toInheritedFacts(null), emptyFacts());
   });
 });

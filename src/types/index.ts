@@ -49,7 +49,6 @@ export interface WatchlistItem {
   product_url: string;
   is_on_offer: boolean;
   category: string | null;
-  taxonomy_version?: number;
   notes: string | null;
   created_at: number;
   updated_at: number;

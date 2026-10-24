@@ -16,7 +16,9 @@ import {
   base64UrlDecode,
 } from './auth.js';
 import { queryAll, queryOne, execute } from './db.js';
-import { scoreCategory, CANONICAL_CATEGORIES } from './lib/category.js';
+import {
+  classifyCategory, normaliseTitle, CANONICAL_CATEGORIES,
+} from './lib/category.js';
 import { isValidUsername, isValidPassword, USERNAME_ERROR, PASSWORD_ERROR } from './lib/validate.js';
 import { validateResolveInput, pickBestRow, toInheritedFacts, emptyFacts } from './lib/resolve.js';
 
@@ -201,17 +203,18 @@ function hashString(str) {
   return Math.abs(hash).toString(36);
 }
 
-// Manual category override, set through `pnpm sift category set`. The name
-// is matched case-insensitively (product_catalog is COLLATE NOCASE) and the
-// override is global: one correction fixes the shelf for every user.
+// Manual category override, set through `pnpm sift category set`. The title is
+// size-stripped to the same id the knowledge memory uses, and the override is
+// global: one correction fixes the shelf for every user.
 async function lookupCategoryOverride(env, name) {
-  const trimmed = typeof name === 'string' ? name.trim() : '';
-  if (!trimmed) return null;
+  const id = normaliseTitle(name);
+  if (!id) return null;
   try {
     const row = await queryOne(
       env,
-      'SELECT category FROM product_catalog WHERE name = ? AND category IS NOT NULL LIMIT 1',
-      [trimmed],
+      `SELECT category FROM product_knowledge
+       WHERE id = ? AND source = 'user_correction' LIMIT 1`,
+      [id],
     );
     if (!row || !row.category) return null;
     const hit = CANONICAL_CATEGORIES.find(
@@ -219,10 +222,68 @@ async function lookupCategoryOverride(env, name) {
     );
     return hit || null;
   } catch (e) {
-    // The category column lands with migration 0002. Until it exists the
-    // scorer simply runs without an override.
     console.error('Category override lookup failed:', e);
     return null;
+  }
+}
+
+// Category memory adapters. The scorer stays pure; these three touch D1 and
+// Workers AI only.
+
+async function lookupKnowledge(env, id) {
+  try {
+    const row = await queryOne(
+      env,
+      'SELECT category FROM product_knowledge WHERE id = ? LIMIT 1',
+      [id],
+    );
+    if (!row?.category) return null;
+    await execute(
+      env,
+      'UPDATE product_knowledge SET hit_count = hit_count + 1 WHERE id = ?',
+      [id],
+    );
+    return row.category;
+  } catch (e) {
+    console.error('Category knowledge lookup failed:', e);
+    return null;
+  }
+}
+
+// Only AI answers are cached here: a manual correction already answered above.
+async function rememberKnowledge(env, id, originalTitle, category) {
+  await execute(
+    env,
+    `INSERT INTO product_knowledge (id, original_title, category, source, hit_count, updated_at)
+     VALUES (?, ?, ?, 'ai', 1, ?)
+     ON CONFLICT(id) DO NOTHING`,
+    [id, originalTitle, category, Date.now()],
+  );
+}
+
+const AI_MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
+const AI_TIMEOUT_MS = 5000;
+
+// 5s guard: a slow model must not hold the add open. A timeout is a miss, so
+// the title is retried on the next add instead of being cached.
+async function inferCategory(env, prompt) {
+  if (!env.AI) throw new Error('AI binding not configured');
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('AI timeout')), AI_TIMEOUT_MS);
+  });
+  try {
+    const result = await Promise.race([
+      env.AI.run(AI_MODEL, {
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0,
+        max_tokens: 8,
+      }),
+      timeout,
+    ]);
+    return result?.response ?? '';
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -1276,7 +1337,6 @@ async function handleRequest(request, env) {
         image_url: r.image_url,
         unit: r.unit,
         category: r.category,
-        taxonomy_version: r.taxonomy_version ?? 0,
         prices: {
           normal: r.normal_price,
           loyalty: r.loyalty_price,
@@ -1324,7 +1384,7 @@ async function handleRequest(request, env) {
       const rows = await queryAll(
         env,
         `SELECT product_name, store, image_url, normal_price, loyalty_price,
-                offer_deal, offer_expires_at, category, taxonomy_version,
+                offer_deal, offer_expires_at, category,
                 product_url, unit, updated_at
          FROM watchlist
          WHERE store = ? OR product_name LIKE ?
@@ -1392,34 +1452,39 @@ async function handleRequest(request, env) {
       if (!signals.title && result.name) signals.title = result.name;
 
       const override = await lookupCategoryOverride(env, result.name);
-      const scored = scoreCategory(signals, { override });
+      const startedAt = Date.now();
+      const scored = await classifyCategory(signals, {
+        override,
+        lookup: (id) => lookupKnowledge(env, id),
+        remember: (id, title, category) => rememberKnowledge(env, id, title, category),
+        infer: (prompt) => inferCategory(env, prompt),
+      });
+      const ms = Date.now() - startedAt;
       const finalCategory = scored.category;
-      const taxonomyVersion = scored.taxonomy_version;
 
-      // One structured line per scored add, plus a second line for rows that
-      // matched nothing, so misses stay visible without scanning everything.
-      console.log('Category scored:', JSON.stringify({
+      // One structured line per add. `fallback` rows get their own line so
+      // model misses stay visible without scanning every add.
+      console.log('Category classified:', JSON.stringify({
         title: signals.title || null,
         leaf: signals.breadcrumb_leaf || null,
         category: finalCategory,
-        reason: scored.reason,
-        votes: scored.votes || [],
-        taxonomy_version: taxonomyVersion,
-        storage: !!signals.storage_text,
+        source: scored.reason,
+        low_confidence: scored.low_confidence,
+        ms,
         override: override || null,
       }));
-      if (scored.reason === 'below-floor') {
-        console.log('Category unknown:', JSON.stringify({
+      if (scored.reason === 'fallback') {
+        console.log('Category fallback:', JSON.stringify({
           title: signals.title || null,
           leaf: signals.breadcrumb_leaf || null,
-          taxonomy_version: taxonomyVersion,
+          ms,
         }));
       }
 
       await execute(
         env,
-         `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, offer_deal, product_url, is_on_offer, category, taxonomy_version, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         `INSERT INTO watchlist (id, user_id, product_id, product_name, store, store_logo, image_url, unit, normal_price, loyalty_price, unit_price, currency, loyalty_type, offer_expires_at, offer_deal, product_url, is_on_offer, category, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           auth.userId,
@@ -1439,30 +1504,21 @@ async function handleRequest(request, env) {
           result.product_url || '',
           result.is_on_offer ? 1 : 0,
           finalCategory,
-          taxonomyVersion,
           null,
           now,
           now,
         ]
       );
 
-      // Persistent search pool: names survive watchlist DELETE. The label
-      // columns are the harvest log for `pnpm sift category learn`: the latest
-      // non-null crumb label wins, so a phone add (no crumbs) cannot erase what
-      // an extension add carried. The manual override (`category`) is never
-      // touched here.
+      // Persistent search pool: names survive watchlist DELETE.
       const catalogName = typeof result.name === 'string' ? result.name.trim() : '';
       if (catalogName) {
         await execute(
           env,
-          `INSERT INTO product_catalog (name, first_seen_at, last_seen_at, leaf, department, category_reason)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(name) DO UPDATE SET
-             last_seen_at = excluded.last_seen_at,
-             leaf = COALESCE(excluded.leaf, leaf),
-             department = COALESCE(excluded.department, department),
-             category_reason = excluded.category_reason`,
-          [catalogName, now, now, scored.leaf || null, scored.department || null, scored.reason]
+          `INSERT INTO product_catalog (name, first_seen_at, last_seen_at)
+           VALUES (?, ?, ?)
+           ON CONFLICT(name) DO UPDATE SET last_seen_at = excluded.last_seen_at`,
+          [catalogName, now, now]
         );
       }
 
@@ -1488,7 +1544,6 @@ async function handleRequest(request, env) {
           product_url: row.product_url,
           is_on_offer: !!row.is_on_offer,
           category: row.category,
-          taxonomy_version: row.taxonomy_version ?? 0,
           // The phone's capture flow reads these two: low_confidence drives
           // its "check this one" state, category_reason names the rule that
           // decided.
@@ -1569,7 +1624,6 @@ async function handleRequest(request, env) {
         product_url: r.product_url,
         is_on_offer: !!r.is_on_offer,
         category: r.category,
-        taxonomy_version: r.taxonomy_version ?? 0,
         notes: r.notes,
         created_at: r.created_at,
         updated_at: r.updated_at,

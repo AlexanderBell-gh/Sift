@@ -1,8 +1,8 @@
 -- Full schema. Executable truth: one file builds a database from scratch.
 --
--- The 2026-10-22 squash folded the old 0001-0009 chain + 0002_catalog_category
--- into this file after the live database was rebuilt from empty. Every
--- statement is idempotent, so re-applying against a partial database is safe.
+-- The 2026-10-24 rebuild folded everything into this file after the live
+-- database was recreated from empty. Every statement is idempotent, so
+-- re-applying against a partial database is safe.
 --
 -- New schema changes add the next number; this file never changes again while
 -- a database that recorded it is live (wrangler tracks migrations by name, so
@@ -52,7 +52,6 @@ CREATE TABLE IF NOT EXISTS watchlist (
   product_url TEXT NOT NULL DEFAULT '',
   is_on_offer INTEGER NOT NULL DEFAULT 0,
   category TEXT,
-  taxonomy_version INTEGER NOT NULL DEFAULT 0,
   notes TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
@@ -64,10 +63,9 @@ CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product_unique
   ON watchlist(user_id, product_id);
 
--- Persistent product pool for search autocomplete (names only), the manual
--- category override set through `pnpm sift category set`, and the harvest log
--- read by `pnpm sift category learn`. First insert wins: ON CONFLICT leaves
--- the label columns alone.
+-- Persistent product pool for search autocomplete (names only). First insert
+-- wins: ON CONFLICT leaves the label columns alone. The label columns are
+-- legacy; the add path no longer writes them.
 CREATE TABLE IF NOT EXISTS product_catalog (
   name TEXT PRIMARY KEY COLLATE NOCASE,
   first_seen_at INTEGER NOT NULL,
@@ -78,6 +76,19 @@ CREATE TABLE IF NOT EXISTS product_catalog (
   department TEXT,
   category_reason TEXT
 );
+
+-- Category memory: one row per size-stripped product title. `source` is
+-- 'ai' for a cached model answer or 'user_correction' for the CLI override.
+CREATE TABLE IF NOT EXISTS product_knowledge (
+  id TEXT PRIMARY KEY,
+  original_title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  source TEXT NOT NULL,
+  hit_count INTEGER NOT NULL DEFAULT 1,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_knowledge_source ON product_knowledge(source);
 
 CREATE TABLE IF NOT EXISTS shopping_list (
   id TEXT PRIMARY KEY,

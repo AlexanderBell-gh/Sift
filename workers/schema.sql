@@ -1,9 +1,10 @@
 -- Human reference for the live schema.
 --
--- Executable truth: workers/migrations/0001_init.sql. This file mirrors it —
--- keep the two identical. New schema changes add the next migration number;
--- 0001 never changes again while a database that recorded it is live
--- (wrangler tracks migrations by name, so an edit would never re-run).
+-- Executable truth: workers/migrations/0001_sift.sql. This file mirrors it —
+-- keep the two identical apart from this header. New schema changes add the
+-- next migration number; 0001 never changes again while a database that
+-- recorded it is live (wrangler tracks migrations by name, so an edit would
+-- never re-run).
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
@@ -49,7 +50,6 @@ CREATE TABLE IF NOT EXISTS watchlist (
   product_url TEXT NOT NULL DEFAULT '',
   is_on_offer INTEGER NOT NULL DEFAULT 0,
   category TEXT,
-  taxonomy_version INTEGER NOT NULL DEFAULT 0,
   notes TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
@@ -61,10 +61,9 @@ CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_product_unique
   ON watchlist(user_id, product_id);
 
--- Persistent product pool for search autocomplete (names only), the manual
--- category override set through `pnpm sift category set`, and the harvest log
--- read by `pnpm sift category learn`. First insert wins: ON CONFLICT leaves
--- the label columns alone.
+-- Persistent product pool for search autocomplete (names only). First insert
+-- wins: ON CONFLICT leaves the label columns alone. The label columns are
+-- legacy; the add path no longer writes them.
 CREATE TABLE IF NOT EXISTS product_catalog (
   name TEXT PRIMARY KEY COLLATE NOCASE,
   first_seen_at INTEGER NOT NULL,
@@ -75,6 +74,19 @@ CREATE TABLE IF NOT EXISTS product_catalog (
   department TEXT,
   category_reason TEXT
 );
+
+-- Category memory: one row per size-stripped product title. `source` is
+-- 'ai' for a cached model answer or 'user_correction' for the CLI override.
+CREATE TABLE IF NOT EXISTS product_knowledge (
+  id TEXT PRIMARY KEY,
+  original_title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  source TEXT NOT NULL,
+  hit_count INTEGER NOT NULL DEFAULT 1,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_knowledge_source ON product_knowledge(source);
 
 CREATE TABLE IF NOT EXISTS shopping_list (
   id TEXT PRIMARY KEY,

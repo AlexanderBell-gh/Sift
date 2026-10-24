@@ -8,10 +8,13 @@ enabled = false
 logs = { enabled = false, head_sampling_rate = 1, persist = false, invocation_logs = false }
 traces = { enabled = false, persist = false, head_sampling_rate = 1 }
 
+[ai]
+binding = "AI"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "sift"
-database_id = "695c35a2-4800-4730-b699-97a698e17e73"
+database_id = "601b7383-8298-427d-8de7-68b2a77ffe79"
 migrations_dir = "migrations"
 
 # Secrets must be set via CLI (never commit plaintext):

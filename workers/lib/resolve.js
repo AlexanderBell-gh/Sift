@@ -65,7 +65,6 @@ export function emptyFacts() {
     offer_deal: null,
     offer_expires_at: null,
     category: null,
-    taxonomy_version: 0,
     product_url: "",
     unit: null,
   };
@@ -80,7 +79,6 @@ export function toInheritedFacts(row) {
     offer_deal: row.offer_deal || null,
     offer_expires_at: row.offer_expires_at || null,
     category: row.category || null,
-    taxonomy_version: row.taxonomy_version ?? 0,
     product_url: row.product_url || "",
     unit: row.unit || null,
   };
