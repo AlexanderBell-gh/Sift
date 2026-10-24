@@ -33,7 +33,7 @@ UK supermarket grocery tracker. Pick up to 3 stores, search once, pin products t
 - Pin any product, on offer or not; infinite scroll (12 per batch, skeletons while appending)
 - Removal stages inline with Undo (no timer); deletion commits on filter change or page leave
 - Status facet inside the Sort & status dropdown: All / Offers / Regular Price / Expired, with counts — combinable with price sorting; All keeps insertion order (newest first)
-- Worker-owned category taxonomy scores every pin server-side at add time
+- Worker-owned category classification: D1 memory → Workers AI → safe fallback, scored server-side at add time
 - Live trial banner (X of 5 items + progress bar)
 
 ### Shopping List
@@ -75,14 +75,14 @@ Prerequisites: Node.js 24+, pnpm 12+, Cloudflare account. Local dev needs `VITE_
 | `pnpm sift build` | `tsc -b` then `vite build` → `dist/` |
 | `pnpm sift lint` | Oxlint over the repo (`.oxlintrc.json`) |
 | `pnpm sift test [file]` | Pure-logic unit tests — `node --test workers/lib/*.test.js src/lib/*.test.ts`, zero-dep |
-| `pnpm sift eval` | Category eval — fit corpus, holdout and live prod suites, gated on per-category accuracy |
+| `pnpm sift eval` | Category core eval — labels, parser, size-stripping and prompt ceiling (offline, no model score) |
 | `pnpm sift audit` | Dependency audit, `--audit-level=high` (CI gate) |
 | `pnpm sift preview` | Serve `dist/` locally via vite preview |
 | `pnpm sift --help` | Full CLI: run steps, doctor, gate, eval, db, category, watchlist reads |
 
 Build code-splits for first paint: the guest landing chunk stays eager while all other routes lazy-load, with React vendored into its own cached chunk.
 
-**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test → eval, and CI calls the same CLI steps); `outdated` and `up`/`upgrade` wrap `pnpm outdated` / `pnpm update`. `db migrate|status|query|users|wipe-watchlist` wraps wrangler D1; `category set|clear|list` manages manual category overrides and `category learn [--remote]` prints vocabulary candidates from harvested labels; `watchlist names|offers` reads the admin API. `watchlist` needs `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (an admin login, never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes`; reads are always allowed. The CLI never deploys — pushes to `main` do that.
+**CLI:** all commands run through `pnpm sift` (extra args forwarded, e.g. `pnpm sift test workers/lib/resolve.test.js`). `doctor` checks toolchain/env/wrangler auth/secrets/D1; `gate` mirrors CI locally (audit → lint → build → test → eval, and CI calls the same CLI steps); `outdated` and `up`/`upgrade` wrap `pnpm outdated` / `pnpm update`. `db migrate|status|query|users|wipe-watchlist` wraps wrangler D1; `category set|clear|list` manages the global category corrections in `product_knowledge`; `watchlist names|offers` reads the admin API. `watchlist` needs `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS` in env (an admin login, never commit); API defaults to production (`SIFT_API_BASE` overrides). Remote writes need both `--remote --yes`; reads are always allowed. The CLI never deploys — pushes to `main` do that.
 
 ## Deploy
 
@@ -101,11 +101,11 @@ Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, plus Worker secrets `A
 <details>
 <summary><strong>Database & migrations</strong></summary>
 
-Schema: `workers/schema.sql` — 8 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog). `product_catalog` is the persistent pool of pinned product names that feeds search autocomplete, holds the manual category override, and logs the harvest labels (`leaf`, `department`, `category_reason`) for `pnpm sift category learn`. Migrations in `workers/migrations/` auto-apply on push to `main`, before the worker deploy:
+Schema: `workers/schema.sql` — 9 tables (users, rate_limits, watchlist, shopping_list, alerts, audit_logs, password_resets, product_catalog, product_knowledge). `product_catalog` is the persistent pool of pinned product names that feeds search autocomplete; `product_knowledge` is the global category memory (`id` = size-stripped title, `source` = `ai` or `user_correction`). Migrations in `workers/migrations/` auto-apply on push to `main`, before the worker deploy:
 
-- `0001_init` — the full schema; builds a database from scratch
+- `0001_sift` — the full schema; builds a database from scratch
 
-The database was rebuilt from empty on 22-10-2026 and the old `0001`–`0009` chain plus `0002_catalog_category` was squashed into `0001_init.sql`. `schema.sql` is the human reference; the two files are identical. Adding a migration: give it the next number and never edit a file a live database has recorded (wrangler tracks migrations by name, so an edit never re-runs) — a migration may only be folded while it is unapplied everywhere.
+The database was rebuilt from empty on 24-10-2026 and the previous `0001_init.sql` was replaced by `0001_sift.sql` (the taxonomy version column and the keyword tables are gone). `schema.sql` is the human reference; the two files are identical apart from the header. Adding a migration: give it the next number and never edit a file a live database has recorded (wrangler tracks migrations by name, so an edit never re-runs).
 
 ```bash
 # Fresh database: migrations are the only setup step.
@@ -116,22 +116,20 @@ pnpm exec wrangler d1 migrations apply sift --remote
 pnpm sift db wipe-watchlist --remote --yes
 ```
 
-`schema.sql` is reference only. Do not execute it before migrations: `0001_init.sql`
+`schema.sql` is reference only. Do not execute it before migrations: `0001_sift.sql`
 already creates every table, so the two would collide.
 
 
 </details>
 
 <details>
-<summary><strong>Category taxonomy</strong></summary>
+<summary><strong>Category classification</strong></summary>
 
-`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Beverages, Produce, Frozen, Bakery, Food Cupboard, Other). It is title-first: the same title scores the same shelf at every store, and a client that sends nothing but a name still gets the right answer.
+`workers/lib/category.js` owns the 8-category taxonomy (Chilled, Snacks, Drinks, Produce, Frozen, Bakery, Food Cupboard, Other). Drinks is ambient only — temperature splits drinks: fresh milk, fresh juice and chilled drinks are Chilled; beer, wine, spirits, cola, water and ambient juice are Drinks. Drinks replaced the old Beverages label.
 
-Eight rules, first hit wins: manual override → non-food → frozen → ambient (a tin or a jar is a cupboard good, unless the title describes a loaf) → leaf map → department → title vote → `Other`. The department rule reads breadcrumbs deepest-first and maps all eight shelves plus store aliases (`Bakery & Cakes`, `Fruit & Veg`, `Crisps & Snacks`, …); non-food, frozen and ambient still beat it, and the leaf map is more specific. The title vote matches the longest known product name in the title first and masks its own tokens (`peanut butter` never also votes `butter`), then falls back to a keyword tier. Flavour words vote weakly: `apple & cinnamon granola` is a cereal, not a fruit, and a curated weak word outranks a corpus-derived strong hit. When the title names no shelf at all, a brand-to-shelf table answers — it never overrides a product phrase, so `Cream of Tomato Soup` stays chilled even when the client sends brand `Heinz`. Ties resolve by a fixed priority.
+Classification runs inline on watchlist add, first hit wins: manual CLI correction → `product_knowledge` memory (same size-stripped title, no AI call, `hit_count` bumped) → Cloudflare Workers AI (`@cf/meta/llama-3.1-8b-instruct-fast`, temperature 0, 5s guard, prompt carries title, brand, shelf crumbs and storage text) → `Other` with `low_confidence`. Only a valid label is cached; a timeout, model error or unparseable answer is not cached and is retried on the next add. `pnpm sift category set "<product name>" <category>` is the escape hatch: it writes `product_knowledge` with `source='user_correction'` and wins before every rule; `clear` and `list` complete the set. `pnpm sift eval` checks the offline core — labels, parser round-trip, size-stripping and prompt ceiling — and does not measure the model; watch the `source` on real adds for that.
 
-The vocabulary is data, not code. `workers/lib/category.lexicon.js` holds one `VOCABULARY` table — key → `{ category, strength }`, where strength is `phrase`, `strong`, `weak` or `stop` — and `workers/lib/category.phrases.js` is generated from the offline product corpus in `src/data/uk-*.json`. `pnpm sift eval` runs three suites — the fit corpus, a holdout scored by the keyword tier alone (curated names stay in the lexicon but are excluded from scoring, so a hand rule cannot read as a keyword-tier hit; the run prints the excluded count), and the products pinned in prod before the wipe, hand-labelled by shelf (live) — and fails below the per-category accuracy floor. `pnpm sift category set "<product name>" <category>` is the escape hatch: a manual override that wins over every rule. `pnpm sift category learn` reads the labels the worker writes to `product_catalog` and prints copy-pasteable lexicon lines; proposing is automatic, committing is human and eval-gated, and nothing is learned while scoring.
-
-Scoring runs inline on watchlist add. Coverage is locked by `workers/lib/category.test.js` (curated cases) plus the three eval suites.
+Coverage is locked by `workers/lib/category.test.js` and the offline eval; live accuracy is watched through the `source` logged on real adds.
 
 </details>
 

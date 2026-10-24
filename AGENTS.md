@@ -27,24 +27,24 @@ Every step runs through `bin/sift.mjs`, extra args forwarded (`rtk pnpm sift tes
 - Provider-level code imports `API_BASE` from `src/lib/config.ts`, never `src/lib/api.ts` (keeps fuse.js and catalog JSON out of the guest chunk). React is vendor-chunked in `vite.config.ts`.
 - **Mirrored, not shared** — update every copy at once; never import worker code into `src/` (or vice versa):
   - validation regexes: `workers/lib/validate.js` ↔ `AuthPage.tsx` / `SettingsPage.tsx` (regexes *and* messages)
-  - `CANONICAL_CATEGORIES`: `workers/lib/category.lexicon.js` ↔ `src/lib/categories.ts` (components import the latter)
+  - `CANONICAL_CATEGORIES`: `workers/lib/category.js` ↔ `src/lib/categories.ts` (components import the latter)
   - `isOfferExpired`: `workers/index.js` ↔ `src/lib/utils.ts`
 
 ## Architecture snapshot
 
 React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + D1; custom JWT + Google OAuth + password auth; GitHub Actions → Pages + Worker + migrations.
 
-`src/` React SPA (`components/{pages,layout,features,ui,guards}`, `contexts`, `hooks`, `lib`, `types`, `data`) · `workers/` `index.js` (all routes), `auth.js`, `db.js`, `lib/category.js` + lexicon/phrases, `lib/validate.js`, `schema.sql`, `migrations/` · `public/` logos, wordmarks, `theme-init.js`, `_headers` · `bin/sift.mjs` ops CLI.
+`src/` React SPA (`components/{pages,layout,features,ui,guards}`, `contexts`, `hooks`, `lib`, `types`, `data`) · `workers/` `index.js` (all routes), `auth.js`, `db.js`, `lib/category.js`, `lib/validate.js`, `schema.sql`, `migrations/` · `public/` logos, wordmarks, `theme-init.js`, `_headers` · `bin/sift.mjs` ops CLI.
 
 - **Routes**: `/` is `HomeRoute` (`SearchPage` signed in, `LandingPage` guest); `/watchlist`, `/list`, `/offers`, `/admin`, `/settings`, `/auth` and legal pages are `React.lazy` behind one `Suspense`; `/search` redirects to `/`.
-- **Schema**: `schema.sql` is the human reference (8 tables); `0001_init.sql` is the executable truth and auto-applies on push to `main` (migrations → worker → pages). They are identical apart from the header comment since the 22-10-2026 rebuild; a new change takes the next number, and an applied file is never edited (wrangler tracks by name, so an edit never re-runs).
-- **Scoring** runs inline on watchlist add, first hit wins: manual override → non-food → frozen → ambient → leaf map → department breadcrumbs → title vote → brand fallback → `Other`. Strong votes name one shelf and outrank weak flavour words; a curated weak vocabulary entry outranks a derived strong keyword; the brand table answers only when no title vote landed and never overrides a phrase. The same add writes the crumb label into `product_catalog`; `pnpm sift category learn` proposes vocabulary from those labels, a human commits, and the eval stays the arbiter.
+- **Schema**: `schema.sql` is the human reference (9 tables); `0001_sift.sql` is the executable truth and auto-applies on push to `main` (migrations → worker → pages). Rebuilt clean on 24-10-2026.
+- **Classification** runs inline on watchlist add, first hit wins: manual CLI override (`product_knowledge` `user_correction`) → `product_knowledge` memory (`id` = size-stripped title) → Cloudflare Workers AI → `Other` with `low_confidence`.
 - **Shopping list** (`/list`) stores quantities only; prices read live from watchlist rows, and multibuy logic is frontend-only in `src/lib/pricing.ts`.
 
 ## Testing & quality gates
 
 - No test framework: `test` runs `node --test` over the pure-logic files in `workers/lib/` and `src/lib/`. New logic gets a `*.test.js` / `*.test.ts` beside it; no coverage tooling — don't invent thresholds.
-- `eval` gates scorer accuracy across the fit, holdout and live suites; floors live in `category.thresholds.json`, ratchet up after a measured gain and never drop.
+- `eval` checks offline category helpers (labels, parser, size stripping, prompt ceiling).
 - `gate` = audit + lint + build + test + eval. CI runs audit → lint → test → eval → build → migrate → worker → pages; PRs never deploy.
 
 ## Security
