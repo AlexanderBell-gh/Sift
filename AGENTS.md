@@ -7,7 +7,7 @@
 - **Prioritise implementation quality over code volume:** More code ≠ better code.
 
 - **Only use read-only git commands**: `status`, `log`, `diff`, `diff --cached`, `show`, `blame`. **Never use**: `commit`, `push`, `reset`, `rebase` or `amend`.
-- **Never touch**: `.env`, Worker secrets, `.github/workflows/`, the CORS allowlist, applied migrations (add a numbered `.sql`), category floors, or the generated `category.phrases.js`.
+- **Never touch**: `.env`, Worker secrets, `.github/workflows/`, the CORS allowlist, or applied migrations (add a numbered `.sql`).
 - **No destructive D1 writes** without explicit confirmation — remote writes need `--remote --yes` (db). Watchlist wipe and category overrides are CLI-only, never migrations or UI.
 
 ## CLI commands
@@ -59,6 +59,6 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 
 ## Docs (user-triggered)
 
-- On **"finish up and update docs"** update `RECENT.md`, `ARCHITECTURE.md` (fix anything stale, ~250 lines), `README.md` only for new features / `.env` keys / commands, and `AGENTS.md` keep lean & for sweeping changes only. 
+- On **"finish up and update docs"** update `RECENT.md`, `ARCHITECTURE.md` (fix anything stale, ~175 lines), `README.md` only for new features / `.env` keys / commands, and `AGENTS.md` keep lean & for sweeping changes only. 
 - Location: `RECENT.md` + `ARCHITECTURE.md` in `/home/wsl/Repositories/markdowns/sift-markdowns/`; `README.md` in the repo root.
 - **Stop after here.** Never commit; report the change and suggest a commit message (`feat:`, `fix:`, `chore:`, `polish:`).
