@@ -90,8 +90,10 @@ export function getLoyaltyClass(store: string): string {
 // "Meal Deal for £15.00 with Nectar" -> "Meal Deal"
 // "Any 2 for £8 with Clubcard" -> "Any 2 for £8"
 // "Any 2 for £5 Clubcard Price" -> "Any 2 for £5"
+// "5 for £5 or 10 for £9 Clubcard Price - Heinz Soup 400g" -> "5 for £5 or 10 for £9"
 export function formatDealShort(deal: string): string {
   const withoutLoyalty = deal
+    .replace(/\s+[-–—]\s+.*$/, '') // Tesco appends " - <product name>" after the deal
     .replace(/\s+(?:with\s+(?:an?\s+)?(?:nectar|clubcard|loyalty|more\s+card|sparks|lidl\s+plus)(?:\s+card|\+)?|(?:nectar|clubcard|more\s+card|sparks|lidl\s+plus)\s+price)\s*$/i, '')
     .trim();
   const short = /^meal\s+deal\b/i.test(withoutLoyalty) ? 'Meal Deal' : withoutLoyalty;

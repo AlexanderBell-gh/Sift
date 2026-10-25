@@ -5,68 +5,78 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  parseOfferDeal,
+  parseOfferTiers,
   lineTotal,
   priceOfferGroup,
   lineSavings,
   formatGBP,
 } from './pricing.ts';
 
-describe('parseOfferDeal (fixed set price)', () => {
+describe('parseOfferTiers (fixed set price)', () => {
   it('Any 3 for £12 -> take 3 at £12', () => {
-    assert.deepEqual(parseOfferDeal('Any 3 for £12'), { take: 3, payQty: 3, payPrice: 12 });
+    assert.deepEqual(parseOfferTiers('Any 3 for £12'), [{ take: 3, payQty: 3, payPrice: 12 }]);
   });
 
   it('3 for £5.50 keeps pence', () => {
-    assert.deepEqual(parseOfferDeal('3 for £5.50'), { take: 3, payQty: 3, payPrice: 5.5 });
+    assert.deepEqual(parseOfferTiers('3 for £5.50'), [{ take: 3, payQty: 3, payPrice: 5.5 }]);
   });
 
   it('2 for 95p converts pence to pounds', () => {
-    assert.deepEqual(parseOfferDeal('2 for 95p'), { take: 2, payQty: 2, payPrice: 0.95 });
+    assert.deepEqual(parseOfferTiers('2 for 95p'), [{ take: 2, payQty: 2, payPrice: 0.95 }]);
   });
 
   it('word numbers work: any two for £6', () => {
-    assert.deepEqual(parseOfferDeal('any two for £6'), { take: 2, payQty: 2, payPrice: 6 });
+    assert.deepEqual(parseOfferTiers('any two for £6'), [{ take: 2, payQty: 2, payPrice: 6 }]);
   });
 
   it('mix & match prefix is stripped', () => {
-    assert.deepEqual(parseOfferDeal('Mix & match 2 for £8'), { take: 2, payQty: 2, payPrice: 8 });
+    assert.deepEqual(parseOfferTiers('Mix & match 2 for £8'), [{ take: 2, payQty: 2, payPrice: 8 }]);
+  });
+
+  it('tiered deal keeps every tier in order', () => {
+    assert.deepEqual(
+      parseOfferTiers('5 for £5 or 10 for £9 Clubcard Price - Heinz Soup 400g'),
+      [
+        { take: 5, payQty: 5, payPrice: 5 },
+        { take: 10, payQty: 10, payPrice: 9 },
+      ],
+    );
   });
 });
 
-describe('parseOfferDeal (pay-for-M and BOGOF)', () => {
+describe('parseOfferTiers (pay-for-M and BOGOF)', () => {
   it('3 for 2 -> take 3 pay 2 at unit', () => {
-    assert.deepEqual(parseOfferDeal('3 for 2'), { take: 3, payQty: 2, payPrice: null });
+    assert.deepEqual(parseOfferTiers('3 for 2'), [{ take: 3, payQty: 2, payPrice: null }]);
   });
 
   it('BOGOF -> take 2 pay 1', () => {
-    assert.deepEqual(parseOfferDeal('BOGOF'), { take: 2, payQty: 1, payPrice: null });
+    assert.deepEqual(parseOfferTiers('BOGOF'), [{ take: 2, payQty: 1, payPrice: null }]);
   });
 
   it('Buy 1 get 1 free -> take 2 pay 1', () => {
-    assert.deepEqual(parseOfferDeal('Buy 1 get 1 free'), { take: 2, payQty: 1, payPrice: null });
+    assert.deepEqual(parseOfferTiers('Buy 1 get 1 free'), [{ take: 2, payQty: 1, payPrice: null }]);
   });
 
   it('Buy 2 get 1 free -> take 3 pay 2', () => {
-    assert.deepEqual(parseOfferDeal('Buy 2 get 1 free'), { take: 3, payQty: 2, payPrice: null });
+    assert.deepEqual(parseOfferTiers('Buy 2 get 1 free'), [{ take: 3, payQty: 2, payPrice: null }]);
   });
 });
 
-describe('parseOfferDeal (never guess)', () => {
-  it('null and blank -> null', () => {
-    assert.equal(parseOfferDeal(null), null);
-    assert.equal(parseOfferDeal(''), null);
-    assert.equal(parseOfferDeal('   '), null);
+describe('parseOfferTiers (never guess)', () => {
+  it('null and blank -> no tiers', () => {
+    assert.deepEqual(parseOfferTiers(null), []);
+    assert.deepEqual(parseOfferTiers(''), []);
+    assert.deepEqual(parseOfferTiers('   '), []);
   });
 
-  it('loyalty-only and meal-deal copy -> null', () => {
-    assert.equal(parseOfferDeal('Clubcard Price'), null);
-    assert.equal(parseOfferDeal('Meal Deal'), null);
-    assert.equal(parseOfferDeal('Save £1'), null);
+  it('loyalty-only and meal-deal copy -> no tiers', () => {
+    assert.deepEqual(parseOfferTiers('Clubcard Price'), []);
+    assert.deepEqual(parseOfferTiers('Meal Deal'), []);
+    assert.deepEqual(parseOfferTiers('Save £1'), []);
   });
 
-  it('inverted bare ratio 2 for 3 -> null', () => {
-    assert.equal(parseOfferDeal('2 for 3'), null);
+  it('inverted bare ratio 2 for 3 -> no tiers', () => {
+    assert.deepEqual(parseOfferTiers('2 for 3'), []);
   });
 });
 
@@ -89,6 +99,21 @@ describe('lineTotal', () => {
   it('3 for 2 takes the free unit off', () => {
     const r = lineTotal(3, 2, null, '3 for 2', false);
     assert.deepEqual(r, { total: 4, unitPrice: 2, basis: 'offer', sets: 1 });
+  });
+
+  it('tiered deal prices the qty at the cheaper tier', () => {
+    const deal = '5 for £5 or 10 for £9 Clubcard Price - Heinz Soup 400g';
+    assert.deepEqual(lineTotal(5, 2, null, deal, false), {
+      total: 5, unitPrice: 2, basis: 'offer', sets: 1,
+    });
+    assert.deepEqual(lineTotal(10, 2, null, deal, false), {
+      total: 9, unitPrice: 2, basis: 'offer', sets: 1,
+    });
+  });
+
+  it('tiered deal takes the cheaper whole tier, remainder at unit', () => {
+    const r = lineTotal(15, 2, null, '5 for £5 or 10 for £9', false);
+    assert.deepEqual(r, { total: 15, unitPrice: 2, basis: 'offer', sets: 3 });
   });
 
   it('loyalty price wins over normal', () => {
@@ -125,7 +150,7 @@ describe('lineTotal', () => {
 describe('priceOfferGroup', () => {
   it('fixed set splits pro-rata across pooled lines', () => {
     const out = priceOfferGroup(
-      { take: 3, payQty: 3, payPrice: 12 },
+      [{ take: 3, payQty: 3, payPrice: 12 }],
       [{ qty: 2, unitPrice: 4 }, { qty: 1, unitPrice: 4 }],
     );
     assert.equal(out[0]?.total, 8);
@@ -135,7 +160,7 @@ describe('priceOfferGroup', () => {
 
   it('leftover pennies go to largest fractions, sums stay exact', () => {
     const out = priceOfferGroup(
-      { take: 3, payQty: 3, payPrice: 10 },
+      [{ take: 3, payQty: 3, payPrice: 10 }],
       [{ qty: 1, unitPrice: 1 }, { qty: 2, unitPrice: 1 }],
     );
     const sum = (out[0]?.total ?? 0) + (out[1]?.total ?? 0);
@@ -145,7 +170,7 @@ describe('priceOfferGroup', () => {
 
   it('pay-for-M frees the cheapest units first', () => {
     const out = priceOfferGroup(
-      { take: 3, payQty: 2, payPrice: null },
+      [{ take: 3, payQty: 2, payPrice: null }],
       [{ qty: 2, unitPrice: 5 }, { qty: 1, unitPrice: 1 }],
     );
     assert.equal(out[0]?.total, 10);
@@ -156,11 +181,23 @@ describe('priceOfferGroup', () => {
 
   it('no completed set -> straight unit pricing', () => {
     const out = priceOfferGroup(
-      { take: 3, payQty: 3, payPrice: 12 },
+      [{ take: 3, payQty: 3, payPrice: 12 }],
       [{ qty: 1, unitPrice: 4 }, { qty: 1, unitPrice: 5 }],
     );
     assert.deepEqual(out.map(l => l.total), [4, 5]);
     assert.deepEqual(out.map(l => l.basis), ['unit', 'unit']);
+  });
+
+  it('pooled tiers land on the cheaper tier', () => {
+    const out = priceOfferGroup(
+      [
+        { take: 5, payQty: 5, payPrice: 5 },
+        { take: 10, payQty: 10, payPrice: 9 },
+      ],
+      [{ qty: 5, unitPrice: 2 }, { qty: 5, unitPrice: 2 }],
+    );
+    assert.deepEqual(out.map(l => l.total), [4.5, 4.5]);
+    assert.deepEqual(out.map(l => l.basis), ['offer', 'offer']);
   });
 });
 
@@ -175,6 +212,18 @@ describe('lineSavings + formatGBP', () => {
   it('expired loyalty lines show zero savings against shelf', () => {
     const priced = lineTotal(2, 5, 4, null, true);
     assert.equal(lineSavings(2, 5, priced), 0);
+  });
+
+  it('group totals leave no float dust in savings', () => {
+    const priced = priceOfferGroup(
+      [
+        { take: 5, payQty: 5, payPrice: 5 },
+        { take: 10, payQty: 10, payPrice: 9 },
+      ],
+      [{ qty: 3, unitPrice: 1.1 }],
+    )[0]!;
+    const r = lineSavings(3, 1.1, { total: priced.total, unitPrice: 1.1, basis: priced.basis, sets: priced.sets });
+    assert.equal(r, 0);
   });
 
   it('savings null without a normal or a total', () => {

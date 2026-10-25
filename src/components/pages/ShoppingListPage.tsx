@@ -3,8 +3,8 @@ import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../../lib/api';
-import { isOfferExpired, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
-import { lineTotal, lineSavings, formatGBP, parseOfferDeal, priceOfferGroup, type LineTotal } from '../../lib/pricing';
+import { isOfferExpired, formatDealShort, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
+import { lineTotal, lineSavings, formatGBP, parseOfferTiers, priceOfferGroup, type LineTotal } from '../../lib/pricing';
 import { STORES } from '../../lib/stores';
 import NavHeader from '../layout/NavHeader';
 
@@ -146,7 +146,7 @@ export default function ShoppingListPage() {
       const expired = isOfferExpired(entry.item.offer_expires_at);
       const unitPrice = entry.item.prices.loyalty ?? entry.item.prices.normal;
       const tag = entry.item.offer_deal;
-      if (!expired && unitPrice !== null && unitPrice !== undefined && tag && parseOfferDeal(tag)) {
+      if (!expired && unitPrice !== null && unitPrice !== undefined && tag && parseOfferTiers(tag).length) {
         const key = `${entry.item.store}\n${tag.toLowerCase().trim().replace(/\s+/g, ' ')}`;
         const arr = groups.get(key) ?? [];
         arr.push(idx);
@@ -170,9 +170,9 @@ export default function ShoppingListPage() {
     });
     for (const idxs of groups.values()) {
       const first = activeEntries[idxs[0] as number]!;
-      const offer = parseOfferDeal(first.item.offer_deal)!;
+      const offerTiers = parseOfferTiers(first.item.offer_deal);
       const results = priceOfferGroup(
-        offer,
+        offerTiers,
         idxs.map(i => {
           const e = activeEntries[i as number]!;
           return { qty: e.quantity, unitPrice: (e.item.prices.loyalty ?? e.item.prices.normal) as number };
@@ -470,7 +470,7 @@ export default function ShoppingListPage() {
                             </p>
                             {item.offer_deal ? (
                               <span className={`product-card-loyalty-label ${getLoyaltyClass(item.store)}`} title={item.offer_deal}>
-                                {expired ? 'Offer expired' : item.offer_deal}
+                                {expired ? 'Offer expired' : formatDealShort(item.offer_deal)}
                               </span>
                             ) : item.prices.loyalty !== null && !expired ? (
                               <span className={`product-card-loyalty-label ${getLoyaltyClass(item.store)}`} title={getLoyaltyLabel(item.store)}>

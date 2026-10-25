@@ -84,6 +84,7 @@ describe('display helpers', () => {
     assert.equal(formatDealShort('Meal Deal for £15.00 with Nectar'), 'Meal Deal');
     assert.equal(formatDealShort('Any 2 for £8 with Clubcard'), 'Any 2 for £8');
     assert.equal(formatDealShort('Any 2 for £5 Clubcard Price'), 'Any 2 for £5');
+    assert.equal(formatDealShort('5 for £5 or 10 for £9 Clubcard Price - Heinz Soup 400g'), '5 for £5 or 10 for £9');
     assert.equal(formatDealShort('Any 3 for £12'), 'Any 3 for £12');
   });
 
