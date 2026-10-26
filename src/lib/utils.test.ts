@@ -9,6 +9,7 @@ import {
   parseDate,
   isOfferExpired,
   daysToExpiry,
+  isEndingSoon,
   formatDate,
   formatTimeAgo,
   formatDealShort,
@@ -65,6 +66,17 @@ describe('daysToExpiry', () => {
     assert.equal(daysToExpiry(isoDate(0)), 0);
     assert.equal(daysToExpiry(isoDate(1)), 1);
     assert.equal(daysToExpiry(isoDate(-1)), -1);
+  });
+});
+
+describe('isEndingSoon', () => {
+  it('uses the label day count, not raw milliseconds', () => {
+    assert.equal(isEndingSoon(null), false);
+    assert.equal(isEndingSoon('garbage'), false);
+    assert.equal(isEndingSoon(isoDate(0)), false);
+    assert.equal(isEndingSoon(isoDate(-1)), false);
+    assert.equal(isEndingSoon(isoDate(7)), true);
+    assert.equal(isEndingSoon(isoDate(8)), false);
   });
 });
 

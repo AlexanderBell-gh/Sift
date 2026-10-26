@@ -250,6 +250,11 @@ export default function WatchlistPage() {
   // All writes go mirror-first, so racing commits collapse to one.
   const [staged, setStaged] = useState<Map<string, WatchlistItem[]>>(new Map());
   const stagedMirror = useRef(new Map<string, WatchlistItem[]>());
+  // Multi-select removal: checkbox mode over the product groups currently
+  // on screen. Removal stages each group through the same undo path as a
+  // single remove; clearing happens on filter/view change like staging.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   // Latest-token mirror for the pagehide flush (runs outside render cycle).
   const tokenRef = useRef(token);
   tokenRef.current = token;
@@ -282,12 +287,56 @@ export default function WatchlistPage() {
     e.preventDefault();
     e.stopPropagation();
     if (!token) return;
-    const group = items.filter(i => i.product_id === productId);
-    if (group.length === 0 || stagedMirror.current.has(productId)) return;
     // Optimistic: card dims in place, action slot flips to Undo.
-    stagedMirror.current.set(productId, group);
+    stageProduct(productId);
     syncStagedState();
   }
+
+  // Shared by the single ✕ and Select mode: stage one product group.
+  function stageProduct(productId: string): boolean {
+    const group = items.filter(i => i.product_id === productId);
+    if (group.length === 0 || stagedMirror.current.has(productId)) return false;
+    stagedMirror.current.set(productId, group);
+    return true;
+  }
+
+  function toggleSelect(productId: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelected(new Set());
+  }
+
+  function enterSelectMode() {
+    setSelectMode(true);
+  }
+
+  function removeSelected() {
+    if (!token || selected.size === 0) return;
+    for (const productId of selected) stageProduct(productId);
+    syncStagedState();
+    exitSelectMode();
+  }
+
+  // Escape leaves Select mode; filter/view changes already reset it below.
+  useEffect(() => {
+    if (!selectMode) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setSelectMode(false);
+        setSelected(new Set());
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectMode]);
 
   function undoRemoval(productId: string) {
     if (!stagedMirror.current.has(productId)) return;
@@ -295,10 +344,18 @@ export default function WatchlistPage() {
     syncStagedState();
   }
 
+  // Selection sees unstaged groups on the current page only.
+  const selectableIds = visibleProducts
+    .map(group => group[0]?.product_id)
+    .filter((id): id is string => !!id && !staged.has(id));
+  const allVisibleSelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
+
   // Removed cards never leak across views: any filter/sort/search/status
   // change commits pending removals first. Unmount flushes too.
   useEffect(() => {
     commitAllStaged();
+    setSelectMode(false);
+    setSelected(prev => (prev.size ? new Set() : prev));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStores, selectedCategories, sortBy, searchQuery, view]);
   useEffect(() => () => {
@@ -446,6 +503,8 @@ export default function WatchlistPage() {
     // Staged removal: full details stay in place, dimmed; the action
     // slot flips to Undo and persists until undo or commit.
     const isStaged = staged.has(product.product_id);
+    const isSelected = selected.has(product.product_id);
+    const isSelectable = selectMode && !isStaged;
     const logo = storeLogoFor(best.store, best.store_logo);
     const veilClass = isStaged ? ' product-card-removed-veil' : '';
     const days = daysToExpiry(best.offer_expires_at);
@@ -465,6 +524,11 @@ export default function WatchlistPage() {
             <img src={logo} alt="" className="product-card-media-img" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           ) : (
             <span className="product-card-media-text">{best.store.slice(0, 2).toUpperCase()}</span>
+          )}
+          {isSelectable && (
+            <span className={`product-card-check${isSelected ? ' is-checked' : ''}`} aria-hidden="true">
+              {isSelected && <Check size={14} />}
+            </span>
           )}
         </div>
 
@@ -515,47 +579,72 @@ export default function WatchlistPage() {
           )}
         </div>
 
-        <div className="product-card-foot">
-          <button
-            onClick={(e) => handleAddToList(best.id, e)}
-            className={`product-card-add${addedIds.has(best.id) ? ' is-added' : ''}`}
-            title="Add to shopping list"
-            aria-label={`Add ${product.product_name} to shopping list`}
-            disabled={isStaged}
-          >
-            {addedIds.has(best.id) ? <Check size={14} /> : <Plus size={14} />}
-            {addedIds.has(best.id) ? 'Added' : 'Add to list'}
-          </button>
-          {isStaged ? (
+        {(!selectMode || isStaged) && (
+          <div className="product-card-foot">
             <button
-              type="button"
-              onClick={() => undoRemoval(product.product_id)}
-              className="product-card-remove is-undo"
-              aria-label={`Undo remove ${product.product_name} from watchlist`}
+              onClick={(e) => handleAddToList(best.id, e)}
+              className={`product-card-add${addedIds.has(best.id) ? ' is-added' : ''}`}
+              title="Add to shopping list"
+              aria-label={`Add ${product.product_name} to shopping list`}
+              disabled={isStaged}
             >
-              Undo
+              {addedIds.has(best.id) ? <Check size={14} /> : <Plus size={14} />}
+              {addedIds.has(best.id) ? 'Added' : 'Add to list'}
             </button>
-          ) : (
-            <button
-              onClick={(e) => handleRemoveProduct(product.product_id, e)}
-              className="product-card-remove"
-              title="Remove"
-              aria-label={`Remove ${product.product_name} from watchlist`}
-            >
-              ✕
-            </button>
-          )}
-        </div>
+            {isStaged ? (
+              <button
+                type="button"
+                onClick={() => undoRemoval(product.product_id)}
+                className="product-card-remove is-undo"
+                aria-label={`Undo remove ${product.product_name} from watchlist`}
+              >
+                Undo
+              </button>
+            ) : (
+              <button
+                onClick={(e) => handleRemoveProduct(product.product_id, e)}
+                className="product-card-remove"
+                title="Remove"
+                aria-label={`Remove ${product.product_name} from watchlist`}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
       </>
     );
 
     const baseClass = expired ? 'product-card is-expired' : 'product-card';
     const highlightedClass = highlightedId === product.product_id ? ' is-highlighted' : '';
-    const cardClass = `${baseClass}${highlightedClass}${isStaged ? ' is-removed' : ''}`;
+    const cardClass = `${baseClass}${highlightedClass}${isStaged ? ' is-removed' : ''}${isSelected ? ' is-selected' : ''}${isSelectable ? ' is-selectable' : ''}`;
     // Staged cards render as a status div (no navigation); Undo announces.
     if (isStaged) {
       return (
         <div key={product.product_id} role="status" className={cardClass}>
+          {cardContent}
+        </div>
+      );
+    }
+    // Select mode: card is a checkbox, no link and no hold-to-remove.
+    if (selectMode) {
+      return (
+        <div
+          key={product.product_id}
+          id={`watchlist-card-${product.product_id}`}
+          role="checkbox"
+          aria-checked={isSelected}
+          aria-label={`Select ${product.product_name}`}
+          tabIndex={0}
+          className={cardClass}
+          onClick={() => toggleSelect(product.product_id)}
+          onKeyDown={(e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+              e.preventDefault();
+              toggleSelect(product.product_id);
+            }
+          }}
+        >
           {cardContent}
         </div>
       );
@@ -572,7 +661,11 @@ export default function WatchlistPage() {
       onTouchMove: moveHold,
       onTouchEnd: clearHold,
       onTouchCancel: clearHold,
-      onContextMenu: (e: MouseEvent) => e.preventDefault(),
+      // Mobile long-press would open the OS context menu mid-hold; desktop
+      // right-click is a normal browser action and must stay.
+      onContextMenu: (e: MouseEvent) => {
+        if (window.matchMedia(MOBILE_QUERY).matches) e.preventDefault();
+      },
     };
     return best.product_url ? (
       <a
@@ -691,6 +784,50 @@ export default function WatchlistPage() {
           <div className="empty-state-box">
             <p className="empty-state-title">No items match filters</p>
             <p className="empty-state-desc">Try selecting more stores.</p>
+          </div>
+        )}
+
+        {!loading && visibleProducts.length > 0 && (
+          <div className={`watchlist-select-row${selectMode ? ' is-selecting' : ''}`}>
+            {selectMode ? (
+              <>
+                <button
+                  type="button"
+                  className="btn-secondary watchlist-select-btn"
+                  onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(selectableIds))}
+                >
+                  {allVisibleSelected ? 'Clear all' : 'Select all'}
+                </button>
+                <p className="watchlist-select-count" aria-live="polite">{selected.size} selected</p>
+                <div className="watchlist-select-actions">
+                  <button
+                    type="button"
+                    className="btn-danger watchlist-select-btn"
+                    onClick={removeSelected}
+                    disabled={selected.size === 0}
+                  >
+                    <Trash2 size={14} />
+                    Remove{selected.size ? ` ${selected.size}` : ''}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary watchlist-select-btn"
+                    onClick={exitSelectMode}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn-secondary watchlist-select-btn"
+                onClick={enterSelectMode}
+              >
+                <Check size={14} />
+                Select
+              </button>
+            )}
           </div>
         )}
 

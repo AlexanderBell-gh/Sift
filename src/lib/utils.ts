@@ -60,6 +60,15 @@ export function daysToExpiry(dateString: string | null): number | null {
   return Math.round((date.getTime() - today.getTime()) / 86400000);
 }
 
+const ENDING_SOON_DAYS = 7;
+
+// Shares daysToExpiry so the "Ends in Nd" label and the ending filter can
+// never disagree across a DST change; days <= 0 is already expired.
+export function isEndingSoon(dateString: string | null): boolean {
+  const days = daysToExpiry(dateString);
+  return days !== null && days > 0 && days <= ENDING_SOON_DAYS;
+}
+
 export function getLoyaltyLabel(store: string): string {
   const labels: Record<string, string> = {
     Tesco: 'Clubcard price',

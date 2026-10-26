@@ -43,36 +43,42 @@ export function OfferCarousel({ title, items, loading, limitReached, onAdded, vi
 
   const visible = items.slice(0, CAROUSEL_VISIBLE_COUNT);
   const showAllTile = !loading && items.length > CAROUSEL_VISIBLE_COUNT;
+  const showHeadActions = !loading && items.length > 0;
 
   return (
     <section className="offers-section" aria-label={title} aria-busy={loading || undefined}>
       <div className="offers-container">
         <div className="offers-head">
-          <h2 className="offers-title">
-            {title}
-            {!loading && items.length > 0 && (
+          <h2 className="offers-title">{title}</h2>
+          <div className="offers-head-actions">
+            {showHeadActions && (
               <span className="offers-count">{items.length}</span>
             )}
-          </h2>
-          <div className="offers-arrows">
-            <button
-              type="button"
-              className="offers-arrow"
-              onClick={() => scrollByDir(-1)}
-              disabled={loading || !canPrev}
-              aria-label={`Scroll ${title} left`}
-            >
-              <ChevronLeft size={18} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="offers-arrow"
-              onClick={() => scrollByDir(1)}
-              disabled={loading || !canNext}
-              aria-label={`Scroll ${title} right`}
-            >
-              <ChevronRight size={18} aria-hidden="true" />
-            </button>
+            {showHeadActions && (
+              <Link to={`/offers?view=${view}`} className="offers-view-all" aria-label={`View all ${title}`}>
+                View all
+              </Link>
+            )}
+            <div className="offers-arrows">
+              <button
+                type="button"
+                className="offers-arrow"
+                onClick={() => scrollByDir(-1)}
+                disabled={loading || !canPrev}
+                aria-label={`Scroll ${title} left`}
+              >
+                <ChevronLeft size={18} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="offers-arrow"
+                onClick={() => scrollByDir(1)}
+                disabled={loading || !canNext}
+                aria-label={`Scroll ${title} right`}
+              >
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </div>
         <div

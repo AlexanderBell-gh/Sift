@@ -31,12 +31,14 @@ Autocomplete comes from the bundled UK grocery dictionary plus a shared catalog
 of every product ever pinned — names persist after an item leaves the watchlist.
 Two snap carousels sit under the hero: live offers and Popular right now (all
 pinned products ranked by pin count, `n pins` badge), each 8 tiles + Show-all
-into the full `/offers` page with view, store and product filters.
+into the full `/offers` page (plus a header `View all`), with view, store and
+product filters.
 
 **Watchlist.** Pin anything, on offer or not. 12 per batch with skeletons, a
 Sort & status facet (All / Offers / Regular Price / Expired, combinable, with
-counts), and hold-to-remove that stages an inline Undo. Categories are assigned
-by the worker at add time: D1 memory → Workers AI → safe fallback.
+counts), hold-to-remove that stages an inline Undo, and a Select mode that
+batch-removes with the same per-card Undo. Categories are assigned by the
+worker at add time: D1 memory → Workers AI → safe fallback.
 
 **Shopping list.** Quantities against watchlist items at `/list`, priced live
 from tracked prices. Free-text deal terms (`Any 3 for £12`, `3 for 2`, `BOGOF`,
