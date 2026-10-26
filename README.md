@@ -39,9 +39,10 @@ counts), and hold-to-remove that stages an inline Undo. Categories are assigned
 by the worker at add time: D1 memory → Workers AI → safe fallback.
 
 **Shopping list.** Quantities against watchlist items at `/list`, priced live
-from tracked prices. Free-text deal terms (`Any 3 for £12`, `3 for 2`, `BOGOF`)
-become set pricing, pooled across lines that share a deal. Per-store subtotals,
-savings vs shelf, grand total, two-tap clear-all.
+from tracked prices. Free-text deal terms (`Any 3 for £12`, `3 for 2`, `BOGOF`,
+`5 for £5 or 10 for £9`) become set pricing, pooled across lines that share a
+deal; a quantity takes the cheapest whole tier, never a mix. Per-store
+subtotals, savings vs shelf, grand total, two-tap clear-all.
 
 **Alerts.** The 6am UTC cron flips expired offers off and raises one alert per
 transition. Bell with mark-all-read and swipe-dismiss; tapping an alert deep-links
@@ -143,7 +144,7 @@ an edit never re-runs. Adding one: give it the next number and mirror it in
 pnpm exec wrangler d1 migrations apply sift --remote
 
 # Clean slate for watchlist-derived data (users, catalog and logs survive).
-# D1 enforces foreign keys; the command still deletes shopping_list -> alerts -> watchlist.
+# Dependents are deleted first: shopping_list -> alerts -> watchlist.
 pnpm sift db wipe-watchlist --remote --yes
 ```
 

@@ -2,7 +2,7 @@
 
 ## Session rules
 
-- **On startup skills**: `@ponytail` and `@caveman` both at `full` intensity, all session, until told otherwise.
+- **On startup skills**: `@caveman` at `full` intensity, all session, until told otherwise.
 - **Prefix every shell command with:** `rtk` — e.g. `rtk git log -5`.
 - **Prioritise implementation quality over code volume:** More code ≠ better code.
 
@@ -54,7 +54,7 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 - CSP is enforced twice — `<meta>` from `cspMeta()` in `vite.config.ts` and the header in `public/_headers`; keep both identical (dev omits it for HMR).
 - No `dangerouslySetInnerHTML`; CSV export stays formula-injection safe.
 - Rate limits and trial gating (5 items, 24h, server-side on `POST /api/watchlist`) are security controls — never remove or move them client-side.
-- No PII in logs or `audit_logs`. D1 enforces foreign keys: `shopping_list` and `alerts` cascade from `watchlist`, and the CLI still clears dependents first (`shopping_list` → `alerts` → `watchlist`) so the order never depends on that.
+- No PII in logs or `audit_logs`. `shopping_list` and `alerts` declare `ON DELETE CASCADE` from `watchlist`, but the worker DELETE and the CLI still clear dependents explicitly (`shopping_list` → `alerts` → `watchlist`) so the order never depends on cascade enforcement.
 - CORS origins live in `ALLOWED_ORIGINS` in `workers/index.js` (Pages, `localhost:5173`/`:3000`, LAN `192.168.1.70:5173`).
 
 ## Docs (user-triggered)
