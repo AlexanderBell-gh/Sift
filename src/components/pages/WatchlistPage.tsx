@@ -323,19 +323,28 @@ export default function WatchlistPage() {
     for (const productId of selected) stageProduct(productId);
     syncStagedState();
     exitSelectMode();
+    // Hand focus to the top-most Undo so the whole batch can be reversed.
+    setTimeout(() => {
+      document.querySelector<HTMLButtonElement>('.product-card.is-removed .product-card-remove.is-undo')?.focus();
+    }, 0);
   }
 
   // Escape leaves Select mode; filter/view changes already reset it below.
   useEffect(() => {
     if (!selectMode) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setSelectMode(false);
-        setSelected(new Set());
-      }
+      if (e.key === 'Escape') exitSelectMode();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectMode]);
+
+  // Select mode owns the bottom slot on mobile: its action bar replaces the
+  // tab bar, so nav does not stack under the bar or take tab focus behind it.
+  useEffect(() => {
+    document.body.classList.toggle('watchlist-selecting', selectMode);
+    return () => document.body.classList.remove('watchlist-selecting');
   }, [selectMode]);
 
   function undoRemoval(productId: string) {
@@ -579,39 +588,37 @@ export default function WatchlistPage() {
           )}
         </div>
 
-        {(!selectMode || isStaged) && (
-          <div className="product-card-foot">
+        <div className={`product-card-foot${selectMode && !isStaged ? ' is-hidden' : ''}`}>
+          <button
+            onClick={(e) => handleAddToList(best.id, e)}
+            className={`product-card-add${addedIds.has(best.id) ? ' is-added' : ''}`}
+            title="Add to shopping list"
+            aria-label={`Add ${product.product_name} to shopping list`}
+            disabled={isStaged}
+          >
+            {addedIds.has(best.id) ? <Check size={14} /> : <Plus size={14} />}
+            {addedIds.has(best.id) ? 'Added' : 'Add to list'}
+          </button>
+          {isStaged ? (
             <button
-              onClick={(e) => handleAddToList(best.id, e)}
-              className={`product-card-add${addedIds.has(best.id) ? ' is-added' : ''}`}
-              title="Add to shopping list"
-              aria-label={`Add ${product.product_name} to shopping list`}
-              disabled={isStaged}
+              type="button"
+              onClick={() => undoRemoval(product.product_id)}
+              className="product-card-remove is-undo"
+              aria-label={`Undo remove ${product.product_name} from watchlist`}
             >
-              {addedIds.has(best.id) ? <Check size={14} /> : <Plus size={14} />}
-              {addedIds.has(best.id) ? 'Added' : 'Add to list'}
+              Undo
             </button>
-            {isStaged ? (
-              <button
-                type="button"
-                onClick={() => undoRemoval(product.product_id)}
-                className="product-card-remove is-undo"
-                aria-label={`Undo remove ${product.product_name} from watchlist`}
-              >
-                Undo
-              </button>
-            ) : (
-              <button
-                onClick={(e) => handleRemoveProduct(product.product_id, e)}
-                className="product-card-remove"
-                title="Remove"
-                aria-label={`Remove ${product.product_name} from watchlist`}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        )}
+          ) : (
+            <button
+              onClick={(e) => handleRemoveProduct(product.product_id, e)}
+              className="product-card-remove"
+              title="Remove"
+              aria-label={`Remove ${product.product_name} from watchlist`}
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </>
     );
 
@@ -794,11 +801,14 @@ export default function WatchlistPage() {
                 <button
                   type="button"
                   className="btn-secondary watchlist-select-btn"
+                  aria-pressed={allVisibleSelected}
                   onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(selectableIds))}
                 >
-                  {allVisibleSelected ? 'Clear all' : 'Select all'}
+                  {allVisibleSelected ? 'Clear all' : hasMore ? 'Select all shown' : 'Select all'}
                 </button>
-                <p className="watchlist-select-count" aria-live="polite">{selected.size} selected</p>
+                <p className="watchlist-select-count" aria-live="polite">
+                  {selected.size ? `${selected.size} selected` : 'Select items to remove'}
+                </p>
                 <div className="watchlist-select-actions">
                   <button
                     type="button"
@@ -807,7 +817,7 @@ export default function WatchlistPage() {
                     disabled={selected.size === 0}
                   >
                     <Trash2 size={14} />
-                    Remove{selected.size ? ` ${selected.size}` : ''}
+                    Remove{selected.size ? ` ${selected.size} item${selected.size === 1 ? '' : 's'}` : ''}
                   </button>
                   <button
                     type="button"

@@ -4524,6 +4524,11 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   padding: 0 12px 12px;
 }
 
+/* Select mode hides the foot but keeps its space, so the grid does not jump. */
+.product-card-foot.is-hidden {
+  visibility: hidden;
+}
+
 .product-card-foot .product-card-add {
   flex: 1 1 auto;
   min-width: 0;
@@ -4575,7 +4580,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   border-radius: 4px;
   display: inline-block;
   max-width: 280px;
-  white-space: nowrap;
+  white-space: wrap;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: top;
@@ -4608,11 +4613,6 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   color: #444153;
 }
 
-.dark .product-card-loyalty-label.loyalty-mns {
-  background: rgba(169, 164, 190, 0.18);
-  color: #A9A4BE;
-}
-
 .product-card-loyalty-label.loyalty-lidl {
   background: rgba(0, 51, 160, 0.12);
   color: #0033a0;
@@ -4626,6 +4626,38 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 .product-card-loyalty-label.loyalty-aldi {
   background: rgba(0, 56, 164, 0.12);
   color: #0038a4;
+}
+
+/* Dark mode: the brand colours are tuned for a 12% wash over white and go
+   near-invisible on `--surface` #161B22, so each label lifts to a tint of the
+   same hue and its wash follows the text (no second hex to keep in sync). */
+.dark .product-card-loyalty-label {
+  color: #be93f0;
+  background: color-mix(in oklab, currentColor 18%, transparent);
+}
+
+.dark .product-card-loyalty-label.loyalty-tesco {
+  color: #6fa8e8;
+}
+
+.dark .product-card-loyalty-label.loyalty-morrisons {
+  color: #6fcf97;
+}
+
+.dark .product-card-loyalty-label.loyalty-mns {
+  color: #a9a4be;
+}
+
+.dark .product-card-loyalty-label.loyalty-lidl {
+  color: #8ca9f2;
+}
+
+.dark .product-card-loyalty-label.loyalty-asda {
+  color: #f58ba9;
+}
+
+.dark .product-card-loyalty-label.loyalty-aldi {
+  color: #8fb0f5;
 }
 
 .product-card-category {
@@ -5011,6 +5043,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   border-radius: 99px;
   background: var(--surface);
   color: transparent;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 .product-card-check.is-checked {
   background: var(--primary);
@@ -5029,12 +5062,27 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
 }
 @media (max-width: 640px) {
+  /* Bottom bar, not the top row: the fixed filter nav already owns the top
+     strip. It takes the tab bar's slot so the body padding still lines up. */
   .watchlist-select-actions {
-    width: 100%;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 130;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     margin-left: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-direction: row-reverse;
   }
   .watchlist-select-actions .watchlist-select-btn {
     flex: 1;
+    min-height: 44px;
+  }
+  body.watchlist-selecting .mobile-tabbar {
+    display: none;
   }
 }
 .empty-state-cta-wrap {
@@ -7394,6 +7442,15 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.extension-fab-panel-closing {
+  animation: panelSlideDown 0.25s var(--ease-smooth) forwards;
+}
+
+@keyframes panelSlideDown {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
+}
+
 .dark .extension-fab-panel {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
@@ -7513,7 +7570,10 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   gap: 10px;
   white-space: nowrap;
   animation: fabTooltipIn 0.25s var(--ease-smooth);
-  z-index: 91;
+}
+
+.extension-fab-tooltip-closing {
+  animation: fabTooltipOut 0.25s var(--ease-smooth) forwards;
 }
 
 .extension-fab-tooltip::after {
@@ -7534,6 +7594,11 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fabTooltipOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(4px); }
+}
+
 .dark .extension-fab-tooltip {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
@@ -7545,13 +7610,14 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 }
 
 .extension-fab-tooltip-close {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   border: none;
   background: transparent;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -7563,4 +7629,9 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 .extension-fab-tooltip-close:hover {
   background: var(--surface-hover);
   color: var(--text);
+}
+
+.extension-fab-tooltip-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary);
 }

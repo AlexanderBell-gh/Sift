@@ -32,6 +32,8 @@ export default function ExtensionFAB() {
   const [fabState, setFabState] = useState<FabState>('hidden');
   const [expanded, setExpanded] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipClosing, setTooltipClosing] = useState(false);
+  const [panelClosing, setPanelClosing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevInstalled = useRef(installed);
 
@@ -67,16 +69,28 @@ export default function ExtensionFAB() {
     if (!expanded) return;
     function handleClickOutside(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setExpanded(false);
+        closePanel();
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expanded]);
 
+  function closePanel() {
+    setPanelClosing(true);
+    setTimeout(() => {
+      setExpanded(false);
+      setPanelClosing(false);
+    }, 250);
+  }
+
   function dismissTooltip() {
     localStorage.setItem(TOOLTIP_KEY, '1');
-    setTooltipVisible(false);
+    setTooltipClosing(true);
+    setTimeout(() => {
+      setTooltipVisible(false);
+      setTooltipClosing(false);
+    }, 250);
   }
 
   if (fabState === 'hidden' || isAuthPage || isGuest) return null;
@@ -90,8 +104,8 @@ export default function ExtensionFAB() {
       )}
     >
       {tooltipVisible && !expanded && (
-        <div className="extension-fab-tooltip">
-          <span className="extension-fab-tooltip-text">Click to Download the Sift extension</span>
+        <div className={cn('extension-fab-tooltip', tooltipClosing && 'extension-fab-tooltip-closing')}>
+          <span className="extension-fab-tooltip-text">Get the Sift extension</span>
           <button
             onClick={dismissTooltip}
             className="extension-fab-tooltip-close"
@@ -102,9 +116,9 @@ export default function ExtensionFAB() {
         </div>
       )}
       {expanded && (
-        <div className="extension-fab-panel">
+        <div className={cn('extension-fab-panel', panelClosing && 'extension-fab-panel-closing')}>
           <button
-            onClick={() => setExpanded(false)}
+            onClick={closePanel}
             className="extension-fab-close"
             aria-label="Close"
           >
@@ -141,7 +155,11 @@ export default function ExtensionFAB() {
         </div>
       )}
       <button
-        onClick={() => { setExpanded(!expanded); setTooltipVisible(false); }}
+        onClick={() => {
+          if (expanded) closePanel();
+          else setExpanded(true);
+          setTooltipVisible(false);
+        }}
         className="extension-fab-btn"
         aria-label="Get the Sift browser extension"
       >
