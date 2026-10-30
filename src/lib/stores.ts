@@ -13,7 +13,7 @@ export const STORES: Store[] = [
   { id: 'marksandspencer', name: 'M&S', logo: '/mands.png', searchUrl: (q) => `https://www.marksandspencer.com/food/search?referrer=food-catalogue&searchTerm=${encodeURIComponent(q)}` },
   { id: 'aldi', name: 'Aldi', logo: '/aldi.png', searchUrl: (q) => `https://www.aldi.co.uk/results?q=${encodeURIComponent(q)}` },
   { id: 'lidl', name: 'Lidl', logo: '/lidl.png', searchUrl: (q) => `https://www.lidl.co.uk/q/search?q=${encodeURIComponent(q)}` },
-  { id: 'coop', name: 'Co-op', logo: '/coop.png', searchUrl: (q) => `https://www.coop.co.uk/search?query=${encodeURIComponent(q)}` },
+  { id: 'coop', name: 'Co-op', logo: '/coop.png', searchUrl: (q) => `https://www.coop.co.uk/products/search?query=${encodeURIComponent(q)}` },
   { id: 'waitrose', name: 'Waitrose', logo: '/waitrose.png', searchUrl: (q) => `https://www.waitrose.com/ecom/shop/search?&searchTerm=${encodeURIComponent(q)}` },
   { id: 'iceland', name: 'Iceland', logo: '/iceland.png', searchUrl: (q) => `https://www.iceland.co.uk/search?q=${encodeURIComponent(q)}` },
   { id: 'ocado', name: 'Ocado', logo: '/ocado.png', searchUrl: (q) => `https://www.ocado.com/search?q=${encodeURIComponent(q)}` },
