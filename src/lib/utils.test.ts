@@ -14,6 +14,7 @@ import {
   formatTimeAgo,
   formatDealShort,
   getLoyaltyLabel,
+  getSecondPrice,
 } from './utils.ts';
 
 function isoDate(offsetDays: number): string {
@@ -104,5 +105,27 @@ describe('display helpers', () => {
     assert.equal(getLoyaltyLabel('Tesco'), 'Clubcard price');
     assert.equal(getLoyaltyLabel("Sainsbury's"), 'Nectar price');
     assert.equal(getLoyaltyLabel('Unknown Store'), 'Offer price');
+  });
+});
+
+describe('getSecondPrice', () => {
+  it('loyalty price wins with its scheme label and class', () => {
+    const p = getSecondPrice('Tesco', { loyalty: 2, offer: null });
+    assert.deepEqual(p, { value: 2, label: 'Clubcard price', className: 'loyalty-tesco' });
+  });
+
+  it('ASDA plain offer reads as a rollback', () => {
+    const p = getSecondPrice('ASDA', { loyalty: null, offer: 3 });
+    assert.deepEqual(p, { value: 3, label: 'Rollback price', className: 'loyalty-asda' });
+  });
+
+  it('generic plain offer uses the neutral offer badge', () => {
+    const p = getSecondPrice('Iceland', { loyalty: null, offer: 3 });
+    assert.deepEqual(p, { value: 3, label: 'Offer price', className: 'loyalty-offer' });
+  });
+
+  it('loyalty wins when both are set, null when neither', () => {
+    assert.equal(getSecondPrice('ASDA', { loyalty: 2, offer: 3 })?.value, 2);
+    assert.equal(getSecondPrice('ASDA', { loyalty: null, offer: null }), null);
   });
 });

@@ -25,8 +25,8 @@ to a watchlist, and shop them from one multibuy-aware list.
 
 ## Features
 
-**Search & deals.** One query opens results on up to 11 stores (Tesco,
-Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland, Ocado).
+**Search & deals.** One query opens results on up to 10 stores (Tesco,
+Sainsbury's, ASDA, Morrisons, M&S, Aldi, Lidl, Co-op, Waitrose, Iceland).
 Autocomplete comes from the bundled UK grocery dictionary plus a shared catalog
 of every product ever pinned — names persist after an item leaves the watchlist.
 Two snap carousels sit under the hero: live offers and Popular right now (all

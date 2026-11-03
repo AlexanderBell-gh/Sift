@@ -23,7 +23,6 @@ export const STORE_ALIASES = {
   coop: "Co-op",
   waitrose: "Waitrose",
   iceland: "Iceland",
-  ocado: "Ocado",
 };
 
 const DISPLAY_NAMES = new Set(Object.values(STORE_ALIASES).map((n) => n.toLowerCase()));
@@ -62,6 +61,8 @@ export function emptyFacts() {
     image_url: "",
     normal_price: null,
     loyalty_price: null,
+    offer_price: null,
+    offer_type: null,
     offer_deal: null,
     offer_expires_at: null,
     category: null,
@@ -76,6 +77,8 @@ export function toInheritedFacts(row) {
     image_url: row.image_url || "",
     normal_price: row.normal_price ?? null,
     loyalty_price: row.loyalty_price ?? null,
+    offer_price: row.offer_price ?? null,
+    offer_type: row.offer_type || null,
     offer_deal: row.offer_deal || null,
     offer_expires_at: row.offer_expires_at || null,
     category: row.category || null,

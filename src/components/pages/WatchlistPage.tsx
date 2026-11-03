@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../../lib/api';
 import { STORES, storeLogoFor } from '../../lib/stores';
 import { CATEGORIES } from '../../lib/categories';
-import { formatDate, formatTimeAgo, isOfferExpired, daysToExpiry, formatDealShort, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
+import { formatDate, formatTimeAgo, isOfferExpired, daysToExpiry, formatDealShort, getSecondPrice } from '../../lib/utils';
 import type { WatchlistItem } from '../../types';
 import NavHeader from '../layout/NavHeader';
 import { Modal } from '../ui/Modal';
@@ -77,7 +77,7 @@ export default function WatchlistPage() {
   }, [filtered]);
 
   function getBest(group: WatchlistItem[]): WatchlistItem {
-    return [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity))[0]!;
+    return [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.offer ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.offer ?? b.prices.normal ?? Infinity))[0]!;
   }
 
   const { offerGroups, plainGroups, expiredProducts, allGroups } = useMemo(() => {
@@ -506,9 +506,10 @@ export default function WatchlistPage() {
   function renderGroup(group: WatchlistItem[], expired: boolean) {
     const product = group[0];
     const lastUpdated = Math.max(...group.map(i => i.updated_at));
-    const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.normal ?? Infinity));
+    const sorted = [...group].sort((a, b) => (a.prices.loyalty ?? a.prices.offer ?? a.prices.normal ?? Infinity) - (b.prices.loyalty ?? b.prices.offer ?? b.prices.normal ?? Infinity));
     const best = sorted[0];
     if (!product || !best) return null;
+    const second = getSecondPrice(best.store, best.prices);
     // Staged removal: full details stay in place, dimmed; the action
     // slot flips to Undo and persists until undo or commit.
     const isStaged = staged.has(product.product_id);
@@ -550,27 +551,27 @@ export default function WatchlistPage() {
             {expired ? (
               <>
                 <span className="expired-price">
-                  £{(best.prices.normal ?? best.prices.loyalty ?? 0).toFixed(2)}
+                  £{(best.prices.normal ?? second?.value ?? 0).toFixed(2)}
                 </span>
-                {best.prices.normal !== null && best.prices.loyalty !== null && (
-                  <span className="was-price">was £{best.prices.loyalty.toFixed(2)}</span>
+                {best.prices.normal !== null && second && (
+                  <span className="was-price">was £{second.value.toFixed(2)}</span>
                 )}
               </>
             ) : best.offer_deal ? (
               <span className="offer-price">£{(best.prices.normal ?? 0).toFixed(2)}</span>
             ) : (
               <>
-                {best.prices.normal !== null && best.prices.loyalty !== null && (
+                {best.prices.normal !== null && second && (
                   <span className="full-price">£{best.prices.normal.toFixed(2)}</span>
                 )}
                 <span className="offer-price">
-                  £{(best.prices.loyalty ?? best.prices.normal ?? 0).toFixed(2)}
+                  £{(second?.value ?? best.prices.normal ?? 0).toFixed(2)}
                 </span>
               </>
             )}
           </div>
-          {(best.offer_deal || best.prices.loyalty !== null) && (
-            <span className={`product-card-loyalty-label ${getLoyaltyClass(best.store)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? formatDealShort(best.offer_deal) : getLoyaltyLabel(best.store)}</span>
+          {(best.offer_deal || second) && (
+            <span className={`product-card-loyalty-label ${second?.className ?? ''}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? formatDealShort(best.offer_deal) : second?.label}</span>
           )}
           {expired ? (
             <span className="product-card-offer expired">

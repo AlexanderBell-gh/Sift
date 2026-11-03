@@ -18,10 +18,12 @@ export interface SearchResult {
   prices: {
     normal: number | null;
     loyalty: number | null;
+    offer: number | null;
     unit_price: number | null;
     currency: string;
   };
   loyalty_type: string | null;
+  offer_type: 'loyalty' | 'offer' | null;
   offer_expires_at: string | null;
   offer_deal: string | null;
   category: string | null;
@@ -40,10 +42,12 @@ export interface WatchlistItem {
   prices: {
     normal: number | null;
     loyalty: number | null;
+    offer: number | null;
     unit_price: number | null;
     currency: string;
   };
   loyalty_type: string | null;
+  offer_type: 'loyalty' | 'offer' | null;
   offer_expires_at: string | null;
   offer_deal: string | null;
   product_url: string;

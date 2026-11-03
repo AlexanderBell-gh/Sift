@@ -3,7 +3,7 @@ import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../../lib/api';
-import { isOfferExpired, formatDealShort, getLoyaltyLabel, getLoyaltyClass } from '../../lib/utils';
+import { isOfferExpired, formatDealShort, getSecondPrice } from '../../lib/utils';
 import { lineTotal, lineSavings, formatGBP, parseOfferTiers, priceOfferGroup, type LineTotal } from '../../lib/pricing';
 import { STORES } from '../../lib/stores';
 import NavHeader from '../layout/NavHeader';
@@ -144,7 +144,7 @@ export default function ShoppingListPage() {
     const groups = new Map<string, number[]>();
     activeEntries.forEach((entry, idx) => {
       const expired = isOfferExpired(entry.item.offer_expires_at);
-      const unitPrice = entry.item.prices.loyalty ?? entry.item.prices.normal;
+      const unitPrice = entry.item.prices.loyalty ?? entry.item.prices.offer ?? entry.item.prices.normal;
       const tag = entry.item.offer_deal;
       if (!expired && unitPrice !== null && unitPrice !== undefined && tag && parseOfferTiers(tag).length) {
         const key = `${entry.item.store}\n${tag.toLowerCase().trim().replace(/\s+/g, ' ')}`;
@@ -155,7 +155,7 @@ export default function ShoppingListPage() {
         const priced = lineTotal(
           entry.quantity,
           entry.item.prices.normal,
-          entry.item.prices.loyalty,
+          entry.item.prices.loyalty ?? entry.item.prices.offer,
           tag,
           expired,
         );
@@ -175,13 +175,13 @@ export default function ShoppingListPage() {
         offerTiers,
         idxs.map(i => {
           const e = activeEntries[i as number]!;
-          return { qty: e.quantity, unitPrice: (e.item.prices.loyalty ?? e.item.prices.normal) as number };
+          return { qty: e.quantity, unitPrice: (e.item.prices.loyalty ?? e.item.prices.offer ?? e.item.prices.normal) as number };
         }),
       );
       idxs.forEach((entryIdx, k) => {
         const entry = activeEntries[entryIdx as number]!;
         const r = results[k as number]!;
-        const unitPrice = (entry.item.prices.loyalty ?? entry.item.prices.normal) as number;
+        const unitPrice = (entry.item.prices.loyalty ?? entry.item.prices.offer ?? entry.item.prices.normal) as number;
         const priced: LineTotal = { total: r.total, unitPrice, basis: r.basis, sets: r.sets };
         out[entryIdx as number] = {
           entry,
@@ -212,7 +212,7 @@ export default function ShoppingListPage() {
           priced: lineTotal(
             entry.quantity,
             entry.item.prices.normal,
-            entry.item.prices.loyalty,
+            entry.item.prices.loyalty ?? entry.item.prices.offer,
             entry.item.offer_deal,
             expired,
           ),
@@ -453,6 +453,7 @@ export default function ShoppingListPage() {
                   <ul className="shoplist-lines">
                     {lines.map(({ entry, expired, priced, savings: save, staged: isStaged }) => {
                       const item = entry.item;
+                      const second = getSecondPrice(item.store, item.prices);
                       const pending = pendingIds.has(entry.list_id);
                       return (
                         <li key={entry.list_id} className={`shoplist-line${pending ? ' is-pending' : ''}${isStaged ? ' is-removed' : ''}`} aria-busy={pending || undefined}>
@@ -469,12 +470,12 @@ export default function ShoppingListPage() {
                               {priced.unitPrice !== null ? `${formatGBP(priced.unitPrice)} each` : 'Price unavailable'}
                             </p>
                             {item.offer_deal ? (
-                              <span className={`product-card-loyalty-label ${getLoyaltyClass(item.store)}`} title={item.offer_deal}>
+                              <span className={`product-card-loyalty-label ${second?.className ?? ''}`} title={item.offer_deal}>
                                 {expired ? 'Offer expired' : formatDealShort(item.offer_deal)}
                               </span>
-                            ) : item.prices.loyalty !== null && !expired ? (
-                              <span className={`product-card-loyalty-label ${getLoyaltyClass(item.store)}`} title={getLoyaltyLabel(item.store)}>
-                                {getLoyaltyLabel(item.store)}
+                            ) : second && !expired ? (
+                              <span className={`product-card-loyalty-label ${second.className}`} title={second.label}>
+                                {second.label}
                               </span>
                             ) : null}
                             <div className="shoplist-notes">

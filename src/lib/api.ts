@@ -121,10 +121,12 @@ export interface DealOffer {
   prices: {
     normal: number | null;
     loyalty: number | null;
+    offer: number | null;
     unit_price: number | null;
     currency: string;
   };
   loyalty_type: string | null;
+  offer_type: 'loyalty' | 'offer' | null;
   category: string | null;
   is_on_offer: boolean;
   offer_expires_at: string | null;

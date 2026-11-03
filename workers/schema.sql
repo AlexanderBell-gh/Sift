@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS watchlist (
   unit_price REAL,
   currency TEXT NOT NULL DEFAULT 'GBP',
   loyalty_type TEXT,
+  -- loyalty_price = scheme only, offer_price = plain store offer.
+  offer_price REAL,
+  offer_type TEXT,
   offer_expires_at TEXT,
   offer_deal TEXT,
   product_url TEXT NOT NULL DEFAULT '',

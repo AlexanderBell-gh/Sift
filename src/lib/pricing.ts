@@ -25,7 +25,7 @@ export type LineBasis = 'offer' | 'unit' | 'expired' | 'unknown';
 export interface LineTotal {
   /** Line total in GBP, or null when no usable price exists. */
   total: number | null;
-  /** Unit price used (loyalty preferred), or null. */
+  /** Unit price used (discount preferred), or null. */
   unitPrice: number | null;
   /** How the total was derived. */
   basis: LineBasis;
@@ -144,18 +144,18 @@ function cheapestOffer(tiers: MultibuyOffer[], qty: number, unitPrice: number): 
 }
 
 /**
- * Price one list line. Loyalty price preferred (matches watchlist best-item
- * logic). Expired offers are ignored and priced at normal.
+ * Price one list line. Discount price preferred (caller resolves loyalty
+ * over plain offer). Expired offers are ignored and priced at normal.
  */
 export function lineTotal(
   qty: number,
   normal: number | null,
-  loyalty: number | null,
+  discount: number | null,
   offerDeal: string | null,
   expired: boolean,
 ): LineTotal {
-  // Expired offers price at shelf: the loyalty discount no longer applies.
-  const unitPrice = expired ? (normal ?? loyalty) : (loyalty ?? normal);
+  // Expired offers price at shelf: the discount no longer applies.
+  const unitPrice = expired ? (normal ?? discount) : (discount ?? normal);
   if (unitPrice === null || unitPrice === undefined) {
     return { total: null, unitPrice: null, basis: 'unknown', sets: 0 };
   }

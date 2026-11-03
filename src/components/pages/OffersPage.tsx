@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { addToWatchlist, getDealOffers, getPopular, ApiError, type DealOffer } from '../../lib/api';
-import { daysToExpiry, formatDate, formatDealShort, getLoyaltyClass, getLoyaltyLabel, isEndingSoon, isOfferExpired, parseDate } from '../../lib/utils';
+import { daysToExpiry, formatDate, formatDealShort, getSecondPrice, isEndingSoon, isOfferExpired, parseDate } from '../../lib/utils';
 import { storeLogoFor, STORES } from '../../lib/stores';
 import NavHeader from '../layout/NavHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -63,6 +63,7 @@ function OfferGridCard({ deal, limitReached, onAdded }: {
       unit: null,
       prices: deal.prices,
       loyalty_type: deal.loyalty_type,
+      offer_type: deal.offer_type,
       offer_expires_at: deal.offer_expires_at,
       offer_deal: deal.offer_deal,
       product_url: deal.product_url,
@@ -92,6 +93,7 @@ function OfferGridCard({ deal, limitReached, onAdded }: {
   // card: they render as plain regular-price rows (shelf price, no labels),
   // expired status lives only in the watchlist.
   const expired = isOfferExpired(deal.offer_expires_at);
+  const second = getSecondPrice(deal.store, deal.prices);
 
   return (
     <div className="product-card">
@@ -126,23 +128,23 @@ function OfferGridCard({ deal, limitReached, onAdded }: {
         )}
         <div className="product-card-price">
           {expired ? (
-            <span className="offer-price">£{(deal.prices.normal ?? deal.prices.loyalty ?? 0).toFixed(2)}</span>
+            <span className="offer-price">£{(deal.prices.normal ?? second?.value ?? 0).toFixed(2)}</span>
           ) : deal.offer_deal ? (
             <span className="offer-price">£{(deal.prices.normal ?? 0).toFixed(2)}</span>
           ) : (
             <>
-              {deal.prices.normal != null && deal.prices.loyalty != null && (
+              {deal.prices.normal != null && second != null && (
                 <span className="full-price">£{deal.prices.normal.toFixed(2)}</span>
               )}
               <span className="offer-price">
-                £{(deal.prices.loyalty ?? deal.prices.normal ?? 0).toFixed(2)}
+                £{(second?.value ?? deal.prices.normal ?? 0).toFixed(2)}
               </span>
             </>
           )}
         </div>
-        {!expired && (deal.offer_deal || deal.prices.loyalty != null) && (
-          <span className={`product-card-loyalty-label ${getLoyaltyClass(deal.store)}`} title={deal.offer_deal ?? undefined}>
-            {deal.offer_deal ? formatDealShort(deal.offer_deal) : getLoyaltyLabel(deal.store)}
+        {!expired && (deal.offer_deal || second) && (
+          <span className={`product-card-loyalty-label ${second?.className ?? ''}`} title={deal.offer_deal ?? undefined}>
+            {deal.offer_deal ? formatDealShort(deal.offer_deal) : second?.label}
           </span>
         )}
         {!expired && deal.offer_expires_at && days !== null && days > 0 && (

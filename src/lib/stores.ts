@@ -16,7 +16,6 @@ export const STORES: Store[] = [
   { id: 'coop', name: 'Co-op', logo: '/coop.png', searchUrl: (q) => `https://www.coop.co.uk/products/search?query=${encodeURIComponent(q)}` },
   { id: 'waitrose', name: 'Waitrose', logo: '/waitrose.png', searchUrl: (q) => `https://www.waitrose.com/ecom/shop/search?&searchTerm=${encodeURIComponent(q)}` },
   { id: 'iceland', name: 'Iceland', logo: '/iceland.png', searchUrl: (q) => `https://www.iceland.co.uk/search?q=${encodeURIComponent(q)}` },
-  { id: 'ocado', name: 'Ocado', logo: '/ocado.png', searchUrl: (q) => `https://www.ocado.com/search?q=${encodeURIComponent(q)}` },
 ];
 
 /**

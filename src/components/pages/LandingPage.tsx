@@ -24,13 +24,12 @@ const STORE_MARKS = [
   { id: 'coop', logo: '/landing/landing_coop.svg', w: 39 },
   { id: 'waitrose', logo: '/landing/landing_waitrose.svg', w: 193 },
   { id: 'iceland', logo: '/landing/landing_iceland.svg', w: 183 },
-  { id: 'ocado', logo: '/landing/landing_ocado.svg', w: 190 },
 ];
 
 const FEATURES = [
   {
     icon: Search,
-    title: 'Search 11 UK supermarkets',
+    title: 'Search 10 UK supermarkets',
     desc: 'One search box opens results across Tesco, Sainsbury’s, M&S, Asda, Aldi, Lidl and more — up to 3 stores at a time.',
     Visual: SearchVisual,
   },
@@ -128,7 +127,7 @@ export default function LandingPage() {
             <span className="text-gradient block">Every store. Every deal.</span>
           </h1>
           <p className="landing-hero-sub">
-            Search 11 UK supermarkets, pin your staples, and shop from one smart
+            Search 10 UK supermarkets, pin your staples, and shop from one smart
             list. Free to join — tracking takes seconds.
           </p>
         </div>

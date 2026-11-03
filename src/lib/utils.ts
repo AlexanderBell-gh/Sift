@@ -95,6 +95,24 @@ export function getLoyaltyClass(store: string): string {
   return classes[store] ?? '';
 }
 
+function getOfferLabel(store: string): string {
+  return store === 'ASDA' ? 'Rollback price' : 'Offer price';
+}
+
+/** Second price to show beside the shelf price: loyalty wins over plain offer. */
+export function getSecondPrice(
+  store: string,
+  prices: { loyalty: number | null; offer: number | null },
+): { value: number; label: string; className: string } | null {
+  if (prices.loyalty != null) {
+    return { value: prices.loyalty, label: getLoyaltyLabel(store), className: getLoyaltyClass(store) };
+  }
+  if (prices.offer != null) {
+    return { value: prices.offer, label: getOfferLabel(store), className: getLoyaltyClass(store) || 'loyalty-offer' };
+  }
+  return null;
+}
+
 // Display-only shortener for free-text `offer_deal` (server stores full text).
 // "Meal Deal for £15.00 with Nectar" -> "Meal Deal"
 // "Any 2 for £8 with Clubcard" -> "Any 2 for £8"

@@ -23,7 +23,7 @@ export function AboutPage() {
   return (
     <LegalLayout title="About Sift" updated="October 2026">
       <p>
-        Sift is a UK grocery tracker. Search 11 UK supermarkets, pin your
+        Sift is a UK grocery tracker. Search 10 UK supermarkets, pin your
         staples to a watchlist, and shop from one smart list with multibuy
         savings applied.
       </p>

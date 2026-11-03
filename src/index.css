@@ -4628,6 +4628,11 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   color: #0038a4;
 }
 
+.product-card-loyalty-label.loyalty-offer {
+  background: rgba(213, 0, 0, 0.12);
+  color: #d50000;
+}
+
 /* Dark mode: the brand colours are tuned for a 12% wash over white and go
    near-invisible on `--surface` #161B22, so each label lifts to a tint of the
    same hue and its wash follows the text (no second hex to keep in sync). */
@@ -4658,6 +4663,10 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 
 .dark .product-card-loyalty-label.loyalty-aldi {
   color: #8fb0f5;
+}
+
+.dark .product-card-loyalty-label.loyalty-offer {
+  color: #f28b82;
 }
 
 .product-card-category {
