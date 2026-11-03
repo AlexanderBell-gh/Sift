@@ -21,8 +21,8 @@ export function SearchVisual() {
           <X className="lv-tab-x" />
         </span>
         <span className="lv-tab lv-tab--c">
-          <img src="/waitrose.png" alt="" className="lv-tab-logo" />
-          Waitrose
+          <img src="/aldi.png" alt="" className="lv-tab-logo" />
+          Aldi
           <X className="lv-tab-x" />
         </span>
       </div>
@@ -40,8 +40,8 @@ export function SearchVisual() {
               <X className="lv-chip-x" />
             </span>
             <span className="lv-chip lv-chip--pick-c">
-              <img src="/waitrose.png" alt="" className="lv-chip-logo" />
-              <span className="lv-chip-label">Waitrose</span>
+              <img src="/aldi.png" alt="" className="lv-chip-logo" />
+              <span className="lv-chip-label">Aldi</span>
               <X className="lv-chip-x" />
             </span>
           </div>

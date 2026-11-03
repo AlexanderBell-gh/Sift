@@ -34,7 +34,9 @@ pinned products ranked by pin count, `n pins` badge), each 8 tiles + Show-all
 into the full `/offers` page (plus a header `View all`), with view, store and
 product filters.
 
-**Watchlist.** Pin anything, on offer or not. 12 per batch with skeletons, a
+**Watchlist.** Pin anything, on offer or not. Prices track the shelf price, the
+store's loyalty scheme price (Clubcard, Nectar, More card…) and plain store
+offers (Rollback, Offer), each with its own badge. 12 per batch with skeletons, a
 Sort & status facet (All / Offers / Regular Price / Expired, combinable, with
 counts), hold-to-remove that stages an inline Undo, and a Select mode that
 batch-removes with the same per-card Undo. Categories are assigned by the
@@ -133,8 +135,9 @@ product_knowledge). `product_catalog` is the pool of pinned product names behind
 autocomplete; `product_knowledge` is the global category memory (`id` =
 size-stripped title, `source` = `ai` or `user_correction`).
 
-`workers/migrations/0001_sift.sql` is the executable truth and builds a database
-from scratch; it auto-applies on push to `main` before the worker deploy. The
+`workers/migrations/` is the executable truth and builds a database from
+scratch; every numbered file auto-applies on push to `main` before the worker
+deploy (`0002_offer_price.sql` added the plain-offer columns). The
 database was rebuilt from empty on 24-10-2026 and the old `0001_init.sql` was
 replaced (the taxonomy version column and keyword tables are gone). Never edit a
 migration a live database has recorded — wrangler tracks migrations by name, so
