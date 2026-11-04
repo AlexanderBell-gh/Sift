@@ -99,6 +99,12 @@ function getOfferLabel(store: string): string {
   return store === 'ASDA' ? 'Rollback price' : 'Offer price';
 }
 
+/** Badge colour for a free-text multibuy: the store's own hue even when no
+ *  second price exists, so Tesco/M&S deals never inherit Sainsbury's purple. */
+export function getDealClass(store: string, second: { className: string } | null): string {
+  return second?.className || getLoyaltyClass(store) || 'loyalty-offer';
+}
+
 /** Second price to show beside the shelf price: loyalty wins over plain offer. */
 export function getSecondPrice(
   store: string,

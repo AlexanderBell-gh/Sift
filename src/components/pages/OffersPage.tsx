@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { addToWatchlist, getDealOffers, getPopular, ApiError, type DealOffer } from '../../lib/api';
-import { daysToExpiry, formatDate, formatDealShort, getSecondPrice, isEndingSoon, isOfferExpired, parseDate } from '../../lib/utils';
+import { daysToExpiry, formatDate, formatDealShort, getDealClass, getSecondPrice, isEndingSoon, isOfferExpired, parseDate } from '../../lib/utils';
 import { storeLogoFor, STORES } from '../../lib/stores';
 import NavHeader from '../layout/NavHeader';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -143,7 +143,7 @@ function OfferGridCard({ deal, limitReached, onAdded }: {
           )}
         </div>
         {!expired && (deal.offer_deal || second) && (
-          <span className={`product-card-loyalty-label ${second?.className ?? ''}`} title={deal.offer_deal ?? undefined}>
+          <span className={`product-card-loyalty-label ${getDealClass(deal.store, second)}`} title={deal.offer_deal ?? undefined}>
             {deal.offer_deal ? formatDealShort(deal.offer_deal) : second?.label}
           </span>
         )}

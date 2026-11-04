@@ -15,6 +15,7 @@ import {
   formatDealShort,
   getLoyaltyLabel,
   getSecondPrice,
+  getDealClass,
 } from './utils.ts';
 
 function isoDate(offsetDays: number): string {
@@ -127,5 +128,21 @@ describe('getSecondPrice', () => {
   it('loyalty wins when both are set, null when neither', () => {
     assert.equal(getSecondPrice('ASDA', { loyalty: 2, offer: 3 })?.value, 2);
     assert.equal(getSecondPrice('ASDA', { loyalty: null, offer: null }), null);
+  });
+});
+
+describe('getDealClass', () => {
+  it('keeps the second price class when one exists', () => {
+    assert.equal(getDealClass('Tesco', { className: 'loyalty-tesco' }), 'loyalty-tesco');
+  });
+
+  it('uses the store hue for a multibuy with no second price', () => {
+    assert.equal(getDealClass('Tesco', null), 'loyalty-tesco');
+    assert.equal(getDealClass('M&S', null), 'loyalty-mns');
+    assert.equal(getDealClass("Sainsbury's", null), 'loyalty-sainsburys');
+  });
+
+  it('falls back to the plain offer badge for stores without a scheme', () => {
+    assert.equal(getDealClass('Iceland', null), 'loyalty-offer');
   });
 });

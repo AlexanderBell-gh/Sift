@@ -3,7 +3,7 @@ import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getShoppingList, setShoppingListQty, clearShoppingList, type ShoppingListEntry } from '../../lib/api';
-import { isOfferExpired, formatDealShort, getSecondPrice } from '../../lib/utils';
+import { isOfferExpired, formatDealShort, getDealClass, getSecondPrice } from '../../lib/utils';
 import { lineTotal, lineSavings, formatGBP, parseOfferTiers, priceOfferGroup, type LineTotal } from '../../lib/pricing';
 import { STORES } from '../../lib/stores';
 import NavHeader from '../layout/NavHeader';
@@ -470,7 +470,7 @@ export default function ShoppingListPage() {
                               {priced.unitPrice !== null ? `${formatGBP(priced.unitPrice)} each` : 'Price unavailable'}
                             </p>
                             {item.offer_deal ? (
-                              <span className={`product-card-loyalty-label ${second?.className ?? ''}`} title={item.offer_deal}>
+                              <span className={`product-card-loyalty-label ${getDealClass(item.store, second)}`} title={item.offer_deal}>
                                 {expired ? 'Offer expired' : formatDealShort(item.offer_deal)}
                               </span>
                             ) : second && !expired ? (

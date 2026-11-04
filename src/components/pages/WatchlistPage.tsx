@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getWatchlist, removeFromWatchlist, addToShoppingList } from '../../lib/api';
 import { STORES, storeLogoFor } from '../../lib/stores';
 import { CATEGORIES } from '../../lib/categories';
-import { formatDate, formatTimeAgo, isOfferExpired, daysToExpiry, formatDealShort, getSecondPrice } from '../../lib/utils';
+import { formatDate, formatTimeAgo, isOfferExpired, daysToExpiry, formatDealShort, getDealClass, getSecondPrice } from '../../lib/utils';
 import type { WatchlistItem } from '../../types';
 import NavHeader from '../layout/NavHeader';
 import { Modal } from '../ui/Modal';
@@ -571,7 +571,7 @@ export default function WatchlistPage() {
             )}
           </div>
           {(best.offer_deal || second) && (
-            <span className={`product-card-loyalty-label ${second?.className ?? ''}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? formatDealShort(best.offer_deal) : second?.label}</span>
+            <span className={`product-card-loyalty-label ${getDealClass(best.store, second)}`} title={best.offer_deal ?? undefined}>{best.offer_deal ? formatDealShort(best.offer_deal) : second?.label}</span>
           )}
           {expired ? (
             <span className="product-card-offer expired">

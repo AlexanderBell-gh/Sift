@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { addToWatchlist, ApiError, type DealOffer } from '../../../lib/api';
-import { daysToExpiry, formatDate, formatDealShort, getSecondPrice, isOfferExpired } from '../../../lib/utils';
+import { daysToExpiry, formatDate, formatDealShort, getDealClass, getSecondPrice, isOfferExpired } from '../../../lib/utils';
 import { storeLogoFor } from '../../../lib/stores';
 import { PinButton } from './PinButton';
 import type { SearchResult } from '../../../types';
@@ -123,7 +123,7 @@ export function OfferTile({ deal, limitReached, onAdded }: {
           )}
         </div>
         {!expired && (deal.offer_deal || second) && (
-          <span className={`product-card-loyalty-label ${second?.className ?? ''}`} title={deal.offer_deal ?? undefined}>
+          <span className={`product-card-loyalty-label ${getDealClass(deal.store, second)}`} title={deal.offer_deal ?? undefined}>
             {deal.offer_deal ? formatDealShort(deal.offer_deal) : second?.label}
           </span>
         )}
