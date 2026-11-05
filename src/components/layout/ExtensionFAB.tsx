@@ -65,6 +65,14 @@ export default function ExtensionFAB() {
     prevInstalled.current = installed;
   }, [installed, fabState]);
 
+  function closePanel() {
+    setPanelClosing(true);
+    setTimeout(() => {
+      setExpanded(false);
+      setPanelClosing(false);
+    }, 250);
+  }
+
   useEffect(() => {
     if (!expanded) return;
     function handleClickOutside(e: MouseEvent) {
@@ -75,14 +83,6 @@ export default function ExtensionFAB() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expanded]);
-
-  function closePanel() {
-    setPanelClosing(true);
-    setTimeout(() => {
-      setExpanded(false);
-      setPanelClosing(false);
-    }, 250);
-  }
 
   function dismissTooltip() {
     localStorage.setItem(TOOLTIP_KEY, '1');

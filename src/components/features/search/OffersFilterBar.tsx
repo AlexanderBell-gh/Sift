@@ -53,6 +53,11 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange, 
   const [isClosing, setIsClosing] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number | undefined>(undefined);
+  // Scroll bookkeeping lives in refs: it must survive effect re-runs without
+  // the compiler treating per-run locals as render-time state.
+  const ticking = useRef(false);
+  const lastY = useRef(0);
+  const suppressUntil = useRef(0);
   const isMobile = useIsMobile();
   // Counter-based: survives another sheet opening on top.
   useBodyLock(openPanel !== null && isMobile);
@@ -98,9 +103,7 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange, 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_QUERY);
     const bar = barRef.current;
-    let lastY = window.scrollY;
-    let ticking = false;
-    let suppressUntil = 0;
+    lastY.current = window.scrollY;
     function place(y: number, hidden: boolean) {
       if (!bar) return;
       if (!mq.matches) {
@@ -131,7 +134,7 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange, 
       return document.documentElement.scrollHeight - window.innerHeight - GAP_PX - y > HIDE_ROOM;
     }
     function update() {
-      ticking = false;
+      ticking.current = false;
       if (!bar || !mq.matches) {
         bar?.classList.remove('is-hidden');
         if (bar) bar.style.top = '';
@@ -141,29 +144,29 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange, 
         // Panel open: force visible, snapped (no slide while the sheet
         // above opens). Scroll is locked, so y is frozen here.
         sync(window.scrollY, false);
-        lastY = window.scrollY;
+        lastY.current = window.scrollY;
         return;
       }
       const y = window.scrollY;
-      const dy = y - lastY;
-      lastY = y;
+      const dy = y - lastY.current;
+      lastY.current = y;
       // Settle window for the content-gap transition: the collapse pulls
       // scrollY up and that echo must not re-show the bar.
-      if (performance.now() < suppressUntil) return;
+      if (performance.now() < suppressUntil.current) return;
       if (y <= REVEAL_Y || dy < -SCROLL_DY) {
         place(y, false);
       } else if (dy > SCROLL_DY && y > HIDE_Y && canHide(y)) {
-        suppressUntil = performance.now() + SUPPRESS_MS;
+        suppressUntil.current = performance.now() + SUPPRESS_MS;
         place(y, true);
       }
     }
     function onScroll() {
-      if (ticking) return;
-      ticking = true;
+      if (ticking.current) return;
+      ticking.current = true;
       window.requestAnimationFrame(update);
     }
     function onMqChange() {
-      lastY = window.scrollY;
+      lastY.current = window.scrollY;
       if (!bar) return;
       if (!mq.matches) {
         bar.style.top = '';
@@ -172,7 +175,7 @@ export default function OffersFilterBar({ view, selectedStores, onStoresChange, 
       }
       sync(window.scrollY, false);
     }
-    lastY = window.scrollY;
+    lastY.current = window.scrollY;
     // Initial position snaps: no entrance slide on page load.
     if (bar && mq.matches) sync(window.scrollY, false);
     else update();
