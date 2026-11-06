@@ -3106,6 +3106,23 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   background: rgba(255, 87, 1, 0.05);
 }
 
+/* Inline picker (mobile search sheet): store selected, not opened. */
+.store-chip-selected {
+  border-color: var(--primary);
+  background: rgba(255, 87, 1, 0.08);
+  color: var(--primary);
+}
+
+.store-chip-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.store-chip-disabled:hover {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
 .store-chip img {
   width: 16px;
   height: 16px;
@@ -3949,9 +3966,9 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   margin-bottom: 12px;
 }
 
-/* Sheet chip slider: 3 selected chips exceed the sheet width, so the
-   row scrolls horizontally (swipe-only, bar hidden) instead of
-   wrapping. flex-start keeps left items reachable; chips never shrink. */
+/* Sheet chip row: every store is a toggle chip, so the row scrolls
+   horizontally (swipe-only, bar hidden) instead of wrapping into a
+   second sheet. flex-start keeps left items reachable; chips never shrink. */
 .search-sheet-panel .store-chips-row {
   flex-wrap: nowrap;
   justify-content: flex-start;
@@ -3965,13 +3982,8 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 .search-sheet-panel .store-chips-row::-webkit-scrollbar {
   display: none;
 }
-.search-sheet-panel .store-chip,
-.search-sheet-panel .store-chip-add {
+.search-sheet-panel .store-chip {
   flex: none;
-}
-/* No stores yet: the lone Add button stays centered. */
-.search-sheet-panel .store-chip-add:only-child {
-  margin: 0 auto;
 }
 
 .search-sheet-list {
@@ -5039,6 +5051,20 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   gap: 8px;
   margin-left: auto;
 }
+/* Mobile entry is the card press-hold; this quiet hint replaces the Select
+   button and doubles as its keyboard/screen-reader fallback. */
+.watchlist-hold-hint {
+  display: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
 .product-card-check {
   position: absolute;
   top: 8px;
@@ -5071,6 +5097,16 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
 }
 @media (max-width: 640px) {
+  /* Hold a card to start selecting; the Select button is desktop-only. */
+  .watchlist-select-row:not(.is-selecting) {
+    justify-content: flex-start;
+  }
+  .watchlist-select-row:not(.is-selecting) > .watchlist-select-btn {
+    display: none;
+  }
+  .watchlist-hold-hint {
+    display: block;
+  }
   /* Bottom bar, not the top row: the fixed filter nav already owns the top
      strip. It takes the tab bar's slot so the body padding still lines up. */
   .watchlist-select-actions {

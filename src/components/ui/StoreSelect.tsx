@@ -9,11 +9,13 @@ interface StoreSelectProps {
   selected: Set<string>;
   onChange: (selected: Set<string>) => void;
   className?: string;
+  /** Every store is a toggle chip in the row itself; no Add chip, no panel. */
+  inline?: boolean;
 }
 
 export const MAX_STORES = 3;
 
-export function StoreSelect({ selected, onChange, className }: StoreSelectProps) {
+export function StoreSelect({ selected, onChange, className, inline }: StoreSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -73,6 +75,46 @@ export function StoreSelect({ selected, onChange, className }: StoreSelectProps)
 
   function clearAll() {
     onChange(new Set());
+  }
+
+  // The sheet opens on mount, so saved stores far down the row would start
+  // off-screen. Run once: re-scrolling on every tap would yank the row.
+  useEffect(() => {
+    if (!inline) return;
+    dropdownRef.current
+      ?.querySelector('.store-chip-selected')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [inline]);
+
+  if (inline) {
+    return (
+      <div ref={dropdownRef} className={cn('relative store-select', className)}>
+        <div className="store-chips-row" role="group" aria-label="Stores">
+          {STORES.map(store => {
+            const isSelected = selected.has(store.id);
+            const atLimit = !isSelected && selected.size >= MAX_STORES;
+            return (
+              <button
+                key={store.id}
+                type="button"
+                onClick={() => toggleStore(store.id)}
+                disabled={atLimit}
+                aria-pressed={isSelected}
+                className={cn(
+                  'store-chip',
+                  isSelected && 'store-chip-selected',
+                  atLimit && 'store-chip-disabled'
+                )}
+              >
+                <img src={store.logo} alt="" className="w-4 h-4 rounded object-contain" />
+                <span>{store.name}</span>
+                {isSelected && <X className="icon-xs" aria-hidden="true" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
 
   return (
