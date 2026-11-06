@@ -38,8 +38,8 @@ product filters.
 store's loyalty scheme price (Clubcard, Nectar, More card…) and plain store
 offers (Rollback, Offer), each with its own badge. 12 per batch with skeletons, a
 Sort & status facet (All / Offers / Regular Price / Expired, combinable, with
-counts), hold-to-remove that stages an inline Undo, and a Select mode that
-batch-removes with the same per-card Undo. Categories are assigned by the
+counts), a press-hold on mobile (or `Select` on desktop) that batch-removes with
+per-card Undo. Categories are assigned by the
 worker at add time: D1 memory → Workers AI → safe fallback.
 
 **Shopping list.** Quantities against watchlist items at `/list`, priced live
@@ -187,7 +187,8 @@ real adds for that. Coverage is locked by `workers/lib/category.test.js`.
 <summary><strong>How it works</strong></summary>
 
 1. Select up to 3 stores (persisted locally; search stays disabled until one is
-   picked).
+   picked). On mobile the slide-up sheet carries every store as a swipeable
+   toggle chip, so picking and searching stay in one sheet.
 2. Type — autocomplete suggests from the grocery dictionary and the shared pin
    catalog (debounced, keyboard navigable).
 3. Enter — each store's results open in a new tab; pin what you like via the
