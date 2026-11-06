@@ -9,7 +9,6 @@ import { CATEGORIES } from '../../lib/categories';
 import { formatDate, formatTimeAgo, isOfferExpired, daysToExpiry, formatDealShort, getDealClass, getSecondPrice } from '../../lib/utils';
 import type { WatchlistItem } from '../../types';
 import NavHeader from '../layout/NavHeader';
-import { Modal } from '../ui/Modal';
 import WatchlistFilters from '../features/watchlist/WatchlistFilters';
 import type { OfferStatus } from '../features/watchlist/WatchlistFilters';
 import WatchlistSkeletonCard from '../features/watchlist/WatchlistSkeletonCard';
@@ -432,44 +431,39 @@ export default function WatchlistPage() {
     }
   }
 
-  // Mobile hold-to-remove: long-press a card to remove its product group.
-  // Desktop keeps the ✕ button; timers only start under the 640px breakpoint.
-  const holdRef = useRef<{ timer: number | undefined; productId: string | null; x: number; y: number }>({
+  // Mobile press-hold enters Select mode with the held card picked; desktop
+  // keeps the ✕ button and the Select entry button. Timers only start under
+  // the 640px breakpoint.
+  const holdRef = useRef<{ timer: number | undefined; x: number; y: number }>({
     timer: undefined,
-    productId: null,
     x: 0,
     y: 0,
   });
   const lastHoldRef = useRef(0);
-  const [pendingRemove, setPendingRemove] = useState<{ productId: string; name: string; store: string } | null>(null);
+  // Swallow the synthetic click that follows the release of a hold, or the
+  // freshly picked card would toggle straight back off. Cleared by the next
+  // pointerdown, so a dropped click cannot eat a later tap.
+  const holdClickArmedRef = useRef(false);
 
   function clearHold() {
     if (holdRef.current.timer !== undefined) {
       window.clearTimeout(holdRef.current.timer);
       holdRef.current.timer = undefined;
     }
-    holdRef.current.productId = null;
   }
 
   function startHold(productId: string, e: TouchEvent) {
     if (!window.matchMedia(MOBILE_QUERY).matches) return;
     const touch = e.touches[0];
     if (!touch) return;
-    const group = items.filter(i => i.product_id === productId);
-    const first = group[0];
-    if (!first) return;
-    const pending = {
-      productId,
-      name: first.product_name,
-      store: first.store,
-    };
     clearHold();
-    holdRef.current.productId = productId;
     holdRef.current.x = touch.clientX;
     holdRef.current.y = touch.clientY;
     holdRef.current.timer = window.setTimeout(() => {
       lastHoldRef.current = Date.now();
-      setPendingRemove(pending);
+      holdClickArmedRef.current = true;
+      enterSelectMode();
+      setSelected(new Set([productId]));
       clearHold();
     }, 600);
   }
@@ -645,7 +639,15 @@ export default function WatchlistPage() {
           aria-label={`Select ${product.product_name}`}
           tabIndex={0}
           className={cardClass}
-          onClick={() => toggleSelect(product.product_id)}
+          onClick={() => {
+            if (holdClickArmedRef.current) {
+              // The release that entered Select mode: not a toggle.
+              holdClickArmedRef.current = false;
+              return;
+            }
+            toggleSelect(product.product_id);
+          }}
+          onPointerDown={() => { holdClickArmedRef.current = false; }}
           onKeyDown={(e) => {
             if (e.key === ' ' || e.key === 'Enter') {
               e.preventDefault();
@@ -830,14 +832,25 @@ export default function WatchlistPage() {
                 </div>
               </>
             ) : (
-              <button
-                type="button"
-                className="btn-secondary watchlist-select-btn"
-                onClick={enterSelectMode}
-              >
-                <Check size={14} />
-                Select
-              </button>
+              <>
+                {/* Mobile entry: the press-hold, with a quiet tap fallback so
+                    keyboard and screen-reader users keep a real control. */}
+                <button
+                  type="button"
+                  className="watchlist-hold-hint"
+                  onClick={enterSelectMode}
+                >
+                  Hold a card to select
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary watchlist-select-btn"
+                  onClick={enterSelectMode}
+                >
+                  <Check size={14} />
+                  Select
+                </button>
+              </>
             )}
           </div>
         )}
@@ -886,38 +899,6 @@ export default function WatchlistPage() {
           <p className="text-sm text-muted watchlist-count">Showing all {currentProducts.length} products</p>
         )}
       </div>
-
-      <Modal
-        isOpen={pendingRemove !== null}
-        onClose={() => setPendingRemove(null)}
-        title="Remove from watchlist"
-      >
-        {pendingRemove && (
-          <>
-            <p className="text-sm">
-              Remove <strong>{pendingRemove.name}</strong>
-              {pendingRemove.store ? ` (${pendingRemove.store})` : ''} from your watchlist?
-            </p>
-            <div className="flex gap-3">
-              <button
-                className="btn-secondary flex-1"
-                onClick={() => setPendingRemove(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-danger flex-1"
-                onClick={(e) => {
-                  handleRemoveProduct(pendingRemove.productId, e);
-                  setPendingRemove(null);
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          </>
-        )}
-      </Modal>
     </div>
   );
 }

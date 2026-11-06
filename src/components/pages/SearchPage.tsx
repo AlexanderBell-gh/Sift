@@ -427,6 +427,7 @@ export default function SearchPage() {
             <StoreSelect
               selected={selectedStores}
               onChange={setSelectedStores}
+              inline
             />
             <form
               onSubmit={(e) => { e.preventDefault(); handleSheetSearch(); }}
