@@ -101,18 +101,20 @@ export default function WatchlistFilters({
   const lastY = useRef(0);
   const suppressUntil = useRef(0);
   const isMobile = useIsMobile();
-  // Desktop selection swaps the whole bar; the entry button unmounts, so
-  // focus moves into the toolbar and back out on exit instead of dropping
-  // to <body>.
-  const showSelectToolbar = selection.active && !isMobile;
+  // Selection swaps the whole bar on both layouts; actions differ (desktop
+  // keeps Cancel/Remove here, mobile in the fixed bottom bar). On desktop
+  // the entry button unmounts, so focus moves into the toolbar and back out
+  // on exit instead of dropping to <body>.
+  const showSelectToolbar = selection.active;
   const selectTriggerRef = useRef<HTMLButtonElement>(null);
   const selectAllRef = useRef<HTMLButtonElement>(null);
   const wasSelecting = useRef(false);
   useEffect(() => {
+    if (isMobile) return;
     if (showSelectToolbar) selectAllRef.current?.focus();
     else if (wasSelecting.current) selectTriggerRef.current?.focus();
     wasSelecting.current = selection.active;
-  }, [showSelectToolbar, selection.active]);
+  }, [showSelectToolbar, selection.active, isMobile]);
   // Counter-based: survives the account sheet opening on top.
   useBodyLock(openPanel !== null && isMobile);
 
@@ -197,9 +199,10 @@ export default function WatchlistFilters({
         if (bar) bar.style.top = '';
         return;
       }
-      if (openPanel !== null) {
-        // Panel open: force visible, snapped (no slide while the sheet
-        // above opens). Scroll is locked, so y is frozen here.
+      if (openPanel !== null || selection.active) {
+        // Panel open or selecting: force visible, snapped (no slide while
+        // the sheet above opens). Scroll is locked while a panel is open,
+        // so y is frozen there; in select mode the bar must not hide.
         sync(window.scrollY, false);
         lastY.current = window.scrollY;
         return;
@@ -245,7 +248,7 @@ export default function WatchlistFilters({
       // Resetting to the CSS default flashed the bar 0 -> 72 -> 0 with
       // transition on every panel open/close.
     };
-  }, [openPanel]);
+  }, [openPanel, selection.active]);
 
   const allStores = selectedStores.length === STORE_NAMES.length;
   const allCategories = selectedCategories.length === CATEGORIES.length;
@@ -463,20 +466,22 @@ export default function WatchlistFilters({
               >
                 {selection.allVisibleSelected ? 'Clear all' : selection.hasMore ? 'Select all shown' : 'Select all'}
               </button>
-              <div className="watchlist-select-toolbar-actions">
-                <button type="button" className="filter-trigger" onClick={selection.onExit}>
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-danger watchlist-select-btn"
-                  onClick={selection.onRemove}
-                  disabled={selection.count === 0}
-                >
-                  <Trash2 size={14} />
-                  Remove{selection.count ? ` ${selection.count} item${selection.count === 1 ? '' : 's'}` : ''}
-                </button>
-              </div>
+              {!isMobile && (
+                <div className="watchlist-select-toolbar-actions">
+                  <button type="button" className="filter-trigger" onClick={selection.onExit}>
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-danger watchlist-select-btn"
+                    onClick={selection.onRemove}
+                    disabled={selection.count === 0}
+                  >
+                    <Trash2 size={14} />
+                    Remove{selection.count ? ` ${selection.count} item${selection.count === 1 ? '' : 's'}` : ''}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

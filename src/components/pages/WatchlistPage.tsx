@@ -398,43 +398,6 @@ export default function WatchlistPage() {
 
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
-  // Bulk clear of the expired tab: two-tap confirm (4s window, Escape
-  // cancels), mirroring the shopping-list clear pattern. Commits
-  // immediately with rollback on failure; staged rows for cleared
-  // products are dropped so their commits cannot 404 after the fact.
-  const [confirmClearExpired, setConfirmClearExpired] = useState(false);
-  const clearExpiredTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(clearExpiredTimer.current), []);
-
-  async function handleClearExpired() {
-    if (!token) return;
-    if (!confirmClearExpired) {
-      setConfirmClearExpired(true);
-      window.clearTimeout(clearExpiredTimer.current);
-      clearExpiredTimer.current = window.setTimeout(() => setConfirmClearExpired(false), 4000);
-      return;
-    }
-    window.clearTimeout(clearExpiredTimer.current);
-    setConfirmClearExpired(false);
-    const groups = expiredProducts;
-    if (groups.length === 0) return;
-    const ids = new Set(groups.flatMap(g => g.map(i => i.id)));
-    for (const group of groups) {
-      const pid = group[0]?.product_id;
-      if (pid) stagedMirror.current.delete(pid);
-    }
-    syncStagedState();
-    const prev = items;
-    setItems(prevItems => prevItems.filter(i => !ids.has(i.id)));
-    setError('');
-    try {
-      await Promise.all(groups.flatMap(g => g.map(i => removeFromWatchlist(token, i.id))));
-    } catch {
-      setItems(prev);
-      setError('Failed to clear expired items');
-    }
-  }
-
   // Mobile press-hold enters Select mode with the held card picked; desktop
   // keeps the ✕ button and the Select entry button. Timers only start under
   // the 640px breakpoint.
@@ -864,20 +827,6 @@ export default function WatchlistPage() {
             <p className="expired-clear-count" aria-live="polite">
               {expiredProducts.length} expired
             </p>
-            <button
-              onClick={handleClearExpired}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape' && confirmClearExpired) {
-                  window.clearTimeout(clearExpiredTimer.current);
-                  setConfirmClearExpired(false);
-                }
-              }}
-              aria-live="polite"
-              className={`btn-secondary expired-clear${confirmClearExpired ? ' expired-clear-confirm' : ''}`}
-            >
-              <Trash2 size={14} />
-              {confirmClearExpired ? 'Confirm clear?' : 'Clear expired'}
-            </button>
           </div>
         )}
 

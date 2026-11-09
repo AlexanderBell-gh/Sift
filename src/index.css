@@ -5138,6 +5138,18 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   .watchlist-hold-hint {
     display: block;
   }
+  /* Selection lives in the filter bar on mobile too; the row keeps only the
+     fixed bottom action bar. */
+  .watchlist-select-row.is-selecting {
+    margin-bottom: 0;
+  }
+  .watchlist-select-row.is-selecting > .watchlist-select-btn,
+  .watchlist-select-row.is-selecting > .watchlist-select-count {
+    display: none;
+  }
+  .watchlist-select-toolbar {
+    justify-content: space-between;
+  }
   /* Bottom bar, not the top row: the fixed filter nav already owns the top
      strip. It takes the tab bar's slot so the body padding still lines up. */
   .watchlist-select-actions {
@@ -5170,7 +5182,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   padding: 10px 20px;
 }
 
-/* Expired-tab head row: mono count left, two-tap clear right. */
+/* Expired-tab head row: mono count. */
 .expired-clear-row {
   display: flex;
   align-items: center;
@@ -5185,25 +5197,6 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   font-weight: 600;
   color: var(--muted);
   margin: 0;
-}
-
-.expired-clear {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  flex-shrink: 0;
-}
-
-.expired-clear-confirm {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-.expired-clear-confirm:hover:not(:disabled) {
-  border-color: var(--danger);
-  background: rgba(220, 38, 38, 0.08);
-  color: var(--danger);
 }
 
 /* Shopping list */
