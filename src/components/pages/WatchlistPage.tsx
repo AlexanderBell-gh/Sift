@@ -358,6 +358,10 @@ export default function WatchlistPage() {
     .filter((id): id is string => !!id && !staged.has(id));
   const allVisibleSelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
 
+  function toggleSelectAll() {
+    setSelected(allVisibleSelected ? new Set() : new Set(selectableIds));
+  }
+
   // Removed cards never leak across views: any filter/sort/search/status
   // change commits pending removals first. Unmount flushes too.
   useEffect(() => {
@@ -713,6 +717,16 @@ export default function WatchlistPage() {
         status={view}
         onStatusChange={handleStatusChange}
         statusCounts={statusCounts}
+        selection={{
+          active: selectMode,
+          count: selected.size,
+          allVisibleSelected,
+          hasMore,
+          onEnter: enterSelectMode,
+          onToggleAll: toggleSelectAll,
+          onRemove: removeSelected,
+          onExit: exitSelectMode,
+        }}
       />
 
       <div className="container watchlist-content">
@@ -805,7 +819,7 @@ export default function WatchlistPage() {
                   type="button"
                   className="btn-secondary watchlist-select-btn"
                   aria-pressed={allVisibleSelected}
-                  onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(selectableIds))}
+                  onClick={toggleSelectAll}
                 >
                   {allVisibleSelected ? 'Clear all' : hasMore ? 'Select all shown' : 'Select all'}
                 </button>
@@ -832,25 +846,15 @@ export default function WatchlistPage() {
                 </div>
               </>
             ) : (
-              <>
-                {/* Mobile entry: the press-hold, with a quiet tap fallback so
-                    keyboard and screen-reader users keep a real control. */}
-                <button
-                  type="button"
-                  className="watchlist-hold-hint"
-                  onClick={enterSelectMode}
-                >
-                  Hold a card to select
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary watchlist-select-btn"
-                  onClick={enterSelectMode}
-                >
-                  <Check size={14} />
-                  Select
-                </button>
-              </>
+              // Mobile entry: the press-hold, with a quiet tap fallback so
+              // keyboard and screen-reader users keep a real control.
+              <button
+                type="button"
+                className="watchlist-hold-hint"
+                onClick={enterSelectMode}
+              >
+                Hold a card to select
+              </button>
             )}
           </div>
         )}

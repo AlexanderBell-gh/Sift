@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Store, LayoutGrid, ArrowUpDown, Search, X } from 'lucide-react';
+import { Store, LayoutGrid, ArrowUpDown, Search, X, Check, Trash2 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { STORES } from '../../../lib/stores';
 import { CATEGORIES } from '../../../lib/categories';
@@ -49,6 +49,17 @@ function dockTop(y: number): string {
   return `${Math.max(0, NAV_H - y)}px`;
 }
 
+export interface WatchlistSelection {
+  active: boolean;
+  count: number;
+  allVisibleSelected: boolean;
+  hasMore: boolean;
+  onEnter: () => void;
+  onToggleAll: () => void;
+  onRemove: () => void;
+  onExit: () => void;
+}
+
 interface WatchlistFiltersProps {
   selectedStores: string[];
   onStoresChange: (stores: string[]) => void;
@@ -61,6 +72,7 @@ interface WatchlistFiltersProps {
   status: OfferStatus;
   onStatusChange: (status: OfferStatus) => void;
   statusCounts: Record<OfferStatus, number>;
+  selection: WatchlistSelection;
 }
 
 type PanelKey = 'stores' | 'categories' | 'sort' | null;
@@ -77,6 +89,7 @@ export default function WatchlistFilters({
   status,
   onStatusChange,
   statusCounts,
+  selection,
 }: WatchlistFiltersProps) {
   const [openPanel, setOpenPanel] = useState<PanelKey>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -88,6 +101,18 @@ export default function WatchlistFilters({
   const lastY = useRef(0);
   const suppressUntil = useRef(0);
   const isMobile = useIsMobile();
+  // Desktop selection swaps the whole bar; the entry button unmounts, so
+  // focus moves into the toolbar and back out on exit instead of dropping
+  // to <body>.
+  const showSelectToolbar = selection.active && !isMobile;
+  const selectTriggerRef = useRef<HTMLButtonElement>(null);
+  const selectAllRef = useRef<HTMLButtonElement>(null);
+  const wasSelecting = useRef(false);
+  useEffect(() => {
+    if (showSelectToolbar) selectAllRef.current?.focus();
+    else if (wasSelecting.current) selectTriggerRef.current?.focus();
+    wasSelecting.current = selection.active;
+  }, [showSelectToolbar, selection.active]);
   // Counter-based: survives the account sheet opening on top.
   useBodyLock(openPanel !== null && isMobile);
 
@@ -298,7 +323,7 @@ export default function WatchlistFilters({
     <div ref={barRef} className="filter-nav">
       {openPanel && <div className={cn('filter-panel-backdrop', isClosing && 'is-closing')} onClick={closePanel} />}
       <div className="filter-nav-inner">
-        <div className="filter-bar">
+        <div className={cn('filter-bar', showSelectToolbar && 'is-selecting')}>
           <div className="filter-group">
             <FilterTrigger
               icon={Store}
@@ -411,6 +436,49 @@ export default function WatchlistFilters({
               </button>
             )}
           </div>
+
+          {!isMobile && !selection.active && (
+            <button
+              ref={selectTriggerRef}
+              type="button"
+              className="filter-trigger"
+              onClick={selection.onEnter}
+            >
+              <Check size={15} className="filter-trigger-icon" />
+              Select
+            </button>
+          )}
+
+          {showSelectToolbar && (
+            <div className="watchlist-select-toolbar">
+              <p className="watchlist-select-count" aria-live="polite">
+                {selection.count ? `${selection.count} selected` : 'Select items to remove'}
+              </p>
+              <button
+                ref={selectAllRef}
+                type="button"
+                className="filter-trigger"
+                aria-pressed={selection.allVisibleSelected}
+                onClick={selection.onToggleAll}
+              >
+                {selection.allVisibleSelected ? 'Clear all' : selection.hasMore ? 'Select all shown' : 'Select all'}
+              </button>
+              <div className="watchlist-select-toolbar-actions">
+                <button type="button" className="filter-trigger" onClick={selection.onExit}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-danger watchlist-select-btn"
+                  onClick={selection.onRemove}
+                  disabled={selection.count === 0}
+                >
+                  <Trash2 size={14} />
+                  Remove{selection.count ? ` ${selection.count} item${selection.count === 1 ? '' : 's'}` : ''}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

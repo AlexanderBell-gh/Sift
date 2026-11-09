@@ -5051,6 +5051,34 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   gap: 8px;
   margin-left: auto;
 }
+/* Desktop selection swaps the filter bar into this toolbar; the groups and
+   search step aside (a filter change already exits select mode). */
+.filter-bar.is-selecting > .filter-group,
+.filter-bar.is-selecting > .watchlist-search {
+  display: none;
+}
+.watchlist-select-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  animation: fade-in 150ms var(--ease-smooth);
+}
+.watchlist-select-toolbar .watchlist-select-btn {
+  height: 36px;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+.watchlist-select-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .watchlist-select-toolbar {
+    animation: none;
+  }
+}
 /* Mobile entry is the card press-hold; this quiet hint replaces the Select
    button and doubles as its keyboard/screen-reader fallback. */
 .watchlist-hold-hint {
@@ -5096,13 +5124,16 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   outline: none;
   box-shadow: 0 0 0 3px rgba(255, 87, 1, 0.12);
 }
+@media (min-width: 641px) {
+  /* Desktop selection owns the filter bar; this row is the mobile dock. */
+  .watchlist-select-row {
+    display: none;
+  }
+}
 @media (max-width: 640px) {
-  /* Hold a card to start selecting; the Select button is desktop-only. */
+  /* Hold a card to start selecting; desktop entry lives in the filter bar. */
   .watchlist-select-row:not(.is-selecting) {
     justify-content: flex-start;
-  }
-  .watchlist-select-row:not(.is-selecting) > .watchlist-select-btn {
-    display: none;
   }
   .watchlist-hold-hint {
     display: block;
