@@ -6513,7 +6513,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 12px;
   text-align: center;
   font-size: 14px;
   color: var(--muted);
@@ -6522,6 +6522,7 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 .auth-link {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   color: var(--primary);
   font-weight: 500;
   cursor: pointer;
@@ -6563,6 +6564,10 @@ html.sift-locked:has(.nav:not(.nav-static)) body {
 
   .auth-footer .auth-link {
     min-height: 44px;
+  }
+
+  .auth-footer {
+    gap: 2px;
   }
 
   .auth-promo {
