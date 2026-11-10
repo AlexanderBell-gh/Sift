@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, type FormEvent, type KeyboardEvent } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Zap } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { forgotPassword, resetPassword } from '../../lib/api';
 
@@ -232,15 +232,9 @@ export default function AuthPage() {
   return (
     <div className="auth-wrapper">
       <div className="auth-card">
-        <div className="auth-header">
-          <div className="logo-mark">
-            <div className="logo-tag" />
-            <div className="logo-scan-line" />
-          </div>
-          <h2 className="auth-title">Welcome to Sift</h2>
-          <p className="auth-subtitle">Sign-in or Register to track your groceries</p>
-        </div>
-
+        {/* Header removed — the landing page owns branding. Heading stays for
+            the document outline. */}
+        <h1 className="sr-only">Welcome to Sift</h1>
         <div className="auth-tabs" role="tablist" aria-label="Authentication method">
           {tabs.map((tab, i) => (
             <button
@@ -251,7 +245,7 @@ export default function AuthPage() {
               aria-selected={activeTab === tab.key}
               aria-controls="auth-panel"
               tabIndex={activeTab === tab.key ? 0 : -1}
-              className={`auth-tab ${activeTab === tab.key ? 'active' : ''} ${tab.key === 'trial' ? 'tab-trial' : ''}`}
+              className={`auth-tab ${activeTab === tab.key ? 'active' : ''}`}
               onClick={() => handleTabChange(tab.key)}
               onKeyDown={(e) => handleTabKeyDown(e, i)}
             >
@@ -274,7 +268,7 @@ export default function AuthPage() {
 
             {activeTab === 'trial' && (
               <div className="auth-promo">
-                <div className="auth-promo-title">⚡ 24-Hour Trial Access</div>
+                <div className="auth-promo-title"><Zap className="icon-xs" aria-hidden="true" />24-Hour Trial Access</div>
                 <p className="auth-promo-desc">
                   Try Sift for 24 hours. No account or password required.
                 </p>
@@ -286,6 +280,10 @@ export default function AuthPage() {
                 label="Username"
                 type="text"
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="next"
                 placeholder="Enter your username"
                 value={username}
                 onChange={(e) => { setUsername(e.target.value); clearFieldError('username'); }}
@@ -299,6 +297,10 @@ export default function AuthPage() {
                 label="Email Address"
                 type="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="next"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
@@ -312,6 +314,7 @@ export default function AuthPage() {
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete={activeTab === 'register' ? 'new-password' : 'current-password'}
+                enterKeyHint="go"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
@@ -357,6 +360,10 @@ export default function AuthPage() {
                     label="Account Email"
                     type="email"
                     autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    enterKeyHint="next"
                     placeholder="you@example.com"
                     value={forgotEmail}
                     onChange={(e) => { setForgotEmail(e.target.value); clearFieldError('forgotEmail'); }}
@@ -368,6 +375,7 @@ export default function AuthPage() {
                     label="New Password"
                     type={showResetPassword ? 'text' : 'password'}
                     autoComplete="new-password"
+                    enterKeyHint="done"
                     placeholder="••••••••"
                     value={resetNewPassword}
                     onChange={(e) => { setResetNewPassword(e.target.value); clearFieldError('resetNewPassword'); }}
@@ -441,9 +449,7 @@ export default function AuthPage() {
             </span>
           )}
           {activeTab === 'trial' && <span>This is a temporary account with no login credentials</span>}
-        </div>
-        <div className="auth-footer">
-          <button type="button" className="auth-link" onClick={() => navigate('/')}>
+          <button type="button" className="auth-link auth-link-quiet" onClick={() => navigate('/')}>
             Back to home
           </button>
         </div>
