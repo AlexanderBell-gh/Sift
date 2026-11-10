@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Smartphone, Check } from 'lucide-react';
+import { Search, Bookmark, Bell, Puzzle, ShoppingCart, Sun, Moon, LogIn, Check } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { useRevealRoot } from '../../hooks/useReveal';
 import {
@@ -118,10 +118,7 @@ export default function LandingPage() {
 
       <section className="hero">
         <div className="container">
-          <p className="landing-hero-eyebrow">
-            <Smartphone className="icon-sm" aria-hidden="true" />
-            Android app coming soon
-          </p>
+          <p/>
           <h1 className="landing-hero-title">
             One list for the whole shop.
             <span className="text-gradient block">Every store. Every deal.</span>
