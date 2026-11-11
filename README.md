@@ -7,7 +7,7 @@
 <p align="center"><strong>All your groceries. One place.</strong></p>
 
 <p align="center">
-  <a href="https://siftsearch.pages.dev"><strong>Live: siftsearch.pages.dev</strong></a>
+  <a href="https://siftuk.pages.dev"><strong>Sift</strong></a>
 </p>
 
 <p align="center">

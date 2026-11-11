@@ -5,7 +5,6 @@
 - **On startup skills**: `@caveman` at `full` intensity, all session, until told otherwise.
 - **Prefix every shell command with:** `rtk` — e.g. `rtk git log -5`.
 - **Prioritise implementation quality over code volume:** More code ≠ better code.
-
 - **Only use read-only git commands**: `status`, `log`, `diff`, `diff --cached`, `show`, `blame`. **Never use**: `commit`, `push`, `reset`, `rebase` or `amend`.
 - **Never touch**: `.env`, Worker secrets, `.github/workflows/`, the CORS allowlist, or applied migrations (add a numbered `.sql`).
 - **No destructive D1 writes** without explicit confirmation — remote writes need `--remote --yes` (db). Watchlist wipe and category overrides are CLI-only, never migrations or UI.
