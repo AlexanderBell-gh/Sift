@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, type FormEvent, type KeyboardEvent } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Eye, EyeOff, Zap, ArrowLeft } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Zap } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { forgotPassword, resetPassword } from '../../lib/api';
 
@@ -232,7 +232,7 @@ export default function AuthPage() {
   return (
     <div className="auth-wrapper">
       <div className="auth-card">
-        {/* Header removed — the landing page owns branding. Heading stays for
+        {/* No header: the auth screen is the whole page. Heading stays for
             the document outline. */}
         <h1 className="sr-only">Welcome to Sift</h1>
         <div className="auth-tabs" role="tablist" aria-label="Authentication method">
@@ -449,10 +449,6 @@ export default function AuthPage() {
             </span>
           )}
           {activeTab === 'trial' && <span>This is a temporary account with no login credentials</span>}
-          <button type="button" className="auth-link auth-link-quiet" onClick={() => navigate('/')}>
-            <ArrowLeft className="icon-xs" aria-hidden="true" />
-            Back
-          </button>
         </div>
       </div>
     </div>

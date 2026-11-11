@@ -3,14 +3,13 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import LandingPage from './components/pages/LandingPage';
 import RequireAdmin from './components/guards/RequireAdmin';
 import { NotFoundPage, RouteErrorBoundary } from './components/guards/ErrorPage';
 import { CookieConsent } from './components/ui/CookieConsent';
 import ExtensionFAB from './components/layout/ExtensionFAB';
 
-// Landing stays eager (guest first paint). Everything else splits off so
-// guests never download signed-in, admin, or auth code up front.
+// Search stays eager (signed-in first paint). Everything else splits off so
+// guests only download the auth screen up front.
 const SearchPage = lazy(() => import('./components/pages/SearchPage'));
 const AuthPage = lazy(() => import('./components/pages/AuthPage'));
 const WatchlistPage = lazy(() => import('./components/pages/WatchlistPage'));
@@ -70,7 +69,7 @@ function HomeRoute() {
     );
   }
 
-  return token ? <SearchPage /> : <LandingPage />;
+  return token ? <SearchPage /> : <Navigate to="/auth" replace />;
 }
 
 // SPA navigation keeps scroll position — reset to top on every route change

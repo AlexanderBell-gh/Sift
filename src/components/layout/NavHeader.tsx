@@ -172,7 +172,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, staticNav 
                     {isDark ? 'Light Mode' : 'Dark Mode'}
                   </button>
                   <div className="dropdown-divider" />
-                  <button onClick={() => { logout(); navigate('/'); closeMenu(); }} className="dropdown-item sign-out">
+                  <button onClick={() => { logout(); navigate('/auth', { replace: true }); closeMenu(); }} className="dropdown-item sign-out">
                     <LogOut className="icon-sm" />
                     Sign out
                   </button>
@@ -202,7 +202,7 @@ export default function NavHeader({ title = 'Sift', showBack = false, staticNav 
                     {isDark ? 'Light Mode' : 'Dark Mode'}
                   </button>
                   <div className="dropdown-divider" />
-                  <button onClick={() => { logout(); navigate('/'); closeMenu(); }} className="dropdown-item sign-out">
+                  <button onClick={() => { logout(); navigate('/auth', { replace: true }); closeMenu(); }} className="dropdown-item sign-out">
                     <LogOut className="icon-sm" />
                     Sign out
                   </button>
