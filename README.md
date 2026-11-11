@@ -52,9 +52,9 @@ subtotals, savings vs shelf, grand total, two-tap clear-all.
 transition. Bell with mark-all-read and swipe-dismiss; tapping an alert deep-links
 to the exact tile in the Expired tab.
 
-**Auth & accounts.** JWT + Google OAuth + username/password, guest landing,
-self-service password recovery. Trial is 24h / 5 items, server-side. Google
-accounts sign in without a password — Settings greys out Change Password, locks
+**Auth & accounts.** JWT + Google OAuth + username/password, sign-in screen
+for guests, self-service password recovery. Trial is 24h / 5 items, server-side.
+Google accounts sign in without a password — Settings greys out Change Password, locks
 email, allows username edits; username changes are limited to one per 20 minutes
 per user, email changes to one per day. The website hands its token to the Chrome
 extension, so there is no double sign-in. Legal pages at `/privacy`, `/terms`,
@@ -103,8 +103,8 @@ wrangler D1; `category set|clear|list` manages the global corrections in
 overrides production). Remote writes need `--remote --yes`, reads do not. The
 CLI never deploys.
 
-Build code-splits for first paint: the guest landing stays eager while every
-other route lazy-loads, with React in its own cached chunk.
+Build code-splits for first paint: every route lazy-loads behind one `Suspense`,
+with React in its own cached chunk.
 
 ## Deploy
 
@@ -210,7 +210,7 @@ letters + numbers, 4–30 chars. Passwords: letters, numbers, dots, underscores,
 ```
 src/              React SPA (components/{pages,layout,features,ui,guards}, contexts, hooks, lib, types, data)
 workers/          Cloudflare Worker API (index.js, auth.js, db.js, lib/, schema.sql, migrations/)
-public/           Store logo PNGs (+ landing/ wordmarks) + favicon.svg + theme-init.js + _headers
+public/           Store logo PNGs + favicon.svg + theme-init.js + _headers
 bin/sift.mjs      Ops CLI behind every pnpm sift command
 ```
 
