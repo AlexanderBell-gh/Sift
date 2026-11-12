@@ -33,7 +33,9 @@ Every step runs through `bin/sift.mjs`, extra args forwarded (`rtk pnpm sift tes
 
 React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + D1; custom JWT + Google OAuth + password auth; GitHub Actions → Pages + Worker + migrations.
 
-`src/` React SPA (`components/{pages,layout,features,ui,guards}`, `contexts`, `hooks`, `lib`, `types`, `data`) · `workers/` `index.js` (all routes), `auth.js`, `db.js`, `lib/category.js`, `lib/validate.js`, `schema.sql`, `migrations/` · `public/` logos, `theme-init.js`, `_headers` · `bin/sift.mjs` ops CLI.
+`src/` React SPA (`components/{pages,layout,features,ui,guards}`, `contexts`, `hooks`, `lib`, `types`, `data`) · `workers/` `index.js` (all routes), `auth.js`, `db.js`, `lib/category.js`, `lib/validate.js`, `schema.sql`, `migrations/` · `public/` logos, `theme-init.js`, `_headers`, `_redirects` · `bin/sift.mjs` ops CLI.
+
+- **Legal pages**: live in `sift-landing`; `/privacy`, `/terms`, `/cookies`, `/about`, `/license` 301 there via `public/_redirects`.
 
 - **Routes**: `/` is `HomeRoute` (`SearchPage` signed in, redirect to `/auth` for guests); every route is `React.lazy` behind one `Suspense`; `/search` redirects to `/`.
 - **Schema**: `schema.sql` is the human reference (9 tables); `0001_sift.sql` is the executable truth and auto-applies on push to `main` (migrations → worker → pages). Rebuilt clean on 24-10-2026.
