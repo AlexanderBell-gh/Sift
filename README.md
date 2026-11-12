@@ -78,7 +78,10 @@ pnpm sift dev          # Vite on :5173
 
 Node 24+, pnpm 12+, a Cloudflare account. Local dev needs
 `VITE_GOOGLE_CLIENT_ID` in `.env` (gitignored, see `.env.example`); it must match
-the Worker's `GOOGLE_CLIENT_ID` secret.
+the Worker's `GOOGLE_CLIENT_ID` secret. The ops CLI reads the same `.env` for
+`SIFT_API_BASE`, `SIFT_ADMIN_USER` and `SIFT_ADMIN_PASS` — all optional, only
+`watchlist` reads need the admin pair, and a real environment variable wins over
+the file.
 
 ## Commands
 
@@ -102,7 +105,8 @@ wrangler D1; `category set|clear|list` manages the global corrections in
 `product_knowledge`; `watchlist names|offers` reads the admin API (needs
 `SIFT_ADMIN_USER` + `SIFT_ADMIN_PASS`, never committed; `SIFT_API_BASE`
 overrides production). Remote writes need `--remote --yes`, reads do not. The
-CLI never deploys.
+CLI never deploys. Output is coloured on a terminal and plain when piped,
+in `CI` or under `NO_COLOR`.
 
 Build code-splits for first paint: every route lazy-loads behind one `Suspense`,
 with React in its own cached chunk.
