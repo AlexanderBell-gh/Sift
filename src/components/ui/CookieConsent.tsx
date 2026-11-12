@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
+import { LANDING_URL } from '../../lib/config';
 import { Cookie } from 'lucide-react';
 
 export function CookieConsent() {
@@ -59,7 +59,7 @@ export function CookieConsent() {
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
               Sift keeps your sign-in and preferences in this browser only — no
-              tracking cookies. See the <Link to="/cookies" className="cookie-banner-link">cookie policy</Link>.
+              tracking cookies. See the <a href={`${LANDING_URL}/cookies`} className="cookie-banner-link">cookie policy</a>.
             </p>
           </div>
         </div>

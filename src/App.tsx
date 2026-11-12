@@ -17,21 +17,6 @@ const ShoppingListPage = lazy(() => import('./components/pages/ShoppingListPage'
 const OffersPage = lazy(() => import('./components/pages/OffersPage'));
 const AdminPage = lazy(() => import('./components/pages/AdminPage'));
 const SettingsPage = lazy(() => import('./components/pages/SettingsPage'));
-const PrivacyPage = lazy(() =>
-  import('./components/pages/LegalPages').then(m => ({ default: m.PrivacyPage }))
-);
-const CookiesPage = lazy(() =>
-  import('./components/pages/LegalPages').then(m => ({ default: m.CookiesPage }))
-);
-const TermsPage = lazy(() =>
-  import('./components/pages/LegalPages').then(m => ({ default: m.TermsPage }))
-);
-const AboutPage = lazy(() =>
-  import('./components/pages/LegalPages').then(m => ({ default: m.AboutPage }))
-);
-const LicensePage = lazy(() =>
-  import('./components/pages/LegalPages').then(m => ({ default: m.LicensePage }))
-);
 
 function RouteFallback() {
   return (
@@ -105,11 +90,6 @@ function App() {
             }
           />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/cookies" element={<CookiesPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/license" element={<LicensePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>

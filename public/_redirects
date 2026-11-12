@@ -1,0 +1,7 @@
+# Legal pages moved to the landing site. One hop keeps the app page in browser
+# history, so Back returns to where the link was clicked.
+/privacy https://siftuk.pages.dev/privacy 301
+/cookies https://siftuk.pages.dev/cookies 301
+/terms https://siftuk.pages.dev/terms 301
+/about https://siftuk.pages.dev/about 301
+/license https://siftuk.pages.dev/license 301
