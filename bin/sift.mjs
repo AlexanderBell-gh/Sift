@@ -8,6 +8,24 @@ import { CANONICAL_CATEGORIES, normaliseTitle } from '../workers/lib/category.js
 
 const PROD_API = 'https://siftapi.blackmesa.workers.dev';
 const WRANGLER = ['exec', 'wrangler'];
+const ADMIN_ENV = ['SIFT_API_BASE', 'SIFT_ADMIN_USER', 'SIFT_ADMIN_PASS'];
+
+// Colour only on a terminal, and never against NO_COLOR.
+const useColor = !process.env.NO_COLOR && Boolean(process.stdout.isTTY);
+const paint = (code) => (s) => (useColor ? `\x1b[${code}m${s}\x1b[0m` : String(s));
+const c = { bold: paint('1'), dim: paint('2'), red: paint('31'), green: paint('32'), yellow: paint('33'), cyan: paint('36') };
+
+// The CLI runs under plain node, so .env is not loaded for it the way Vite
+// loads it for the app. Real env wins, so CI and one-off overrides stay in charge.
+function loadEnvFile(file = '.env') {
+  if (!existsSync(file)) return;
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    const m = line.match(/^\s*([A-Za-z_]\w*)\s*=\s*(.*?)\s*$/);
+    if (!m || m[1] in process.env) continue;
+    process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+}
+loadEnvFile();
 
 const HELP = `Sift — CLI (never deploys; CI owns deploys)
 
@@ -43,8 +61,17 @@ Flags: --api <url> (default $SIFT_API_BASE or prod) --local --remote --yes --jso
   watchlist (read-only debug via admin token):
     watchlist names|offers [--json]
 
-Env: SIFT_API_BASE, SIFT_ADMIN_USER, SIFT_ADMIN_PASS (never commit).
+Env — put these in .env (gitignored, never commit):
+    SIFT_API_BASE      API host to read from (default: production)
+    SIFT_ADMIN_USER    admin username, needed for watchlist reads
+    SIFT_ADMIN_PASS    admin password, needed for watchlist reads
 Remote writes need BOTH --remote --yes (db).`;
+
+function helpText() {
+  return HELP
+    .replace(/^(Usage|Flags|Env)[^\n]*/gm, (m) => c.bold(m))
+    .replace(/^ {2}\S[^\n]*/gm, (m) => c.cyan(m));
+}
 
 const argv = process.argv.slice(2);
 const flags = { api: process.env.SIFT_API_BASE || PROD_API, local: false, remote: false, yes: false, json: false };
@@ -65,7 +92,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--remote') flags.remote = true;
   else if (a === '--yes') flags.yes = true;
   else if (a === '--json') flags.json = true;
-  else if (a === '--help' || a === '-h') { console.log(HELP); process.exit(0); }
+  else if (a === '--help' || a === '-h') { console.log(helpText()); process.exit(0); }
   else if (a === '--apply') flags.apply = true;
   else if (takeStringFlag('brand')(a, box)) i = box.i;
   else if (takeStringFlag('search')(a, box)) i = box.i;
@@ -74,7 +101,7 @@ for (let i = 0; i < argv.length; i++) {
 }
 const [cmd, sub, ...args] = rest;
 
-function fail(msg) { console.error(`sift: ${msg}`); process.exit(1); }
+function fail(msg) { console.error(`${c.red('sift:')} ${msg}`); process.exit(1); }
 // Remote DB writes need the double flag. Local targets proceed freely.
 function guardWrite() {
   if (flags.remote && !flags.yes) fail('remote write needs BOTH --remote --yes');
@@ -117,8 +144,8 @@ function upgradeStep(passthru) { run('pnpm', ['update', ...passthru]); }
 function doctor() {
   let ok = true;
   const check = (name, fn) => {
-    try { const v = fn(); console.log(`ok   ${name}${v ? ` (${v})` : ''}`); }
-    catch (e) { ok = false; console.log(`FAIL ${name}: ${e.message}`); }
+    try { const v = fn(); console.log(`${c.green('ok')}   ${name}${v ? ` ${c.dim(`(${v})`)}` : ''}`); }
+    catch (e) { ok = false; console.log(`${c.red('FAIL')} ${name}: ${e.message}`); }
   };
   check('repo root', () => {
     const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -157,6 +184,13 @@ function doctor() {
     if (!out.includes('sift')) throw new Error('sift database not found — run wrangler login');
     return 'sift found';
   });
+  // Watchlist reads are the only commands needing admin creds, so this warns.
+  const missingCreds = ADMIN_ENV.slice(1).filter((k) => !process.env[k]);
+  if (missingCreds.length) {
+    console.log(`${c.yellow('warn')} admin env: ${missingCreds.join(', ')} not set — only watchlist reads need them (put them in .env)`);
+  } else {
+    console.log(`${c.green('ok')}   admin env ${c.dim(`(${ADMIN_ENV.join(', ')})`)}`);
+  }
   if (!ok) process.exit(1);
 }
 
@@ -169,9 +203,12 @@ function gate() {
     ['eval', () => evalStep(['--quiet'])],
   ];
   for (const [name, step] of steps) {
-    console.log(`\n== ${name} ==`);
+    console.log(`\n${c.cyan(c.bold(`== ${name} ==`))}`);
+    const started = Date.now();
     step();
+    console.log(`${c.green('ok')} ${name} ${c.dim(`${((Date.now() - started) / 1000).toFixed(1)}s`)}`);
   }
+  console.log(`\n${c.green('gate passed')}`);
 }
 
 function wranglerD1(extra) {
@@ -208,14 +245,14 @@ function wipeWatchlist() {
   const wipeOrder = ['shopping_list', 'alerts', 'watchlist'];
   const kept = ['users', 'product_catalog', 'product_knowledge', 'audit_logs', 'rate_limits', 'password_resets'];
 
-  console.log(`wipe-watchlist (${target})`);
-  console.log(`before: ${formatCounts(tableCounts([...wipeOrder, ...kept]))}`);
+  console.log(c.bold(`wipe-watchlist (${target})`));
+  console.log(c.dim(`before: ${formatCounts(tableCounts([...wipeOrder, ...kept]))}`));
   for (const table of wipeOrder) {
     run('pnpm', [...WRANGLER, ...wranglerD1(['--command', `DELETE FROM ${table}`])]);
-    console.log(`deleted ${table}`);
+    console.log(`${c.green('deleted')} ${table}`);
   }
   const after = tableCounts([...wipeOrder, ...kept]);
-  console.log(`after:  ${formatCounts(after)}`);
+  console.log(c.dim(`after:  ${formatCounts(after)}`));
   const remaining = wipeOrder.filter((table) => after[table] !== 0);
   if (remaining.length) fail(`wipe incomplete: ${remaining.join(', ')} not empty`);
 }
@@ -265,7 +302,7 @@ async function api(path, { method = 'GET', body, token } = {}) {
 async function adminToken() {
   const username = process.env.SIFT_ADMIN_USER;
   const password = process.env.SIFT_ADMIN_PASS;
-  if (!username || !password) fail('set SIFT_ADMIN_USER + SIFT_ADMIN_PASS (never commit)');
+  if (!username || !password) fail('set SIFT_ADMIN_USER + SIFT_ADMIN_PASS in .env (never commit)');
   const data = await api('/api/auth/login', { method: 'POST', body: { username, password } });
   if (data.user?.role !== 'admin') fail(`${username} is not an admin`);
   return data.token;
@@ -324,7 +361,7 @@ function categoryCmd() {
          source = 'user_correction',
          updated_at = excluded.updated_at`,
     ])]);
-    console.log(`set ${hit} for ${name} (${id})`);
+    console.log(`${c.green('set')} ${hit} for ${name} ${c.dim(`(${id})`)}`);
   } else if (sub === 'clear') {
     const [name] = args;
     if (!name) fail('usage: pnpm sift category clear "<product name>"');
@@ -334,7 +371,7 @@ function categoryCmd() {
     run('pnpm', [...WRANGLER, ...wranglerD1(['--command',
       `DELETE FROM product_knowledge WHERE id = ${sqlQuote(id)} AND source = 'user_correction'`,
     ])]);
-    console.log(`cleared ${name} (${id})`);
+    console.log(`${c.green('cleared')} ${name} ${c.dim(`(${id})`)}`);
   } else fail(`unknown category subcommand: ${sub} (set|clear|list)`);
 }
 
@@ -356,6 +393,6 @@ async function main() {
   else if (cmd === 'db') dbCmd();
   else if (cmd === 'category') categoryCmd();
   else if (cmd === 'watchlist') await watchlistCmd();
-  else { console.log(HELP); process.exit(cmd ? 1 : 0); }
+  else { console.log(helpText()); process.exit(cmd ? 1 : 0); }
 }
 main().catch(e => fail(e.message));
