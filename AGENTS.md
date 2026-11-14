@@ -56,7 +56,7 @@ React 19 + TypeScript 7 + Vite 8 + Tailwind v4; Cloudflare Workers (plain JS) + 
 - No `dangerouslySetInnerHTML`; CSV export stays formula-injection safe.
 - Rate limits and trial gating (5 items, 24h, server-side on `POST /api/watchlist`) are security controls — never remove or move them client-side.
 - No PII in logs or `audit_logs`. `shopping_list` and `alerts` declare `ON DELETE CASCADE` from `watchlist`, but the worker DELETE and the CLI still clear dependents explicitly (`shopping_list` → `alerts` → `watchlist`) so the order never depends on cascade enforcement.
-- CORS origins live in `ALLOWED_ORIGINS` in `workers/index.js` (Pages, `localhost:5173`/`:3000`, LAN `192.168.1.70:5173`).
+- CORS origins live in `ALLOWED_ORIGINS` in `workers/index.js` (Pages, `localhost:5173`, LAN `10.49.1.70:5173`).
 
 ## Docs (user-triggered)
 

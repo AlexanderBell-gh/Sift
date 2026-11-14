@@ -25,10 +25,10 @@ import { validateResolveInput, pickBestRow, toInheritedFacts, emptyFacts } from 
 
 
 const ALLOWED_ORIGINS = [
+  'https://siftuk.pages.dev',
   'https://siftsearch.pages.dev',
   'http://localhost:5173',
-  'http://localhost:3000',
-  'http://192.168.1.70:5173',
+  'http://10.49.1.70:5173',
 ];
 
 function buildCorsHeaders(request) {
